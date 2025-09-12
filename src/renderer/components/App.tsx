@@ -103,13 +103,33 @@ const App: React.FC = () => {
       status: 'Processing complete!'
     }));
 
-    // Update process in storage
+    // Update process in storage - convert ProcessingResult[] to ProcessResult[]
     if (currentProcessId) {
       try {
-        await window.electronAPI.updateProcess(currentProcessId, {
-          results,
-          status: results.some(r => r.success) ? 'completed' as const : 'failed' as const
+        console.log('Processing complete - saving results:', results);
+        console.log('Target images for conversion:', targetImages);
+        
+        const convertedResults = results.map((result, index) => ({
+          inputPath: targetImages[index], // Use the corresponding target image path
+          outputPath: result.outputPath,
+          success: result.success,
+          error: result.error,
+          metadata: result.metadata ? {
+            aiAdjustments: result.metadata.aiAdjustments,
+            processingTime: undefined
+          } : undefined
+        }));
+
+        console.log('Converted results for storage:', convertedResults);
+        const status = results.some(r => r.success) ? 'completed' as const : 'failed' as const;
+        console.log('Setting process status to:', status);
+
+        const updateResult = await window.electronAPI.updateProcess(currentProcessId, {
+          results: convertedResults,
+          status: status
         });
+        
+        console.log('Update process result:', updateResult);
       } catch (error) {
         console.error('Failed to update process:', error);
       }
@@ -138,7 +158,20 @@ const App: React.FC = () => {
   const handleSelectProcess = (process: ProcessHistory) => {
     setBaseImage(process.baseImage);
     setTargetImages(process.targetImages);
-    setResults(process.results);
+    
+    // Convert ProcessResult[] to ProcessingResult[] 
+    const convertedResults: ProcessingResult[] = (process.results || []).map(result => ({
+      success: result.success,
+      outputPath: result.outputPath,
+      error: result.error,
+      metadata: result.metadata ? {
+        aiAdjustments: result.metadata.aiAdjustments,
+        reasoning: undefined,
+        confidence: undefined
+      } : undefined
+    }));
+    
+    setResults(convertedResults);
     setCurrentProcessId(process.id);
     
     // Always go to results view when selecting a process
@@ -146,12 +179,8 @@ const App: React.FC = () => {
   };
 
   const handleOpenProject = (process: ProcessHistory) => {
-    // Load the process but go to upload view to allow modification
-    setBaseImage(process.baseImage);
-    setTargetImages(process.targetImages);
-    setResults([]); // Clear results so user can process again
-    setCurrentProcessId(null); // Create new process instead of updating old one
-    setCurrentStep('upload');
+    // Always open projects in results view - let the results view handle empty states
+    handleSelectProcess(process);
   };
 
   // Set up IPC listeners when component mounts
@@ -170,7 +199,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="container">
+    <div className={`container ${currentStep}`}>
       <header style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
         {currentStep !== 'history' && (
           <button
@@ -213,7 +242,6 @@ const App: React.FC = () => {
       {currentStep === 'history' && (
         <div className="fade-in">
           <HistoryView
-            onSelectProcess={handleSelectProcess}
             onOpenProject={handleOpenProject}
             onNewProcess={handleNewProcess}
           />

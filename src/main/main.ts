@@ -308,11 +308,14 @@ class ImageMatchApp {
             `Processing image ${i + 1} of ${totalImages}...`);
 
           try {
-            // Process individual image
-            const result = await this.imageProcessor.analyzeColorMatch({
+            // Process individual image (generate adjusted output for a project view)
+            const result = await this.imageProcessor.matchStyle({
               baseImagePath: data.baseImagePath,
               targetImagePath: targetPath,
-              hint: data.hint,
+              matchColors: true,
+              matchBrightness: true,
+              matchContrast: true,
+              matchSaturation: true,
               ...data.options
             });
 

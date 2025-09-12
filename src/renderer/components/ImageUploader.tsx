@@ -13,19 +13,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   baseImage,
   targetImages
 }) => {
-  const [baseImagePreview, setBaseImagePreview] = useState<string | null>(null);
-  const [targetImagePreviews, setTargetImagePreviews] = useState<string[]>([]);
-
-  const generatePreview = async (imagePath: string): Promise<string> => {
-    try {
-      const result = await window.electronAPI.generatePreview({ path: imagePath });
-      console.log('Preview result:', result);
-      return result.success ? result.previewPath : imagePath;
-    } catch (error) {
-      console.error('Error generating preview:', error);
-      return imagePath;
-    }
-  };
+  const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
 
   const handleBaseImageSelect = async () => {
     try {
@@ -65,22 +53,34 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   const canProcess = baseImage && targetImages.length > 0;
 
-  // Generate preview for base image when it changes
+  // Generate previews for target images
   useEffect(() => {
-    if (baseImage) {
-      generatePreview(baseImage).then(setBaseImagePreview);
-    } else {
-      setBaseImagePreview(null);
-    }
-  }, [baseImage]);
+    const generateTargetPreviews = async () => {
+      if (targetImages.length === 0) {
+        setTargetPreviews([]);
+        return;
+      }
 
-  // Generate previews for target images when they change
-  useEffect(() => {
-    if (targetImages.length > 0) {
-      Promise.all(targetImages.map(generatePreview)).then(setTargetImagePreviews);
-    } else {
-      setTargetImagePreviews([]);
-    }
+      try {
+        const previews = await Promise.all(
+          targetImages.map(async (imagePath) => {
+            try {
+              const result = await window.electronAPI.generatePreview({ path: imagePath });
+              return result.success ? result.previewPath : imagePath;
+            } catch (error) {
+              console.error('Error generating preview for target image:', error);
+              return imagePath;
+            }
+          })
+        );
+        setTargetPreviews(previews);
+      } catch (error) {
+        console.error('Error generating target previews:', error);
+        setTargetPreviews(targetImages); // Fallback to original paths
+      }
+    };
+
+    generateTargetPreviews();
   }, [targetImages]);
 
   return (
@@ -126,29 +126,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 position: 'relative',
                 boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)'
               }}>
-                {baseImagePreview ? (
+                {baseImage && (
                   <img 
-                    src={baseImagePreview.startsWith('file://') ? baseImagePreview : `file://${baseImagePreview}`}
+                    src={`file://${baseImage}`}
                     alt="Base image"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#f8f9ff',
-                    color: '#667eea',
-                    fontSize: '16px'
-                  }}>
-                    🔄 Loading preview...
-                  </div>
                 )}
                 <div style={{
                   position: 'absolute',
@@ -244,7 +227,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 width: '300px',
                 margin: '0 auto'
               }}>
-                {targetImagePreviews.slice(0, 4).map((preview, index) => (
+                {targetImages.slice(0, 4).map((imgPath, index) => {
+                  const previewPath = targetPreviews[index] || imgPath;
+                  return (
                   <div
                     key={index}
                     style={{
@@ -258,7 +243,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                     }}
                   >
                     <img
-                      src={preview ? (preview.startsWith('file://') ? preview : `file://${preview}`) : `file://${targetImages[index]}`}
+                      src={`file://${previewPath}`}
                       alt={`Target image ${index + 1}`}
                       style={{
                         width: '100%',
@@ -280,7 +265,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                       {index + 1}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               {targetImages.length > 4 && (
                 <p style={{ 
@@ -335,22 +321,22 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       {canProcess && (
         <div className="fade-in" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
           <div className="card" style={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            border: 'none',
-            boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
+            background: 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)',
+            border: '1px solid #e8eaff',
+            boxShadow: '0 2px 12px rgba(102, 126, 234, 0.08)'
           }}>
             <h3 style={{ 
               fontSize: '20px', 
               fontWeight: '600', 
-              marginBottom: '12px' 
+              marginBottom: '12px',
+              color: '#333'
             }}>
               Ready to Process
             </h3>
             <p style={{ 
               fontSize: '14px', 
               marginBottom: '24px',
-              opacity: 0.9,
+              color: '#666',
               lineHeight: '1.5'
             }}>
               AI will analyze your reference image and generate complete color adjustments for all target images.
@@ -360,15 +346,17 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               className="button"
               onClick={onStartProcessing}
               style={{
-                background: 'white',
-                color: '#667eea',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
                 fontSize: '16px',
                 fontWeight: '600',
-                padding: '14px 32px'
+                padding: '14px 32px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.2)'
               }}
             >
-              🚀 Start AI Processing
+              Start Processing
             </button>
           </div>
         </div>

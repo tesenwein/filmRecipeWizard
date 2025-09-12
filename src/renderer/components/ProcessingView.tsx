@@ -13,114 +13,120 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   targetImages
 }) => {
   const { progress, status } = processingState;
-  const [baseImagePreview, setBaseImagePreview] = useState<string | null>(null);
-
-  const generatePreview = async (imagePath: string): Promise<string> => {
-    try {
-      const result = await window.electronAPI.generatePreview({ path: imagePath });
-      return result.success ? result.previewPath : imagePath;
-    } catch (error) {
-      console.error('Error generating preview:', error);
-      return imagePath;
-    }
-  };
-
-  useEffect(() => {
-    if (baseImage) {
-      generatePreview(baseImage).then(setBaseImagePreview);
-    }
-  }, [baseImage]);
+  // No preview generation in processing; show original base image
 
   return (
-    <div className="card" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ 
-        fontSize: '64px', 
-        marginBottom: '24px',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
-        animation: 'pulse 2s infinite'
-      }}>
-        🤖
+    <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <div style={{ 
+          fontSize: '48px', 
+          marginBottom: '20px',
+          animation: 'pulse 2s infinite'
+        }}>
+          ✨
+        </div>
+
+        <h2 style={{ 
+          fontSize: '24px', 
+          fontWeight: '600', 
+          color: '#333',
+          marginBottom: '12px'
+        }}>
+          Processing Your Images
+        </h2>
+
+        <p style={{ 
+          fontSize: '16px', 
+          color: '#666',
+          marginBottom: '32px',
+          lineHeight: '1.5'
+        }}>
+          AI is analyzing your reference image and generating color adjustments 
+          for {targetImages.length} target image{targetImages.length !== 1 ? 's' : ''}
+        </p>
+
+        {/* Progress Bar */}
+        <div style={{ 
+          background: '#f5f6fa',
+          borderRadius: '20px',
+          height: '8px',
+          overflow: 'hidden',
+          marginBottom: '12px',
+          maxWidth: '400px',
+          margin: '0 auto 12px auto'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            height: '100%',
+            borderRadius: '20px',
+            width: `${progress}%`,
+            transition: 'width 0.3s ease'
+          }} />
+        </div>
+
+        <div style={{ 
+          fontSize: '16px', 
+          fontWeight: '600',
+          color: '#667eea',
+          marginBottom: '8px'
+        }}>
+          {Math.round(progress)}%
+        </div>
+
+        <div style={{ 
+          fontSize: '14px',
+          color: '#666',
+          fontWeight: '500',
+          minHeight: '20px'
+        }}>
+          {status}
+        </div>
       </div>
 
-      <h2 style={{ 
-        fontSize: '28px', 
-        fontWeight: '700', 
-        color: '#333333',
-        marginBottom: '12px'
-      }}>
-        AI Processing in Progress
-      </h2>
-
-      <p style={{ 
-        fontSize: '16px', 
-        color: '#666666',
-        marginBottom: '32px',
-        lineHeight: '1.6'
-      }}>
-        Our AI is analyzing your reference image and generating precise color adjustments 
-        for {targetImages.length} target image{targetImages.length !== 1 ? 's' : ''}
-      </p>
-
-      {/* Progress Bar */}
-      <div className="progress-bar" style={{ marginBottom: '16px' }}>
-        <div 
-          className="progress-fill" 
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      <div style={{ 
-        fontSize: '14px', 
-        fontWeight: '600',
-        color: '#667eea',
-        marginBottom: '8px'
-      }}>
-        {Math.round(progress)}%
-      </div>
-
-      <div className="status-message" style={{ 
-        fontSize: '15px',
-        color: '#555555',
-        fontWeight: '500',
-        minHeight: '20px'
-      }}>
-        {status}
-      </div>
-
-      {/* Image Preview */}
+      {/* Image Preview Cards */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: '16px', 
-        marginTop: '40px',
-        maxWidth: '400px',
-        margin: '40px auto 0'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+        gap: '24px'
       }}>
-        <div>
-          <h4 style={{ 
-            fontSize: '12px', 
-            fontWeight: '600', 
-            color: '#999999', 
-            marginBottom: '8px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
+        {/* Reference Card */}
+        <div className="card" style={{ padding: '24px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '16px',
+            gap: '8px'
           }}>
-            Reference Style
-          </h4>
+            <div style={{ 
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#667eea'
+            }} />
+            <h3 style={{ 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#667eea',
+              margin: 0,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              Reference Style
+            </h3>
+          </div>
+          
           {baseImage && (
             <div style={{
               width: '100%',
-              height: '120px',
-              borderRadius: '10px',
+              height: '200px',
+              borderRadius: '12px',
               overflow: 'hidden',
-              border: '2px solid #667eea',
-              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.2)'
+              border: '1px solid #e8eaff',
+              boxShadow: '0 2px 12px rgba(102, 126, 234, 0.1)'
             }}>
               <img 
-                src={baseImagePreview ? (baseImagePreview.startsWith('file://') ? baseImagePreview : `file://${baseImagePreview}`) : `file://${baseImage}`}
+                src={`file://${baseImage}`}
                 alt="Base image"
                 style={{
                   width: '100%',
@@ -130,33 +136,70 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
               />
             </div>
           )}
+
+          <p style={{
+            fontSize: '12px',
+            color: '#666',
+            marginTop: '12px',
+            margin: '12px 0 0 0'
+          }}>
+            {baseImage?.split('/').pop()}
+          </p>
         </div>
 
-        <div>
-          <h4 style={{ 
-            fontSize: '12px', 
-            fontWeight: '600', 
-            color: '#999999', 
-            marginBottom: '8px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Processing {targetImages.length} Image{targetImages.length !== 1 ? 's' : ''}
-          </h4>
+        {/* Target Images Card */}
+        <div className="card" style={{ padding: '24px' }}>
           <div style={{
-            width: '100%',
-            height: '100px',
-            borderRadius: '8px',
-            border: '2px dashed #d0d0d0',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            background: '#fafafa',
-            color: '#999999',
-            fontSize: '24px'
+            marginBottom: '16px',
+            gap: '8px'
           }}>
-            ⚡
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#764ba2',
+              animation: 'pulse 2s infinite'
+            }} />
+            <h3 style={{ 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              color: '#764ba2',
+              margin: 0,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              Processing {targetImages.length} Image{targetImages.length !== 1 ? 's' : ''}
+            </h3>
           </div>
+          
+          <div style={{
+            width: '100%',
+            height: '200px',
+            borderRadius: '12px',
+            border: '2px dashed #e0e0e0',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)',
+            color: '#999'
+          }}>
+            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚡</div>
+            <div style={{ fontSize: '14px', fontWeight: '500' }}>
+              Analyzing colors...
+            </div>
+          </div>
+
+          <p style={{
+            fontSize: '12px',
+            color: '#666',
+            marginTop: '12px',
+            margin: '12px 0 0 0'
+          }}>
+            {targetImages.length} file{targetImages.length !== 1 ? 's' : ''} queued
+          </p>
         </div>
       </div>
 

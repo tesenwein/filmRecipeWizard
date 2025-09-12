@@ -24,6 +24,11 @@ body {
   padding: 20px;
 }
 
+/* Results view should use full available width */
+.container.results {
+  max-width: 100%;
+}
+
 .card {
   background: #ffffff;
   border-radius: 12px;

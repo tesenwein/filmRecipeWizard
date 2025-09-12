@@ -23,6 +23,23 @@ export interface AIColorAdjustments {
   hue_blue: number; // -100 to +100
   hue_purple: number; // -100 to +100
   hue_magenta: number; // -100 to +100
+  // HSL per-color (optional)
+  sat_red?: number; // -100 to +100
+  sat_orange?: number; // -100 to +100
+  sat_yellow?: number; // -100 to +100
+  sat_green?: number; // -100 to +100
+  sat_aqua?: number; // -100 to +100
+  sat_blue?: number; // -100 to +100
+  sat_purple?: number; // -100 to +100
+  sat_magenta?: number; // -100 to +100
+  lum_red?: number; // -100 to +100
+  lum_orange?: number; // -100 to +100
+  lum_yellow?: number; // -100 to +100
+  lum_green?: number; // -100 to +100
+  lum_aqua?: number; // -100 to +100
+  lum_blue?: number; // -100 to +100
+  lum_purple?: number; // -100 to +100
+  lum_magenta?: number; // -100 to +100
   // Modern Color Grading (optional)
   color_grade_shadow_hue?: number; // 0-360
   color_grade_shadow_sat?: number; // 0-100
@@ -113,6 +130,7 @@ Consider these aspects:
 Also include modern Color Grading settings (Lightroom/ACR):
 - Shadow/Midtone/Highlight/Global color wheels with Hue (0-360), Sat (0-100), and Lum (-100 to 100)
 - Color grade blending (0-100)
+\nImportant: Use the Lightroom color wheel hue reference (0=red, 60=yellow, 120=green, 180=cyan/teal, 240=blue, 300=magenta). If the base image has a green/teal cast, favor teal/cyan hues (around 180–210) in shadows/midtones/highlights rather than red/magenta.
 
 Provide specific numeric values for each adjustment that would achieve the best match.`,
               },
@@ -270,36 +288,177 @@ Provide specific numeric values for each adjustment that would achieve the best 
                     minimum: -100,
                     maximum: 100,
                   },
+                  // HSL per-color controls
+                  sat_red: { type: 'number', description: 'Red saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_orange: { type: 'number', description: 'Orange saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_yellow: { type: 'number', description: 'Yellow saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_green: { type: 'number', description: 'Green saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_aqua: { type: 'number', description: 'Aqua saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_blue: { type: 'number', description: 'Blue saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_purple: { type: 'number', description: 'Purple saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_magenta: { type: 'number', description: 'Magenta saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_red: { type: 'number', description: 'Red luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_orange: { type: 'number', description: 'Orange luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_yellow: { type: 'number', description: 'Yellow luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_green: { type: 'number', description: 'Green luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_aqua: { type: 'number', description: 'Aqua luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_blue: { type: 'number', description: 'Blue luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_purple: { type: 'number', description: 'Purple luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  lum_magenta: { type: 'number', description: 'Magenta luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
                   // Additional develop settings
-                  texture: { type: 'number', description: 'Texture (-100 to +100)', minimum: -100, maximum: 100 },
-                  dehaze: { type: 'number', description: 'Dehaze (-100 to +100)', minimum: -100, maximum: 100 },
-                  sharpening: { type: 'number', description: 'Sharpening amount (0 to 150)', minimum: 0, maximum: 150 },
-                  sharpening_radius: { type: 'number', description: 'Sharpening radius (0.5 to 3.0)', minimum: 0.5, maximum: 3.0 },
-                  sharpening_detail: { type: 'number', description: 'Sharpening detail (0 to 100)', minimum: 0, maximum: 100 },
-                  sharpening_masking: { type: 'number', description: 'Sharpening masking (0 to 100)', minimum: 0, maximum: 100 },
-                  luminance_noise_reduction: { type: 'number', description: 'Luminance NR (0 to 100)', minimum: 0, maximum: 100 },
-                  color_noise_reduction: { type: 'number', description: 'Color NR (0 to 100)', minimum: 0, maximum: 100 },
-                  vignette: { type: 'number', description: 'Post-crop vignette amount (-100 to 100)', minimum: -100, maximum: 100 },
+                  texture: {
+                    type: 'number',
+                    description: 'Texture (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  dehaze: {
+                    type: 'number',
+                    description: 'Dehaze (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  // Parametric tone curve regions (PV2012)
+                  parametric_shadows: {
+                    type: 'number',
+                    description: 'Parametric Shadows (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  parametric_darks: {
+                    type: 'number',
+                    description: 'Parametric Darks (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  parametric_lights: {
+                    type: 'number',
+                    description: 'Parametric Lights (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  parametric_highlights: {
+                    type: 'number',
+                    description: 'Parametric Highlights (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  parametric_shadow_split: {
+                    type: 'number',
+                    description: 'Parametric Shadow Split (0-100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  parametric_midtone_split: {
+                    type: 'number',
+                    description: 'Parametric Midtone Split (0-100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  parametric_highlight_split: {
+                    type: 'number',
+                    description: 'Parametric Highlight Split (0-100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  sharpening: {
+                    type: 'number',
+                    description: 'Sharpening amount (0 to 150)',
+                    minimum: 0,
+                    maximum: 150,
+                  },
+                  sharpening_radius: {
+                    type: 'number',
+                    description: 'Sharpening radius (0.5 to 3.0)',
+                    minimum: 0.5,
+                    maximum: 3.0,
+                  },
+                  sharpening_detail: {
+                    type: 'number',
+                    description: 'Sharpening detail (0 to 100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  sharpening_masking: {
+                    type: 'number',
+                    description: 'Sharpening masking (0 to 100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  luminance_noise_reduction: {
+                    type: 'number',
+                    description: 'Luminance NR (0 to 100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  color_noise_reduction: {
+                    type: 'number',
+                    description: 'Color NR (0 to 100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  vignette: {
+                    type: 'number',
+                    description: 'Post-crop vignette amount (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  // Camera Calibration and Shadow Tint
+                  shadow_tint: { type: 'number', description: 'Shadow Tint (-100 to +100)', minimum: -100, maximum: 100 },
+                  calib_red_hue: { type: 'number', description: 'Calibration Red Hue (-100 to +100)', minimum: -100, maximum: 100 },
+                  calib_red_sat: { type: 'number', description: 'Calibration Red Saturation (-100 to +100)', minimum: -100, maximum: 100 },
+                  calib_green_hue: { type: 'number', description: 'Calibration Green Hue (-100 to +100)', minimum: -100, maximum: 100 },
+                  calib_green_sat: { type: 'number', description: 'Calibration Green Saturation (-100 to +100)', minimum: -100, maximum: 100 },
+                  calib_blue_hue: { type: 'number', description: 'Calibration Blue Hue (-100 to +100)', minimum: -100, maximum: 100 },
+                  calib_blue_sat: { type: 'number', description: 'Calibration Blue Saturation (-100 to +100)', minimum: -100, maximum: 100 },
                   // Curves: 0-255 pairs for PV2012 tone curve
                   tone_curve: {
                     type: 'array',
                     description: 'Composite tone curve control points (0-255 input/output)',
-                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                    items: {
+                      type: 'object',
+                      properties: {
+                        input: { type: 'number', minimum: 0, maximum: 255 },
+                        output: { type: 'number', minimum: 0, maximum: 255 },
+                      },
+                      required: ['input', 'output'],
+                    },
                   },
                   tone_curve_red: {
                     type: 'array',
                     description: 'Red channel tone curve points',
-                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                    items: {
+                      type: 'object',
+                      properties: {
+                        input: { type: 'number', minimum: 0, maximum: 255 },
+                        output: { type: 'number', minimum: 0, maximum: 255 },
+                      },
+                      required: ['input', 'output'],
+                    },
                   },
                   tone_curve_green: {
                     type: 'array',
                     description: 'Green channel tone curve points',
-                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                    items: {
+                      type: 'object',
+                      properties: {
+                        input: { type: 'number', minimum: 0, maximum: 255 },
+                        output: { type: 'number', minimum: 0, maximum: 255 },
+                      },
+                      required: ['input', 'output'],
+                    },
                   },
                   tone_curve_blue: {
                     type: 'array',
                     description: 'Blue channel tone curve points',
-                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                    items: {
+                      type: 'object',
+                      properties: {
+                        input: { type: 'number', minimum: 0, maximum: 255 },
+                        output: { type: 'number', minimum: 0, maximum: 255 },
+                      },
+                      required: ['input', 'output'],
+                    },
                   },
                   // Modern Color Grading (LR/ACR)
                   color_grade_shadow_hue: {

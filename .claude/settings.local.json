@@ -21,9 +21,14 @@
       "Bash(npm run typecheck:*)",
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "/Users/theodoresenwein/Library",
+      "/Users/theodoresenwein/Downloads"
+    ]
   }
 }
