@@ -3,6 +3,15 @@ import { contextBridge, ipcRenderer } from 'electron';
 // Define the API that will be exposed to the renderer process
 const electronAPI = {
   // File operations
+  selectFiles: (options: {
+    title: string;
+    filters: Array<{ name: string; extensions: string[] }>;
+    properties: string[];
+  }) => ipcRenderer.invoke('select-files', options),
+  
+  openPath: (path: string) => ipcRenderer.invoke('open-path', path),
+
+  // Legacy file operations (keep for backward compatibility)
   onBaseImageSelected: (callback: (filePath: string) => void) => {
     ipcRenderer.on('base-image-selected', (_event, filePath) => callback(filePath));
   },
@@ -11,13 +20,38 @@ const electronAPI = {
   },
 
   // Image processing
+  processImages: (data: {
+    baseImagePath: string;
+    targetImagePaths: string[];
+    hint?: string;
+    options: any;
+  }) => ipcRenderer.invoke('process-images', data),
+  
   processImage: (data: any) => ipcRenderer.invoke('process-image', data),
   analyzeColors: (imagePath: string) => ipcRenderer.invoke('analyze-colors', imagePath),
   analyzeColorMatch: (data: any) => ipcRenderer.invoke('analyze-color-match', data),
   matchStyle: (data: any) => ipcRenderer.invoke('match-style', data),
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
+  downloadXMP: (data: any) => ipcRenderer.invoke('download-xmp', data),
+  
+  // Progress monitoring
+  onProcessingProgress: (callback: (progress: number, status: string) => void) => {
+    ipcRenderer.on('processing-progress', (_event, progress, status) => callback(progress, status));
+  },
+  
+  onProcessingComplete: (callback: (results: any[]) => void) => {
+    ipcRenderer.on('processing-complete', (_event, results) => callback(results));
+  },
+
   // Preview generation
   generatePreview: (args: { path?: string; dataUrl?: string }) => ipcRenderer.invoke('generate-preview', args),
+  generateAdjustedPreview: (args: { path: string; adjustments: any }) => ipcRenderer.invoke('generate-adjusted-preview', args),
+
+  // Storage operations
+  loadHistory: () => ipcRenderer.invoke('load-history'),
+  saveProcess: (processData: any) => ipcRenderer.invoke('save-process', processData),
+  updateProcess: (processId: string, updates: any) => ipcRenderer.invoke('update-process', processId, updates),
+  deleteProcess: (processId: string) => ipcRenderer.invoke('delete-process', processId),
 
   // Utility functions
   removeAllListeners: (channel: string) => {

@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
-  entry: './src/renderer/renderer.ts',
+  entry: './src/renderer/index.tsx',
   target: 'electron-renderer',
   output: {
     path: path.resolve(__dirname, 'dist/renderer'),
@@ -11,7 +11,7 @@ module.exports = {
     clean: true
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.json']
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
   },
   module: {
     rules: [

@@ -108,6 +108,7 @@ Consider these aspects:
 - Color grading and selective color adjustments
 - Saturation and vibrance
 - Individual color hue shifts
+ - Tone curves: when needed, include multiple control points (3-7) for composite and per-channel curves (0-255 input/output) to shape contrast and color balance
 
 Also include modern Color Grading settings (Lightroom/ACR):
 - Shadow/Midtone/Highlight/Global color wheels with Hue (0-360), Sat (0-100), and Lum (-100 to 100)

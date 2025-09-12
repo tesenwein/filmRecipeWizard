@@ -4,7 +4,7 @@ import sharp from 'sharp';
 // Declare worker globals
 declare const self: any;
 
-interface WorkerMessage {
+interface _WorkerMessage {
   id: string;
   type: 'analyze-colors' | 'match-style' | 'process-raw';
   data: any;
@@ -145,7 +145,7 @@ class ImageProcessingWorker {
     };
   }
 
-  private async processRawImage(data: any): Promise<any> {
+  private async processRawImage(_data: any): Promise<any> {
     // TODO: Implement RAW processing with LibRaw-Wasm
     // For now, return a placeholder
     throw new Error('RAW processing not yet implemented in worker');

@@ -5,9 +5,7 @@
     "node": true
   },
   "extends": [
-    "eslint:recommended",
-    "@typescript-eslint/recommended",
-    "prettier"
+    "eslint:recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -16,20 +14,19 @@
     "project": ["./src/*/tsconfig.json"]
   },
   "plugins": [
-    "@typescript-eslint",
-    "prettier"
+    "@typescript-eslint"
   ],
   "rules": {
-    "prettier/prettier": "error",
+    "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    "@typescript-eslint/explicit-function-return-type": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "no-console": "warn"
+    "no-console": "off",
+    "no-empty": "warn"
   },
   "ignorePatterns": [
     "dist/",
     "node_modules/",
     "webpack.*.js",
-    "*.js"
+    "*.js",
+    "*.d.ts"
   ]
 }

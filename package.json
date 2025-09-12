@@ -53,9 +53,13 @@
   "dependencies": {
     "@imagemagick/magick-wasm": "^0.0.36",
     "@julianberger/libraw.js": "^3.2.9",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
     "dotenv": "^17.2.2",
     "libraw-wasm": "^1.1.2",
     "openai": "^5.20.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "sharp": "^0.32.6"
   },
   "build": {

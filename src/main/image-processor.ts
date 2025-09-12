@@ -2,7 +2,6 @@ import sharp from 'sharp';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ColorMatcher } from '../algorithms/color-matching';
-import { FileUtils } from '../utils/file-utils';
 import { ImageMagick, MagickFormat, Percentage, initializeImageMagick, ConfigurationFiles } from '@imagemagick/magick-wasm';
 import { OpenAIColorAnalyzer, AIColorAdjustments } from '../services/openai-color-analyzer';
 import * as dotenv from 'dotenv';
@@ -75,7 +74,7 @@ export class ImageProcessor {
     console.log('[PROCESSOR] Starting processImage with:', { baseImagePath: data.baseImagePath, targetImagePath: data.targetImagePath, outputPath: data.outputPath });
     
     try {
-      const { baseImagePath, targetImagePath, outputPath } = data;
+      const { baseImagePath, targetImagePath } = data;
       
       console.log('[PROCESSOR] Validating image files');
       // Check if files exist
@@ -141,7 +140,9 @@ export class ImageProcessor {
         if (isGreenish) {
           hint = 'Base image shows a cool green/teal cast. Favor cooler temperature, negative tint (toward green), and teal color grading in shadows/midtones/highlights.';
         }
-      } catch (_) {}
+      } catch (_) {
+        // Silently ignore preview generation errors
+      }
 
       const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(
         data.baseImagePath,
@@ -155,7 +156,9 @@ export class ImageProcessor {
       // Return the AI analysis results without applying them
       return {
         success: true,
+        outputPath: data.targetImagePath, // Use original target path for display
         metadata: {
+          aiAdjustments: aiAdjustments,
           adjustments: aiAdjustments,
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning
@@ -345,6 +348,30 @@ export class ImageProcessor {
     } catch (error) {
       console.error('[PROCESSOR] Failed to generate preview:', error);
       throw error;
+    }
+  }
+
+  // Generate a JPEG preview with AI adjustments applied (ImageMagick if available, else Sharp)
+  async generateAdjustedPreview(args: { path: string; adjustments: AIColorAdjustments }): Promise<string> {
+    const tmp = path.join((await import('os')).tmpdir(), 'image-match-previews');
+    await fs.mkdir(tmp, { recursive: true });
+    const outPath = path.join(tmp, `adj-prev-${Date.now()}-${Math.floor(Math.random()*1e6)}.jpg`);
+
+    const ext = path.extname(args.path).toLowerCase();
+    try {
+      if (this.isRawFormat(ext)) {
+        // RAW → use Sharp-based pipeline
+        await this.applyAIAdjustments(args.path, outPath, args.adjustments);
+      } else if (this.magickInitialized) {
+        await this.applyAIAdjustmentsWithImageMagick(args.path, outPath, args.adjustments);
+      } else {
+        await this.applyAIAdjustments(args.path, outPath, args.adjustments);
+      }
+      return outPath;
+    } catch (error) {
+      console.error('[PROCESSOR] Failed to generate adjusted preview:', error);
+      // Fallback to plain preview
+      return await this.generatePreview({ path: args.path });
     }
   }
 
@@ -945,7 +972,11 @@ export class ImageProcessor {
     return path.join(dir, `${name}_processed${ext}`);
   }
 
-  private generateXMPContent(adjustments: any, include?: { wbBasic?: boolean; hsl?: boolean; colorGrading?: boolean; curves?: boolean; sharpenNoise?: boolean; vignette?: boolean }): string {
+
+  public generateXMPContent(
+    adjustments: any,
+    include?: { wbBasic?: boolean; exposure?: boolean; hsl?: boolean; colorGrading?: boolean; curves?: boolean; sharpenNoise?: boolean; vignette?: boolean }
+  ): string {
     console.log('[PROCESSOR] Generating XMP with adjustments:', adjustments);
     
     // Handle both AI and legacy adjustment formats
@@ -1058,8 +1089,10 @@ export class ImageProcessor {
    crs:CameraModelRestriction=""
    crs:Copyright=""
    crs:ContactInfo=""
-      <crs:Version>17.5</crs:Version>
-      <crs:ProcessVersion>15.4</crs:ProcessVersion>
+   crs:HasSettings="True"
+   crs:Version="17.5"
+   crs:ProcessVersion="15.4"
+   crs:CameraProfile="Adobe Color">
       <crs:Name>
         <rdf:Alt>
           <rdf:li xml:lang="x-default">${presetName}</rdf:li>
@@ -1171,8 +1204,8 @@ export class ImageProcessor {
       <crs:PerspectiveScale>100</crs:PerspectiveScale>
       <crs:PerspectiveX>0.00</crs:PerspectiveX>
       <crs:PerspectiveY>0.00</crs:PerspectiveY>
-      <crs:GrainAmount>0</crs:GrainAmount>
-      <crs:PostCropVignettingAmount>0</crs:PostCropVignettingAmount>
+      
+      
       <crs:ShadowTint>0</crs:ShadowTint>
       <crs:RedHue>0</crs:RedHue>
       <crs:RedSaturation>0</crs:RedSaturation>
@@ -1183,7 +1216,6 @@ export class ImageProcessor {
       <crs:HDREditMode>0</crs:HDREditMode>
       <crs:OverrideLookVignette>True</crs:OverrideLookVignette>
       <crs:ToneCurveName2012>Linear</crs:ToneCurveName2012>
-      <crs:HasSettings>True</crs:HasSettings>
       <crs:CropTop>0</crs:CropTop>
       <crs:CropLeft>0</crs:CropLeft>
       <crs:CropBottom>1</crs:CropBottom>
@@ -1234,7 +1266,6 @@ ${curveBlue}
           /\n\s*<crs:WhiteBalance>[^<]*<\/crs:WhiteBalance>/g,
           /\n\s*<crs:Temperature>[^<]*<\/crs:Temperature>/g,
           /\n\s*<crs:Tint>[^<]*<\/crs:Tint>/g,
-          /\n\s*<crs:Exposure2012>[^<]*<\/crs:Exposure2012>/g,
           /\n\s*<crs:Contrast2012>[^<]*<\/crs:Contrast2012>/g,
           /\n\s*<crs:Highlights2012>[^<]*<\/crs:Highlights2012>/g,
           /\n\s*<crs:Shadows2012>[^<]*<\/crs:Shadows2012>/g,
@@ -1246,6 +1277,10 @@ ${curveBlue}
           /\n\s*<crs:Vibrance>[^<]*<\/crs:Vibrance>/g,
           /\n\s*<crs:Saturation>[^<]*<\/crs:Saturation>/g,
         ]);
+      }
+      // Exposure is controlled independently; default to excluded when not explicitly enabled
+      if (include.exposure !== true) {
+        removeTags([/\n\s*<crs:Exposure2012>[^<]*<\/crs:Exposure2012>/g]);
       }
       if (include.hsl === false) {
         removeTags([
@@ -1299,7 +1334,7 @@ ${curveBlue}
     }
   }
 
-  private async processHeicWithConversion(data: StyleMatchOptions): Promise<ProcessingResult> {
+  private async processHeicWithConversion(_data: StyleMatchOptions): Promise<ProcessingResult> {
     console.log('[PROCESSOR] Processing HEIC with conversion fallback');
     
     // For now, provide helpful error message
@@ -1555,9 +1590,15 @@ ${curveBlue}
               }
 
               console.log('[PROCESSOR] Writing processed image with ImageMagick');
-              
+              // Choose output format based on file extension (default JPEG)
+              const lower = outputPath.toLowerCase();
+              let fmt: MagickFormat = MagickFormat.Jpeg;
+              if (lower.endsWith('.png')) fmt = MagickFormat.Png;
+              else if (lower.endsWith('.heic') || lower.endsWith('.heif')) fmt = MagickFormat.Heic;
+              else if (lower.endsWith('.avif')) fmt = MagickFormat.Avif;
+
               // Write the processed image
-              img.write(MagickFormat.Dng, (data) => {
+              img.write(fmt, (data) => {
                 fs.writeFile(outputPath, data).then(() => {
                   console.log('[PROCESSOR] ImageMagick processing completed successfully');
                   resolve();

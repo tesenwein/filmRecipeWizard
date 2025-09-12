@@ -1,15 +1,16 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
+import { StorageService, ProcessHistory } from './storage-service';
 
 class ImageMatchApp {
   private mainWindow: BrowserWindow | null = null;
   private imageProcessor: ImageProcessor;
-  private lastDialogTime = 0;
-  private readonly DIALOG_DEBOUNCE_MS = 1000; // Prevent multiple dialogs within 1 second
+  private storageService: StorageService;
 
   constructor() {
     this.imageProcessor = new ImageProcessor();
+    this.storageService = new StorageService();
     this.setupApp();
     this.setupIPC();
   }
@@ -72,17 +73,6 @@ class ImageMatchApp {
         label: 'File',
         submenu: [
           {
-            label: 'Open Base Image',
-            accelerator: 'CmdOrCtrl+O',
-            click: () => this.openBaseImage(),
-          },
-          {
-            label: 'Add Target Images',
-            accelerator: 'CmdOrCtrl+Shift+O',
-            click: () => this.openTargetImages(),
-          },
-          { type: 'separator' },
-          {
             label: 'Exit',
             accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
             click: () => app.quit(),
@@ -141,59 +131,6 @@ class ImageMatchApp {
     Menu.setApplicationMenu(menu);
   }
 
-  private async openBaseImage(): Promise<void> {
-    if (!this.mainWindow) return;
-
-    const now = Date.now();
-    if (now - this.lastDialogTime < this.DIALOG_DEBOUNCE_MS) {
-      console.log('[MAIN] Debouncing file dialog - too soon after last dialog');
-      return;
-    }
-    this.lastDialogTime = now;
-
-    console.log('[MAIN] Opening base image dialog');
-    const result = await dialog.showOpenDialog(this.mainWindow, {
-      properties: ['openFile'],
-      filters: [
-        {
-          name: 'Images',
-          extensions: ['dng', 'jpg', 'jpeg', 'png', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'heic', 'heif', 'avif'],
-        },
-      ],
-    });
-
-    if (!result.canceled && result.filePaths.length > 0) {
-      console.log('[MAIN] Base image selected:', result.filePaths[0]);
-      this.mainWindow.webContents.send('base-image-selected', result.filePaths[0]);
-    }
-  }
-
-  private async openTargetImages(): Promise<void> {
-    if (!this.mainWindow) return;
-
-    const now = Date.now();
-    if (now - this.lastDialogTime < this.DIALOG_DEBOUNCE_MS) {
-      console.log('[MAIN] Debouncing file dialog - too soon after last dialog');
-      return;
-    }
-    this.lastDialogTime = now;
-
-    console.log('[MAIN] Opening target images dialog');
-    const result = await dialog.showOpenDialog(this.mainWindow, {
-      properties: ['openFile', 'multiSelections'],
-      filters: [
-        {
-          name: 'Images',
-          extensions: ['dng', 'jpg', 'jpeg', 'png', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'heic', 'heif', 'avif'],
-        },
-      ],
-    });
-
-    if (!result.canceled && result.filePaths.length > 0) {
-      console.log('[MAIN] Target images selected:', result.filePaths.length, 'files');
-      this.mainWindow.webContents.send('target-images-selected', result.filePaths);
-    }
-  }
 
   private setupIPC(): void {
     // Handle image processing requests
@@ -248,6 +185,39 @@ class ImageMatchApp {
       }
     });
 
+    // Handle XMP download - generate XMP and show save dialog
+    ipcMain.handle('download-xmp', async (_event, data) => {
+      console.log('[IPC] download-xmp called with data');
+      try {
+        // Generate XMP content
+        const xmpContent = this.imageProcessor.generateXMPContent(data.adjustments, data.include);
+        
+        // Show save dialog
+        const { dialog } = require('electron');
+        const result = await dialog.showSaveDialog({
+          title: 'Save XMP Preset',
+          defaultPath: `ImageMatch-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xmp`,
+          filters: [
+            { name: 'XMP Presets', extensions: ['xmp'] },
+            { name: 'All Files', extensions: ['*'] }
+          ]
+        });
+        
+        if (!result.canceled && result.filePath) {
+          // Write the file
+          const fs = require('fs').promises;
+          await fs.writeFile(result.filePath, xmpContent, 'utf8');
+          console.log('[IPC] download-xmp completed:', { filePath: result.filePath });
+          return { success: true, filePath: result.filePath };
+        } else {
+          return { success: false, error: 'Save canceled' };
+        }
+      } catch (error) {
+        console.error('[IPC] Error downloading XMP:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
     ipcMain.handle('generate-preview', async (_event, args: { path?: string; dataUrl?: string }) => {
       console.log('[IPC] generate-preview called with:', { hasPath: !!args?.path, hasDataUrl: !!args?.dataUrl });
@@ -257,6 +227,18 @@ class ImageMatchApp {
         return { success: true, previewPath };
       } catch (error) {
         console.error('[IPC] Error generating preview:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Generate adjusted preview with AI changes applied
+    ipcMain.handle('generate-adjusted-preview', async (_event, args: { path: string; adjustments: any }) => {
+      console.log('[IPC] generate-adjusted-preview called');
+      try {
+        const previewPath = await this.imageProcessor.generateAdjustedPreview(args);
+        return { success: true, previewPath };
+      } catch (error) {
+        console.error('[IPC] Error generating adjusted preview:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
@@ -271,6 +253,142 @@ class ImageMatchApp {
       } catch (error) {
         console.error('[IPC] Error analyzing color match:', error);
         throw error;
+      }
+    });
+
+    // New React frontend IPC handlers
+    ipcMain.handle('select-files', async (_event, options) => {
+      if (!this.mainWindow) return [];
+
+      try {
+        const result = await dialog.showOpenDialog(this.mainWindow, {
+          title: options.title,
+          filters: options.filters,
+          properties: options.properties as any
+        });
+
+        if (result.canceled) return [];
+        return result.filePaths;
+      } catch (error) {
+        console.error('[IPC] Error selecting files:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('open-path', async (_event, path) => {
+      try {
+        await shell.showItemInFolder(path);
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error opening path:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Handle batch processing for React frontend
+    ipcMain.handle('process-images', async (_event, data) => {
+      console.log('[IPC] process-images called with:', { 
+        baseImagePath: data?.baseImagePath, 
+        targetImageCount: data?.targetImagePaths?.length,
+        hint: data?.hint 
+      });
+
+      if (!this.mainWindow) return [];
+
+      try {
+        const results = [];
+        const totalImages = data.targetImagePaths.length;
+
+        for (let i = 0; i < totalImages; i++) {
+          const targetPath = data.targetImagePaths[i];
+          
+          // Send progress update
+          const progress = ((i + 0.1) / totalImages) * 100;
+          this.mainWindow.webContents.send('processing-progress', progress, 
+            `Processing image ${i + 1} of ${totalImages}...`);
+
+          try {
+            // Process individual image
+            const result = await this.imageProcessor.analyzeColorMatch({
+              baseImagePath: data.baseImagePath,
+              targetImagePath: targetPath,
+              hint: data.hint,
+              ...data.options
+            });
+
+            results.push(result);
+            
+            // Update progress
+            const finalProgress = ((i + 1) / totalImages) * 100;
+            this.mainWindow.webContents.send('processing-progress', finalProgress, 
+              `Completed image ${i + 1} of ${totalImages}`);
+
+          } catch (error) {
+            console.error(`[IPC] Error processing image ${i + 1}:`, error);
+            results.push({
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            });
+          }
+        }
+
+        // Send completion event
+        this.mainWindow.webContents.send('processing-complete', results);
+        return results;
+
+      } catch (error) {
+        console.error('[IPC] Error in batch processing:', error);
+        throw error;
+      }
+    });
+
+    // Storage service IPC handlers
+    ipcMain.handle('load-history', async () => {
+      try {
+        const history = await this.storageService.loadHistory();
+        console.log('[IPC] load-history completed:', { count: history.length });
+        return { success: true, history };
+      } catch (error) {
+        console.error('[IPC] Error loading history:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    ipcMain.handle('save-process', async (_event, processData: Omit<ProcessHistory, 'id' | 'timestamp'>) => {
+      try {
+        const process: ProcessHistory = {
+          id: this.storageService.generateProcessId(),
+          timestamp: new Date().toISOString(),
+          ...processData
+        };
+        await this.storageService.addProcess(process);
+        console.log('[IPC] save-process completed:', { id: process.id });
+        return { success: true, process };
+      } catch (error) {
+        console.error('[IPC] Error saving process:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    ipcMain.handle('update-process', async (_event, processId: string, updates: Partial<ProcessHistory>) => {
+      try {
+        await this.storageService.updateProcess(processId, updates);
+        console.log('[IPC] update-process completed:', { id: processId });
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error updating process:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    ipcMain.handle('delete-process', async (_event, processId: string) => {
+      try {
+        await this.storageService.deleteProcess(processId);
+        console.log('[IPC] delete-process completed:', { id: processId });
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error deleting process:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
   }
