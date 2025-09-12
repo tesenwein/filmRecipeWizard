@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Match</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1>Image Match</h1>
+            <p>Match colors and style from a base image to target images</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Image Upload Section -->
+            <section class="upload-section">
+                <div class="base-image-upload">
+                    <h2>Base Image</h2>
+                    <div class="drop-zone" id="baseImageDropZone">
+                        <div class="drop-zone-content">
+                            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                            </svg>
+                            <p>Drop base image here or click to select</p>
+                            <p class="file-types">Supports DNG, JPG, PNG, TIFF, CR2, NEF, ARW</p>
+                        </div>
+                        <input type="file" id="baseImageInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw" style="display: none;">
+                    </div>
+                    <div class="image-preview" id="baseImagePreview" style="display: none;">
+                        <img id="baseImage" alt="Base image">
+                        <div class="image-info">
+                            <span id="baseImageName"></span>
+                            <button class="remove-btn" id="removeBaseImage">Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="target-images-upload">
+                    <h2>Target Images</h2>
+                    <div class="drop-zone" id="targetImagesDropZone">
+                        <div class="drop-zone-content">
+                            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                            </svg>
+                            <p>Drop target images here or click to select</p>
+                            <p class="file-types">Multiple files supported</p>
+                        </div>
+                        <input type="file" id="targetImagesInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw" multiple style="display: none;">
+                    </div>
+                    <div class="target-images-grid" id="targetImagesGrid"></div>
+                </div>
+            </section>
+
+            <!-- Style Matching Options -->
+            <section class="options-section" id="optionsSection" style="display: none;">
+                <h2>Style Matching Options</h2>
+                <div class="options-grid">
+                    <div class="option-group">
+                        <h3>What to Match</h3>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="matchColors" checked>
+                            <span>Colors</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="matchBrightness" checked>
+                            <span>Brightness</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="matchContrast">
+                            <span>Contrast</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="matchSaturation">
+                            <span>Saturation</span>
+                        </label>
+                    </div>
+
+                    <div class="option-group">
+                        <h3>Output Options</h3>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="generatePreset">
+                            <span>Generate Lightroom Preset</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="modifyDNG" checked>
+                            <span>Modify DNG Directly (non-destructive)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="analyzeButton">Analyze Colors</button>
+                    <button class="btn btn-primary" id="processButton" disabled>Process Images</button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <h2>Results</h2>
+                <div class="results-grid" id="resultsGrid"></div>
+            </section>
+
+            <!-- Progress Section -->
+            <section class="progress-section" id="progressSection" style="display: none;">
+                <h2>Processing...</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <p id="progressText">Starting...</p>
+            </section>
+        </main>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
