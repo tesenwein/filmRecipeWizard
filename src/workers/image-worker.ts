@@ -1,6 +1,9 @@
 // Image processing worker for heavy computations
 import sharp from 'sharp';
 
+// Declare worker globals
+declare const self: any;
+
 interface WorkerMessage {
   id: string;
   type: 'analyze-colors' | 'match-style' | 'process-raw';
@@ -22,7 +25,7 @@ class ImageProcessingWorker {
     }
   }
 
-  private async handleMessage(event: MessageEvent<WorkerMessage>): Promise<void> {
+  private async handleMessage(event: MessageEvent): Promise<void> {
     const { id, type, data } = event.data;
     
     try {
@@ -54,7 +57,7 @@ class ImageProcessingWorker {
 
   private sendResponse(response: WorkerResponse): void {
     if (typeof self !== 'undefined') {
-      self.postMessage(response);
+      (self as any).postMessage(response);
     }
   }
 

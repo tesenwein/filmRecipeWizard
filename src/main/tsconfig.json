@@ -1,14 +1,18 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/main",
+    "outDir": "../../dist",
     "target": "es2020",
     "module": "commonjs",
     "lib": ["es2020"],
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "rootDir": "../"
   },
   "include": [
-    "./**/*"
+    "../**/*"
+  ],
+  "exclude": [
+    "../renderer/**/*"
   ]
 }
