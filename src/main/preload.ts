@@ -13,6 +13,7 @@ const electronAPI = {
   // Image processing
   processImage: (data: any) => ipcRenderer.invoke('process-image', data),
   analyzeColors: (imagePath: string) => ipcRenderer.invoke('analyze-colors', imagePath),
+  analyzeColorMatch: (data: any) => ipcRenderer.invoke('analyze-color-match', data),
   matchStyle: (data: any) => ipcRenderer.invoke('match-style', data),
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
 

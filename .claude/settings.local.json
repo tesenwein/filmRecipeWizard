@@ -12,7 +12,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npm run clean:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npm search:*)",
+      "Bash(node:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

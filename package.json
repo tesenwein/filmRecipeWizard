@@ -50,6 +50,11 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@imagemagick/magick-wasm": "^0.0.36",
+    "@julianberger/libraw.js": "^3.2.9",
+    "dotenv": "^17.2.2",
+    "libraw-wasm": "^1.1.2",
+    "openai": "^5.20.1",
     "sharp": "^0.32.6"
   },
   "build": {

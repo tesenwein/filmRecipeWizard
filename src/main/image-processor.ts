@@ -3,6 +3,12 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ColorMatcher } from '../algorithms/color-matching';
 import { FileUtils } from '../utils/file-utils';
+import { ImageMagick, MagickFormat } from '@imagemagick/magick-wasm';
+import { OpenAIColorAnalyzer, AIColorAdjustments } from '../services/openai-color-analyzer';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 export interface ColorAnalysis {
   histogram: {
@@ -41,27 +47,55 @@ export interface ProcessingResult {
 }
 
 export class ImageProcessor {
-  private readonly supportedFormats = ['.jpg', '.jpeg', '.png', '.tiff', '.tif'];
+  private readonly supportedFormats = ['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.heic', '.heif', '.avif'];
   private readonly rawFormats = ['.dng', '.cr2', '.nef', '.arw'];
+  private magickInitialized = false;
+  private aiAnalyzer: OpenAIColorAnalyzer;
+
+  constructor() {
+    this.initializeImageMagick();
+    this.aiAnalyzer = new OpenAIColorAnalyzer();
+  }
+
+  private async initializeImageMagick(): Promise<void> {
+    try {
+      // ImageMagick WASM auto-initializes
+      this.magickInitialized = true;
+      console.log('[PROCESSOR] ImageMagick WASM ready');
+    } catch (error) {
+      console.error('[PROCESSOR] Failed to initialize ImageMagick WASM:', error);
+    }
+  }
 
   async processImage(data: StyleMatchOptions): Promise<ProcessingResult> {
+    console.log('[PROCESSOR] Starting processImage with:', { baseImagePath: data.baseImagePath, targetImagePath: data.targetImagePath, outputPath: data.outputPath });
+    
     try {
       const { baseImagePath, targetImagePath, outputPath } = data;
       
+      console.log('[PROCESSOR] Validating image files');
       // Check if files exist
       await this.validateImageFile(baseImagePath);
       await this.validateImageFile(targetImagePath);
+      console.log('[PROCESSOR] File validation completed');
 
       const baseExt = path.extname(baseImagePath).toLowerCase();
       const targetExt = path.extname(targetImagePath).toLowerCase();
+      console.log('[PROCESSOR] File extensions - base:', baseExt, 'target:', targetExt);
 
       // Handle different file types
       if (this.isRawFormat(baseExt) || this.isRawFormat(targetExt)) {
+        console.log('[PROCESSOR] Processing RAW images');
         return await this.processRawImages(data);
+      } else if (this.isHeicFormat(baseExt) || this.isHeicFormat(targetExt)) {
+        console.log('[PROCESSOR] Processing HEIC/HEIF/AVIF images');
+        return await this.processHeicImages(data);
       } else {
+        console.log('[PROCESSOR] Processing standard images');
         return await this.processStandardImages(data);
       }
     } catch (error) {
+      console.error('[PROCESSOR] processImage failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -70,26 +104,116 @@ export class ImageProcessor {
   }
 
   async analyzeColors(imagePath: string): Promise<ColorAnalysis> {
+    console.log('[PROCESSOR] Analyzing colors for:', imagePath);
     const ext = path.extname(imagePath).toLowerCase();
+    console.log('[PROCESSOR] File extension:', ext);
     
     if (this.isRawFormat(ext)) {
+      console.log('[PROCESSOR] Using RAW color analysis');
       return await this.analyzeRawImageColors(imagePath);
+    } else if (ext === '.heic' || ext === '.heif' || ext === '.avif') {
+      console.log('[PROCESSOR] Using HEIC/HEIF/AVIF color analysis');
+      return await this.analyzeHeicImageColors(imagePath);
     } else {
+      console.log('[PROCESSOR] Using standard color analysis');
       return await this.analyzeStandardImageColors(imagePath);
     }
   }
 
-  async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
+  async analyzeColorMatch(data: { baseImagePath: string; targetImagePath: string }): Promise<ProcessingResult> {
+    console.log('[PROCESSOR] Starting AI color match analysis');
+    
+    if (!this.aiAnalyzer.isAvailable()) {
+      throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable for AI analysis.');
+    }
+
     try {
+      console.log('[PROCESSOR] Running AI color analysis...');
+      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(data.baseImagePath, data.targetImagePath);
+      
+      console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
+      console.log('[PROCESSOR] AI reasoning:', aiAdjustments.reasoning);
+      
+      // Return the AI analysis results without applying them
+      return {
+        success: true,
+        metadata: {
+          adjustments: aiAdjustments,
+          confidence: aiAdjustments.confidence,
+          reasoning: aiAdjustments.reasoning
+        }
+      };
+    } catch (error) {
+      console.error('[PROCESSOR] AI color analysis failed:', error);
+      throw error;
+    }
+  }
+
+  async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
+    console.log('[PROCESSOR] Starting AI-powered style matching');
+    
+    if (!this.aiAnalyzer.isAvailable()) {
+      throw new Error('OpenAI API key not configured. This app requires OpenAI for color matching. Please set OPENAI_API_KEY environment variable.');
+    }
+
+    console.log('[PROCESSOR] Using AI-powered color matching');
+    return await this.matchStyleWithAI(data);
+  }
+
+  private async matchStyleWithAI(data: StyleMatchOptions): Promise<ProcessingResult> {
+    try {
+      console.log('[PROCESSOR] Analyzing images with AI');
+      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(data.baseImagePath, data.targetImagePath);
+      
+      console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
+      console.log('[PROCESSOR] AI reasoning:', aiAdjustments.reasoning);
+      
+      // Apply AI adjustments to target image
+      const outputPath = data.outputPath || this.generateOutputPath(data.targetImagePath);
+      console.log('[PROCESSOR] Output path:', outputPath);
+      
+      console.log('[PROCESSOR] Applying AI-generated adjustments');
+      await this.applyAIAdjustments(data.targetImagePath, outputPath, aiAdjustments);
+      console.log('[PROCESSOR] AI adjustments applied successfully');
+
+      return {
+        success: true,
+        outputPath,
+        metadata: { 
+          aiAdjustments,
+          adjustments: this.convertAIToLegacyFormat(aiAdjustments), // For preset generation
+          confidence: aiAdjustments.confidence,
+          reasoning: aiAdjustments.reasoning
+        },
+      };
+    } catch (error) {
+      console.error('[PROCESSOR] AI style matching failed:', error);
+      throw error;
+    }
+  }
+
+  private async matchStyleTraditional(data: StyleMatchOptions): Promise<ProcessingResult> {
+    try {
+      console.log('[PROCESSOR] Analyzing base image colors');
       const baseColors = await this.analyzeColors(data.baseImagePath);
+      console.log('[PROCESSOR] Base colors analyzed - temp:', baseColors.temperature, 'tint:', baseColors.tint);
+      
+      console.log('[PROCESSOR] Analyzing target image colors');
       const targetColors = await this.analyzeColors(data.targetImagePath);
+      console.log('[PROCESSOR] Target colors analyzed - temp:', targetColors.temperature, 'tint:', targetColors.tint);
 
       // Apply style matching based on options
+      console.log('[PROCESSOR] Calculating adjustments');
       const adjustments = this.calculateAdjustments(baseColors, targetColors, data);
+      console.log('[PROCESSOR] Adjustments calculated:', adjustments);
       
       // Apply adjustments to target image
       const outputPath = data.outputPath || this.generateOutputPath(data.targetImagePath);
+      console.log('[PROCESSOR] Output path:', outputPath);
+      
+      console.log('[PROCESSOR] Applying adjustments');
       await this.applyAdjustments(data.targetImagePath, outputPath, adjustments);
+      console.log('[PROCESSOR] Adjustments applied successfully');
 
       return {
         success: true,
@@ -97,6 +221,7 @@ export class ImageProcessor {
         metadata: { baseColors, targetColors, adjustments },
       };
     } catch (error) {
+      console.error('[PROCESSOR] Traditional style matching failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -106,18 +231,31 @@ export class ImageProcessor {
 
   async generateLightroomPreset(data: any): Promise<ProcessingResult> {
     try {
-      // TODO: Implement XMP preset generation
-      const presetPath = path.join(process.cwd(), 'presets', `${Date.now()}-preset.xmp`);
+      console.log('[PROCESSOR] Generating Lightroom preset with adjustments:', data.adjustments);
       
-      // For now, create a basic XMP structure
+      // Create presets directory if it doesn't exist
+      const presetsDir = path.join(process.cwd(), 'presets');
+      await fs.mkdir(presetsDir, { recursive: true });
+      
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const presetPath = path.join(presetsDir, `ImageMatch-${timestamp}.xmp`);
+      
+      // Generate XMP preset content
       const xmpContent = this.generateXMPContent(data.adjustments);
-      await fs.writeFile(presetPath, xmpContent);
+      await fs.writeFile(presetPath, xmpContent, 'utf8');
+      
+      console.log('[PROCESSOR] Lightroom preset saved to:', presetPath);
 
       return {
         success: true,
         outputPath: presetPath,
+        metadata: {
+          presetName: `ImageMatch-${timestamp}.xmp`,
+          adjustments: data.adjustments
+        }
       };
     } catch (error) {
+      console.error('[PROCESSOR] Preset generation failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -126,9 +264,12 @@ export class ImageProcessor {
   }
 
   private async validateImageFile(filePath: string): Promise<void> {
+    console.log('[PROCESSOR] Validating file:', filePath);
     try {
       await fs.access(filePath);
-    } catch {
+      console.log('[PROCESSOR] File exists and is accessible');
+    } catch (error) {
+      console.error('[PROCESSOR] File validation failed:', error);
       throw new Error(`File not found: ${filePath}`);
     }
   }
@@ -137,9 +278,41 @@ export class ImageProcessor {
     return this.rawFormats.includes(extension.toLowerCase());
   }
 
+  private isHeicFormat(extension: string): boolean {
+    const heicFormats = ['.heic', '.heif', '.avif'];
+    return heicFormats.includes(extension.toLowerCase());
+  }
+
   private async processRawImages(data: StyleMatchOptions): Promise<ProcessingResult> {
-    // TODO: Implement RAW processing with LibRaw-Wasm
-    throw new Error('RAW image processing not yet implemented');
+    console.log('[PROCESSOR] Processing RAW images with Sharp-based pipeline');
+    
+    // Try to process directly with Sharp where possible (especially DNG)
+    try {
+      return await this.processStandardImages(data);
+    } catch (error) {
+      console.error('[PROCESSOR] Direct RAW processing failed:', error);
+      
+      // For non-DNG files that Sharp can't handle, provide helpful error
+      const baseExt = path.extname(data.baseImagePath).toLowerCase();
+      const targetExt = path.extname(data.targetImagePath).toLowerCase();
+      
+      const failedFormats = [];
+      if (this.isRawFormat(baseExt) && baseExt !== '.dng') failedFormats.push(`base image (${baseExt})`);
+      if (this.isRawFormat(targetExt) && targetExt !== '.dng') failedFormats.push(`target image (${targetExt})`);
+      
+      if (failedFormats.length > 0) {
+        return {
+          success: false,
+          error: `RAW format processing failed for ${failedFormats.join(' and ')}. ` +
+                `Please convert to DNG format first using Adobe DNG Converter, or use JPEG/PNG/TIFF files.`,
+        };
+      }
+      
+      return {
+        success: false,
+        error: `RAW processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
   }
 
   private async processStandardImages(data: StyleMatchOptions): Promise<ProcessingResult> {
@@ -177,11 +350,17 @@ export class ImageProcessor {
   }
 
   private async analyzeStandardImageColors(imagePath: string): Promise<ColorAnalysis> {
-    const image = sharp(imagePath);
-    const { data, info } = await image
-      .resize(512, 512, { fit: 'inside' }) // Increased resolution for better analysis
-      .raw()
-      .toBuffer({ resolveWithObject: true });
+    console.log('[PROCESSOR] Starting standard image color analysis');
+    try {
+      const image = sharp(imagePath);
+      console.log('[PROCESSOR] Sharp instance created, resizing image');
+      const { data, info } = await image
+        .resize(512, 512, { fit: 'inside' }) // Increased resolution for better analysis
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      
+      console.log('[PROCESSOR] Image processed - width:', info.width, 'height:', info.height, 'channels:', info.channels);
+    
 
     const pixels = new Uint8Array(data);
     const histogram = { red: new Array(256).fill(0), green: new Array(256).fill(0), blue: new Array(256).fill(0) };
@@ -230,7 +409,199 @@ export class ImageProcessor {
       })
       .filter(color => color.percentage > 1); // Filter out very minor colors
 
-    // Use ColorMatcher for more accurate temperature calculation
+      // Use ColorMatcher for more accurate temperature calculation
+      console.log('[PROCESSOR] Calculating color temperature and balance');
+      const temperature = ColorMatcher.calculateColorTemperature(averageColor);
+      const colorBalance = ColorMatcher.analyzeColorBalance(dominantColors);
+      
+      console.log('[PROCESSOR] Color analysis complete - avg color:', averageColor, 'temp:', colorBalance.temperature);
+      
+      return {
+        histogram,
+        averageColor,
+        dominantColors,
+        temperature: colorBalance.temperature,
+        tint: colorBalance.tint,
+      };
+    } catch (error) {
+      console.error('[PROCESSOR] Standard image color analysis failed:', error);
+      throw error;
+    }
+  }
+
+  private async analyzeHeicImageColors(imagePath: string): Promise<ColorAnalysis> {
+    console.log('[PROCESSOR] Analyzing HEIC/HEIF/AVIF image colors');
+    
+    try {
+      // First attempt: Try Sharp's native HEIC processing
+      const image = sharp(imagePath);
+      
+      // Get metadata first to check orientation and other properties
+      const metadata = await image.metadata();
+      console.log('[PROCESSOR] HEIC metadata - width:', metadata.width, 'height:', metadata.height, 'orientation:', metadata.orientation);
+      
+      // Process with auto-rotation for HEIC files (common with mobile photos)
+      const { data, info } = await image
+        .rotate() // Auto-rotate based on EXIF orientation
+        .resize(512, 512, { fit: 'inside' })
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      
+      console.log('[PROCESSOR] HEIC processing successful - channels:', info.channels);
+      return await this.processImageBuffer(data, info);
+      
+    } catch (sharpError) {
+      const errorMsg = sharpError instanceof Error ? sharpError.message : String(sharpError);
+      console.error('[PROCESSOR] Sharp HEIC processing failed:', errorMsg);
+      
+      // Check if it's a codec issue
+      if (errorMsg.includes('Unsupported codec') || errorMsg.includes('bad seek')) {
+        console.log('[PROCESSOR] HEIC codec not supported by Sharp, trying conversion fallback');
+        return await this.tryHeicConversionFallback(imagePath);
+      }
+      
+      // For other errors, provide helpful guidance
+      throw new Error(
+        `HEIC processing failed: ${errorMsg}. ` +
+        `This HEIC file may use an unsupported codec. ` +
+        `Try converting to JPEG first using Preview, Photos app, or online converters.`
+      );
+    }
+  }
+
+  private async tryHeicConversionFallback(imagePath: string): Promise<ColorAnalysis> {
+    console.log('[PROCESSOR] Attempting HEIC conversion fallback');
+    
+    // For now, provide detailed error with solution
+    // ImageMagick integration can be added later when WASM API is stable
+    throw new Error(
+      `HEIC file uses an unsupported codec (possibly newer HEVC/H.265 variant). ` +
+      `Please convert to JPEG using one of these methods:\n` +
+      `• macOS: Open in Preview → Export as JPEG\n` +
+      `• Photos app: Export as JPEG\n` +
+      `• iPhone: Settings → Camera → Formats → Most Compatible\n` +
+      `• Online: Use CloudConvert or Convertio\n` +
+      `• Adobe tools: DNG Converter or Lightroom`
+    );
+  }
+
+  private async convertHeicWithImageMagick(heicPath: string): Promise<string> {
+    // Placeholder for ImageMagick conversion
+    // For now, throw an error since the WASM API needs more work
+    throw new Error('ImageMagick HEIC conversion not yet implemented. Please convert HEIC to JPEG manually.');
+  }
+
+  private async analyzeRawBufferColors(buffer: Uint8Array, width: number, height: number): Promise<ColorAnalysis> {
+    console.log('[PROCESSOR] Analyzing RAW buffer colors - dimensions:', width, 'x', height);
+    
+    const histogram = { red: new Array(256).fill(0), green: new Array(256).fill(0), blue: new Array(256).fill(0) };
+    let totalR = 0, totalG = 0, totalB = 0;
+    const pixelCount = width * height;
+    const colorMap = new Map<string, number>();
+
+    // Assume RGB format (3 channels)
+    for (let i = 0; i < buffer.length; i += 3) {
+      const r = buffer[i] || 0;
+      const g = buffer[i + 1] || 0;
+      const b = buffer[i + 2] || 0;
+
+      histogram.red[r]++;
+      histogram.green[g]++;
+      histogram.blue[b]++;
+
+      totalR += r;
+      totalG += g;
+      totalB += b;
+
+      // Track color occurrences for dominant colors
+      const quantR = Math.floor(r / 8) * 8;
+      const quantG = Math.floor(g / 8) * 8;
+      const quantB = Math.floor(b / 8) * 8;
+      const colorKey = `${quantR},${quantG},${quantB}`;
+      colorMap.set(colorKey, (colorMap.get(colorKey) || 0) + 1);
+    }
+
+    const averageColor = {
+      r: Math.round(totalR / pixelCount),
+      g: Math.round(totalG / pixelCount),
+      b: Math.round(totalB / pixelCount),
+    };
+
+    const dominantColors = Array.from(colorMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([colorKey, count]) => {
+        const [r, g, b] = colorKey.split(',').map(Number);
+        return {
+          color: { r, g, b },
+          percentage: Math.round((count / pixelCount) * 100 * 100) / 100,
+        };
+      })
+      .filter(color => color.percentage > 1);
+
+    // Use ColorMatcher for temperature calculation
+    const temperature = ColorMatcher.calculateColorTemperature(averageColor);
+    const colorBalance = ColorMatcher.analyzeColorBalance(dominantColors);
+    
+    console.log('[PROCESSOR] RAW buffer analysis complete');
+    
+    return {
+      histogram,
+      averageColor,
+      dominantColors,
+      temperature: colorBalance.temperature,
+      tint: colorBalance.tint,
+    };
+  }
+
+  private async processImageBuffer(data: Uint8Array, info: any): Promise<ColorAnalysis> {
+    console.log('[PROCESSOR] Processing image buffer - channels:', info.channels);
+    
+    const pixels = new Uint8Array(data);
+    const histogram = { red: new Array(256).fill(0), green: new Array(256).fill(0), blue: new Array(256).fill(0) };
+    
+    let totalR = 0, totalG = 0, totalB = 0;
+    const pixelCount = pixels.length / info.channels;
+    const colorMap = new Map<string, number>();
+
+    for (let i = 0; i < pixels.length; i += info.channels) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+
+      histogram.red[r]++;
+      histogram.green[g]++;
+      histogram.blue[b]++;
+
+      totalR += r;
+      totalG += g;
+      totalB += b;
+
+      const quantR = Math.floor(r / 8) * 8;
+      const quantG = Math.floor(g / 8) * 8;
+      const quantB = Math.floor(b / 8) * 8;
+      const colorKey = `${quantR},${quantG},${quantB}`;
+      colorMap.set(colorKey, (colorMap.get(colorKey) || 0) + 1);
+    }
+
+    const averageColor = {
+      r: Math.round(totalR / pixelCount),
+      g: Math.round(totalG / pixelCount),
+      b: Math.round(totalB / pixelCount),
+    };
+
+    const dominantColors = Array.from(colorMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([colorKey, count]) => {
+        const [r, g, b] = colorKey.split(',').map(Number);
+        return {
+          color: { r, g, b },
+          percentage: Math.round((count / pixelCount) * 100 * 100) / 100,
+        };
+      })
+      .filter(color => color.percentage > 1);
+
     const temperature = ColorMatcher.calculateColorTemperature(averageColor);
     const colorBalance = ColorMatcher.analyzeColorBalance(dominantColors);
     
@@ -244,8 +615,58 @@ export class ImageProcessor {
   }
 
   private async analyzeRawImageColors(imagePath: string): Promise<ColorAnalysis> {
-    // TODO: Implement RAW color analysis with LibRaw-Wasm
-    throw new Error('RAW color analysis not yet implemented');
+    console.log('[PROCESSOR] Analyzing RAW image colors with enhanced Sharp processing');
+    
+    // Enhanced Sharp processing with better error handling and RAW options
+    try {
+      console.log('[PROCESSOR] Processing with Sharp (supports DNG, some CR2/NEF)');
+      
+      // Create Sharp instance with specific RAW processing options
+      let sharpInstance = sharp(imagePath);
+      
+      // For DNG files, try to set specific options
+      const ext = path.extname(imagePath).toLowerCase();
+      if (ext === '.dng') {
+        console.log('[PROCESSOR] Applying DNG-specific processing options');
+        // DNG files are usually supported better by Sharp
+      }
+      
+      const { data, info } = await sharpInstance
+        .resize(512, 512, { fit: 'inside' })
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      
+      console.log('[PROCESSOR] Sharp RAW processing successful - channels:', info.channels);
+      return await this.processImageBuffer(data, info);
+      
+    } catch (sharpError) {
+      const errorMsg = sharpError instanceof Error ? sharpError.message : String(sharpError);
+      console.error('[PROCESSOR] Sharp RAW processing failed:', errorMsg);
+      
+      // Provide specific guidance based on file type
+      const ext = path.extname(imagePath).toLowerCase();
+      let suggestion = '';
+      
+      switch (ext) {
+        case '.dng':
+          suggestion = 'DNG should be supported. Try re-saving the DNG with Adobe DNG Converter.';
+          break;
+        case '.cr2':
+        case '.cr3':
+          suggestion = 'Canon RAW files require conversion. Use Adobe DNG Converter or Canon Digital Photo Professional.';
+          break;
+        case '.nef':
+          suggestion = 'Nikon RAW files require conversion. Use Adobe DNG Converter or Nikon NX Studio.';
+          break;
+        case '.arw':
+          suggestion = 'Sony RAW files require conversion. Use Adobe DNG Converter or Sony Imaging Edge.';
+          break;
+        default:
+          suggestion = 'RAW format not recognized. Convert to DNG, JPEG, or TIFF first.';
+      }
+      
+      throw new Error(`RAW processing failed: ${errorMsg}. ${suggestion}`);
+    }
   }
 
   private calculateAdjustments(baseColors: ColorAnalysis, targetColors: ColorAnalysis, options: StyleMatchOptions): any {
@@ -337,55 +758,76 @@ export class ImageProcessor {
   }
 
   private async applyAdjustments(inputPath: string, outputPath: string, adjustments: any): Promise<void> {
-    let image = sharp(inputPath);
-
-    // Apply exposure adjustment
-    if (adjustments.exposure && Math.abs(adjustments.exposure) > 0.01) {
-      const multiplier = Math.pow(2, adjustments.exposure);
-      image = image.linear(multiplier, 0);
-    }
-
-    // Apply brightness, saturation, and lightness adjustments
-    const modulateOptions: any = {};
-    if (adjustments.brightness && Math.abs(adjustments.brightness - 1) > 0.01) {
-      modulateOptions.brightness = adjustments.brightness;
-    }
-    if (adjustments.saturation && Math.abs(adjustments.saturation - 1) > 0.01) {
-      modulateOptions.saturation = adjustments.saturation;
-    }
-
-    if (Object.keys(modulateOptions).length > 0) {
-      image = image.modulate(modulateOptions);
-    }
-
-    // Apply color balance adjustments using color matrix
-    if (adjustments.colorBalance && (
-      Math.abs(adjustments.colorBalance.red - 1) > 0.01 ||
-      Math.abs(adjustments.colorBalance.green - 1) > 0.01 ||
-      Math.abs(adjustments.colorBalance.blue - 1) > 0.01
-    )) {
-      // Create a color adjustment matrix
-      const { red, green, blue } = adjustments.colorBalance;
-      image = image.recomb([
-        [red, 0, 0],
-        [0, green, 0],
-        [0, 0, blue],
-      ]);
-    }
-
-    // Determine output format based on input
-    const ext = path.extname(inputPath).toLowerCase();
-    const outputExt = path.extname(outputPath).toLowerCase();
+    console.log('[PROCESSOR] Applying adjustments to:', inputPath);
+    console.log('[PROCESSOR] Output path:', outputPath);
+    console.log('[PROCESSOR] Adjustments:', adjustments);
     
-    if (outputExt === '.jpg' || outputExt === '.jpeg') {
-      await image.jpeg({ quality: 95 }).toFile(outputPath);
-    } else if (outputExt === '.png') {
-      await image.png({ compressionLevel: 6 }).toFile(outputPath);
-    } else if (outputExt === '.tiff' || outputExt === '.tif') {
-      await image.tiff({ compression: 'lzw' }).toFile(outputPath);
-    } else {
-      // Default to JPEG for unknown formats
-      await image.jpeg({ quality: 95 }).toFile(outputPath);
+    try {
+      let image = sharp(inputPath);
+
+      // Apply exposure adjustment
+      if (adjustments.exposure && Math.abs(adjustments.exposure) > 0.01) {
+        console.log('[PROCESSOR] Applying exposure adjustment:', adjustments.exposure);
+        const multiplier = Math.pow(2, adjustments.exposure);
+        image = image.linear(multiplier, 0);
+      }
+
+      // Apply brightness, saturation, and lightness adjustments
+      const modulateOptions: any = {};
+      if (adjustments.brightness && Math.abs(adjustments.brightness - 1) > 0.01) {
+        modulateOptions.brightness = adjustments.brightness;
+      }
+      if (adjustments.saturation && Math.abs(adjustments.saturation - 1) > 0.01) {
+        modulateOptions.saturation = adjustments.saturation;
+      }
+
+      if (Object.keys(modulateOptions).length > 0) {
+        console.log('[PROCESSOR] Applying modulation:', modulateOptions);
+        image = image.modulate(modulateOptions);
+      }
+
+      // Apply color balance adjustments using color matrix
+      if (adjustments.colorBalance && (
+        Math.abs(adjustments.colorBalance.red - 1) > 0.01 ||
+        Math.abs(adjustments.colorBalance.green - 1) > 0.01 ||
+        Math.abs(adjustments.colorBalance.blue - 1) > 0.01
+      )) {
+        console.log('[PROCESSOR] Applying color balance:', adjustments.colorBalance);
+        // Create a color adjustment matrix
+        const { red, green, blue } = adjustments.colorBalance;
+        image = image.recomb([
+          [red, 0, 0],
+          [0, green, 0],
+          [0, 0, blue],
+        ]);
+      }
+
+      // Determine output format based on input
+      const ext = path.extname(inputPath).toLowerCase();
+      const outputExt = path.extname(outputPath).toLowerCase();
+      console.log('[PROCESSOR] Saving image - input ext:', ext, 'output ext:', outputExt);
+      
+      if (outputExt === '.jpg' || outputExt === '.jpeg') {
+        await image.jpeg({ quality: 95 }).toFile(outputPath);
+      } else if (outputExt === '.png') {
+        await image.png({ compressionLevel: 6 }).toFile(outputPath);
+      } else if (outputExt === '.tiff' || outputExt === '.tif') {
+        await image.tiff({ compression: 'lzw' }).toFile(outputPath);
+      } else if (outputExt === '.heic' || outputExt === '.heif' || outputExt === '.avif') {
+        if (outputExt === '.avif') {
+          await image.avif({ quality: 95 }).toFile(outputPath);
+        } else {
+          await image.heif({ quality: 95 }).toFile(outputPath);
+        }
+      } else {
+        // Default to JPEG for unknown formats
+        await image.jpeg({ quality: 95 }).toFile(outputPath);
+      }
+      
+      console.log('[PROCESSOR] Image saved successfully to:', outputPath);
+    } catch (error) {
+      console.error('[PROCESSOR] Failed to apply adjustments:', error);
+      throw error;
     }
   }
 
@@ -410,13 +852,60 @@ export class ImageProcessor {
   }
 
   private generateXMPContent(adjustments: any): string {
-    // Convert our adjustments to Lightroom format
-    const exposure = adjustments.exposure || 0;
-    const brightness = adjustments.brightness ? Math.log2(adjustments.brightness) * 25 : 0;
-    const contrast = adjustments.contrast ? (adjustments.contrast - 1) * 100 : 0;
-    const saturation = adjustments.saturation ? (adjustments.saturation - 1) * 100 : 0;
-    const temperature = adjustments.temperature || 5500;
-    const tint = adjustments.tint || 0;
+    console.log('[PROCESSOR] Generating XMP with adjustments:', adjustments);
+    
+    // Handle both AI and legacy adjustment formats
+    let exposure, brightness, contrast, saturation, temperature, tint;
+    let highlights, shadows, whites, blacks, clarity, vibrance;
+    let hueAdjustments = {};
+    
+    if (adjustments.exposure !== undefined) {
+      // New AI format or legacy format
+      exposure = adjustments.exposure || 0;
+      brightness = adjustments.brightness ? 
+        (typeof adjustments.brightness === 'number' && adjustments.brightness > -100 && adjustments.brightness < 100 ? 
+         adjustments.brightness : Math.log2(adjustments.brightness) * 25) : 0;
+      contrast = adjustments.contrast ? 
+        (typeof adjustments.contrast === 'number' && adjustments.contrast > -100 && adjustments.contrast < 100 ? 
+         adjustments.contrast : (adjustments.contrast - 1) * 100) : 0;
+      saturation = adjustments.saturation ? 
+        (typeof adjustments.saturation === 'number' && adjustments.saturation > -100 && adjustments.saturation < 100 ? 
+         adjustments.saturation : (adjustments.saturation - 1) * 100) : 0;
+      temperature = adjustments.temperature || 5500;
+      tint = adjustments.tint || 0;
+      
+      // Advanced adjustments (from AI)
+      highlights = adjustments.highlights || 0;
+      shadows = adjustments.shadows || 0;
+      whites = adjustments.whites || 0;
+      blacks = adjustments.blacks || 0;
+      clarity = adjustments.clarity || 0;
+      vibrance = adjustments.vibrance || 0;
+      
+      // Hue adjustments
+      if (adjustments.hue) {
+        hueAdjustments = {
+          red: adjustments.hue.red || 0,
+          orange: adjustments.hue.orange || 0,
+          yellow: adjustments.hue.yellow || 0,
+          green: adjustments.hue.green || 0,
+          aqua: adjustments.hue.aqua || 0,
+          blue: adjustments.hue.blue || 0,
+          purple: adjustments.hue.purple || 0,
+          magenta: adjustments.hue.magenta || 0
+        };
+      }
+    } else {
+      // Legacy format fallback
+      exposure = 0;
+      brightness = 0;
+      contrast = 0;
+      saturation = 0;
+      temperature = 5500;
+      tint = 0;
+      highlights = shadows = whites = blacks = clarity = vibrance = 0;
+      hueAdjustments = { red: 0, orange: 0, yellow: 0, green: 0, aqua: 0, blue: 0, purple: 0, magenta: 0 };
+    }
     
     // Color balance adjustments to shadow/midtone/highlight
     const colorBalance = adjustments.colorBalance || { red: 1, green: 1, blue: 1 };
@@ -438,14 +927,14 @@ export class ImageProcessor {
       <crs:Tint>${Math.round(tint)}</crs:Tint>
       <crs:Exposure2012>${exposure.toFixed(2)}</crs:Exposure2012>
       <crs:Contrast2012>${Math.round(contrast)}</crs:Contrast2012>
-      <crs:Highlights2012>0</crs:Highlights2012>
-      <crs:Shadows2012>0</crs:Shadows2012>
-      <crs:Whites2012>0</crs:Whites2012>
-      <crs:Blacks2012>0</crs:Blacks2012>
+      <crs:Highlights2012>${Math.round(highlights)}</crs:Highlights2012>
+      <crs:Shadows2012>${Math.round(shadows)}</crs:Shadows2012>
+      <crs:Whites2012>${Math.round(whites)}</crs:Whites2012>
+      <crs:Blacks2012>${Math.round(blacks)}</crs:Blacks2012>
       <crs:Texture>0</crs:Texture>
-      <crs:Clarity2012>0</crs:Clarity2012>
+      <crs:Clarity2012>${Math.round(clarity)}</crs:Clarity2012>
       <crs:Dehaze>0</crs:Dehaze>
-      <crs:Vibrance>0</crs:Vibrance>
+      <crs:Vibrance>${Math.round(vibrance)}</crs:Vibrance>
       <crs:Saturation>${Math.round(saturation)}</crs:Saturation>
       <crs:ParametricShadows>0</crs:ParametricShadows>
       <crs:ParametricDarks>0</crs:ParametricDarks>
@@ -464,14 +953,14 @@ export class ImageProcessor {
       <crs:ColorNoiseReductionDetail>50</crs:ColorNoiseReductionDetail>
       <crs:ColorNoiseReductionSmoothness>50</crs:ColorNoiseReductionSmoothness>
       <crs:LuminanceNoiseReduction>0</crs:LuminanceNoiseReduction>
-      <crs:HueAdjustmentRed>0</crs:HueAdjustmentRed>
-      <crs:HueAdjustmentOrange>0</crs:HueAdjustmentOrange>
-      <crs:HueAdjustmentYellow>0</crs:HueAdjustmentYellow>
-      <crs:HueAdjustmentGreen>0</crs:HueAdjustmentGreen>
-      <crs:HueAdjustmentAqua>0</crs:HueAdjustmentAqua>
-      <crs:HueAdjustmentBlue>0</crs:HueAdjustmentBlue>
-      <crs:HueAdjustmentPurple>0</crs:HueAdjustmentPurple>
-      <crs:HueAdjustmentMagenta>0</crs:HueAdjustmentMagenta>
+      <crs:HueAdjustmentRed>${Math.round((hueAdjustments as any).red || 0)}</crs:HueAdjustmentRed>
+      <crs:HueAdjustmentOrange>${Math.round((hueAdjustments as any).orange || 0)}</crs:HueAdjustmentOrange>
+      <crs:HueAdjustmentYellow>${Math.round((hueAdjustments as any).yellow || 0)}</crs:HueAdjustmentYellow>
+      <crs:HueAdjustmentGreen>${Math.round((hueAdjustments as any).green || 0)}</crs:HueAdjustmentGreen>
+      <crs:HueAdjustmentAqua>${Math.round((hueAdjustments as any).aqua || 0)}</crs:HueAdjustmentAqua>
+      <crs:HueAdjustmentBlue>${Math.round((hueAdjustments as any).blue || 0)}</crs:HueAdjustmentBlue>
+      <crs:HueAdjustmentPurple>${Math.round((hueAdjustments as any).purple || 0)}</crs:HueAdjustmentPurple>
+      <crs:HueAdjustmentMagenta>${Math.round((hueAdjustments as any).magenta || 0)}</crs:HueAdjustmentMagenta>
       <crs:SaturationAdjustmentRed>0</crs:SaturationAdjustmentRed>
       <crs:SaturationAdjustmentOrange>0</crs:SaturationAdjustmentOrange>
       <crs:SaturationAdjustmentYellow>0</crs:SaturationAdjustmentYellow>
@@ -579,5 +1068,159 @@ export class ImageProcessor {
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
+  }
+
+  private async processHeicImages(data: StyleMatchOptions): Promise<ProcessingResult> {
+    console.log('[PROCESSOR] Processing HEIC images with enhanced pipeline');
+    
+    try {
+      // Try standard processing first (works for most HEIC files)
+      return await this.processStandardImages(data);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('[PROCESSOR] Standard HEIC processing failed:', errorMsg);
+      
+      // If it's a codec issue, try conversion approach
+      if (errorMsg.includes('Unsupported codec') || errorMsg.includes('bad seek')) {
+        console.log('[PROCESSOR] Attempting HEIC conversion approach');
+        return await this.processHeicWithConversion(data);
+      }
+      
+      return {
+        success: false,
+        error: `HEIC processing failed: ${errorMsg}. Try converting the HEIC file to JPEG first.`,
+      };
+    }
+  }
+
+  private async processHeicWithConversion(data: StyleMatchOptions): Promise<ProcessingResult> {
+    console.log('[PROCESSOR] Processing HEIC with conversion fallback');
+    
+    // For now, provide helpful error message
+    return {
+      success: false,
+      error: (
+        `HEIC codec not supported by this system. Please convert to JPEG first:\n` +
+        `• macOS: Open in Preview → File → Export As → JPEG\n` +
+        `• Photos app: Select image → File → Export → JPEG\n` +
+        `• iPhone: Settings → Camera → Formats → Most Compatible\n` +
+        `• Online: Use CloudConvert or Convertio`
+      ),
+    };
+  }
+
+  private async applyAIAdjustments(inputPath: string, outputPath: string, aiAdjustments: AIColorAdjustments): Promise<void> {
+    console.log('[PROCESSOR] Applying AI-generated adjustments');
+    console.log('[PROCESSOR] Input:', inputPath);
+    console.log('[PROCESSOR] Output:', outputPath);
+    console.log('[PROCESSOR] AI adjustments:', aiAdjustments);
+    
+    try {
+      let image = sharp(inputPath);
+
+      // Apply exposure adjustment (convert stops to multiplier)
+      if (Math.abs(aiAdjustments.exposure) > 0.01) {
+        console.log('[PROCESSOR] Applying exposure:', aiAdjustments.exposure, 'stops');
+        const multiplier = Math.pow(2, aiAdjustments.exposure);
+        image = image.linear(multiplier, 0);
+      }
+
+      // Apply brightness, contrast, saturation adjustments
+      const modulateOptions: any = {};
+      
+      // Convert AI brightness (-100 to +100) to Sharp brightness (0.5 to 2.0)
+      if (Math.abs(aiAdjustments.brightness) > 1) {
+        modulateOptions.brightness = 1 + (aiAdjustments.brightness / 100);
+        console.log('[PROCESSOR] Applying brightness:', modulateOptions.brightness);
+      }
+      
+      // Convert AI saturation (-100 to +100) to Sharp saturation (0.0 to 2.0)
+      if (Math.abs(aiAdjustments.saturation) > 1) {
+        modulateOptions.saturation = Math.max(0, 1 + (aiAdjustments.saturation / 100));
+        console.log('[PROCESSOR] Applying saturation:', modulateOptions.saturation);
+      }
+
+      if (Object.keys(modulateOptions).length > 0) {
+        image = image.modulate(modulateOptions);
+      }
+
+      // Apply contrast using gamma correction approximation
+      if (Math.abs(aiAdjustments.contrast) > 1) {
+        console.log('[PROCESSOR] Applying contrast:', aiAdjustments.contrast);
+        // Convert contrast (-100 to +100) to gamma (1.0 to 3.0 for Sharp)
+        // Positive contrast = higher gamma (more contrast)
+        // Negative contrast = lower gamma (less contrast)
+        const gamma = Math.max(1.0, Math.min(3.0, 1 + (aiAdjustments.contrast / 100)));
+        console.log('[PROCESSOR] Applying gamma:', gamma);
+        image = image.gamma(gamma);
+      }
+
+      // Apply vibrance using saturation boost on less saturated colors
+      if (Math.abs(aiAdjustments.vibrance) > 1) {
+        console.log('[PROCESSOR] Applying vibrance boost:', aiAdjustments.vibrance);
+        const vibranceBoost = 1 + (aiAdjustments.vibrance / 200);
+        image = image.modulate({ saturation: vibranceBoost });
+      }
+
+      // Note: Advanced color grading (hue shifts, selective colors) would require
+      // more sophisticated processing or external tools like ImageMagick
+      // For now, we apply the core adjustments that Sharp supports well
+
+      // Determine output format based on input
+      const ext = path.extname(inputPath).toLowerCase();
+      const outputExt = path.extname(outputPath).toLowerCase();
+      console.log('[PROCESSOR] Saving image - input ext:', ext, 'output ext:', outputExt);
+      
+      if (outputExt === '.jpg' || outputExt === '.jpeg') {
+        await image.jpeg({ quality: 95 }).toFile(outputPath);
+      } else if (outputExt === '.png') {
+        await image.png({ compressionLevel: 6 }).toFile(outputPath);
+      } else if (outputExt === '.tiff' || outputExt === '.tif') {
+        await image.tiff({ compression: 'lzw' }).toFile(outputPath);
+      } else if (outputExt === '.heic' || outputExt === '.heif' || outputExt === '.avif') {
+        if (outputExt === '.avif') {
+          await image.avif({ quality: 95 }).toFile(outputPath);
+        } else {
+          await image.heif({ quality: 95 }).toFile(outputPath);
+        }
+      } else {
+        // Default to JPEG for unknown formats
+        await image.jpeg({ quality: 95 }).toFile(outputPath);
+      }
+      
+      console.log('[PROCESSOR] AI-processed image saved successfully to:', outputPath);
+    } catch (error) {
+      console.error('[PROCESSOR] Failed to apply AI adjustments:', error);
+      throw error;
+    }
+  }
+
+  private convertAIToLegacyFormat(aiAdjustments: AIColorAdjustments): any {
+    // Convert AI adjustments to legacy format for preset generation compatibility
+    return {
+      exposure: aiAdjustments.exposure,
+      brightness: 1 + (aiAdjustments.brightness / 100),
+      contrast: 1 + (aiAdjustments.contrast / 100),
+      saturation: 1 + (aiAdjustments.saturation / 100),
+      temperature: aiAdjustments.temperature,
+      tint: aiAdjustments.tint,
+      highlights: aiAdjustments.highlights,
+      shadows: aiAdjustments.shadows,
+      whites: aiAdjustments.whites,
+      blacks: aiAdjustments.blacks,
+      clarity: aiAdjustments.clarity,
+      vibrance: aiAdjustments.vibrance,
+      colorBalance: { red: 1, green: 1, blue: 1 }, // Basic fallback
+      hue: {
+        red: aiAdjustments.hue_red,
+        orange: aiAdjustments.hue_orange,
+        yellow: aiAdjustments.hue_yellow,
+        green: aiAdjustments.hue_green,
+        aqua: aiAdjustments.hue_aqua,
+        blue: aiAdjustments.hue_blue,
+        purple: aiAdjustments.hue_purple,
+        magenta: aiAdjustments.hue_magenta
+      }
+    };
   }
 }

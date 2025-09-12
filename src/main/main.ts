@@ -5,6 +5,8 @@ import { ImageProcessor } from './image-processor';
 class ImageMatchApp {
   private mainWindow: BrowserWindow | null = null;
   private imageProcessor: ImageProcessor;
+  private lastDialogTime = 0;
+  private readonly DIALOG_DEBOUNCE_MS = 1000; // Prevent multiple dialogs within 1 second
 
   constructor() {
     this.imageProcessor = new ImageProcessor();
@@ -142,17 +144,26 @@ class ImageMatchApp {
   private async openBaseImage(): Promise<void> {
     if (!this.mainWindow) return;
 
+    const now = Date.now();
+    if (now - this.lastDialogTime < this.DIALOG_DEBOUNCE_MS) {
+      console.log('[MAIN] Debouncing file dialog - too soon after last dialog');
+      return;
+    }
+    this.lastDialogTime = now;
+
+    console.log('[MAIN] Opening base image dialog');
     const result = await dialog.showOpenDialog(this.mainWindow, {
       properties: ['openFile'],
       filters: [
         {
           name: 'Images',
-          extensions: ['dng', 'jpg', 'jpeg', 'png', 'tiff', 'tif', 'cr2', 'nef', 'arw'],
+          extensions: ['dng', 'jpg', 'jpeg', 'png', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'heic', 'heif', 'avif'],
         },
       ],
     });
 
     if (!result.canceled && result.filePaths.length > 0) {
+      console.log('[MAIN] Base image selected:', result.filePaths[0]);
       this.mainWindow.webContents.send('base-image-selected', result.filePaths[0]);
     }
   }
@@ -160,58 +171,92 @@ class ImageMatchApp {
   private async openTargetImages(): Promise<void> {
     if (!this.mainWindow) return;
 
+    const now = Date.now();
+    if (now - this.lastDialogTime < this.DIALOG_DEBOUNCE_MS) {
+      console.log('[MAIN] Debouncing file dialog - too soon after last dialog');
+      return;
+    }
+    this.lastDialogTime = now;
+
+    console.log('[MAIN] Opening target images dialog');
     const result = await dialog.showOpenDialog(this.mainWindow, {
       properties: ['openFile', 'multiSelections'],
       filters: [
         {
           name: 'Images',
-          extensions: ['dng', 'jpg', 'jpeg', 'png', 'tiff', 'tif', 'cr2', 'nef', 'arw'],
+          extensions: ['dng', 'jpg', 'jpeg', 'png', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'heic', 'heif', 'avif'],
         },
       ],
     });
 
     if (!result.canceled && result.filePaths.length > 0) {
+      console.log('[MAIN] Target images selected:', result.filePaths.length, 'files');
       this.mainWindow.webContents.send('target-images-selected', result.filePaths);
     }
   }
 
   private setupIPC(): void {
     // Handle image processing requests
-    ipcMain.handle('process-image', async (event, data) => {
+    ipcMain.handle('process-image', async (_event, data) => {
+      console.log('[IPC] process-image called with:', { baseImagePath: data?.baseImagePath, targetImagePath: data?.targetImagePath, options: { ...data, baseImagePath: '...', targetImagePath: '...' } });
       try {
-        return await this.imageProcessor.processImage(data);
+        const result = await this.imageProcessor.processImage(data);
+        console.log('[IPC] process-image completed:', { success: result.success, outputPath: result.outputPath });
+        return result;
       } catch (error) {
-        console.error('Error processing image:', error);
+        console.error('[IPC] Error processing image:', error);
         throw error;
       }
     });
 
     // Handle color analysis requests
-    ipcMain.handle('analyze-colors', async (event, imagePath) => {
+    ipcMain.handle('analyze-colors', async (_event, imagePath) => {
+      console.log('[IPC] analyze-colors called with:', imagePath);
       try {
-        return await this.imageProcessor.analyzeColors(imagePath);
+        const result = await this.imageProcessor.analyzeColors(imagePath);
+        console.log('[IPC] analyze-colors completed successfully');
+        return result;
       } catch (error) {
-        console.error('Error analyzing colors:', error);
+        console.error('[IPC] Error analyzing colors:', error);
         throw error;
       }
     });
 
     // Handle style matching requests
-    ipcMain.handle('match-style', async (event, data) => {
+    ipcMain.handle('match-style', async (_event, data) => {
+      console.log('[IPC] match-style called with:', { baseImagePath: data?.baseImagePath, targetImagePath: data?.targetImagePath, options: { ...data, baseImagePath: '...', targetImagePath: '...' } });
       try {
-        return await this.imageProcessor.matchStyle(data);
+        const result = await this.imageProcessor.matchStyle(data);
+        console.log('[IPC] match-style completed:', { success: result.success, outputPath: result.outputPath });
+        return result;
       } catch (error) {
-        console.error('Error matching style:', error);
+        console.error('[IPC] Error matching style:', error);
         throw error;
       }
     });
 
     // Handle preset generation
-    ipcMain.handle('generate-preset', async (event, data) => {
+    ipcMain.handle('generate-preset', async (_event, data) => {
+      console.log('[IPC] generate-preset called with data');
       try {
-        return await this.imageProcessor.generateLightroomPreset(data);
+        const result = await this.imageProcessor.generateLightroomPreset(data);
+        console.log('[IPC] generate-preset completed:', { success: result.success, outputPath: result.outputPath });
+        return result;
       } catch (error) {
-        console.error('Error generating preset:', error);
+        console.error('[IPC] Error generating preset:', error);
+        throw error;
+      }
+    });
+
+    // Handle AI color match analysis
+    ipcMain.handle('analyze-color-match', async (_event, data) => {
+      console.log('[IPC] analyze-color-match called with:', { baseImagePath: data?.baseImagePath, targetImagePath: data?.targetImagePath });
+      try {
+        const result = await this.imageProcessor.analyzeColorMatch(data);
+        console.log('[IPC] analyze-color-match completed:', { success: result.success });
+        return result;
+      } catch (error) {
+        console.error('[IPC] Error analyzing color match:', error);
         throw error;
       }
     });

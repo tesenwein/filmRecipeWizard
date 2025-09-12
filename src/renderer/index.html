@@ -24,9 +24,9 @@
                                 <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                             </svg>
                             <p>Drop base image here or click to select</p>
-                            <p class="file-types">Supports DNG, JPG, PNG, TIFF, CR2, NEF, ARW</p>
+                            <p class="file-types">Supports DNG, JPG, PNG, TIFF, HEIC, AVIF, CR2, NEF, ARW</p>
                         </div>
-                        <input type="file" id="baseImageInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw" style="display: none;">
+                        <input type="file" id="baseImageInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw,.heic,.heif,.avif" style="display: none;">
                     </div>
                     <div class="image-preview" id="baseImagePreview" style="display: none;">
                         <img id="baseImage" alt="Base image">
@@ -47,7 +47,7 @@
                             <p>Drop target images here or click to select</p>
                             <p class="file-types">Multiple files supported</p>
                         </div>
-                        <input type="file" id="targetImagesInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw" multiple style="display: none;">
+                        <input type="file" id="targetImagesInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw,.heic,.heif,.avif" multiple style="display: none;">
                     </div>
                     <div class="target-images-grid" id="targetImagesGrid"></div>
                 </div>
@@ -78,15 +78,8 @@
                     </div>
 
                     <div class="option-group">
-                        <h3>Output Options</h3>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="generatePreset">
-                            <span>Generate Lightroom Preset</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="modifyDNG" checked>
-                            <span>Modify DNG Directly (non-destructive)</span>
-                        </label>
+                        <h3>AI Processing</h3>
+                        <p class="option-note">🤖 Uses OpenAI GPT-5 Vision to analyze both images and create professional color matching adjustments</p>
                     </div>
                 </div>
 
