@@ -37,6 +37,11 @@ export interface AIColorAdjustments {
   color_grade_global_sat?: number; // 0-100
   color_grade_global_lum?: number; // -100 to 100
   color_grade_blending?: number; // 0-100
+  // Tone curves (0-255 input/output pairs)
+  tone_curve?: Array<{ input: number; output: number }>;
+  tone_curve_red?: Array<{ input: number; output: number }>;
+  tone_curve_green?: Array<{ input: number; output: number }>;
+  tone_curve_blue?: Array<{ input: number; output: number }>;
   confidence: number; // 0.0 to 1.0 - AI confidence in recommendations
   reasoning: string; // AI explanation of the adjustments
 }
@@ -274,6 +279,27 @@ Provide specific numeric values for each adjustment that would achieve the best 
                   luminance_noise_reduction: { type: 'number', description: 'Luminance NR (0 to 100)', minimum: 0, maximum: 100 },
                   color_noise_reduction: { type: 'number', description: 'Color NR (0 to 100)', minimum: 0, maximum: 100 },
                   vignette: { type: 'number', description: 'Post-crop vignette amount (-100 to 100)', minimum: -100, maximum: 100 },
+                  // Curves: 0-255 pairs for PV2012 tone curve
+                  tone_curve: {
+                    type: 'array',
+                    description: 'Composite tone curve control points (0-255 input/output)',
+                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                  },
+                  tone_curve_red: {
+                    type: 'array',
+                    description: 'Red channel tone curve points',
+                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                  },
+                  tone_curve_green: {
+                    type: 'array',
+                    description: 'Green channel tone curve points',
+                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                  },
+                  tone_curve_blue: {
+                    type: 'array',
+                    description: 'Blue channel tone curve points',
+                    items: { type: 'object', properties: { input: { type: 'number', minimum: 0, maximum: 255 }, output: { type: 'number', minimum: 0, maximum: 255 } }, required: ['input','output'] }
+                  },
                   // Modern Color Grading (LR/ACR)
                   color_grade_shadow_hue: {
                     type: 'number',

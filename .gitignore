@@ -141,3 +141,5 @@ presets/*.xmp
 
 # WebAssembly files
 *.wasm
+
+presets/*.xmp

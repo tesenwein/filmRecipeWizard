@@ -521,6 +521,7 @@ class ImageMatchRenderer {
       wbBasic: byId('exportWBBasic'),
       hsl: byId('exportHSL'),
       colorGrading: byId('exportColorGrading'),
+      curves: byId('exportCurves'),
       sharpenNoise: byId('exportSharpenNoise'),
       vignette: byId('exportVignette'),
     };

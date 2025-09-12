@@ -285,8 +285,8 @@ export class ImageProcessor {
     try {
       console.log('[PROCESSOR] Generating Lightroom preset with adjustments:', data.adjustments);
       
-      // Create presets directory and a group folder (image-match) for Lightroom grouping on import
-      const presetsDir = path.join(process.cwd(), 'presets', 'image-match');
+      // Create presets directory
+      const presetsDir = path.join(process.cwd(), 'presets');
       await fs.mkdir(presetsDir, { recursive: true });
       
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -945,7 +945,7 @@ export class ImageProcessor {
     return path.join(dir, `${name}_processed${ext}`);
   }
 
-  private generateXMPContent(adjustments: any, include?: any): string {
+  private generateXMPContent(adjustments: any, include?: { wbBasic?: boolean; hsl?: boolean; colorGrading?: boolean; curves?: boolean; sharpenNoise?: boolean; vignette?: boolean }): string {
     console.log('[PROCESSOR] Generating XMP with adjustments:', adjustments);
     
     // Handle both AI and legacy adjustment formats
@@ -1025,6 +1025,17 @@ export class ImageProcessor {
     const presetName = `ImageMatch ${timestamp}`;
     const presetUUID = `ImageMatch-${Date.now()}`;
     
+    // Build curve sequences (defaults to linear if not provided)
+    const toCurveSeq = (arr?: Array<{ input: number; output: number }>) => {
+      const pts = (arr && arr.length ? arr : [{ input: 0, output: 0 }, { input: 255, output: 255 }])
+        .map(p => ({ x: Math.max(0, Math.min(255, Math.round(p.input))), y: Math.max(0, Math.min(255, Math.round(p.output))) }));
+      return pts.map(p => `          <rdf:li>${p.x}, ${p.y}</rdf:li>`).join('\n');
+    };
+    const curveComposite = toCurveSeq(adjustments.tone_curve);
+    const curveRed = toCurveSeq(adjustments.tone_curve_red);
+    const curveGreen = toCurveSeq(adjustments.tone_curve_green);
+    const curveBlue = toCurveSeq(adjustments.tone_curve_blue);
+
     let xmp = `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -1163,30 +1174,27 @@ export class ImageProcessor {
       <crs:CropConstrainToWarp>0</crs:CropConstrainToWarp>
       <crs:HasCrop>False</crs:HasCrop>
       <crs:AlreadyApplied>False</crs:AlreadyApplied>
+      ${include?.curves === false ? '' : `
       <crs:ToneCurvePV2012>
         <rdf:Seq>
-          <rdf:li>0, 0</rdf:li>
-          <rdf:li>255, 255</rdf:li>
+${curveComposite}
         </rdf:Seq>
       </crs:ToneCurvePV2012>
       <crs:ToneCurvePV2012Red>
         <rdf:Seq>
-          <rdf:li>0, 0</rdf:li>
-          <rdf:li>255, 255</rdf:li>
+${curveRed}
         </rdf:Seq>
       </crs:ToneCurvePV2012Red>
       <crs:ToneCurvePV2012Green>
         <rdf:Seq>
-          <rdf:li>0, 0</rdf:li>
-          <rdf:li>255, 255</rdf:li>
+${curveGreen}
         </rdf:Seq>
       </crs:ToneCurvePV2012Green>
       <crs:ToneCurvePV2012Blue>
         <rdf:Seq>
-          <rdf:li>0, 0</rdf:li>
-          <rdf:li>255, 255</rdf:li>
+${curveBlue}
         </rdf:Seq>
-      </crs:ToneCurvePV2012Blue>
+      </crs:ToneCurvePV2012Blue>`}
       <!-- No Look block for standard presets; Amount is controlled by Preset Amount slider in LR Classic 13+ -->
     </rdf:Description>
   </rdf:RDF>
@@ -1194,7 +1202,15 @@ export class ImageProcessor {
 
     // Optionally remove groups the user opted out of
     const removeTags = (patterns: RegExp[]) => { patterns.forEach((re) => { xmp = xmp.replace(re, ''); }); };
-    if (include) {
+      if (include) {
+      if (include.curves === false) {
+        removeTags([
+          /\n\s*<crs:ToneCurvePV2012>[\s\S]*?<\/crs:ToneCurvePV2012>/g,
+          /\n\s*<crs:ToneCurvePV2012Red>[\s\S]*?<\/crs:ToneCurvePV2012Red>/g,
+          /\n\s*<crs:ToneCurvePV2012Green>[\s\S]*?<\/crs:ToneCurvePV2012Green>/g,
+          /\n\s*<crs:ToneCurvePV2012Blue>[\s\S]*?<\/crs:ToneCurvePV2012Blue>/g,
+        ]);
+      }
       if (include.wbBasic === false) {
         removeTags([
           /\n\s*<crs:WhiteBalance>[^<]*<\/crs:WhiteBalance>/g,
