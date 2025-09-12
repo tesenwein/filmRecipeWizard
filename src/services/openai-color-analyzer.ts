@@ -23,6 +23,20 @@ export interface AIColorAdjustments {
   hue_blue: number; // -100 to +100
   hue_purple: number; // -100 to +100
   hue_magenta: number; // -100 to +100
+  // Modern Color Grading (optional)
+  color_grade_shadow_hue?: number; // 0-360
+  color_grade_shadow_sat?: number; // 0-100
+  color_grade_shadow_lum?: number; // -100 to 100
+  color_grade_midtone_hue?: number; // 0-360
+  color_grade_midtone_sat?: number; // 0-100
+  color_grade_midtone_lum?: number; // -100 to 100
+  color_grade_highlight_hue?: number; // 0-360
+  color_grade_highlight_sat?: number; // 0-100
+  color_grade_highlight_lum?: number; // -100 to 100
+  color_grade_global_hue?: number; // 0-360
+  color_grade_global_sat?: number; // 0-100
+  color_grade_global_lum?: number; // -100 to 100
+  color_grade_blending?: number; // 0-100
   confidence: number; // 0.0 to 1.0 - AI confidence in recommendations
   reasoning: string; // AI explanation of the adjustments
 }
@@ -47,7 +61,8 @@ export class OpenAIColorAnalyzer {
 
   async analyzeColorMatch(
     baseImagePath: string,
-    targetImagePath: string
+    targetImagePath: string,
+    hint?: string
   ): Promise<AIColorAdjustments> {
     if (!this.initialized || !this.openai) {
       throw new Error(
@@ -70,6 +85,7 @@ export class OpenAIColorAnalyzer {
           {
             role: 'user',
             content: [
+              ...(hint ? [{ type: 'text' as const, text: `Hint: ${hint}` }] : []),
               {
                 type: 'text',
                 text: `You are a professional photo editor and colorist. I have two images:
@@ -87,6 +103,10 @@ Consider these aspects:
 - Color grading and selective color adjustments
 - Saturation and vibrance
 - Individual color hue shifts
+
+Also include modern Color Grading settings (Lightroom/ACR):
+- Shadow/Midtone/Highlight/Global color wheels with Hue (0-360), Sat (0-100), and Lum (-100 to 100)
+- Color grade blending (0-100)
 
 Provide specific numeric values for each adjustment that would achieve the best match.`,
               },
@@ -242,6 +262,95 @@ Provide specific numeric values for each adjustment that would achieve the best 
                     type: 'number',
                     description: 'Magenta hue shift (-100 to +100)',
                     minimum: -100,
+                    maximum: 100,
+                  },
+                  // Additional develop settings
+                  texture: { type: 'number', description: 'Texture (-100 to +100)', minimum: -100, maximum: 100 },
+                  dehaze: { type: 'number', description: 'Dehaze (-100 to +100)', minimum: -100, maximum: 100 },
+                  sharpening: { type: 'number', description: 'Sharpening amount (0 to 150)', minimum: 0, maximum: 150 },
+                  sharpening_radius: { type: 'number', description: 'Sharpening radius (0.5 to 3.0)', minimum: 0.5, maximum: 3.0 },
+                  sharpening_detail: { type: 'number', description: 'Sharpening detail (0 to 100)', minimum: 0, maximum: 100 },
+                  sharpening_masking: { type: 'number', description: 'Sharpening masking (0 to 100)', minimum: 0, maximum: 100 },
+                  luminance_noise_reduction: { type: 'number', description: 'Luminance NR (0 to 100)', minimum: 0, maximum: 100 },
+                  color_noise_reduction: { type: 'number', description: 'Color NR (0 to 100)', minimum: 0, maximum: 100 },
+                  vignette: { type: 'number', description: 'Post-crop vignette amount (-100 to 100)', minimum: -100, maximum: 100 },
+                  // Modern Color Grading (LR/ACR)
+                  color_grade_shadow_hue: {
+                    type: 'number',
+                    description: 'Shadow color grade hue (degrees, 0-360)',
+                    minimum: 0,
+                    maximum: 360,
+                  },
+                  color_grade_shadow_sat: {
+                    type: 'number',
+                    description: 'Shadow color grade saturation (0-100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  color_grade_shadow_lum: {
+                    type: 'number',
+                    description: 'Shadow color grade luminance (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  color_grade_midtone_hue: {
+                    type: 'number',
+                    description: 'Midtone color grade hue (degrees, 0-360)',
+                    minimum: 0,
+                    maximum: 360,
+                  },
+                  color_grade_midtone_sat: {
+                    type: 'number',
+                    description: 'Midtone color grade saturation (0-100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  color_grade_midtone_lum: {
+                    type: 'number',
+                    description: 'Midtone color grade luminance (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  color_grade_highlight_hue: {
+                    type: 'number',
+                    description: 'Highlight color grade hue (degrees, 0-360)',
+                    minimum: 0,
+                    maximum: 360,
+                  },
+                  color_grade_highlight_sat: {
+                    type: 'number',
+                    description: 'Highlight color grade saturation (0-100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  color_grade_highlight_lum: {
+                    type: 'number',
+                    description: 'Highlight color grade luminance (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  color_grade_global_hue: {
+                    type: 'number',
+                    description: 'Global color grade hue (degrees, 0-360)',
+                    minimum: 0,
+                    maximum: 360,
+                  },
+                  color_grade_global_sat: {
+                    type: 'number',
+                    description: 'Global color grade saturation (0-100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  color_grade_global_lum: {
+                    type: 'number',
+                    description: 'Global color grade luminance (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  color_grade_blending: {
+                    type: 'number',
+                    description: 'Color grade blending (0-100)',
+                    minimum: 0,
                     maximum: 100,
                   },
                   confidence: {

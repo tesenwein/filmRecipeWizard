@@ -133,7 +133,21 @@ export class ImageProcessor {
 
     try {
       console.log('[PROCESSOR] Running AI color analysis...');
-      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(data.baseImagePath, data.targetImagePath);
+      let hint: string | undefined;
+      try {
+        const baseColors = await this.analyzeColors(data.baseImagePath);
+        const avg = baseColors.averageColor;
+        const isGreenish = avg.g > avg.r + 10 && avg.g > avg.b + 10;
+        if (isGreenish) {
+          hint = 'Base image shows a cool green/teal cast. Favor cooler temperature, negative tint (toward green), and teal color grading in shadows/midtones/highlights.';
+        }
+      } catch (_) {}
+
+      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(
+        data.baseImagePath,
+        data.targetImagePath,
+        hint
+      );
       
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
       console.log('[PROCESSOR] AI reasoning:', aiAdjustments.reasoning);
@@ -167,18 +181,46 @@ export class ImageProcessor {
   private async matchStyleWithAI(data: StyleMatchOptions): Promise<ProcessingResult> {
     try {
       console.log('[PROCESSOR] Analyzing images with AI');
-      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(data.baseImagePath, data.targetImagePath);
+      // Build a context hint from base image if it skews green/teal to encourage the AI toward the intended look
+      let hint: string | undefined;
+      try {
+        const baseColors = await this.analyzeColors(data.baseImagePath);
+        const avg = baseColors.averageColor;
+        const isGreenish = avg.g > avg.r + 10 && avg.g > avg.b + 10;
+        if (isGreenish) {
+          hint = 'Base image shows a cool green/teal cast. Favor cooler temperature, negative tint (toward green), and teal color grading in shadows/midtones/highlights.';
+        }
+      } catch (_) {
+        // Best-effort hint; ignore errors
+      }
+
+      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(
+        data.baseImagePath,
+        data.targetImagePath,
+        hint
+      );
       
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
       console.log('[PROCESSOR] AI reasoning:', aiAdjustments.reasoning);
       
       // Apply AI adjustments to target image
-      const outputPath = data.outputPath || this.generateOutputPath(data.targetImagePath);
+      // For RAW inputs, generate a JPEG preview instead of attempting to write DNG
+      const targetExt = path.extname(data.targetImagePath).toLowerCase();
+      let outputPath = data.outputPath || this.generateOutputPath(data.targetImagePath);
+      if (this.isRawFormat(targetExt)) {
+        const dir = path.dirname(data.targetImagePath);
+        const name = path.basename(data.targetImagePath, targetExt);
+        outputPath = path.join(dir, `${name}_processed.jpg`);
+      }
       console.log('[PROCESSOR] Output path:', outputPath);
       
       console.log('[PROCESSOR] Applying AI-generated adjustments');
       // Try ImageMagick first for advanced adjustments, fallback to Sharp for basic ones
-      if (this.magickInitialized) {
+      // For RAW inputs, always use Sharp-based pipeline for the JPEG preview
+      if (this.isRawFormat(targetExt)) {
+        await this.applyAIAdjustments(data.targetImagePath, outputPath, aiAdjustments);
+        console.log('[PROCESSOR] RAW input detected: generated JPEG preview with Sharp');
+      } else if (this.magickInitialized) {
         await this.applyAIAdjustmentsWithImageMagick(data.targetImagePath, outputPath, aiAdjustments);
         console.log('[PROCESSOR] Advanced AI adjustments applied with ImageMagick');
       } else {
@@ -251,7 +293,7 @@ export class ImageProcessor {
       const presetPath = path.join(presetsDir, `ImageMatch-${timestamp}.xmp`);
       
       // Generate XMP preset content
-      const xmpContent = this.generateXMPContent(data.adjustments);
+      const xmpContent = this.generateXMPContent(data.adjustments, data.include);
       await fs.writeFile(presetPath, xmpContent, 'utf8');
       
       console.log('[PROCESSOR] Lightroom preset saved to:', presetPath);
@@ -903,13 +945,29 @@ export class ImageProcessor {
     return path.join(dir, `${name}_processed${ext}`);
   }
 
-  private generateXMPContent(adjustments: any): string {
+  private generateXMPContent(adjustments: any, include?: any): string {
     console.log('[PROCESSOR] Generating XMP with adjustments:', adjustments);
     
     // Handle both AI and legacy adjustment formats
     let exposure, brightness, contrast, saturation, temperature, tint;
     let highlights, shadows, whites, blacks, clarity, vibrance;
     let hueAdjustments: any = {};
+    // Color grading fields
+    const cg = {
+      shHue: Math.round(adjustments.color_grade_shadow_hue ?? 0),
+      shSat: Math.round(adjustments.color_grade_shadow_sat ?? 0),
+      shLum: Math.round(adjustments.color_grade_shadow_lum ?? 0),
+      miHue: Math.round(adjustments.color_grade_midtone_hue ?? 0),
+      miSat: Math.round(adjustments.color_grade_midtone_sat ?? 0),
+      miLum: Math.round(adjustments.color_grade_midtone_lum ?? 0),
+      hiHue: Math.round(adjustments.color_grade_highlight_hue ?? 0),
+      hiSat: Math.round(adjustments.color_grade_highlight_sat ?? 0),
+      hiLum: Math.round(adjustments.color_grade_highlight_lum ?? 0),
+      glHue: Math.round(adjustments.color_grade_global_hue ?? 0),
+      glSat: Math.round(adjustments.color_grade_global_sat ?? 0),
+      glLum: Math.round(adjustments.color_grade_global_lum ?? 0),
+      blend: Math.round(adjustments.color_grade_blending ?? 50),
+    };
     
     if (adjustments.exposure !== undefined) {
       // New AI format or legacy format
@@ -967,18 +1025,32 @@ export class ImageProcessor {
     const presetName = `ImageMatch ${timestamp}`;
     const presetUUID = `ImageMatch-${Date.now()}`;
     
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 79.217bca6, 2023/09/30-10:35:33">
+    let xmp = `<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about=""
       xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
       crs:PresetType="Normal"
-      crs:Name="${presetName}"
       crs:SortName="${presetName}"
       crs:Group="image-match"
       crs:UUID="${presetUUID}">
-      <crs:Version>16.0</crs:Version>
+      <crs:Version>17.5</crs:Version>
       <crs:ProcessVersion>15.4</crs:ProcessVersion>
+      <crs:Name>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${presetName}</rdf:li>
+        </rdf:Alt>
+      </crs:Name>
+      <crs:SortName>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${presetName}</rdf:li>
+        </rdf:Alt>
+      </crs:SortName>
+      <crs:Group>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">image-match</rdf:li>
+        </rdf:Alt>
+      </crs:Group>
       <crs:WhiteBalance>Custom</crs:WhiteBalance>
       <crs:Temperature>${Math.round(temperature)}</crs:Temperature>
       <crs:Tint>${Math.round(tint)}</crs:Tint>
@@ -1034,20 +1106,24 @@ export class ImageProcessor {
       <crs:LuminanceAdjustmentBlue>0</crs:LuminanceAdjustmentBlue>
       <crs:LuminanceAdjustmentPurple>0</crs:LuminanceAdjustmentPurple>
       <crs:LuminanceAdjustmentMagenta>0</crs:LuminanceAdjustmentMagenta>
-      <crs:SplitToningShadowHue>0</crs:SplitToningShadowHue>
-      <crs:SplitToningShadowSaturation>0</crs:SplitToningShadowSaturation>
-      <crs:SplitToningHighlightHue>0</crs:SplitToningHighlightHue>
-      <crs:SplitToningHighlightSaturation>0</crs:SplitToningHighlightSaturation>
+      <crs:SplitToningShadowHue>${cg.shHue || 0}</crs:SplitToningShadowHue>
+      <crs:SplitToningShadowSaturation>${cg.shSat || 0}</crs:SplitToningShadowSaturation>
+      <crs:SplitToningHighlightHue>${cg.hiHue || 0}</crs:SplitToningHighlightHue>
+      <crs:SplitToningHighlightSaturation>${cg.hiSat || 0}</crs:SplitToningHighlightSaturation>
       <crs:SplitToningBalance>0</crs:SplitToningBalance>
-      <crs:ColorGradeMidtoneHue>0</crs:ColorGradeMidtoneHue>
-      <crs:ColorGradeMidtoneSat>0</crs:ColorGradeMidtoneSat>
-      <crs:ColorGradeShadowLum>0</crs:ColorGradeShadowLum>
-      <crs:ColorGradeMidtoneLum>0</crs:ColorGradeMidtoneLum>
-      <crs:ColorGradeHighlightLum>0</crs:ColorGradeHighlightLum>
-      <crs:ColorGradeBlending>50</crs:ColorGradeBlending>
-      <crs:ColorGradeGlobalHue>0</crs:ColorGradeGlobalHue>
-      <crs:ColorGradeGlobalSat>0</crs:ColorGradeGlobalSat>
-      <crs:ColorGradeGlobalLum>0</crs:ColorGradeGlobalLum>
+      <crs:ColorGradeShadowHue>${cg.shHue}</crs:ColorGradeShadowHue>
+      <crs:ColorGradeShadowSat>${cg.shSat}</crs:ColorGradeShadowSat>
+      <crs:ColorGradeMidtoneHue>${cg.miHue}</crs:ColorGradeMidtoneHue>
+      <crs:ColorGradeMidtoneSat>${cg.miSat}</crs:ColorGradeMidtoneSat>
+      <crs:ColorGradeHighlightHue>${cg.hiHue}</crs:ColorGradeHighlightHue>
+      <crs:ColorGradeHighlightSat>${cg.hiSat}</crs:ColorGradeHighlightSat>
+      <crs:ColorGradeShadowLum>${cg.shLum}</crs:ColorGradeShadowLum>
+      <crs:ColorGradeMidtoneLum>${cg.miLum}</crs:ColorGradeMidtoneLum>
+      <crs:ColorGradeHighlightLum>${cg.hiLum}</crs:ColorGradeHighlightLum>
+      <crs:ColorGradeBlending>${cg.blend}</crs:ColorGradeBlending>
+      <crs:ColorGradeGlobalHue>${cg.glHue}</crs:ColorGradeGlobalHue>
+      <crs:ColorGradeGlobalSat>${cg.glSat}</crs:ColorGradeGlobalSat>
+      <crs:ColorGradeGlobalLum>${cg.glLum}</crs:ColorGradeGlobalLum>
       <crs:AutoLateralCA>0</crs:AutoLateralCA>
       <crs:LensProfileEnable>0</crs:LensProfileEnable>
       <crs:LensManualDistortionAmount>0</crs:LensManualDistortionAmount>
@@ -1077,8 +1153,7 @@ export class ImageProcessor {
       <crs:BlueSaturation>0</crs:BlueSaturation>
       <crs:OverrideLookVignette>False</crs:OverrideLookVignette>
       <crs:ToneCurveName2012>Linear</crs:ToneCurveName2012>
-      <crs:CameraProfile>Adobe Standard</crs:CameraProfile>
-      <crs:CameraProfileDigest>87FB0EDC503E2E4E86D199DCBF9FA444</crs:CameraProfileDigest>
+      <crs:CameraProfile>Adobe Color</crs:CameraProfile>
       <crs:HasSettings>True</crs:HasSettings>
       <crs:CropTop>0</crs:CropTop>
       <crs:CropLeft>0</crs:CropLeft>
@@ -1112,19 +1187,59 @@ export class ImageProcessor {
           <rdf:li>255, 255</rdf:li>
         </rdf:Seq>
       </crs:ToneCurvePV2012Blue>
-      <crs:Look>
-        <rdf:Description>
-          <crs:Name>ImageMatch Style</crs:Name>
-          <crs:Amount>1.0</crs:Amount>
-          <crs:UUID>ImageMatch-${Date.now()}</crs:UUID>
-          <crs:SupportsAmount>false</crs:SupportsAmount>
-          <crs:SupportsMonochrome>false</crs:SupportsMonochrome>
-          <crs:SupportsOutputReferred>false</crs:SupportsOutputReferred>
-        </rdf:Description>
-      </crs:Look>
+      <!-- No Look block for standard presets; Amount is controlled by Preset Amount slider in LR Classic 13+ -->
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
+
+    // Optionally remove groups the user opted out of
+    const removeTags = (patterns: RegExp[]) => { patterns.forEach((re) => { xmp = xmp.replace(re, ''); }); };
+    if (include) {
+      if (include.wbBasic === false) {
+        removeTags([
+          /\n\s*<crs:WhiteBalance>[^<]*<\/crs:WhiteBalance>/g,
+          /\n\s*<crs:Temperature>[^<]*<\/crs:Temperature>/g,
+          /\n\s*<crs:Tint>[^<]*<\/crs:Tint>/g,
+          /\n\s*<crs:Exposure2012>[^<]*<\/crs:Exposure2012>/g,
+          /\n\s*<crs:Contrast2012>[^<]*<\/crs:Contrast2012>/g,
+          /\n\s*<crs:Highlights2012>[^<]*<\/crs:Highlights2012>/g,
+          /\n\s*<crs:Shadows2012>[^<]*<\/crs:Shadows2012>/g,
+          /\n\s*<crs:Whites2012>[^<]*<\/crs:Whites2012>/g,
+          /\n\s*<crs:Blacks2012>[^<]*<\/crs:Blacks2012>/g,
+          /\n\s*<crs:Texture>[^<]*<\/crs:Texture>/g,
+          /\n\s*<crs:Clarity2012>[^<]*<\/crs:Clarity2012>/g,
+          /\n\s*<crs:Dehaze>[^<]*<\/crs:Dehaze>/g,
+          /\n\s*<crs:Vibrance>[^<]*<\/crs:Vibrance>/g,
+          /\n\s*<crs:Saturation>[^<]*<\/crs:Saturation>/g,
+        ]);
+      }
+      if (include.hsl === false) {
+        removeTags([
+          /\n\s*<crs:HueAdjustment[A-Za-z]+>[^<]*<\/crs:HueAdjustment[A-Za-z]+>/g,
+          /\n\s*<crs:SaturationAdjustment[A-Za-z]+>[^<]*<\/crs:SaturationAdjustment[A-Za-z]+>/g,
+          /\n\s*<crs:LuminanceAdjustment[A-Za-z]+>[^<]*<\/crs:LuminanceAdjustment[A-Za-z]+>/g,
+        ]);
+      }
+      if (include.colorGrading === false) {
+        removeTags([
+          /\n\s*<crs:SplitToning[^>]+>[^<]*<\/crs:SplitToning[^>]+>/g,
+          /\n\s*<crs:SplitToningBalance>[^<]*<\/crs:SplitToningBalance>/g,
+          /\n\s*<crs:ColorGrade[A-Za-z]+>[^<]*<\/crs:ColorGrade[A-Za-z]+>/g,
+        ]);
+      }
+      if (!include.sharpenNoise) {
+        removeTags([
+          /\n\s*<crs:Sharpening(?:Radius|Detail|EdgeMasking)?>[^<]*<\/crs:Sharpening(?:Radius|Detail|EdgeMasking)?>/g,
+          /\n\s*<crs:LuminanceNoiseReduction>[^<]*<\/crs:LuminanceNoiseReduction>/g,
+          /\n\s*<crs:ColorNoiseReduction(?:Detail|Smoothness)?>[^<]*<\/crs:ColorNoiseReduction(?:Detail|Smoothness)?>/g,
+        ]);
+      }
+      if (!include.vignette) {
+        removeTags([/\n\s*<crs:PostCropVignettingAmount>[^<]*<\/crs:PostCropVignettingAmount>/g]);
+      }
+    }
+
+    return xmp;
   }
 
   private async processHeicImages(data: StyleMatchOptions): Promise<ProcessingResult> {
@@ -1212,6 +1327,24 @@ export class ImageProcessor {
         image = image.gamma(gamma);
       }
 
+      // Apply Color Grading (global) approximation first if provided
+      const cgHue = (aiAdjustments as any).color_grade_global_hue;
+      const cgSat = (aiAdjustments as any).color_grade_global_sat;
+      const cgLum = (aiAdjustments as any).color_grade_global_lum;
+      if (typeof cgHue === 'number' || typeof cgSat === 'number' || typeof cgLum === 'number') {
+        const hueDegrees = typeof cgHue === 'number' ? Math.max(-180, Math.min(360, cgHue)) : 0;
+        const satFactor = typeof cgSat === 'number' ? Math.max(0, 1 + (cgSat / 100)) : 1;
+        const lumFactor = typeof cgLum === 'number' ? 1 + (cgLum / 200) : 1; // map -100..100 to 0.5..1.5
+        const mod: any = {};
+        if (hueDegrees) mod.hue = Math.round(hueDegrees);
+        if (satFactor !== 1) mod.saturation = satFactor;
+        if (lumFactor !== 1) mod.brightness = lumFactor;
+        if (Object.keys(mod).length > 0) {
+          console.log('[PROCESSOR] Applying global color grade modulate:', mod);
+          image = image.modulate(mod);
+        }
+      }
+
       // Apply vibrance using saturation boost on less saturated colors
       if (Math.abs(aiAdjustments.vibrance) > 1) {
         console.log('[PROCESSOR] Applying vibrance boost:', aiAdjustments.vibrance);
@@ -1228,8 +1361,11 @@ export class ImageProcessor {
         const avgHue = presentHueValues.reduce((a: number, b: number) => a + b, 0) / presentHueValues.length;
         // Map -100..100 -> roughly -60..60 degrees
         const hueDegrees = Math.max(-60, Math.min(60, avgHue * 0.6));
-        console.log('[PROCESSOR] Applying global hue rotation (deg):', hueDegrees);
-        image = image.modulate({ hue: hueDegrees });
+        const hueInt = Math.round(hueDegrees);
+        if (Math.abs(hueInt) > 0) {
+          console.log('[PROCESSOR] Applying global hue rotation (deg):', hueInt);
+          image = image.modulate({ hue: hueInt });
+        }
       }
 
       // Note: Advanced color grading (hue shifts, selective colors) would require
@@ -1266,7 +1402,7 @@ export class ImageProcessor {
   }
 
   // Build a simple white balance color matrix for Sharp.recomb
-  private buildWhiteBalanceMatrix(temperature: number, tint: number): number[][] {
+  private buildWhiteBalanceMatrix(temperature: number, tint: number): [[number, number, number],[number, number, number],[number, number, number]] {
     const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
     const tempDelta = clamp((temperature - 6500) / 3500, -1, 1); // -1 warm, +1 cool
     let r = 1 - 0.2 * tempDelta; // cooler -> reduce red
@@ -1283,11 +1419,12 @@ export class ImageProcessor {
     const avg = (r + g + b) / 3;
     r /= avg; g /= avg; b /= avg;
 
-    return [
+    const matrix: [[number, number, number],[number, number, number],[number, number, number]] = [
       [r, 0, 0],
       [0, g, 0],
       [0, 0, b],
     ];
+    return matrix;
   }
 
   private async applyAIAdjustmentsWithImageMagick(inputPath: string, outputPath: string, aiAdjustments: AIColorAdjustments): Promise<void> {

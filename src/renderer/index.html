@@ -64,33 +64,31 @@
                 <h2>Style Matching Options</h2>
                 <div class="options-grid">
                     <div class="option-group">
-                        <h3>What to Match</h3>
+                        <h3>Export To XMP</h3>
                         <label class="checkbox-label">
-                            <input type="checkbox" id="matchColors" checked>
-                            <span>Colors</span>
+                            <input type="checkbox" id="exportWBBasic" checked>
+                            <span>WB + Basic (Exposure/Contrast/Tones/Clarity/Dehaze/Vibrance/Saturation)</span>
                         </label>
                         <label class="checkbox-label">
-                            <input type="checkbox" id="matchBrightness" checked>
-                            <span>Brightness</span>
+                            <input type="checkbox" id="exportHSL" checked>
+                            <span>HSL Hue Shifts</span>
                         </label>
                         <label class="checkbox-label">
-                            <input type="checkbox" id="matchContrast" checked>
-                            <span>Contrast</span>
+                            <input type="checkbox" id="exportColorGrading" checked>
+                            <span>Color Grading (Shadows/Mids/Highlights/Global)</span>
                         </label>
                         <label class="checkbox-label">
-                            <input type="checkbox" id="matchSaturation" checked>
-                            <span>Saturation</span>
+                            <input type="checkbox" id="exportSharpenNoise">
+                            <span>Sharpening + Noise Reduction</span>
                         </label>
-                    </div>
-
-                    <div class="option-group">
-                        <h3>AI Processing</h3>
-                        <p class="option-note">🤖 Uses OpenAI GPT-5 Vision to analyze both images and create professional color matching adjustments</p>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="exportVignette">
+                            <span>Vignette</span>
+                        </label>
                     </div>
                 </div>
 
                 <div class="action-buttons">
-                    <button class="btn btn-primary" id="analyzeButton">Analyze Colors</button>
                     <button class="btn btn-primary" id="processButton" disabled>Process Images</button>
                 </div>
             </section>
@@ -99,6 +97,55 @@
             <section class="results-section" id="resultsSection" style="display: none;">
                 <h2>Results</h2>
                 <div class="results-grid" id="resultsGrid"></div>
+            </section>
+
+            <!-- AI Adjustments (Bottom) -->
+            <section class="ai-panel" id="aiSidePanel" style="display: none;">
+                <h2>AI Adjustments</h2>
+                <div id="aiSummary"></div>
+                <div class="ai-section">
+                    <h3>White Balance</h3>
+                    <p>Temperature: <span id="aiTemp">-</span> K</p>
+                    <p>Tint: <span id="aiTint">-</span></p>
+                </div>
+                <div class="ai-section">
+                    <h3>Basic</h3>
+                    <p>Exposure: <span id="aiExposure">-</span> stops</p>
+                    <p>Contrast: <span id="aiContrast">-</span></p>
+                    <p>Clarity: <span id="aiClarity">-</span></p>
+                    <p>Vibrance: <span id="aiVibrance">-</span></p>
+                    <p>Saturation: <span id="aiSaturation">-</span></p>
+                    <p>Highlights: <span id="aiHighlights">-</span></p>
+                    <p>Shadows: <span id="aiShadows">-</span></p>
+                    <p>Whites: <span id="aiWhites">-</span></p>
+                    <p>Blacks: <span id="aiBlacks">-</span></p>
+                </div>
+                <div class="ai-section">
+                    <h3>Hue Shifts</h3>
+                    <div id="aiHueList" class="ai-hue-list"></div>
+                </div>
+                <div class="ai-section">
+                    <h3>Color Grading</h3>
+                    <div class="cg-grid">
+                        <div class="cg-item">
+                            <div class="cg-swatch" id="cgShadow"></div>
+                            <span>Shadows</span>
+                        </div>
+                        <div class="cg-item">
+                            <div class="cg-swatch" id="cgMidtone"></div>
+                            <span>Midtones</span>
+                        </div>
+                        <div class="cg-item">
+                            <div class="cg-swatch" id="cgHighlight"></div>
+                            <span>Highlights</span>
+                        </div>
+                        <div class="cg-item">
+                            <div class="cg-swatch" id="cgGlobal"></div>
+                            <span>Global</span>
+                        </div>
+                    </div>
+                    <p>Blending: <span id="cgBlend">-</span></p>
+                </div>
             </section>
 
             <!-- Progress Section -->

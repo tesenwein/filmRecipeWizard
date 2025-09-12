@@ -10,6 +10,7 @@ declare global {
       analyzeColors: (imagePath: string) => Promise<any>;
       matchStyle: (data: any) => Promise<any>;
       generatePreset: (data: any) => Promise<any>;
+      generatePreview: (args: { path?: string; dataUrl?: string }) => Promise<{ success: boolean; previewPath?: string; error?: string }>;
       removeAllListeners: (channel: string) => void;
     };
   }
@@ -58,7 +59,6 @@ class ImageMatchRenderer {
     removeTargetImageBtn?.addEventListener('click', () => this.removeCurrentTargetImage());
 
     // Action buttons
-    document.getElementById('analyzeButton')?.addEventListener('click', () => this.analyzeColors());
     document.getElementById('processButton')?.addEventListener('click', () => this.processImages());
   }
 
@@ -392,10 +392,7 @@ class ImageMatchRenderer {
       processButton.disabled = !canProcess || this.isProcessing;
     }
 
-    const analyzeButton = document.getElementById('analyzeButton') as HTMLButtonElement;
-    if (analyzeButton) {
-      analyzeButton.disabled = !hasBaseImage || this.isProcessing;
-    }
+    // Analyze button removed; analysis is part of processing flow
   }
 
   private async analyzeColors(): Promise<void> {
@@ -495,7 +492,11 @@ class ImageMatchRenderer {
             `📋 Generating Lightroom preset... (${i + 1}/${this.targetImagePaths.length})`);
             
           console.log(`[UI] Generating preset for image ${i + 1}`);
-          const presetResult = await window.electronAPI.generatePreset({ adjustments: result.metadata?.adjustments });
+          const presetResult = await window.electronAPI.generatePreset({ 
+            // Prefer full AI adjustments if available (includes color grading, sharpen, NR, vignette)
+            adjustments: (result.metadata?.aiAdjustments ?? result.metadata?.adjustments),
+            include: this.getXmpIncludeOptions()
+          });
           if (presetResult.success) {
             presets.push(presetResult);
             console.log('[UI] Preset generated:', presetResult.outputPath);
@@ -514,13 +515,20 @@ class ImageMatchRenderer {
     }
   }
 
-  private getProcessingOptions(): any {
+  private getXmpIncludeOptions() {
+    const byId = (id: string) => (document.getElementById(id) as HTMLInputElement | null)?.checked ?? false;
     return {
-      matchColors: (document.getElementById('matchColors') as HTMLInputElement)?.checked || false,
-      matchBrightness: (document.getElementById('matchBrightness') as HTMLInputElement)?.checked || false,
-      matchContrast: (document.getElementById('matchContrast') as HTMLInputElement)?.checked || false,
-      matchSaturation: (document.getElementById('matchSaturation') as HTMLInputElement)?.checked || false,
+      wbBasic: byId('exportWBBasic'),
+      hsl: byId('exportHSL'),
+      colorGrading: byId('exportColorGrading'),
+      sharpenNoise: byId('exportSharpenNoise'),
+      vignette: byId('exportVignette'),
     };
+  }
+
+  private getProcessingOptions(): any {
+    // AI path matches holistically; legacy flags removed
+    return {};
   }
 
   private setProcessingState(processing: boolean, message?: string): void {
@@ -748,9 +756,6 @@ class ImageMatchRenderer {
                 <button class="result-action-btn" onclick="imageMatchRenderer.downloadPreset('${preset.outputPath}')">
                   📥 Download Preset
                 </button>
-                <button class="result-action-btn secondary" onclick="imageMatchRenderer.copyPresetPath('${preset.outputPath}')">
-                  Copy Path
-                </button>
               </div>
             </div>
           `).join('')}
@@ -780,6 +785,120 @@ class ImageMatchRenderer {
     }
 
     resultsSection.style.display = 'block';
+
+    const firstAdj = results.find(r => r?.metadata?.adjustments)?.metadata?.adjustments;
+    if (firstAdj) {
+      this.updateAISidePanel(firstAdj, results[0]?.metadata?.reasoning);
+    }
+  }
+
+  private renderAdjustmentsTable(adj: any): string {
+    const val = (x: any, fmt?: (n: number)=>string) => x === undefined || x === null ? '-' : (typeof x === 'number' ? (fmt ? fmt(x) : String(x)) : String(x));
+    const rows = [
+      ['Temperature (K)', val(adj.temperature, (n)=>Math.round(n).toString())],
+      ['Tint', val(adj.tint, (n)=>Math.round(n).toString())],
+      ['Exposure (stops)', val(adj.exposure, (n)=>n.toFixed(2))],
+      ['Contrast', val(adj.contrast, (n)=>Math.round(n).toString())],
+      ['Clarity', val(adj.clarity, (n)=>Math.round(n).toString())],
+      ['Vibrance', val(adj.vibrance, (n)=>Math.round(n).toString())],
+      ['Saturation', val(adj.saturation, (n)=>Math.round(n).toString())],
+      ['Highlights', val(adj.highlights, (n)=>Math.round(n).toString())],
+      ['Shadows', val(adj.shadows, (n)=>Math.round(n).toString())],
+      ['Whites', val(adj.whites, (n)=>Math.round(n).toString())],
+      ['Blacks', val(adj.blacks, (n)=>Math.round(n).toString())],
+    ];
+    const hueMap: any = {
+      Red: adj.hue_red ?? adj.hue?.red,
+      Orange: adj.hue_orange ?? adj.hue?.orange,
+      Yellow: adj.hue_yellow ?? adj.hue?.yellow,
+      Green: adj.hue_green ?? adj.hue?.green,
+      Aqua: adj.hue_aqua ?? adj.hue?.aqua,
+      Blue: adj.hue_blue ?? adj.hue?.blue,
+      Purple: adj.hue_purple ?? adj.hue?.purple,
+      Magenta: adj.hue_magenta ?? adj.hue?.magenta,
+    };
+    const hueRows = Object.entries(hueMap).map(([k,v])=>`<tr><td>${k} Hue</td><td>${val(v, (n)=>Math.round(n).toString())}</td></tr>`).join('');
+    const cg = {
+      Shadow: [adj.color_grade_shadow_hue, adj.color_grade_shadow_sat, adj.color_grade_shadow_lum],
+      Midtone: [adj.color_grade_midtone_hue, adj.color_grade_midtone_sat, adj.color_grade_midtone_lum],
+      Highlight: [adj.color_grade_highlight_hue, adj.color_grade_highlight_sat, adj.color_grade_highlight_lum],
+      Global: [adj.color_grade_global_hue, adj.color_grade_global_sat, adj.color_grade_global_lum],
+      Blending: [undefined, undefined, adj.color_grade_blending],
+    } as any;
+    const cgRows = [`<tr><th colspan="2">Color Grading</th></tr>`].concat(
+      Object.entries(cg).map(([k,v]: any)=>{
+        if (k === 'Blending') return `<tr><td>Blending</td><td>${val(v[2], (n)=>Math.round(n).toString())}</td></tr>`;
+        return `<tr><td>${k} (H/S/L)</td><td>${val(v[0], (n)=>Math.round(n).toString())}/${val(v[1], (n)=>Math.round(n).toString())}/${val(v[2], (n)=>Math.round(n).toString())}</td></tr>`;
+      })
+    ).join('');
+
+    const basicRows = rows.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+    return `
+      <div class="ai-adjustments-table">
+        <table>
+          <tbody>
+            ${basicRows}
+            <tr><th colspan="2">Hue Shifts</th></tr>
+            ${hueRows}
+            ${cgRows}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  private updateAISidePanel(adj: any, reasoning?: string): void {
+    const show = (id: string, value: string) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    const panel = document.getElementById('aiSidePanel');
+    if (panel) panel.style.display = 'block';
+    show('aiTemp', String(Math.round(adj.temperature ?? 0)));
+    show('aiTint', String(Math.round(adj.tint ?? 0)));
+    show('aiExposure', (adj.exposure ?? 0).toFixed(2));
+    show('aiContrast', String(Math.round(adj.contrast ?? 0)));
+    show('aiClarity', String(Math.round(adj.clarity ?? 0)));
+    show('aiVibrance', String(Math.round(adj.vibrance ?? 0)));
+    show('aiSaturation', String(Math.round(adj.saturation ?? 0)));
+    show('aiHighlights', String(Math.round(adj.highlights ?? 0)));
+    show('aiShadows', String(Math.round(adj.shadows ?? 0)));
+    show('aiWhites', String(Math.round(adj.whites ?? 0)));
+    show('aiBlacks', String(Math.round(adj.blacks ?? 0)));
+
+    const hueList = document.getElementById('aiHueList');
+    if (hueList) {
+      hueList.innerHTML = '';
+      const add = (name: string, v: any) => {
+        if (v === undefined || v === null) return;
+        const div = document.createElement('div');
+        div.className = 'hue-item';
+        div.innerHTML = `<span>${name}</span><span>${Math.round(v)}</span>`;
+        hueList.appendChild(div);
+      };
+      add('Red', adj.hue_red ?? adj.hue?.red);
+      add('Orange', adj.hue_orange ?? adj.hue?.orange);
+      add('Yellow', adj.hue_yellow ?? adj.hue?.yellow);
+      add('Green', adj.hue_green ?? adj.hue?.green);
+      add('Aqua', adj.hue_aqua ?? adj.hue?.aqua);
+      add('Blue', adj.hue_blue ?? adj.hue?.blue);
+      add('Purple', adj.hue_purple ?? adj.hue?.purple);
+      add('Magenta', adj.hue_magenta ?? adj.hue?.magenta);
+    }
+
+    const setSwatch = (id: string, h?: number, s?: number, l?: number) => {
+      const el = document.getElementById(id) as HTMLDivElement | null;
+      if (!el) return;
+      if (typeof h === 'number' && typeof s === 'number') {
+        const lum = typeof l === 'number' ? Math.max(0, Math.min(100, 50 + l/2)) : 50;
+        el.style.background = `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(lum)}%)`;
+      } else {
+        el.style.background = '#eee';
+      }
+    };
+    setSwatch('cgShadow', adj.color_grade_shadow_hue, adj.color_grade_shadow_sat, adj.color_grade_shadow_lum);
+    setSwatch('cgMidtone', adj.color_grade_midtone_hue, adj.color_grade_midtone_sat, adj.color_grade_midtone_lum);
+    setSwatch('cgHighlight', adj.color_grade_highlight_hue, adj.color_grade_highlight_sat, adj.color_grade_highlight_lum);
+    setSwatch('cgGlobal', adj.color_grade_global_hue, adj.color_grade_global_sat, adj.color_grade_global_lum);
+    const cgBlend = document.getElementById('cgBlend');
+    if (cgBlend) cgBlend.textContent = String(Math.round(adj.color_grade_blending ?? 50));
   }
 
   public downloadImage(filePath: string): void {

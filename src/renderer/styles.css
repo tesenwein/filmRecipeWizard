@@ -133,7 +133,7 @@ section h2 {
 
 .image-preview img {
   width: 100%;
-  height: 360px;
+  height: 320px;
   object-fit: cover;
   display: block;
 }
@@ -261,6 +261,27 @@ section h2 {
   height: 18px;
   accent-color: #667eea;
 }
+
+/* AI panel */
+.ai-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1rem;
+  align-self: stretch;
+  margin-top: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.ai-panel h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+.ai-panel .ai-section { margin-top: 1rem; }
+.ai-panel .ai-section h3 { font-size: 1rem; margin-bottom: 0.5rem; color: #444; }
+.ai-panel p { font-size: 0.9rem; color: #444; margin: 0.15rem 0; }
+.ai-hue-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.ai-hue-list .hue-item { display: flex; justify-content: space-between; font-size: 0.88rem; }
+.cg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.cg-item { display: flex; align-items: center; gap: 8px; }
+.cg-swatch { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
 
 .checkbox-label span {
   color: #555;
