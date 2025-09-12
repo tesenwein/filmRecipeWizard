@@ -1037,14 +1037,27 @@ export class ImageProcessor {
     const curveBlue = toCurveSeq(adjustments.tone_curve_blue);
 
     let xmp = `<?xml version="1.0" encoding="UTF-8"?>
-<x:xmpmeta xmlns:x="adobe:ns:meta/">
-  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-    <rdf:Description rdf:about=""
-      xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
-      crs:PresetType="Normal"
-      crs:SortName="${presetName}"
-      crs:Group="image-match"
-      crs:UUID="${presetUUID}">
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00        ">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+    xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
+   crs:PresetType="Normal"
+   crs:Cluster=""
+   crs:UUID="${presetUUID}"
+   crs:SupportsAmount2="True"
+   crs:SupportsAmount="True"
+   crs:SupportsColor="True"
+   crs:SupportsMonochrome="True"
+   crs:SupportsHighDynamicRange="True"
+   crs:SupportsNormalDynamicRange="True"
+   crs:SupportsSceneReferred="True"
+   crs:SupportsOutputReferred="True"
+   crs:RequiresRGBTables="False"
+   crs:ShowInPresets="True"
+   crs:ShowInQuickActions="False"
+   crs:CameraModelRestriction=""
+   crs:Copyright=""
+   crs:ContactInfo=""
       <crs:Version>17.5</crs:Version>
       <crs:ProcessVersion>15.4</crs:ProcessVersion>
       <crs:Name>
@@ -1083,16 +1096,21 @@ export class ImageProcessor {
       <crs:ParametricShadowSplit>25</crs:ParametricShadowSplit>
       <crs:ParametricMidtoneSplit>50</crs:ParametricMidtoneSplit>
       <crs:ParametricHighlightSplit>75</crs:ParametricHighlightSplit>
-      <crs:Sharpening>40</crs:Sharpening>
-      <crs:SharpeningRadius>1.0</crs:SharpeningRadius>
-      <crs:SharpeningDetail>25</crs:SharpeningDetail>
-      <crs:SharpeningEdgeMasking>0</crs:SharpeningEdgeMasking>
-      <crs:PostCropVignettingAmount>0</crs:PostCropVignettingAmount>
+      <crs:Sharpness>40</crs:Sharpness>
+      <crs:SharpenRadius>+1.0</crs:SharpenRadius>
+      <crs:SharpenDetail>25</crs:SharpenDetail>
+      <crs:SharpenEdgeMasking>0</crs:SharpenEdgeMasking>
+      <crs:PostCropVignetteAmount>0</crs:PostCropVignetteAmount>
+      <crs:PostCropVignetteMidpoint>50</crs:PostCropVignetteMidpoint>
+      <crs:PostCropVignetteFeather>50</crs:PostCropVignetteFeather>
+      <crs:PostCropVignetteRoundness>0</crs:PostCropVignetteRoundness>
+      <crs:PostCropVignetteStyle>1</crs:PostCropVignetteStyle>
+      <crs:PostCropVignetteHighlightContrast>0</crs:PostCropVignetteHighlightContrast>
       <crs:GrainAmount>0</crs:GrainAmount>
       <crs:ColorNoiseReduction>25</crs:ColorNoiseReduction>
       <crs:ColorNoiseReductionDetail>50</crs:ColorNoiseReductionDetail>
       <crs:ColorNoiseReductionSmoothness>50</crs:ColorNoiseReductionSmoothness>
-      <crs:LuminanceNoiseReduction>0</crs:LuminanceNoiseReduction>
+      <crs:LuminanceSmoothing>0</crs:LuminanceSmoothing>
       <crs:HueAdjustmentRed>${Math.round((hueAdjustments as any).red || 0)}</crs:HueAdjustmentRed>
       <crs:HueAdjustmentOrange>${Math.round((hueAdjustments as any).orange || 0)}</crs:HueAdjustmentOrange>
       <crs:HueAdjustmentYellow>${Math.round((hueAdjustments as any).yellow || 0)}</crs:HueAdjustmentYellow>
@@ -1162,9 +1180,9 @@ export class ImageProcessor {
       <crs:GreenSaturation>0</crs:GreenSaturation>
       <crs:BlueHue>0</crs:BlueHue>
       <crs:BlueSaturation>0</crs:BlueSaturation>
-      <crs:OverrideLookVignette>False</crs:OverrideLookVignette>
+      <crs:HDREditMode>0</crs:HDREditMode>
+      <crs:OverrideLookVignette>True</crs:OverrideLookVignette>
       <crs:ToneCurveName2012>Linear</crs:ToneCurveName2012>
-      <crs:CameraProfile>Adobe Color</crs:CameraProfile>
       <crs:HasSettings>True</crs:HasSettings>
       <crs:CropTop>0</crs:CropTop>
       <crs:CropLeft>0</crs:CropLeft>
