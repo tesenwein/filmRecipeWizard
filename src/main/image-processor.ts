@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ColorMatcher } from '../algorithms/color-matching';
 import { FileUtils } from '../utils/file-utils';
-import { ImageMagick, MagickFormat } from '@imagemagick/magick-wasm';
+import { ImageMagick, MagickFormat, Percentage, initializeImageMagick, ConfigurationFiles } from '@imagemagick/magick-wasm';
 import { OpenAIColorAnalyzer, AIColorAdjustments } from '../services/openai-color-analyzer';
 import * as dotenv from 'dotenv';
 
@@ -59,11 +59,15 @@ export class ImageProcessor {
 
   private async initializeImageMagick(): Promise<void> {
     try {
-      // ImageMagick WASM auto-initializes
+      // Load the wasm binary and initialize the library
+      const wasmPath = require.resolve('@imagemagick/magick-wasm/dist/magick.wasm');
+      const wasmBinary = await fs.readFile(wasmPath);
+      await initializeImageMagick(wasmBinary, ConfigurationFiles.default);
       this.magickInitialized = true;
-      console.log('[PROCESSOR] ImageMagick WASM ready');
+      console.log('[PROCESSOR] ImageMagick WASM initialized');
     } catch (error) {
-      console.error('[PROCESSOR] Failed to initialize ImageMagick WASM:', error);
+      this.magickInitialized = false;
+      console.warn('[PROCESSOR] ImageMagick WASM not available, falling back to Sharp only:', error instanceof Error ? error.message : error);
     }
   }
 
@@ -173,8 +177,14 @@ export class ImageProcessor {
       console.log('[PROCESSOR] Output path:', outputPath);
       
       console.log('[PROCESSOR] Applying AI-generated adjustments');
-      await this.applyAIAdjustments(data.targetImagePath, outputPath, aiAdjustments);
-      console.log('[PROCESSOR] AI adjustments applied successfully');
+      // Try ImageMagick first for advanced adjustments, fallback to Sharp for basic ones
+      if (this.magickInitialized) {
+        await this.applyAIAdjustmentsWithImageMagick(data.targetImagePath, outputPath, aiAdjustments);
+        console.log('[PROCESSOR] Advanced AI adjustments applied with ImageMagick');
+      } else {
+        await this.applyAIAdjustments(data.targetImagePath, outputPath, aiAdjustments);
+        console.log('[PROCESSOR] Basic AI adjustments applied with Sharp');
+      }
 
       return {
         success: true,
@@ -233,8 +243,8 @@ export class ImageProcessor {
     try {
       console.log('[PROCESSOR] Generating Lightroom preset with adjustments:', data.adjustments);
       
-      // Create presets directory if it doesn't exist
-      const presetsDir = path.join(process.cwd(), 'presets');
+      // Create presets directory and a group folder (image-match) for Lightroom grouping on import
+      const presetsDir = path.join(process.cwd(), 'presets', 'image-match');
       await fs.mkdir(presetsDir, { recursive: true });
       
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -251,6 +261,7 @@ export class ImageProcessor {
         outputPath: presetPath,
         metadata: {
           presetName: `ImageMatch-${timestamp}.xmp`,
+          groupFolder: 'image-match',
           adjustments: data.adjustments
         }
       };
@@ -260,6 +271,38 @@ export class ImageProcessor {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  // Generate a JPEG preview for any supported input (path or dataUrl), sized for UI display
+  async generatePreview(args: { path?: string; dataUrl?: string }): Promise<string> {
+    const os = await import('os');
+    const tmpDir = path.join(os.tmpdir(), 'image-match-previews');
+    await fs.mkdir(tmpDir, { recursive: true });
+
+    const outPath = path.join(tmpDir, `prev-${Date.now()}-${Math.floor(Math.random()*1e6)}.jpg`);
+
+    try {
+      let img = sharp();
+      if (args.path) {
+        img = sharp(args.path);
+      } else if (args.dataUrl) {
+        const base64 = args.dataUrl.split(',')[1] || '';
+        const buf = Buffer.from(base64, 'base64');
+        img = sharp(buf);
+      } else {
+        throw new Error('No input provided for preview');
+      }
+
+      await img
+        .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 92 })
+        .toFile(outPath);
+
+      return outPath;
+    } catch (error) {
+      console.error('[PROCESSOR] Failed to generate preview:', error);
+      throw error;
     }
   }
 
@@ -765,6 +808,15 @@ export class ImageProcessor {
     try {
       let image = sharp(inputPath);
 
+      // Apply white balance (temperature/tint) via color matrix approximation
+      if (adjustments.temperature !== undefined || adjustments.tint !== undefined) {
+        const temp = typeof adjustments.temperature === 'number' ? adjustments.temperature : 6500;
+        const tint = typeof adjustments.tint === 'number' ? adjustments.tint : 0;
+        const matrix = this.buildWhiteBalanceMatrix(temp, tint);
+        console.log('[PROCESSOR] Applying white balance matrix for temp/tint:', temp, tint, matrix);
+        image = image.recomb(matrix);
+      }
+
       // Apply exposure adjustment
       if (adjustments.exposure && Math.abs(adjustments.exposure) > 0.01) {
         console.log('[PROCESSOR] Applying exposure adjustment:', adjustments.exposure);
@@ -857,7 +909,7 @@ export class ImageProcessor {
     // Handle both AI and legacy adjustment formats
     let exposure, brightness, contrast, saturation, temperature, tint;
     let highlights, shadows, whites, blacks, clarity, vibrance;
-    let hueAdjustments = {};
+    let hueAdjustments: any = {};
     
     if (adjustments.exposure !== undefined) {
       // New AI format or legacy format
@@ -882,19 +934,17 @@ export class ImageProcessor {
       clarity = adjustments.clarity || 0;
       vibrance = adjustments.vibrance || 0;
       
-      // Hue adjustments
-      if (adjustments.hue) {
-        hueAdjustments = {
-          red: adjustments.hue.red || 0,
-          orange: adjustments.hue.orange || 0,
-          yellow: adjustments.hue.yellow || 0,
-          green: adjustments.hue.green || 0,
-          aqua: adjustments.hue.aqua || 0,
-          blue: adjustments.hue.blue || 0,
-          purple: adjustments.hue.purple || 0,
-          magenta: adjustments.hue.magenta || 0
-        };
-      }
+      // Hue adjustments: support AI fields hue_red, hue_orange, ...
+      hueAdjustments = {
+        red: adjustments.hue_red ?? adjustments.hue?.red ?? 0,
+        orange: adjustments.hue_orange ?? adjustments.hue?.orange ?? 0,
+        yellow: adjustments.hue_yellow ?? adjustments.hue?.yellow ?? 0,
+        green: adjustments.hue_green ?? adjustments.hue?.green ?? 0,
+        aqua: adjustments.hue_aqua ?? adjustments.hue?.aqua ?? 0,
+        blue: adjustments.hue_blue ?? adjustments.hue?.blue ?? 0,
+        purple: adjustments.hue_purple ?? adjustments.hue?.purple ?? 0,
+        magenta: adjustments.hue_magenta ?? adjustments.hue?.magenta ?? 0,
+      };
     } else {
       // Legacy format fallback
       exposure = 0;
@@ -914,12 +964,19 @@ export class ImageProcessor {
     const shadowsBlue = (colorBalance.blue - 1) * 50;
 
     const timestamp = new Date().toISOString();
+    const presetName = `ImageMatch ${timestamp}`;
+    const presetUUID = `ImageMatch-${Date.now()}`;
     
     return `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 79.217bca6, 2023/09/30-10:35:33">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about=""
-      xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/">
+      xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
+      crs:PresetType="Normal"
+      crs:Name="${presetName}"
+      crs:SortName="${presetName}"
+      crs:Group="image-match"
+      crs:UUID="${presetUUID}">
       <crs:Version>16.0</crs:Version>
       <crs:ProcessVersion>15.4</crs:ProcessVersion>
       <crs:WhiteBalance>Custom</crs:WhiteBalance>
@@ -1162,6 +1219,19 @@ export class ImageProcessor {
         image = image.modulate({ saturation: vibranceBoost });
       }
 
+      // Apply a global hue rotation as an approximation of selective hue shifts
+      const hueFields = ['hue_red','hue_orange','hue_yellow','hue_green','hue_aqua','hue_blue'];
+      const presentHueValues = hueFields
+        .map((k) => (aiAdjustments as any)[k])
+        .filter((v: any) => typeof v === 'number');
+      if (presentHueValues.length > 0) {
+        const avgHue = presentHueValues.reduce((a: number, b: number) => a + b, 0) / presentHueValues.length;
+        // Map -100..100 -> roughly -60..60 degrees
+        const hueDegrees = Math.max(-60, Math.min(60, avgHue * 0.6));
+        console.log('[PROCESSOR] Applying global hue rotation (deg):', hueDegrees);
+        image = image.modulate({ hue: hueDegrees });
+      }
+
       // Note: Advanced color grading (hue shifts, selective colors) would require
       // more sophisticated processing or external tools like ImageMagick
       // For now, we apply the core adjustments that Sharp supports well
@@ -1193,6 +1263,152 @@ export class ImageProcessor {
       console.error('[PROCESSOR] Failed to apply AI adjustments:', error);
       throw error;
     }
+  }
+
+  // Build a simple white balance color matrix for Sharp.recomb
+  private buildWhiteBalanceMatrix(temperature: number, tint: number): number[][] {
+    const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+    const tempDelta = clamp((temperature - 6500) / 3500, -1, 1); // -1 warm, +1 cool
+    let r = 1 - 0.2 * tempDelta; // cooler -> reduce red
+    let b = 1 + 0.2 * tempDelta; // cooler -> increase blue
+    let g = 1.0;
+
+    const tintFactor = clamp(tint / 150, -1, 1); // -1 green .. +1 magenta
+    g *= 1 - 0.15 * tintFactor; // magenta -> reduce green
+    const rbTintBoost = 1 + 0.075 * tintFactor; // magenta -> boost R/B slightly
+    r *= rbTintBoost;
+    b *= rbTintBoost;
+
+    // Normalize to keep overall luminance roughly stable
+    const avg = (r + g + b) / 3;
+    r /= avg; g /= avg; b /= avg;
+
+    return [
+      [r, 0, 0],
+      [0, g, 0],
+      [0, 0, b],
+    ];
+  }
+
+  private async applyAIAdjustmentsWithImageMagick(inputPath: string, outputPath: string, aiAdjustments: AIColorAdjustments): Promise<void> {
+    console.log('[PROCESSOR] Applying comprehensive AI adjustments with ImageMagick');
+    console.log('[PROCESSOR] Input:', inputPath);
+    console.log('[PROCESSOR] Output:', outputPath);
+    console.log('[PROCESSOR] AI adjustments:', aiAdjustments);
+
+    return new Promise((resolve, reject) => {
+      try {
+        // Read the input file
+        fs.readFile(inputPath).then(inputBuffer => {
+          
+          ImageMagick.read(inputBuffer, (img) => {
+            try {
+              console.log('[PROCESSOR] ImageMagick processing started');
+
+              // Apply exposure adjustment using modulate
+              if (Math.abs(aiAdjustments.exposure) > 0.01) {
+                const exposureMultiplier = Math.pow(2, aiAdjustments.exposure);
+                const brightnessPercent = Math.max(50, Math.min(200, exposureMultiplier * 100));
+                console.log('[PROCESSOR] Applying exposure:', aiAdjustments.exposure, 'stops');
+                img.modulate(new Percentage(brightnessPercent), new Percentage(100), new Percentage(100));
+              }
+
+              // Apply brightness adjustment
+              if (Math.abs(aiAdjustments.brightness) > 1) {
+                const brightnessPercent = Math.max(50, Math.min(150, 100 + aiAdjustments.brightness));
+                console.log('[PROCESSOR] Applying brightness:', aiAdjustments.brightness);
+                img.modulate(new Percentage(brightnessPercent), new Percentage(100), new Percentage(100));
+              }
+
+              // Apply saturation adjustment
+              if (Math.abs(aiAdjustments.saturation) > 1) {
+                const saturationPercent = Math.max(0, Math.min(200, 100 + aiAdjustments.saturation));
+                console.log('[PROCESSOR] Applying saturation:', aiAdjustments.saturation);
+                img.modulate(new Percentage(100), new Percentage(saturationPercent), new Percentage(100));
+              }
+
+              // Apply contrast using sigmoidal contrast
+              if (Math.abs(aiAdjustments.contrast) > 1) {
+                const contrastAmount = Math.max(0.1, Math.min(10, Math.abs(aiAdjustments.contrast) / 10));
+                console.log('[PROCESSOR] Applying contrast:', aiAdjustments.contrast);
+                img.sigmoidalContrast(contrastAmount, aiAdjustments.contrast > 0 ? 1 : 0);
+              }
+
+              // Apply whites/blacks level adjustment
+              if (Math.abs(aiAdjustments.whites) > 5 || Math.abs(aiAdjustments.blacks) > 5) {
+                console.log('[PROCESSOR] Applying whites/blacks - whites:', aiAdjustments.whites, 'blacks:', aiAdjustments.blacks);
+                
+                // Adjust black and white points
+                const blackPoint = Math.max(0, Math.min(20, 5 + aiAdjustments.blacks / 10));
+                const whitePoint = Math.max(80, Math.min(100, 95 + aiAdjustments.whites / 10));
+                
+                img.level(new Percentage(blackPoint), new Percentage(whitePoint));
+              }
+
+              // Apply clarity using blur or sharpen
+              if (Math.abs(aiAdjustments.clarity) > 5) {
+                console.log('[PROCESSOR] Applying clarity:', aiAdjustments.clarity);
+                
+                if (aiAdjustments.clarity > 0) {
+                  // Positive clarity - sharpen
+                  const radius = Math.min(2, aiAdjustments.clarity / 30);
+                  const sigma = Math.max(0.1, radius);
+                  img.sharpen(radius, sigma);
+                } else {
+                  // Negative clarity - blur slightly
+                  const sigma = Math.min(1, Math.abs(aiAdjustments.clarity) / 50);
+                  img.blur(0, sigma);
+                }
+              }
+
+              // Apply vibrance using enhanced saturation
+              if (Math.abs(aiAdjustments.vibrance) > 5) {
+                console.log('[PROCESSOR] Applying vibrance:', aiAdjustments.vibrance);
+                const vibrancePercent = Math.max(50, Math.min(150, 100 + aiAdjustments.vibrance / 2));
+                img.modulate(new Percentage(100), new Percentage(vibrancePercent), new Percentage(100));
+              }
+
+              // Apply hue rotation for selective color effects
+              if (Math.abs(aiAdjustments.hue_red) > 5 || Math.abs(aiAdjustments.hue_yellow) > 5 || 
+                  Math.abs(aiAdjustments.hue_blue) > 5 || Math.abs(aiAdjustments.hue_green) > 5) {
+                
+                // Calculate average hue shift (simplified approach)
+                const avgHueShift = (aiAdjustments.hue_red + aiAdjustments.hue_yellow + 
+                                   aiAdjustments.hue_blue + aiAdjustments.hue_green) / 4;
+                
+                if (Math.abs(avgHueShift) > 5) {
+                  console.log('[PROCESSOR] Applying average hue shift:', avgHueShift);
+                  const huePercent = Math.max(50, Math.min(150, 100 + avgHueShift));
+                  img.modulate(new Percentage(100), new Percentage(100), new Percentage(huePercent));
+                }
+              }
+
+              console.log('[PROCESSOR] Writing processed image with ImageMagick');
+              
+              // Write the processed image
+              img.write(MagickFormat.Dng, (data) => {
+                fs.writeFile(outputPath, data).then(() => {
+                  console.log('[PROCESSOR] ImageMagick processing completed successfully');
+                  resolve();
+                }).catch((error) => {
+                  console.error('[PROCESSOR] Failed to write ImageMagick output:', error);
+                  reject(error);
+                });
+              });
+
+            } catch (error) {
+              console.error('[PROCESSOR] ImageMagick processing failed:', error);
+              reject(error);
+            }
+          });
+
+        }).catch(reject);
+
+      } catch (error) {
+        console.error('[PROCESSOR] Failed to apply ImageMagick adjustments:', error);
+        reject(error);
+      }
+    });
   }
 
   private convertAIToLegacyFormat(aiAdjustments: AIColorAdjustments): any {

@@ -38,18 +38,24 @@
                 </div>
 
                 <div class="target-images-upload">
-                    <h2>Target Images</h2>
+                    <h2>Target Image</h2>
                     <div class="drop-zone" id="targetImagesDropZone">
                         <div class="drop-zone-content">
                             <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24">
                                 <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                             </svg>
-                            <p>Drop target images here or click to select</p>
-                            <p class="file-types">Multiple files supported</p>
+                            <p>Drop a target image here or click to select</p>
+                            <p class="file-types">Single file</p>
                         </div>
-                        <input type="file" id="targetImagesInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw,.heic,.heif,.avif" multiple style="display: none;">
+                        <input type="file" id="targetImagesInput" accept=".dng,.jpg,.jpeg,.png,.tiff,.tif,.cr2,.nef,.arw,.heic,.heif,.avif" style="display: none;">
                     </div>
-                    <div class="target-images-grid" id="targetImagesGrid"></div>
+                    <div class="image-preview" id="targetImagePreview" style="display: none;">
+                        <img id="targetImage" alt="Target image">
+                        <div class="image-info">
+                            <span id="targetImageName"></span>
+                            <button class="remove-btn" id="removeTargetImage">Remove</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -68,11 +74,11 @@
                             <span>Brightness</span>
                         </label>
                         <label class="checkbox-label">
-                            <input type="checkbox" id="matchContrast">
+                            <input type="checkbox" id="matchContrast" checked>
                             <span>Contrast</span>
                         </label>
                         <label class="checkbox-label">
-                            <input type="checkbox" id="matchSaturation">
+                            <input type="checkbox" id="matchSaturation" checked>
                             <span>Saturation</span>
                         </label>
                     </div>

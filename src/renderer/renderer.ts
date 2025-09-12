@@ -47,9 +47,15 @@ class ImageMatchRenderer {
 
     if (targetImagesDropZone && targetImagesInput) {
       this.setupDropZone(targetImagesDropZone, targetImagesInput, (files) => {
-        this.handleTargetImagesSelection(Array.from(files));
-      }, true);
+        // Enforce single target image
+        const first = Array.from(files)[0];
+        if (first) this.handleTargetImagesSelection([first]);
+      }, false);
     }
+
+    // Target remove button
+    const removeTargetImageBtn = document.getElementById('removeTargetImage');
+    removeTargetImageBtn?.addEventListener('click', () => this.removeCurrentTargetImage());
 
     // Action buttons
     document.getElementById('analyzeButton')?.addEventListener('click', () => this.analyzeColors());
@@ -141,7 +147,7 @@ class ImageMatchRenderer {
     });
   }
 
-  private handleBaseImageSelection(file: File): void {
+  private async handleBaseImageSelection(file: File): Promise<void> {
     console.log('[UI] Handling base image selection:', file.name);
     if (this.isValidImageFile(file)) {
       // In Electron, File objects have a path property, but we need to handle both cases
@@ -155,14 +161,14 @@ class ImageMatchRenderer {
       
       this.baseImagePath = newPath;
       console.log('[UI] Base image path set to:', this.baseImagePath);
-      this.displayBaseImage(file);
+      await this.displayBaseImage(file);
       this.updateUI();
     } else {
       this.showError('Invalid file format. Please select a supported image file.');
     }
   }
 
-  private handleBaseImagePath(filePath: string): void {
+  private async handleBaseImagePath(filePath: string): Promise<void> {
     console.log('[UI] Handling base image path from menu:', filePath);
     
     // Prevent duplicate selections
@@ -172,11 +178,11 @@ class ImageMatchRenderer {
     }
     
     this.baseImagePath = filePath;
-    this.displayBaseImageFromPath(filePath);
+    await this.displayBaseImageFromPath(filePath);
     this.updateUI();
   }
 
-  private handleTargetImagesSelection(files: File[]): void {
+  private async handleTargetImagesSelection(files: File[]): Promise<void> {
     console.log('[UI] Handling target images selection:', files.length, 'files');
     const validFiles = files.filter(file => this.isValidImageFile(file));
     
@@ -185,37 +191,52 @@ class ImageMatchRenderer {
       return;
     }
 
+    // Only keep the first valid file
+    this.targetImagePaths = [];
+    const targetPreview = document.getElementById('targetImagePreview');
+    const targetDrop = document.getElementById('targetImagesDropZone');
+    if (targetPreview && targetDrop) {
+      targetPreview.style.display = 'none';
+      targetDrop.style.display = 'block';
+    }
+
     let addedCount = 0;
-    validFiles.forEach(file => {
+    for (const file of validFiles.slice(0, 1)) {
       // In Electron, File objects have a path property, but we need to handle both cases
       const path = (file as any).path || URL.createObjectURL(file);
       if (!this.targetImagePaths.includes(path)) {
         this.targetImagePaths.push(path);
-        this.addTargetImageToGrid(file, path);
+        await this.displayTargetImage(file);
         addedCount++;
         console.log('[UI] Added target image:', file.name);
       } else {
         console.log('[UI] Skipping duplicate target image:', file.name);
       }
-    });
+    }
 
     console.log(`[UI] Added ${addedCount} new target images, total: ${this.targetImagePaths.length}`);
     this.updateUI();
   }
 
-  private handleTargetImagePaths(filePaths: string[]): void {
+  private async handleTargetImagePaths(filePaths: string[]): Promise<void> {
     console.log('[UI] Handling target image paths from menu:', filePaths.length, 'paths');
+    // Only keep one target
+    this.targetImagePaths = [];
+    const targetPreview2 = document.getElementById('targetImagePreview');
+    const targetDrop2 = document.getElementById('targetImagesDropZone');
+    if (targetPreview2 && targetDrop2) {
+      targetPreview2.style.display = 'none';
+      targetDrop2.style.display = 'block';
+    }
+
     let addedCount = 0;
-    filePaths.forEach(path => {
-      if (!this.targetImagePaths.includes(path)) {
-        this.targetImagePaths.push(path);
-        this.addTargetImageToGridFromPath(path);
-        addedCount++;
-        console.log('[UI] Added target image path:', path.split('/').pop());
-      } else {
-        console.log('[UI] Skipping duplicate target image path:', path.split('/').pop());
-      }
-    });
+    const first = filePaths[0];
+    if (first && !this.targetImagePaths.includes(first)) {
+      this.targetImagePaths.push(first);
+      await this.displayTargetImageFromPath(first);
+      addedCount++;
+      console.log('[UI] Added target image path:', first.split('/').pop());
+    }
 
     console.log(`[UI] Added ${addedCount} new target images, total: ${this.targetImagePaths.length}`);
     this.updateUI();
@@ -227,15 +248,15 @@ class ImageMatchRenderer {
     return validExtensions.some(ext => fileName.endsWith(ext));
   }
 
-  private displayBaseImage(file: File): void {
+  private async displayBaseImage(file: File): Promise<void> {
     const preview = document.getElementById('baseImagePreview');
     const image = document.getElementById('baseImage') as HTMLImageElement;
     const nameSpan = document.getElementById('baseImageName');
     const dropZone = document.getElementById('baseImageDropZone');
 
     if (preview && image && nameSpan && dropZone) {
-      const url = URL.createObjectURL(file);
-      image.src = url;
+      const previewPath = await this.generatePreviewForFile(file);
+      image.src = `file://${previewPath}`;
       nameSpan.textContent = file.name;
       
       dropZone.style.display = 'none';
@@ -243,14 +264,15 @@ class ImageMatchRenderer {
     }
   }
 
-  private displayBaseImageFromPath(filePath: string): void {
+  private async displayBaseImageFromPath(filePath: string): Promise<void> {
     const preview = document.getElementById('baseImagePreview');
     const image = document.getElementById('baseImage') as HTMLImageElement;
     const nameSpan = document.getElementById('baseImageName');
     const dropZone = document.getElementById('baseImageDropZone');
 
     if (preview && image && nameSpan && dropZone) {
-      image.src = `file://${filePath}`;
+      const previewPath = await this.generatePreviewFromPath(filePath);
+      image.src = `file://${previewPath}`;
       nameSpan.textContent = filePath.split('/').pop() || 'Unknown';
       
       dropZone.style.display = 'none';
@@ -258,57 +280,68 @@ class ImageMatchRenderer {
     }
   }
 
-  private addTargetImageToGrid(file: File, path: string): void {
-    const grid = document.getElementById('targetImagesGrid');
-    if (!grid) return;
+  private async displayTargetImage(file: File): Promise<void> {
+    const preview = document.getElementById('targetImagePreview');
+    const image = document.getElementById('targetImage') as HTMLImageElement;
+    const nameSpan = document.getElementById('targetImageName');
+    const dropZone = document.getElementById('targetImagesDropZone');
 
-    const item = document.createElement('div');
-    item.className = 'target-image-item';
-    const imgUrl = URL.createObjectURL(file);
-    item.innerHTML = `
-      <img src="${imgUrl}" alt="${file.name}">
-      <button class="remove-btn" onclick="imageMatchRenderer.removeTargetImage('${path}')">×</button>
-      <div class="target-image-name">${file.name}</div>
-    `;
-
-    grid.appendChild(item);
-
-    const img = item.querySelector('img') as HTMLImageElement | null;
-    if (img) {
-      img.onerror = () => {
-        const fallback = document.createElement('div');
-        fallback.className = 'no-preview';
-        fallback.textContent = 'No preview available (HEIC/RAW)';
-        img.replaceWith(fallback);
-      };
+    if (preview && image && nameSpan && dropZone) {
+      const previewPath = await this.generatePreviewForFile(file);
+      image.src = `file://${previewPath}`;
+      nameSpan.textContent = file.name;
+      dropZone.style.display = 'none';
+      preview.style.display = 'block';
     }
   }
 
-  private addTargetImageToGridFromPath(filePath: string): void {
-    const grid = document.getElementById('targetImagesGrid');
-    if (!grid) return;
+  private async displayTargetImageFromPath(filePath: string): Promise<void> {
+    const preview = document.getElementById('targetImagePreview');
+    const image = document.getElementById('targetImage') as HTMLImageElement;
+    const nameSpan = document.getElementById('targetImageName');
+    const dropZone = document.getElementById('targetImagesDropZone');
 
-    const fileName = filePath.split('/').pop() || 'Unknown';
-    const item = document.createElement('div');
-    item.className = 'target-image-item';
-    const url = `file://${encodeURI(filePath)}`;
-    item.innerHTML = `
-      <img src="${url}" alt="${fileName}">
-      <button class="remove-btn" onclick="imageMatchRenderer.removeTargetImage('${filePath}')">×</button>
-      <div class="target-image-name">${fileName}</div>
-    `;
-
-    grid.appendChild(item);
-
-    const img = item.querySelector('img') as HTMLImageElement | null;
-    if (img) {
-      img.onerror = () => {
-        const fallback = document.createElement('div');
-        fallback.className = 'no-preview';
-        fallback.textContent = 'No preview available (HEIC/RAW)';
-        img.replaceWith(fallback);
-      };
+    if (preview && image && nameSpan && dropZone) {
+      const previewPath = await this.generatePreviewFromPath(filePath);
+      image.src = `file://${previewPath}`;
+      nameSpan.textContent = filePath.split('/').pop() || 'Unknown';
+      dropZone.style.display = 'none';
+      preview.style.display = 'block';
     }
+  }
+
+  private removeCurrentTargetImage(): void {
+    this.targetImagePaths = [];
+    const preview = document.getElementById('targetImagePreview');
+    const dropZone = document.getElementById('targetImagesDropZone');
+    if (preview && dropZone) {
+      preview.style.display = 'none';
+      dropZone.style.display = 'block';
+    }
+    this.updateUI();
+  }
+
+  private async generatePreviewFromPath(filePath: string): Promise<string> {
+    const res = await window.electronAPI.generatePreview({ path: filePath });
+    if (res?.success && res.previewPath) return res.previewPath;
+    throw new Error(res?.error || 'Preview generation failed');
+  }
+
+  private async generatePreviewForFile(file: File): Promise<string> {
+    const filePath = (file as any).path;
+    if (filePath) {
+      return this.generatePreviewFromPath(filePath);
+    }
+    // Fallback: read as data URL and send to main
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    const res = await window.electronAPI.generatePreview({ dataUrl });
+    if (res?.success && res.previewPath) return res.previewPath;
+    throw new Error(res?.error || 'Preview generation failed');
   }
 
   public removeTargetImage(path: string): void {

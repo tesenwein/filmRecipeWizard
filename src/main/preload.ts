@@ -16,6 +16,8 @@ const electronAPI = {
   analyzeColorMatch: (data: any) => ipcRenderer.invoke('analyze-color-match', data),
   matchStyle: (data: any) => ipcRenderer.invoke('match-style', data),
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
+  // Preview generation
+  generatePreview: (args: { path?: string; dataUrl?: string }) => ipcRenderer.invoke('generate-preview', args),
 
   // Utility functions
   removeAllListeners: (channel: string) => {

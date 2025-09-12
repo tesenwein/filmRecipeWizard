@@ -248,6 +248,19 @@ class ImageMatchApp {
       }
     });
 
+    // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
+    ipcMain.handle('generate-preview', async (_event, args: { path?: string; dataUrl?: string }) => {
+      console.log('[IPC] generate-preview called with:', { hasPath: !!args?.path, hasDataUrl: !!args?.dataUrl });
+      try {
+        const previewPath = await this.imageProcessor.generatePreview(args);
+        console.log('[IPC] generate-preview completed:', { previewPath });
+        return { success: true, previewPath };
+      } catch (error) {
+        console.error('[IPC] Error generating preview:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Handle AI color match analysis
     ipcMain.handle('analyze-color-match', async (_event, data) => {
       console.log('[IPC] analyze-color-match called with:', { baseImagePath: data?.baseImagePath, targetImagePath: data?.targetImagePath });
