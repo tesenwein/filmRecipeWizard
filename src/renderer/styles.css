@@ -340,6 +340,240 @@ section h2 {
   margin-bottom: 0.5rem;
 }
 
+/* Color Analysis Modal */
+.color-analysis-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 2rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 2rem;
+}
+
+.analysis-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.analysis-section p {
+  margin-bottom: 0.5rem;
+  color: #666;
+}
+
+.color-swatch {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border: 2px solid #eee;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dominant-colors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dominant-color-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dominant-color-item .color-swatch {
+  width: 30px;
+  height: 30px;
+  margin: 0;
+}
+
+.dominant-color-item span {
+  font-weight: 500;
+  color: #666;
+}
+
+/* Enhanced Results */
+.result-item {
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.result-item:hover {
+  transform: translateY(-4px);
+}
+
+.result-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.result-item:hover .result-actions {
+  opacity: 1;
+}
+
+.result-action-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.result-action-btn:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+
+/* Enhanced Progress */
+.progress-section {
+  text-align: center;
+}
+
+.progress-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.progress-item {
+  background: rgba(255, 255, 255, 0.5);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.progress-item h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.progress-item-bar {
+  width: 100%;
+  height: 4px;
+  background: #e9ecef;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-item-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.progress-item span {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Toast Notifications */
+.toast {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  background: white;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transform: translateX(400px);
+  transition: transform 0.3s ease;
+  border-left: 4px solid #667eea;
+}
+
+.toast.show {
+  transform: translateX(0);
+}
+
+.toast.error {
+  border-left-color: #ff4757;
+}
+
+.toast.success {
+  border-left-color: #2ed573;
+}
+
+.toast.warning {
+  border-left-color: #ffa502;
+}
+
 /* Responsive design */
 @media (max-width: 1024px) {
   .upload-section {
@@ -352,6 +586,10 @@ section h2 {
   
   .main-content {
     padding: 1rem;
+  }
+  
+  .analysis-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -374,5 +612,19 @@ section h2 {
   
   .btn {
     padding: 1rem;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .modal-header, .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .analysis-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }

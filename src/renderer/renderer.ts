@@ -376,9 +376,46 @@ class ImageMatchRenderer {
   }
 
   private showColorAnalysis(analysis: any): void {
-    // TODO: Implement color analysis display
     console.log('Color analysis:', analysis);
-    this.showInfo(`Color analysis complete. Temperature: ${analysis.temperature}K, Tint: ${analysis.tint}`);
+    
+    // Create a color analysis modal
+    const modal = document.createElement('div');
+    modal.className = 'color-analysis-modal';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Color Analysis Results</h3>
+          <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.remove()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="analysis-grid">
+            <div class="analysis-section">
+              <h4>White Balance</h4>
+              <p>Temperature: <strong>${analysis.temperature}K</strong></p>
+              <p>Tint: <strong>${analysis.tint}</strong></p>
+            </div>
+            <div class="analysis-section">
+              <h4>Average Color</h4>
+              <div class="color-swatch" style="background-color: rgb(${analysis.averageColor.r}, ${analysis.averageColor.g}, ${analysis.averageColor.b})"></div>
+              <p>RGB: ${analysis.averageColor.r}, ${analysis.averageColor.g}, ${analysis.averageColor.b}</p>
+            </div>
+            <div class="analysis-section">
+              <h4>Dominant Colors</h4>
+              <div class="dominant-colors">
+                ${analysis.dominantColors.map((color: any, index: number) => `
+                  <div class="dominant-color-item">
+                    <div class="color-swatch" style="background-color: rgb(${color.color.r}, ${color.color.g}, ${color.color.b})"></div>
+                    <span>${color.percentage.toFixed(1)}%</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
   }
 
   private showResults(results: any[]): void {
@@ -389,32 +426,74 @@ class ImageMatchRenderer {
 
     resultsGrid.innerHTML = '';
     
+    let successCount = 0;
     results.forEach((result, index) => {
       if (result.success && result.outputPath) {
+        successCount++;
+        const fileName = result.outputPath.split('/').pop() || `Image ${index + 1}`;
         const item = document.createElement('div');
         item.className = 'result-item';
         item.innerHTML = `
           <img src="file://${result.outputPath}" alt="Processed image ${index + 1}">
+          <div class="result-actions">
+            <button class="result-action-btn" onclick="imageMatchRenderer.openInFolder('${result.outputPath}')">
+              Show in Folder
+            </button>
+          </div>
           <div class="result-info">
-            <h4>Processed Image ${index + 1}</h4>
-            <p>Output: ${result.outputPath}</p>
+            <h4>${fileName}</h4>
+            <p>Processing: ${result.metadata ? 'Style matched successfully' : 'Basic processing applied'}</p>
+            ${result.metadata ? `
+              <p><small>Temperature: ${Math.round(result.metadata.adjustments?.temperature || 0)}K, 
+                        Brightness: ${(result.metadata.adjustments?.brightness || 1).toFixed(2)}x</small></p>
+            ` : ''}
           </div>
         `;
         resultsGrid.appendChild(item);
       }
     });
 
+    if (successCount > 0) {
+      this.showToast(`Successfully processed ${successCount} image${successCount > 1 ? 's' : ''}`, 'success');
+    }
+
+    const failedCount = results.length - successCount;
+    if (failedCount > 0) {
+      this.showToast(`${failedCount} image${failedCount > 1 ? 's' : ''} failed to process`, 'warning');
+    }
+
     resultsSection.style.display = 'block';
   }
 
+  public openInFolder(filePath: string): void {
+    // This would need to be implemented via IPC to the main process
+    console.log('Open in folder:', filePath);
+    this.showToast('Feature not yet implemented', 'warning');
+  }
+
   private showError(message: string): void {
-    // Simple error display - could be improved with a toast system
-    alert(`Error: ${message}`);
+    this.showToast(message, 'error');
   }
 
   private showInfo(message: string): void {
-    // Simple info display - could be improved with a toast system
-    alert(message);
+    this.showToast(message, 'success');
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after 4 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => document.body.removeChild(toast), 300);
+    }, 4000);
   }
 }
 
