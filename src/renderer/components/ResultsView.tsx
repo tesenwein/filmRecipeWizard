@@ -14,7 +14,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   targetImages,
   onReset
 }) => {
-  // No preview image processing
+  // For display only: convert unsupported formats to JPEG (no adjustments)
+  const [convertedBase, setConvertedBase] = useState<string | null>(null);
+  const [convertedOriginals, setConvertedOriginals] = useState<Record<number, string>>({});
   const [exportOptions, setExportOptions] = useState<Record<number, {
     wbBasic: boolean;
     exposure: boolean;
@@ -28,11 +30,53 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const successfulResults = results.filter(result => result.success);
   const failedResults = results.filter(result => !result.success);
 
+  const isSafeForImg = (p?: string | null) => {
+    if (!p) return false;
+    const ext = p.split('.').pop()?.toLowerCase();
+    return !!ext && ['jpg','jpeg','png','webp','gif'].includes(ext);
+  };
+
+  // Convert base if needed for <img>
+  useEffect(() => {
+    const run = async () => {
+      if (_baseImage && !isSafeForImg(_baseImage)) {
+        try {
+          const res = await window.electronAPI.generatePreview({ path: _baseImage });
+          if (res?.success && res.previewPath) setConvertedBase(res.previewPath);
+          else setConvertedBase(_baseImage);
+        } catch {
+          setConvertedBase(_baseImage);
+        }
+      } else {
+        setConvertedBase(null);
+      }
+    };
+    run();
+  }, [_baseImage]);
+
+  // Convert original target images if needed for <img>
+  useEffect(() => {
+    const run = async () => {
+      const map: Record<number, string> = {};
+      await Promise.all(results.map(async (_r, idx) => {
+        const orig = targetImages[idx];
+        if (orig && !isSafeForImg(orig)) {
+          try {
+            const res = await window.electronAPI.generatePreview({ path: orig });
+            if (res?.success && res.previewPath) map[idx] = res.previewPath;
+          } catch {}
+        }
+      }));
+      setConvertedOriginals(map);
+    };
+    run();
+  }, [results, targetImages]);
+
   const defaultOptions = {
     wbBasic: true,
     exposure: false,
     hsl: true,
-    colorGrading: true,
+    colorGrading: false,
     curves: true,
     sharpenNoise: true,
     vignette: true
@@ -146,7 +190,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     <div style={{ width: '100%', height: '260px', borderRadius: '12px', overflow: 'hidden', border: '3px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
                       {_baseImage && (
                         <img
-                          src={`file://${_baseImage}`}
+                          src={(() => {
+                            const src = convertedBase || _baseImage;
+                            return src.startsWith('file://') ? src : `file://${src}`;
+                          })()}
                           alt="Base"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
@@ -154,19 +201,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600 }}>Processed</div>
+                    <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600 }}>Original</div>
                     <div style={{ width: '100%', height: '260px', borderRadius: '12px', overflow: 'hidden', border: '3px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', position: 'relative' }}>
                       <img
                         src={(() => {
-                          // Show the processed output image, not the original
-                          const processedPath = result.outputPath;
-                          if (!processedPath) {
-                            // Fallback to original if no processed image available
-                            const overallIndex = results.indexOf(result);
-                            const fallback = targetImages[overallIndex];
-                            return fallback?.startsWith('file://') ? fallback : `file://${fallback}`;
-                          }
-                          return processedPath?.startsWith('file://') ? processedPath : `file://${processedPath}`;
+                          const overallIndex = results.indexOf(result);
+                          const orig = convertedOriginals[overallIndex] || targetImages[overallIndex];
+                          const src = orig || '';
+                          return src?.startsWith('file://') ? src : `file://${src}`;
                         })()}
                         alt={`Processed image ${index + 1}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}

@@ -126,6 +126,7 @@ Consider these aspects:
 - Saturation and vibrance
 - Individual color hue shifts
  - Tone curves: when needed, include multiple control points (3-7) for composite and per-channel curves (0-255 input/output) to shape contrast and color balance
+ - watch out for skin tones and ensure they remain natural
 
 Also include modern Color Grading settings (Lightroom/ACR):
 - Shadow/Midtone/Highlight/Global color wheels with Hue (0-360), Sat (0-100), and Lum (-100 to 100)
@@ -289,22 +290,102 @@ Provide specific numeric values for each adjustment that would achieve the best 
                     maximum: 100,
                   },
                   // HSL per-color controls
-                  sat_red: { type: 'number', description: 'Red saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  sat_orange: { type: 'number', description: 'Orange saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  sat_yellow: { type: 'number', description: 'Yellow saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  sat_green: { type: 'number', description: 'Green saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  sat_aqua: { type: 'number', description: 'Aqua saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  sat_blue: { type: 'number', description: 'Blue saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  sat_purple: { type: 'number', description: 'Purple saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  sat_magenta: { type: 'number', description: 'Magenta saturation shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_red: { type: 'number', description: 'Red luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_orange: { type: 'number', description: 'Orange luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_yellow: { type: 'number', description: 'Yellow luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_green: { type: 'number', description: 'Green luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_aqua: { type: 'number', description: 'Aqua luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_blue: { type: 'number', description: 'Blue luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_purple: { type: 'number', description: 'Purple luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
-                  lum_magenta: { type: 'number', description: 'Magenta luminance shift (-100 to +100)', minimum: -100, maximum: 100 },
+                  sat_red: {
+                    type: 'number',
+                    description: 'Red saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  sat_orange: {
+                    type: 'number',
+                    description: 'Orange saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  sat_yellow: {
+                    type: 'number',
+                    description: 'Yellow saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  sat_green: {
+                    type: 'number',
+                    description: 'Green saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  sat_aqua: {
+                    type: 'number',
+                    description: 'Aqua saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  sat_blue: {
+                    type: 'number',
+                    description: 'Blue saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  sat_purple: {
+                    type: 'number',
+                    description: 'Purple saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  sat_magenta: {
+                    type: 'number',
+                    description: 'Magenta saturation shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_red: {
+                    type: 'number',
+                    description: 'Red luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_orange: {
+                    type: 'number',
+                    description: 'Orange luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_yellow: {
+                    type: 'number',
+                    description: 'Yellow luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_green: {
+                    type: 'number',
+                    description: 'Green luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_aqua: {
+                    type: 'number',
+                    description: 'Aqua luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_blue: {
+                    type: 'number',
+                    description: 'Blue luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_purple: {
+                    type: 'number',
+                    description: 'Purple luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  lum_magenta: {
+                    type: 'number',
+                    description: 'Magenta luminance shift (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
                   // Additional develop settings
                   texture: {
                     type: 'number',
@@ -404,13 +485,48 @@ Provide specific numeric values for each adjustment that would achieve the best 
                     maximum: 100,
                   },
                   // Camera Calibration and Shadow Tint
-                  shadow_tint: { type: 'number', description: 'Shadow Tint (-100 to +100)', minimum: -100, maximum: 100 },
-                  calib_red_hue: { type: 'number', description: 'Calibration Red Hue (-100 to +100)', minimum: -100, maximum: 100 },
-                  calib_red_sat: { type: 'number', description: 'Calibration Red Saturation (-100 to +100)', minimum: -100, maximum: 100 },
-                  calib_green_hue: { type: 'number', description: 'Calibration Green Hue (-100 to +100)', minimum: -100, maximum: 100 },
-                  calib_green_sat: { type: 'number', description: 'Calibration Green Saturation (-100 to +100)', minimum: -100, maximum: 100 },
-                  calib_blue_hue: { type: 'number', description: 'Calibration Blue Hue (-100 to +100)', minimum: -100, maximum: 100 },
-                  calib_blue_sat: { type: 'number', description: 'Calibration Blue Saturation (-100 to +100)', minimum: -100, maximum: 100 },
+                  shadow_tint: {
+                    type: 'number',
+                    description: 'Shadow Tint (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  calib_red_hue: {
+                    type: 'number',
+                    description: 'Calibration Red Hue (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  calib_red_sat: {
+                    type: 'number',
+                    description: 'Calibration Red Saturation (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  calib_green_hue: {
+                    type: 'number',
+                    description: 'Calibration Green Hue (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  calib_green_sat: {
+                    type: 'number',
+                    description: 'Calibration Green Saturation (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  calib_blue_hue: {
+                    type: 'number',
+                    description: 'Calibration Blue Hue (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  calib_blue_sat: {
+                    type: 'number',
+                    description: 'Calibration Blue Saturation (-100 to +100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
                   // Curves: 0-255 pairs for PV2012 tone curve
                   tone_curve: {
                     type: 'array',

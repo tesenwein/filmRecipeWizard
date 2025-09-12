@@ -13,7 +13,28 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   targetImages
 }) => {
   const { progress, status } = processingState;
-  // No preview generation in processing; show original base image
+  // Convert base image for display if unsupported
+  const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
+  const isSafeForImg = (p?: string | null) => {
+    if (!p) return false;
+    const ext = p.split('.').pop()?.toLowerCase();
+    return !!ext && ['jpg','jpeg','png','webp','gif'].includes(ext);
+  };
+  useEffect(() => {
+    const run = async () => {
+      if (baseImage && !isSafeForImg(baseImage)) {
+        try {
+          const res = await window.electronAPI.generatePreview({ path: baseImage });
+          setBaseDisplay(res?.success ? res.previewPath : baseImage);
+        } catch {
+          setBaseDisplay(baseImage);
+        }
+      } else {
+        setBaseDisplay(baseImage);
+      }
+    };
+    run();
+  }, [baseImage]);
 
   return (
     <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -126,7 +147,10 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
               boxShadow: '0 2px 12px rgba(102, 126, 234, 0.1)'
             }}>
               <img 
-                src={`file://${baseImage}`}
+                src={(() => {
+                  const src = baseDisplay || baseImage;
+                  return src?.startsWith('file://') ? src : `file://${src}`;
+                })()}
                 alt="Base image"
                 style={{
                   width: '100%',

@@ -14,6 +14,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   targetImages
 }) => {
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
+  const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
+
+  const isSafeForImg = (p?: string | null) => {
+    if (!p) return false;
+    const ext = p.split('.').pop()?.toLowerCase();
+    return !!ext && ['jpg','jpeg','png','webp','gif'].includes(ext);
+  };
 
   const handleBaseImageSelect = async () => {
     try {
@@ -52,6 +59,23 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   const canProcess = baseImage && targetImages.length > 0;
+
+  // Convert base image for display if unsupported
+  useEffect(() => {
+    const run = async () => {
+      if (baseImage && !isSafeForImg(baseImage)) {
+        try {
+          const res = await window.electronAPI.generatePreview({ path: baseImage });
+          setBaseDisplay(res?.success ? res.previewPath : baseImage);
+        } catch {
+          setBaseDisplay(baseImage);
+        }
+      } else {
+        setBaseDisplay(baseImage);
+      }
+    };
+    run();
+  }, [baseImage]);
 
   // Generate previews for target images
   useEffect(() => {
@@ -126,9 +150,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 position: 'relative',
                 boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)'
               }}>
-                {baseImage && (
+                {baseDisplay && (
                   <img 
-                    src={`file://${baseImage}`}
+                    src={baseDisplay.startsWith('file://') ? baseDisplay : `file://${baseDisplay}`}
                     alt="Base image"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
@@ -155,7 +179,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 textAlign: 'center',
                 fontWeight: '500'
               }}>
-                {baseImage.split('/').pop()}
+                {(baseImage || '').split('/').pop()}
               </p>
             </div>
           ) : (

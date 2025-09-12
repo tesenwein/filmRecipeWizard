@@ -174,12 +174,14 @@ const App: React.FC = () => {
     setResults(convertedResults);
     setCurrentProcessId(process.id);
     
-    // Always go to results view when selecting a process
+    // Always go to results view when selecting a process - ignore status
     setCurrentStep('results');
   };
 
   const handleOpenProject = (process: ProcessHistory) => {
-    // Always open projects in results view - let the results view handle empty states
+    // Force open ALL projects in results view regardless of status
+    // This fixes the issue where in_progress projects couldn't be opened
+    setProcessingState({ isProcessing: false, progress: 0, status: '' });
     handleSelectProcess(process);
   };
 
