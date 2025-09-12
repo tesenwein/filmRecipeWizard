@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ProcessingResult } from './App';
+import { ProcessingResult } from '../../shared/types';
 
 interface ResultsViewProps {
   results: ProcessingResult[];
@@ -248,9 +248,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       {/* All Adjustments summary */}
                       <div style={{ display: 'grid', gap: '6px', fontSize: '12px', color: '#555555' }}>
                         {/* WB & Basic */}
-                        <div><strong>Temperature:</strong> {Math.round(result.metadata.aiAdjustments.temperature)}K</div>
-                        <div><strong>Tint:</strong> {Math.round(result.metadata.aiAdjustments.tint)}</div>
-                        <div><strong>Exposure:</strong> {result.metadata.aiAdjustments.exposure.toFixed(2)} stops</div>
+                        <div><strong>Temperature:</strong> {Math.round(result.metadata.aiAdjustments.temperature || 0)}K</div>
+                        <div><strong>Tint:</strong> {Math.round(result.metadata.aiAdjustments.tint || 0)}</div>
+                        <div><strong>Exposure:</strong> {(result.metadata.aiAdjustments.exposure || 0).toFixed(2)} stops</div>
                         <div><strong>Contrast:</strong> {result.metadata.aiAdjustments.contrast}</div>
                         <div><strong>Highlights:</strong> {result.metadata.aiAdjustments.highlights}</div>
                         <div><strong>Shadows:</strong> {result.metadata.aiAdjustments.shadows}</div>

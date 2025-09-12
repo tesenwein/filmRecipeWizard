@@ -3,34 +3,7 @@ import ImageUploader from './ImageUploader';
 import ProcessingView from './ProcessingView';
 import ResultsView from './ResultsView';
 import HistoryView from './HistoryView';
-import { AIColorAdjustments } from '../../services/openai-color-analyzer';
-
-export interface ProcessingState {
-  isProcessing: boolean;
-  progress: number;
-  status: string;
-}
-
-export interface ProcessingResult {
-  success: boolean;
-  outputPath?: string;
-  metadata?: {
-    aiAdjustments?: AIColorAdjustments;
-    adjustments?: any;
-    reasoning?: string;
-    confidence?: number;
-  };
-  error?: string;
-}
-
-export interface ProcessHistory {
-  id: string;
-  timestamp: string;
-  baseImage: string;
-  targetImages: string[];
-  results: ProcessingResult[];
-  status: 'completed' | 'failed' | 'in_progress';
-}
+import { ProcessHistory, ProcessingResult, ProcessingState } from '../../shared/types';
 
 const App: React.FC = () => {
   const [baseImage, setBaseImage] = useState<string | null>(null);
@@ -94,7 +67,16 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleProcessingComplete = async (results: ProcessingResult[]) => {
+  const handleProcessingComplete = async (processingResults: any[]) => {
+    // Convert the results to include inputPath for proper storage
+    const results: ProcessingResult[] = processingResults.map((result, index) => ({
+      inputPath: targetImages[index],
+      outputPath: result.outputPath,
+      success: result.success,
+      error: result.error,
+      metadata: result.metadata
+    }));
+    
     setResults(results);
     setProcessingState(prev => ({
       ...prev,
@@ -103,33 +85,14 @@ const App: React.FC = () => {
       status: 'Processing complete!'
     }));
 
-    // Update process in storage - convert ProcessingResult[] to ProcessResult[]
+    // Update process in storage
     if (currentProcessId) {
       try {
-        console.log('Processing complete - saving results:', results);
-        console.log('Target images for conversion:', targetImages);
-        
-        const convertedResults = results.map((result, index) => ({
-          inputPath: targetImages[index], // Use the corresponding target image path
-          outputPath: result.outputPath,
-          success: result.success,
-          error: result.error,
-          metadata: result.metadata ? {
-            aiAdjustments: result.metadata.aiAdjustments,
-            processingTime: undefined
-          } : undefined
-        }));
-
-        console.log('Converted results for storage:', convertedResults);
         const status = results.some(r => r.success) ? 'completed' as const : 'failed' as const;
-        console.log('Setting process status to:', status);
-
-        const updateResult = await window.electronAPI.updateProcess(currentProcessId, {
-          results: convertedResults,
-          status: status
+        await window.electronAPI.updateProcess(currentProcessId, {
+          results,
+          status
         });
-        
-        console.log('Update process result:', updateResult);
       } catch (error) {
         console.error('Failed to update process:', error);
       }
@@ -158,31 +121,24 @@ const App: React.FC = () => {
   const handleSelectProcess = (process: ProcessHistory) => {
     setBaseImage(process.baseImage);
     setTargetImages(process.targetImages);
-    
-    // Convert ProcessResult[] to ProcessingResult[] 
-    const convertedResults: ProcessingResult[] = (process.results || []).map(result => ({
-      success: result.success,
-      outputPath: result.outputPath,
-      error: result.error,
-      metadata: result.metadata ? {
-        aiAdjustments: result.metadata.aiAdjustments,
-        reasoning: undefined,
-        confidence: undefined
-      } : undefined
-    }));
-    
-    setResults(convertedResults);
+    setResults(process.results || []);
     setCurrentProcessId(process.id);
-    
-    // Always go to results view when selecting a process - ignore status
     setCurrentStep('results');
   };
 
   const handleOpenProject = (process: ProcessHistory) => {
-    // Force open ALL projects in results view regardless of status
-    // This fixes the issue where in_progress projects couldn't be opened
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
-    handleSelectProcess(process);
+    setBaseImage(process.baseImage);
+    setTargetImages(process.targetImages);
+    setResults(process.results || []);
+    setCurrentProcessId(process.id);
+    
+    // If project has results, go to results view, otherwise go to upload view
+    if (process.results && process.results.length > 0) {
+      setCurrentStep('results');
+    } else {
+      setCurrentStep('upload');
+    }
   };
 
   // Set up IPC listeners when component mounts

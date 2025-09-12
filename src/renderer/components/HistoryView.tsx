@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ProcessHistory } from './App';
+import { ProcessHistory } from '../../shared/types';
 
 interface HistoryViewProps {
   onOpenProject: (process: ProcessHistory) => void;

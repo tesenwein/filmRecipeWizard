@@ -3,26 +3,27 @@ import * as path from 'path';
 import sharp from 'sharp';
 
 export interface AIColorAdjustments {
-  exposure: number; // -5.0 to +5.0 stops
-  temperature: number; // 2000K to 50000K
-  tint: number; // -150 to +150
-  highlights: number; // -100 to +100
-  shadows: number; // -100 to +100
-  whites: number; // -100 to +100
-  blacks: number; // -100 to +100
-  brightness: number; // -100 to +100 (for legacy compatibility)
-  contrast: number; // -100 to +100
-  clarity: number; // -100 to +100
-  vibrance: number; // -100 to +100
-  saturation: number; // -100 to +100
-  hue_red: number; // -100 to +100
-  hue_orange: number; // -100 to +100
-  hue_yellow: number; // -100 to +100
-  hue_green: number; // -100 to +100
-  hue_aqua: number; // -100 to +100
-  hue_blue: number; // -100 to +100
-  hue_purple: number; // -100 to +100
-  hue_magenta: number; // -100 to +100
+  // All fields optional: include only settings that need changing
+  exposure?: number; // -5.0 to +5.0 stops
+  temperature?: number; // 2000K to 50000K
+  tint?: number; // -150 to +150
+  highlights?: number; // -100 to +100
+  shadows?: number; // -100 to +100
+  whites?: number; // -100 to +100
+  blacks?: number; // -100 to +100
+  brightness?: number; // -100 to +100 (legacy compatibility)
+  contrast?: number; // -100 to +100
+  clarity?: number; // -100 to +100
+  vibrance?: number; // -100 to +100
+  saturation?: number; // -100 to +100
+  hue_red?: number; // -100 to +100
+  hue_orange?: number; // -100 to +100
+  hue_yellow?: number; // -100 to +100
+  hue_green?: number; // -100 to +100
+  hue_aqua?: number; // -100 to +100
+  hue_blue?: number; // -100 to +100
+  hue_purple?: number; // -100 to +100
+  hue_magenta?: number; // -100 to +100
   // HSL per-color (optional)
   sat_red?: number; // -100 to +100
   sat_orange?: number; // -100 to +100
@@ -59,14 +60,14 @@ export interface AIColorAdjustments {
   tone_curve_red?: Array<{ input: number; output: number }>;
   tone_curve_green?: Array<{ input: number; output: number }>;
   tone_curve_blue?: Array<{ input: number; output: number }>;
-  confidence: number; // 0.0 to 1.0 - AI confidence in recommendations
-  reasoning: string; // AI explanation of the adjustments
+  confidence?: number; // 0.0 to 1.0 - AI confidence in recommendations
+  reasoning?: string; // AI explanation of the adjustments
 }
 
 export class OpenAIColorAnalyzer {
   private openai: OpenAI | null = null;
   private initialized = false;
-  private model: string = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  private model: string = process.env.OPENAI_MODEL || 'gpt-5';
 
   constructor() {
     // OpenAI API key should be set as environment variable
@@ -133,7 +134,8 @@ Also include modern Color Grading settings (Lightroom/ACR):
 - Color grade blending (0-100)
 \nImportant: Use the Lightroom color wheel hue reference (0=red, 60=yellow, 120=green, 180=cyan/teal, 240=blue, 300=magenta). If the base image has a green/teal cast, favor teal/cyan hues (around 180–210) in shadows/midtones/highlights rather than red/magenta.
 
-Provide specific numeric values for each adjustment that would achieve the best match.`,
+Provide specific numeric values for each adjustment that would achieve the best match.
+Only include properties you actually intend to change; omit any settings that should remain as-is.`,
               },
               {
                 type: 'text',
@@ -667,37 +669,12 @@ Provide specific numeric values for each adjustment that would achieve the best 
                       'Explanation of why these adjustments were chosen and what they achieve',
                   },
                 },
-                required: [
-                  'exposure',
-                  'temperature',
-                  'tint',
-                  'highlights',
-                  'shadows',
-                  'whites',
-                  'blacks',
-                  'brightness',
-                  'contrast',
-                  'clarity',
-                  'vibrance',
-                  'saturation',
-                  'hue_red',
-                  'hue_orange',
-                  'hue_yellow',
-                  'hue_green',
-                  'hue_aqua',
-                  'hue_blue',
-                  'hue_purple',
-                  'hue_magenta',
-                  'confidence',
-                  'reasoning',
-                ],
               },
             },
           },
         ],
         // Let the model choose the function call; it is strongly guided by the tool schema
         tool_choice: 'auto',
-        max_tokens: 2000,
       });
     } catch (error) {
       console.error('[AI] OpenAI API call failed:', error);

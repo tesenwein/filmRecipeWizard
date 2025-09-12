@@ -1405,12 +1405,161 @@ ${curveBlue}
   </rdf:RDF>
 </x:xmpmeta>`;
 
-    // Optionally remove groups the user opted out of
+    // Prune tags for adjustments the AI did not provide (only emit changed settings)
+    const has = (k: string) => Object.prototype.hasOwnProperty.call(adjustments || {}, k);
+    const hasAny = (...keys: string[]) => keys.some(k => has(k));
+
     const removeTags = (patterns: RegExp[]) => {
       patterns.forEach(re => {
         xmp = xmp.replace(re, '');
       });
     };
+
+    // Basic WB: remove if neither temp nor tint provided
+    if (!hasAny('temperature', 'tint')) {
+      removeTags([
+        /\n\s*<crs:WhiteBalance>[^<]*<\/crs:WhiteBalance>/g,
+        /\n\s*<crs:Temperature>[^<]*<\/crs:Temperature>/g,
+        /\n\s*<crs:Tint>[^<]*<\/crs:Tint>/g,
+      ]);
+    } else {
+      if (!has('temperature')) removeTags([/\n\s*<crs:Temperature>[^<]*<\/crs:Temperature>/g]);
+      if (!has('tint')) removeTags([/\n\s*<crs:Tint>[^<]*<\/crs:Tint>/g]);
+    }
+
+    // Basic tonal sliders
+    if (!has('exposure')) removeTags([/\n\s*<crs:Exposure2012>[^<]*<\/crs:Exposure2012>/g]);
+    if (!has('contrast')) removeTags([/\n\s*<crs:Contrast2012>[^<]*<\/crs:Contrast2012>/g]);
+    if (!has('highlights')) removeTags([/\n\s*<crs:Highlights2012>[^<]*<\/crs:Highlights2012>/g]);
+    if (!has('shadows')) removeTags([/\n\s*<crs:Shadows2012>[^<]*<\/crs:Shadows2012>/g]);
+    if (!has('whites')) removeTags([/\n\s*<crs:Whites2012>[^<]*<\/crs:Whites2012>/g]);
+    if (!has('blacks')) removeTags([/\n\s*<crs:Blacks2012>[^<]*<\/crs:Blacks2012>/g]);
+    if (!has('texture')) removeTags([/\n\s*<crs:Texture>[^<]*<\/crs:Texture>/g]);
+    if (!has('clarity')) removeTags([/\n\s*<crs:Clarity2012>[^<]*<\/crs:Clarity2012>/g]);
+    if (!has('dehaze')) removeTags([/\n\s*<crs:Dehaze>[^<]*<\/crs:Dehaze>/g]);
+    if (!has('vibrance')) removeTags([/\n\s*<crs:Vibrance>[^<]*<\/crs:Vibrance>/g]);
+    if (!has('saturation')) removeTags([/\n\s*<crs:Saturation>[^<]*<\/crs:Saturation>/g]);
+
+    // Parametric tone
+    if (!has('parametric_shadows')) removeTags([/\n\s*<crs:ParametricShadows>[^<]*<\/crs:ParametricShadows>/g]);
+    if (!has('parametric_darks')) removeTags([/\n\s*<crs:ParametricDarks>[^<]*<\/crs:ParametricDarks>/g]);
+    if (!has('parametric_lights')) removeTags([/\n\s*<crs:ParametricLights>[^<]*<\/crs:ParametricLights>/g]);
+    if (!has('parametric_highlights')) removeTags([/\n\s*<crs:ParametricHighlights>[^<]*<\/crs:ParametricHighlights>/g]);
+    if (!has('parametric_shadow_split')) removeTags([/\n\s*<crs:ParametricShadowSplit>[^<]*<\/crs:ParametricShadowSplit>/g]);
+    if (!has('parametric_midtone_split')) removeTags([/\n\s*<crs:ParametricMidtoneSplit>[^<]*<\/crs:ParametricMidtoneSplit>/g]);
+    if (!has('parametric_highlight_split')) removeTags([/\n\s*<crs:ParametricHighlightSplit>[^<]*<\/crs:ParametricHighlightSplit>/g]);
+
+    // HSL Hue per channel
+    const hueMap: Record<string, string> = {
+      hue_red: 'Red',
+      hue_orange: 'Orange',
+      hue_yellow: 'Yellow',
+      hue_green: 'Green',
+      hue_aqua: 'Aqua',
+      hue_blue: 'Blue',
+      hue_purple: 'Purple',
+      hue_magenta: 'Magenta',
+    };
+    Object.entries(hueMap).forEach(([k, name]) => {
+      if (!has(k)) removeTags([new RegExp(`\\n\\s*<crs:HueAdjustment${name}>[^<]*<\\/crs:HueAdjustment${name}>`, 'g')]);
+    });
+
+    // HSL Saturation per channel
+    const satMap: Record<string, string> = {
+      sat_red: 'Red',
+      sat_orange: 'Orange',
+      sat_yellow: 'Yellow',
+      sat_green: 'Green',
+      sat_aqua: 'Aqua',
+      sat_blue: 'Blue',
+      sat_purple: 'Purple',
+      sat_magenta: 'Magenta',
+    };
+    Object.entries(satMap).forEach(([k, name]) => {
+      if (!has(k)) removeTags([new RegExp(`\\n\\s*<crs:SaturationAdjustment${name}>[^<]*<\\/crs:SaturationAdjustment${name}>`, 'g')]);
+    });
+
+    // HSL Luminance per channel
+    const lumMap: Record<string, string> = {
+      lum_red: 'Red',
+      lum_orange: 'Orange',
+      lum_yellow: 'Yellow',
+      lum_green: 'Green',
+      lum_aqua: 'Aqua',
+      lum_blue: 'Blue',
+      lum_purple: 'Purple',
+      lum_magenta: 'Magenta',
+    };
+    Object.entries(lumMap).forEach(([k, name]) => {
+      if (!has(k)) removeTags([new RegExp(`\\n\\s*<crs:LuminanceAdjustment${name}>[^<]*<\\/crs:LuminanceAdjustment${name}>`, 'g')]);
+    });
+
+    // Color grading
+    const cgKeys = [
+      'color_grade_shadow_hue', 'color_grade_shadow_sat', 'color_grade_shadow_lum',
+      'color_grade_midtone_hue', 'color_grade_midtone_sat', 'color_grade_midtone_lum',
+      'color_grade_highlight_hue', 'color_grade_highlight_sat', 'color_grade_highlight_lum',
+      'color_grade_global_hue', 'color_grade_global_sat', 'color_grade_global_lum',
+      'color_grade_blending',
+    ];
+    const anyCg = cgKeys.some(has);
+    if (!anyCg) {
+      removeTags([
+        /\n\s*<crs:ColorGradeShadowHue>[^<]*<\/crs:ColorGradeShadowHue>/g,
+        /\n\s*<crs:ColorGradeShadowSat>[^<]*<\/crs:ColorGradeShadowSat>/g,
+        /\n\s*<crs:ColorGradeMidtoneHue>[^<]*<\/crs:ColorGradeMidtoneHue>/g,
+        /\n\s*<crs:ColorGradeMidtoneSat>[^<]*<\/crs:ColorGradeMidtoneSat>/g,
+        /\n\s*<crs:ColorGradeHighlightHue>[^<]*<\/crs:ColorGradeHighlightHue>/g,
+        /\n\s*<crs:ColorGradeHighlightSat>[^<]*<\/crs:ColorGradeHighlightSat>/g,
+        /\n\s*<crs:ColorGradeShadowLum>[^<]*<\/crs:ColorGradeShadowLum>/g,
+        /\n\s*<crs:ColorGradeMidtoneLum>[^<]*<\/crs:ColorGradeMidtoneLum>/g,
+        /\n\s*<crs:ColorGradeHighlightLum>[^<]*<\/crs:ColorGradeHighlightLum>/g,
+        /\n\s*<crs:ColorGradeBlending>[^<]*<\/crs:ColorGradeBlending>/g,
+        /\n\s*<crs:ColorGradeGlobalHue>[^<]*<\/crs:ColorGradeGlobalHue>/g,
+        /\n\s*<crs:ColorGradeGlobalSat>[^<]*<\/crs:ColorGradeGlobalSat>/g,
+        /\n\s*<crs:ColorGradeGlobalLum>[^<]*<\/crs:ColorGradeGlobalLum>/g,
+      ]);
+    } else {
+      const cgMap: Record<string, string> = {
+        color_grade_shadow_hue: 'ColorGradeShadowHue',
+        color_grade_shadow_sat: 'ColorGradeShadowSat',
+        color_grade_shadow_lum: 'ColorGradeShadowLum',
+        color_grade_midtone_hue: 'ColorGradeMidtoneHue',
+        color_grade_midtone_sat: 'ColorGradeMidtoneSat',
+        color_grade_midtone_lum: 'ColorGradeMidtoneLum',
+        color_grade_highlight_hue: 'ColorGradeHighlightHue',
+        color_grade_highlight_sat: 'ColorGradeHighlightSat',
+        color_grade_highlight_lum: 'ColorGradeHighlightLum',
+        color_grade_global_hue: 'ColorGradeGlobalHue',
+        color_grade_global_sat: 'ColorGradeGlobalSat',
+        color_grade_global_lum: 'ColorGradeGlobalLum',
+        color_grade_blending: 'ColorGradeBlending',
+      };
+      Object.entries(cgMap).forEach(([k, tag]) => {
+        if (!has(k)) removeTags([new RegExp(`\\n\\s*<crs:${tag}>[^<]*<\\/crs:${tag}>`, 'g')]);
+      });
+    }
+
+    // Curves: only keep blocks that were provided
+    const hasCompositeCurve = has('tone_curve');
+    const hasRedCurve = has('tone_curve_red');
+    const hasGreenCurve = has('tone_curve_green');
+    const hasBlueCurve = has('tone_curve_blue');
+    if (!hasCompositeCurve) {
+      removeTags([/\n\s*<crs:ToneCurvePV2012>[\s\S]*?<\/crs:ToneCurvePV2012>/g]);
+    }
+    if (!hasRedCurve) {
+      removeTags([/\n\s*<crs:ToneCurvePV2012Red>[\s\S]*?<\/crs:ToneCurvePV2012Red>/g]);
+    }
+    if (!hasGreenCurve) {
+      removeTags([/\n\s*<crs:ToneCurvePV2012Green>[\s\S]*?<\/crs:ToneCurvePV2012Green>/g]);
+    }
+    if (!hasBlueCurve) {
+      removeTags([/\n\s*<crs:ToneCurvePV2012Blue>[\s\S]*?<\/crs:ToneCurvePV2012Blue>/g]);
+    }
+
+    // Optionally remove groups the user opted out of
+    // (reuse removeTags from above)
     if (include) {
       if (include.curves === false) {
         removeTags([
@@ -1527,7 +1676,7 @@ ${curveBlue}
       let image = sharp(inputPath);
 
       // Apply exposure adjustment (convert stops to multiplier)
-      if (Math.abs(aiAdjustments.exposure) > 0.01) {
+      if (typeof aiAdjustments.exposure === 'number' && Math.abs(aiAdjustments.exposure) > 0.01) {
         console.log('[PROCESSOR] Applying exposure:', aiAdjustments.exposure, 'stops');
         const multiplier = Math.pow(2, aiAdjustments.exposure);
         image = image.linear(multiplier, 0);
@@ -1537,14 +1686,14 @@ ${curveBlue}
       const modulateOptions: any = {};
 
       // Convert AI brightness (-100 to +100) to Sharp brightness (0.5 to 2.0)
-      if (Math.abs(aiAdjustments.brightness) > 1) {
-        modulateOptions.brightness = 1 + aiAdjustments.brightness / 100;
+      if (typeof aiAdjustments.brightness === 'number' && Math.abs(aiAdjustments.brightness) > 1) {
+        modulateOptions.brightness = 1 + (aiAdjustments.brightness as number) / 100;
         console.log('[PROCESSOR] Applying brightness:', modulateOptions.brightness);
       }
 
       // Convert AI saturation (-100 to +100) to Sharp saturation (0.0 to 2.0)
-      if (Math.abs(aiAdjustments.saturation) > 1) {
-        modulateOptions.saturation = Math.max(0, 1 + aiAdjustments.saturation / 100);
+      if (typeof aiAdjustments.saturation === 'number' && Math.abs(aiAdjustments.saturation) > 1) {
+        modulateOptions.saturation = Math.max(0, 1 + (aiAdjustments.saturation as number) / 100);
         console.log('[PROCESSOR] Applying saturation:', modulateOptions.saturation);
       }
 
@@ -1553,12 +1702,12 @@ ${curveBlue}
       }
 
       // Apply contrast using gamma correction approximation
-      if (Math.abs(aiAdjustments.contrast) > 1) {
+      if (typeof aiAdjustments.contrast === 'number' && Math.abs(aiAdjustments.contrast) > 1) {
         console.log('[PROCESSOR] Applying contrast:', aiAdjustments.contrast);
         // Convert contrast (-100 to +100) to gamma (1.0 to 3.0 for Sharp)
         // Positive contrast = higher gamma (more contrast)
         // Negative contrast = lower gamma (less contrast)
-        const gamma = Math.max(1.0, Math.min(3.0, 1 + aiAdjustments.contrast / 100));
+        const gamma = Math.max(1.0, Math.min(3.0, 1 + (aiAdjustments.contrast as number) / 100));
         console.log('[PROCESSOR] Applying gamma:', gamma);
         image = image.gamma(gamma);
       }
@@ -1582,9 +1731,9 @@ ${curveBlue}
       }
 
       // Apply vibrance using saturation boost on less saturated colors
-      if (Math.abs(aiAdjustments.vibrance) > 1) {
+      if (typeof aiAdjustments.vibrance === 'number' && Math.abs(aiAdjustments.vibrance) > 1) {
         console.log('[PROCESSOR] Applying vibrance boost:', aiAdjustments.vibrance);
-        const vibranceBoost = 1 + aiAdjustments.vibrance / 200;
+        const vibranceBoost = 1 + (aiAdjustments.vibrance as number) / 200;
         image = image.modulate({ saturation: vibranceBoost });
       }
 
@@ -1696,7 +1845,7 @@ ${curveBlue}
                 console.log('[PROCESSOR] ImageMagick processing started');
 
                 // Apply exposure adjustment using modulate
-                if (Math.abs(aiAdjustments.exposure) > 0.01) {
+                if (typeof aiAdjustments.exposure === 'number' && Math.abs(aiAdjustments.exposure) > 0.01) {
                   const exposureMultiplier = Math.pow(2, aiAdjustments.exposure);
                   const brightnessPercent = Math.max(50, Math.min(200, exposureMultiplier * 100));
                   console.log('[PROCESSOR] Applying exposure:', aiAdjustments.exposure, 'stops');
@@ -1708,7 +1857,7 @@ ${curveBlue}
                 }
 
                 // Apply brightness adjustment
-                if (Math.abs(aiAdjustments.brightness) > 1) {
+                if (typeof aiAdjustments.brightness === 'number' && Math.abs(aiAdjustments.brightness) > 1) {
                   const brightnessPercent = Math.max(
                     50,
                     Math.min(150, 100 + aiAdjustments.brightness)
@@ -1722,7 +1871,7 @@ ${curveBlue}
                 }
 
                 // Apply saturation adjustment
-                if (Math.abs(aiAdjustments.saturation) > 1) {
+                if (typeof aiAdjustments.saturation === 'number' && Math.abs(aiAdjustments.saturation) > 1) {
                   const saturationPercent = Math.max(
                     0,
                     Math.min(200, 100 + aiAdjustments.saturation)
@@ -1736,7 +1885,7 @@ ${curveBlue}
                 }
 
                 // Apply contrast using sigmoidal contrast
-                if (Math.abs(aiAdjustments.contrast) > 1) {
+                if (typeof aiAdjustments.contrast === 'number' && Math.abs(aiAdjustments.contrast) > 1) {
                   const contrastAmount = Math.max(
                     0.1,
                     Math.min(10, Math.abs(aiAdjustments.contrast) / 10)
@@ -1746,7 +1895,7 @@ ${curveBlue}
                 }
 
                 // Apply whites/blacks level adjustment
-                if (Math.abs(aiAdjustments.whites) > 5 || Math.abs(aiAdjustments.blacks) > 5) {
+                if ((typeof aiAdjustments.whites === 'number' && Math.abs(aiAdjustments.whites) > 5) || (typeof aiAdjustments.blacks === 'number' && Math.abs(aiAdjustments.blacks) > 5)) {
                   console.log(
                     '[PROCESSOR] Applying whites/blacks - whites:',
                     aiAdjustments.whites,
@@ -1755,14 +1904,14 @@ ${curveBlue}
                   );
 
                   // Adjust black and white points
-                  const blackPoint = Math.max(0, Math.min(20, 5 + aiAdjustments.blacks / 10));
-                  const whitePoint = Math.max(80, Math.min(100, 95 + aiAdjustments.whites / 10));
+                  const blackPoint = Math.max(0, Math.min(20, 5 + (aiAdjustments.blacks || 0) / 10));
+                  const whitePoint = Math.max(80, Math.min(100, 95 + (aiAdjustments.whites || 0) / 10));
 
                   img.level(new Percentage(blackPoint), new Percentage(whitePoint));
                 }
 
                 // Apply clarity using blur or sharpen
-                if (Math.abs(aiAdjustments.clarity) > 5) {
+                if (typeof aiAdjustments.clarity === 'number' && Math.abs(aiAdjustments.clarity) > 5) {
                   console.log('[PROCESSOR] Applying clarity:', aiAdjustments.clarity);
 
                   if (aiAdjustments.clarity > 0) {
@@ -1778,7 +1927,7 @@ ${curveBlue}
                 }
 
                 // Apply vibrance using enhanced saturation
-                if (Math.abs(aiAdjustments.vibrance) > 5) {
+                if (typeof aiAdjustments.vibrance === 'number' && Math.abs(aiAdjustments.vibrance) > 5) {
                   console.log('[PROCESSOR] Applying vibrance:', aiAdjustments.vibrance);
                   const vibrancePercent = Math.max(
                     50,
@@ -1793,17 +1942,17 @@ ${curveBlue}
 
                 // Apply hue rotation for selective color effects
                 if (
-                  Math.abs(aiAdjustments.hue_red) > 5 ||
-                  Math.abs(aiAdjustments.hue_yellow) > 5 ||
-                  Math.abs(aiAdjustments.hue_blue) > 5 ||
-                  Math.abs(aiAdjustments.hue_green) > 5
+                  (typeof aiAdjustments.hue_red === 'number' && Math.abs(aiAdjustments.hue_red) > 5) ||
+                  (typeof aiAdjustments.hue_yellow === 'number' && Math.abs(aiAdjustments.hue_yellow) > 5) ||
+                  (typeof aiAdjustments.hue_blue === 'number' && Math.abs(aiAdjustments.hue_blue) > 5) ||
+                  (typeof aiAdjustments.hue_green === 'number' && Math.abs(aiAdjustments.hue_green) > 5)
                 ) {
                   // Calculate average hue shift (simplified approach)
                   const avgHueShift =
-                    (aiAdjustments.hue_red +
-                      aiAdjustments.hue_yellow +
-                      aiAdjustments.hue_blue +
-                      aiAdjustments.hue_green) /
+                    ((aiAdjustments.hue_red || 0) +
+                      (aiAdjustments.hue_yellow || 0) +
+                      (aiAdjustments.hue_blue || 0) +
+                      (aiAdjustments.hue_green || 0)) /
                     4;
 
                   if (Math.abs(avgHueShift) > 5) {

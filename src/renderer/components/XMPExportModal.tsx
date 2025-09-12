@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ProcessingResult } from './App';
+import { ProcessingResult } from '../../shared/types';
 
 interface XMPExportModalProps {
   result: ProcessingResult;
@@ -160,7 +160,7 @@ const XMPExportModal: React.FC<XMPExportModalProps> = ({
                     fontWeight: '600', 
                     color: '#667eea'
                   }}>
-                    Confidence: {Math.round(adjustments.confidence * 100)}%
+                    Confidence: {Math.round((adjustments.confidence || 0) * 100)}%
                   </span>
                 </div>
                 
@@ -196,9 +196,9 @@ const XMPExportModal: React.FC<XMPExportModalProps> = ({
 
                 <div style={{ display: 'grid', gap: '8px', fontSize: '13px', color: '#555555' }}>
                   {/* WB & Basic */}
-                  <div><strong>Temperature:</strong> {Math.round(adjustments.temperature)}K</div>
-                  <div><strong>Tint:</strong> {Math.round(adjustments.tint)}</div>
-                  <div><strong>Exposure:</strong> {adjustments.exposure.toFixed(2)} stops</div>
+                  <div><strong>Temperature:</strong> {Math.round(adjustments.temperature || 0)}K</div>
+                  <div><strong>Tint:</strong> {Math.round(adjustments.tint || 0)}</div>
+                  <div><strong>Exposure:</strong> {(adjustments.exposure || 0).toFixed(2)} stops</div>
                   <div><strong>Contrast:</strong> {adjustments.contrast}</div>
                   <div><strong>Highlights:</strong> {adjustments.highlights}</div>
                   <div><strong>S hadows:</strong> {adjustments.shadows}</div>

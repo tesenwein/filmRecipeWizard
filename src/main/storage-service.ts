@@ -1,26 +1,10 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { app } from 'electron';
+import { ProcessHistory, ProcessingResult } from '../shared/types';
 
-export interface ProcessHistory {
-  id: string;
-  timestamp: string;
-  baseImage: string;
-  targetImages: string[];
-  results: ProcessResult[];
-  status: 'completed' | 'failed' | 'in_progress';
-}
-
-export interface ProcessResult {
-  inputPath: string;
-  outputPath?: string;
-  success: boolean;
-  error?: string;
-  metadata?: {
-    aiAdjustments?: any;
-    processingTime?: number;
-  };
-}
+// Keep legacy alias for backward compatibility
+export type ProcessResult = ProcessingResult;
 
 export class StorageService {
   private storageFile: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProcessingState } from './App';
+import { ProcessingState } from '../../shared/types';
 
 interface ProcessingViewProps {
   processingState: ProcessingState;

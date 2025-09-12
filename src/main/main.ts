@@ -1,7 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
-import { StorageService, ProcessHistory } from './storage-service';
+import { StorageService } from './storage-service';
+import { ProcessHistory } from '../shared/types';
 
 class ImageMatchApp {
   private mainWindow: BrowserWindow | null = null;
