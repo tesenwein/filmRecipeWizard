@@ -9,6 +9,7 @@ interface ResultsViewProps {
   targetImages: string[];
   onReset: () => void;
   onRestart?: () => void;
+  onNewProcessingSession?: () => void;
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({
@@ -16,7 +17,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   baseImage: _baseImage,
   targetImages,
   onReset,
-  onRestart
+  onRestart,
+  onNewProcessingSession
 }) => {
   // For display only: convert unsupported formats to JPEG (no adjustments)
   const [convertedBase, setConvertedBase] = useState<string | null>(null);
@@ -141,9 +143,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         ) : null}
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button className="button" onClick={onReset}>
-            New processing session
-          </button>
+          {onNewProcessingSession ? (
+            <button className="button" onClick={onNewProcessingSession}>
+              New processing session
+            </button>
+          ) : (
+            <button className="button" onClick={onReset}>
+              New processing session
+            </button>
+          )}
         </div>
       </div>
 

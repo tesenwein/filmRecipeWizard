@@ -38,6 +38,7 @@ const App: React.FC = () => {
   useEffect(() => { targetImagesRef.current = targetImages; }, [targetImages]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectLoading, setProjectLoading] = useState(false);
+  const [isNewProcessingSession, setIsNewProcessingSession] = useState(false);
 
   // Check if API key is configured on startup
   useEffect(() => {
@@ -163,6 +164,53 @@ const App: React.FC = () => {
 
   const handleNewProcess = () => {
     handleReset();
+  };
+
+  const handleNewProcessingSession = async () => {
+    // Keep the same images but create a new processing session
+    if (!baseImage || targetImages.length === 0) return;
+    
+    setResults([]);
+    setCurrentProcessId(null);
+    setCurrentStep('processing');
+    setProcessingState({
+      isProcessing: true,
+      progress: 0,
+      status: 'Starting new AI analysis...'
+    });
+
+    // Save new process to storage
+    try {
+      const processData = {
+        baseImage,
+        targetImages,
+        results: []
+      };
+      
+      const result = await window.electronAPI.saveProcess(processData);
+      if (result.success) {
+        console.log('[APP] Saved new processing session', { id: result.process.id, baseImage, targetCount: targetImages.length });
+        setCurrentProcessId(result.process.id);
+        currentProcessIdRef.current = result.process.id;
+      } else {
+        console.warn('[APP] Failed to save new processing session', result.error);
+      }
+    } catch (error) {
+      console.error('Failed to save new processing session:', error);
+    }
+
+    // Navigate to create route to show processing view
+    navigate('/create');
+
+    // Start processing through IPC
+    console.log('[APP] Starting new processing session', { baseImage, targetCount: targetImages.length });
+    window.electronAPI.processImages({
+      baseImagePath: baseImage,
+      targetImagePaths: targetImages,
+      hint: '',
+      options: {},
+      processId: currentProcessIdRef.current || undefined,
+    });
   };
 
   const handleSelectProcess = (process: ProcessHistory) => {
@@ -394,6 +442,7 @@ const App: React.FC = () => {
                 setCurrentStep('processing');
                 handleStartProcessing();
               }}
+              onNewProcessingSession={handleNewProcessingSession}
             />
           )}
           {!projectLoading && !currentProcessId && (

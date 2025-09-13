@@ -205,7 +205,7 @@ export class ImageProcessor {
     }
   }
 
-  generateXMPContent(aiAdjustments: AIColorAdjustments, _include: any): string {
+  generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
     // Generate XMP content for Lightroom based on AI adjustments
     const isBW = !!aiAdjustments.monochrome || aiAdjustments.treatment === 'black_and_white' ||
       (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
@@ -246,6 +246,123 @@ export class ImageProcessor {
     const rawPresetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || fallback;
     const presetName = sanitizeName(rawPresetName) || fallback;
     const groupName = 'image-match';
+    // Inclusion flags with sane defaults (back-compat: include everything when not specified)
+    const inc = {
+      wbBasic: include?.wbBasic !== false,
+      exposure: !!include?.exposure, // exposure is separate and defaults to off unless explicitly enabled
+      hsl: include?.hsl !== false,
+      colorGrading: include?.colorGrading !== false,
+      curves: include?.curves !== false,
+      // sharpenNoise and vignette currently not emitted in XMP (placeholders)
+    } as const;
+
+    // Build conditional blocks
+    const wbBasicBlock = inc.wbBasic
+      ? [
+          tag('Temperature', temp),
+          tag('Tint', tint),
+          tag('Contrast2012', contrast),
+          tag('Highlights2012', highlights),
+          tag('Shadows2012', shadows),
+          tag('Whites2012', whites),
+          tag('Blacks2012', blacks),
+          tag('Clarity2012', clarity),
+          tag('Vibrance', vibrance),
+          tag('Saturation', isBW ? 0 : saturation),
+        ].join('')
+      : '';
+
+    const exposureBlock = inc.exposure ? tag('Exposure2012', fixed2(exposure)) : '';
+
+    const parametricCurvesBlock = inc.curves
+      ? [
+          tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows, -100, 100))),
+          tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks, -100, 100))),
+          tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights, -100, 100))),
+          tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights, -100, 100))),
+          tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))),
+          tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))),
+          tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))),
+        ].join('')
+      : '';
+
+    const toneCurvesBlock = inc.curves
+      ? [
+          (aiAdjustments as any).tone_curve
+            ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n`
+            : '',
+          (aiAdjustments as any).tone_curve_red
+            ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_red as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n`
+            : '',
+          (aiAdjustments as any).tone_curve_green
+            ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_green as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n`
+            : '',
+          (aiAdjustments as any).tone_curve_blue
+            ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_blue as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n`
+            : '',
+        ].join('')
+      : '';
+
+    const hslBlock = inc.hsl
+      ? [
+          tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
+          tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange),
+          tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow),
+          tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green),
+          tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua),
+          tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue),
+          tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple),
+          tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta),
+          tag('SaturationAdjustmentRed', round(clamp((aiAdjustments as any).sat_red, -100, 100))),
+          tag('SaturationAdjustmentOrange', (aiAdjustments as any).sat_orange),
+          tag('SaturationAdjustmentYellow', (aiAdjustments as any).sat_yellow),
+          tag('SaturationAdjustmentGreen', (aiAdjustments as any).sat_green),
+          tag('SaturationAdjustmentAqua', (aiAdjustments as any).sat_aqua),
+          tag('SaturationAdjustmentBlue', (aiAdjustments as any).sat_blue),
+          tag('SaturationAdjustmentPurple', (aiAdjustments as any).sat_purple),
+          tag('SaturationAdjustmentMagenta', (aiAdjustments as any).sat_magenta),
+          tag('LuminanceAdjustmentRed', round(clamp((aiAdjustments as any).lum_red, -100, 100))),
+          tag('LuminanceAdjustmentOrange', (aiAdjustments as any).lum_orange),
+          tag('LuminanceAdjustmentYellow', (aiAdjustments as any).lum_yellow),
+          tag('LuminanceAdjustmentGreen', (aiAdjustments as any).lum_green),
+          tag('LuminanceAdjustmentAqua', (aiAdjustments as any).lum_aqua),
+          tag('LuminanceAdjustmentBlue', (aiAdjustments as any).lum_blue),
+          tag('LuminanceAdjustmentPurple', (aiAdjustments as any).lum_purple),
+          tag('LuminanceAdjustmentMagenta', (aiAdjustments as any).lum_magenta),
+        ].join('')
+      : '';
+
+    const colorGradingBlock = inc.colorGrading
+      ? [
+          tag('ColorGradeShadowHue', round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))),
+          tag('ColorGradeShadowSat', round(clamp((aiAdjustments as any).color_grade_shadow_sat, 0, 100))),
+          tag('ColorGradeShadowLum', round(clamp((aiAdjustments as any).color_grade_shadow_lum, -100, 100))),
+          tag('ColorGradeMidtoneHue', round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))),
+          tag('ColorGradeMidtoneSat', round(clamp((aiAdjustments as any).color_grade_midtone_sat, 0, 100))),
+          tag('ColorGradeMidtoneLum', round(clamp((aiAdjustments as any).color_grade_midtone_lum, -100, 100))),
+          tag('ColorGradeHighlightHue', round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))),
+          tag('ColorGradeHighlightSat', round(clamp((aiAdjustments as any).color_grade_highlight_sat, 0, 100))),
+          tag('ColorGradeHighlightLum', round(clamp((aiAdjustments as any).color_grade_highlight_lum, -100, 100))),
+          tag('ColorGradeGlobalHue', round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))),
+          tag('ColorGradeGlobalSat', round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100))),
+          tag('ColorGradeGlobalLum', round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100))),
+          tag('ColorGradeBlending', round(clamp((aiAdjustments as any).color_grade_blending, 0, 100))),
+        ].join('')
+      : '';
+
+    const pointColorBlocks = [
+      Array.isArray((aiAdjustments as any).point_colors) && (aiAdjustments as any).point_colors.length > 0
+        ? `<crs:PointColors>\n    <rdf:Seq>\n${((aiAdjustments as any).point_colors as number[][])
+            .map(arr => `     <rdf:li>${arr.map(n => (Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000')).join(', ')}</rdf:li>`) 
+            .join('\n')}\n    </rdf:Seq>\n   </crs:PointColors>\n`
+        : '',
+      Array.isArray((aiAdjustments as any).color_variance) && (aiAdjustments as any).color_variance.length > 0
+        ? `<crs:ColorVariance>\n    <rdf:Seq>\n${((aiAdjustments as any).color_variance as number[])
+            .map(n => `     <rdf:li>${Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000'}</rdf:li>`) 
+            .join('\n')}\n    </rdf:Seq>\n   </crs:ColorVariance>\n`
+        : '',
+    ].join('');
+
     const xmp = `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c140 79.160451, 2017/05/06-01:08:21">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -269,85 +386,23 @@ export class ImageProcessor {
         <rdf:Description crs:Name="${profileName}" />
       </crs:Look>
 
-      ${tag('Temperature', temp)}
-      ${tag('Tint', tint)}
-      ${tag('Exposure2012', fixed2(exposure))}
-      ${tag('Contrast2012', contrast)}
-      ${tag('Highlights2012', highlights)}
-      ${tag('Shadows2012', shadows)}
-      ${tag('Whites2012', whites)}
-      ${tag('Blacks2012', blacks)}
-      ${tag('Clarity2012', clarity)}
-      ${tag('Vibrance', vibrance)}
-      ${tag('Saturation', isBW ? 0 : saturation)}
+      ${wbBasicBlock}
+      ${exposureBlock}
 
       <!-- Parametric Tone Regions (optional) -->
-      ${tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows, -100, 100)))}
-      ${tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks, -100, 100)))}
-      ${tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights, -100, 100)))}
-      ${tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights, -100, 100)))}
-      ${tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100)))}
-      ${tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100)))}
-      ${tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100)))}
+      ${parametricCurvesBlock}
 
       <!-- PV2012 Tone Curves (optional) -->
-      ${(aiAdjustments as any).tone_curve ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n` : ''}
-      ${(aiAdjustments as any).tone_curve_red ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_red as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n` : ''}
-      ${(aiAdjustments as any).tone_curve_green ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_green as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n` : ''}
-      ${(aiAdjustments as any).tone_curve_blue ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_blue as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n` : ''}
+      ${toneCurvesBlock}
 
       <!-- HSL Adjustments (optional) -->
-      ${tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100)))}
-      ${tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange)}
-      ${tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow)}
-      ${tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green)}
-      ${tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua)}
-      ${tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue)}
-      ${tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple)}
-      ${tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta)}
-      ${tag('SaturationAdjustmentRed', round(clamp((aiAdjustments as any).sat_red, -100, 100)))}
-      ${tag('SaturationAdjustmentOrange', (aiAdjustments as any).sat_orange)}
-      ${tag('SaturationAdjustmentYellow', (aiAdjustments as any).sat_yellow)}
-      ${tag('SaturationAdjustmentGreen', (aiAdjustments as any).sat_green)}
-      ${tag('SaturationAdjustmentAqua', (aiAdjustments as any).sat_aqua)}
-      ${tag('SaturationAdjustmentBlue', (aiAdjustments as any).sat_blue)}
-      ${tag('SaturationAdjustmentPurple', (aiAdjustments as any).sat_purple)}
-      ${tag('SaturationAdjustmentMagenta', (aiAdjustments as any).sat_magenta)}
-      ${tag('LuminanceAdjustmentRed', round(clamp((aiAdjustments as any).lum_red, -100, 100)))}
-      ${tag('LuminanceAdjustmentOrange', (aiAdjustments as any).lum_orange)}
-      ${tag('LuminanceAdjustmentYellow', (aiAdjustments as any).lum_yellow)}
-      ${tag('LuminanceAdjustmentGreen', (aiAdjustments as any).lum_green)}
-      ${tag('LuminanceAdjustmentAqua', (aiAdjustments as any).lum_aqua)}
-      ${tag('LuminanceAdjustmentBlue', (aiAdjustments as any).lum_blue)}
-      ${tag('LuminanceAdjustmentPurple', (aiAdjustments as any).lum_purple)}
-      ${tag('LuminanceAdjustmentMagenta', (aiAdjustments as any).lum_magenta)}
+      ${hslBlock}
 
       <!-- Color Grading (Modern) -->
-      ${tag('ColorGradeShadowHue', round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360)))}
-      ${tag('ColorGradeShadowSat', round(clamp((aiAdjustments as any).color_grade_shadow_sat, 0, 100)))}
-      ${tag('ColorGradeShadowLum', round(clamp((aiAdjustments as any).color_grade_shadow_lum, -100, 100)))}
-      ${tag('ColorGradeMidtoneHue', round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360)))}
-      ${tag('ColorGradeMidtoneSat', round(clamp((aiAdjustments as any).color_grade_midtone_sat, 0, 100)))}
-      ${tag('ColorGradeMidtoneLum', round(clamp((aiAdjustments as any).color_grade_midtone_lum, -100, 100)))}
-      ${tag('ColorGradeHighlightHue', round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360)))}
-      ${tag('ColorGradeHighlightSat', round(clamp((aiAdjustments as any).color_grade_highlight_sat, 0, 100)))}
-      ${tag('ColorGradeHighlightLum', round(clamp((aiAdjustments as any).color_grade_highlight_lum, -100, 100)))}
-      ${tag('ColorGradeGlobalHue', round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360)))}
-      ${tag('ColorGradeGlobalSat', round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100)))}
-      ${tag('ColorGradeGlobalLum', round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100)))}
-      ${tag('ColorGradeBlending', round(clamp((aiAdjustments as any).color_grade_blending, 0, 100)))}
+      ${colorGradingBlock}
 
       <!-- Point Color (if provided) -->
-      ${Array.isArray((aiAdjustments as any).point_colors) && (aiAdjustments as any).point_colors.length > 0
-        ? `<crs:PointColors>\n    <rdf:Seq>\n${((aiAdjustments as any).point_colors as number[][])
-          .map(arr => `     <rdf:li>${arr.map(n => (Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000')).join(', ')}</rdf:li>`) 
-          .join('\n')}\n    </rdf:Seq>\n   </crs:PointColors>\n`
-        : ''}
-      ${Array.isArray((aiAdjustments as any).color_variance) && (aiAdjustments as any).color_variance.length > 0
-        ? `<crs:ColorVariance>\n    <rdf:Seq>\n${((aiAdjustments as any).color_variance as number[])
-          .map(n => `     <rdf:li>${Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000'}</rdf:li>`) 
-          .join('\n')}\n    </rdf:Seq>\n   </crs:ColorVariance>\n`
-        : ''}
+      ${pointColorBlocks}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
