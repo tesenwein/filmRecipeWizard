@@ -284,6 +284,8 @@ export class ImageProcessor {
       curves: include?.curves !== false,
       // Enable Point Color by default unless explicitly disabled
       pointColor: include?.pointColor !== false,
+      // Film Grain optional export flag (default ON for back-compat)
+      grain: include?.grain !== false,
       // sharpenNoise and vignette currently not emitted in XMP (placeholders)
     } as const;
 
@@ -450,10 +452,14 @@ export class ImageProcessor {
       <!-- Point Color (if provided) -->
       ${pointColorBlocks}
 
-      <!-- Film Grain -->
-      ${tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100)))}
-      ${tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100)))}
-      ${tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100)))}
+      <!-- Film Grain (optional) -->
+      ${inc.grain
+        ? [
+            tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100))),
+            tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100))),
+            tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
+          ].join('')
+        : ''}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;

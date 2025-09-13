@@ -51,6 +51,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         sharpenNoise: boolean;
         vignette: boolean;
         pointColor?: boolean;
+        grain?: boolean;
       }
     >
   >({});
@@ -113,6 +114,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     vignette: true,
     // Enable Point Color by default in export options
     pointColor: true,
+    // Film Grain optional export (default ON)
+    grain: true,
   } as const;
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
@@ -135,6 +138,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     'sharpenNoise',
     'vignette',
     'pointColor',
+    'grain',
   ] as const;
 
   const isAllSelected = (index: number) => {
@@ -715,6 +719,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             { key: 'pointColor', label: 'Point Color' },
                             { key: 'sharpenNoise', label: 'Sharpen & Noise' },
                             { key: 'vignette', label: 'Vignette' },
+                            { key: 'grain', label: 'Film Grain' },
                           ] as const
                         ).map(opt => (
                           <FormControlLabel
