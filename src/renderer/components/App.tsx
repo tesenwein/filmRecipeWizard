@@ -418,6 +418,7 @@ const App: React.FC = () => {
                 results={results}
                 baseImage={baseImage}
                 targetImages={targetImages}
+                processId={currentProcessId || undefined}
                 onReset={() => {
                   handleReset();
                   navigate('/home');
@@ -445,6 +446,7 @@ const App: React.FC = () => {
               results={results}
               baseImage={baseImage}
               targetImages={targetImages}
+              processId={currentProcessId || undefined}
               onReset={() => {
                 handleReset();
                 navigate('/home');

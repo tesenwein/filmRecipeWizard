@@ -23,6 +23,7 @@ interface ResultsViewProps {
   onReset: () => void;
   onRestart?: () => void;
   onNewProcessingSession?: () => void;
+  processId?: string; // Optional process ID to load base64 image data
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({
@@ -32,10 +33,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   onReset,
   onRestart,
   onNewProcessingSession,
+  processId,
 }) => {
-  // For display only: convert unsupported formats to JPEG (no adjustments)
-  const [convertedBase, setConvertedBase] = useState<string | null>(null);
-  const [convertedOriginals, setConvertedOriginals] = useState<Record<number, string>>({});
+  // Base64 image data URLs for display
+  const [baseImageDataUrl, setBaseImageDataUrl] = useState<string | null>(null);
+  const [targetImageDataUrls, setTargetImageDataUrls] = useState<string[]>([]);
   const [exportOptions, setExportOptions] = useState<
     Record<
       number,
@@ -63,54 +65,52 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       failed: failedResults.length,
       targetCount: targetImages?.length,
       baseImage: _baseImage,
+      processId,
     });
-  }, [results, successfulResults.length, failedResults.length, targetImages?.length, _baseImage]);
+  }, [results, successfulResults.length, failedResults.length, targetImages?.length, _baseImage, processId]);
 
-  const isSafeForImg = (p?: string | null) => {
-    if (!p) return false;
-    const ext = p.split('.').pop()?.toLowerCase();
-    return !!ext && ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
-  };
-
-  // Convert base if needed for <img>
+  // Load base64 image data when processId is provided
   useEffect(() => {
-    const run = async () => {
-      if (_baseImage && !isSafeForImg(_baseImage)) {
-        try {
-          const res = await window.electronAPI.generatePreview({ path: _baseImage });
-          if (res?.success && res.previewPath) setConvertedBase(res.previewPath);
-          else setConvertedBase(_baseImage);
-        } catch {
-          setConvertedBase(_baseImage);
+    const loadBase64Images = async () => {
+      if (!processId) {
+        // Clear base64 data when no processId
+        setBaseImageDataUrl(null);
+        setTargetImageDataUrls([]);
+        return;
+      }
+
+      try {
+        const response = await window.electronAPI.getImageDataUrls(processId);
+        if (response.success) {
+          setBaseImageDataUrl(response.baseImageUrl || null);
+          setTargetImageDataUrls(response.targetImageUrls || []);
+          console.log('[RESULTS] Loaded base64 images for process', processId, {
+            hasBase: !!response.baseImageUrl,
+            targetCount: response.targetImageUrls?.length || 0,
+          });
+        } else {
+          console.error('[RESULTS] Failed to load base64 images:', response.error);
+          // Fallback to empty state
+          setBaseImageDataUrl(null);
+          setTargetImageDataUrls([]);
         }
-      } else {
-        setConvertedBase(null);
+      } catch (error) {
+        console.error('[RESULTS] Error loading base64 images:', error);
+        // Fallback to empty state
+        setBaseImageDataUrl(null);
+        setTargetImageDataUrls([]);
       }
     };
-    run();
-  }, [_baseImage]);
 
-  // Convert original target images if needed for <img>
-  useEffect(() => {
-    const run = async () => {
-      const map: Record<number, string> = {};
-      await Promise.all(
-        results.map(async (_r, idx) => {
-          const orig = targetImages[idx];
-          if (orig && !isSafeForImg(orig)) {
-            try {
-              const res = await window.electronAPI.generatePreview({ path: orig });
-              if (res?.success && res.previewPath) map[idx] = res.previewPath;
-            } catch {
-              // Ignore preview generation errors
-            }
-          }
-        })
-      );
-      setConvertedOriginals(map);
-    };
-    run();
-  }, [results, targetImages]);
+    loadBase64Images();
+  }, [processId]);
+
+  // Helper function to get the best image source (prioritizing base64 data)
+  const getImageSource = (base64DataUrl?: string | null, filePath?: string | null) => {
+    if (base64DataUrl) return base64DataUrl;
+    if (filePath) return filePath.startsWith('file://') ? filePath : `file://${filePath}`;
+    return undefined;
+  };
 
   const defaultOptions = {
     wbBasic: true,
@@ -277,12 +277,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                       }}
                     >
-                      {_baseImage && (
+                      {(baseImageDataUrl || _baseImage) && (
                         <img
-                          src={(() => {
-                            const src = convertedBase || _baseImage;
-                            return src.startsWith('file://') ? src : `file://${src}`;
-                          })()}
+                          src={getImageSource(baseImageDataUrl, _baseImage)}
                           alt="Base"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
@@ -312,17 +309,35 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         position: 'relative',
                       }}
                     >
-                      <img
-                        src={(() => {
-                          const overallIndex = results.indexOf(result);
-                          const orig =
-                            convertedOriginals[overallIndex] || targetImages[overallIndex];
-                          const src = orig || '';
-                          return src?.startsWith('file://') ? src : `file://${src}`;
-                        })()}
-                        alt={`Processed image ${index + 1}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                      {(() => {
+                        const overallIndex = results.indexOf(result);
+                        const targetBase64 = targetImageDataUrls[overallIndex];
+                        const targetPath = targetImages[overallIndex];
+                        const imgSrc = getImageSource(targetBase64, targetPath);
+
+                        return imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt={`Processed image ${index + 1}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#f5f5f5',
+                              color: '#999',
+                              fontSize: '14px',
+                            }}
+                          >
+                            No image available
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
