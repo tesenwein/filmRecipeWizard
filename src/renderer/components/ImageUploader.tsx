@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
+import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
+import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 
 interface ImageUploaderProps {
   onImagesSelected: (baseImage: string, targetImages: string[]) => void;
@@ -112,15 +114,23 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     <div className="grid grid-2">
       <div className="card slide-in">
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <div style={{ 
-            fontSize: '48px', 
-            marginBottom: '16px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
-            🎨
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '56px',
+              height: '56px',
+              borderRadius: '16px',
+              background: 'rgba(255,255,255,0.6)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(17,24,39,0.08)',
+              boxShadow: '0 8px 18px rgba(17,24,39,0.06)',
+              marginBottom: '16px',
+            }}
+          >
+            <PaletteOutlinedIcon fontSize="medium" sx={{ color: 'action.active', opacity: 0.9 }} />
           </div>
           <h3 style={{ 
             fontSize: '20px', 
@@ -210,15 +220,23 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       <div className="card slide-in" style={{ animationDelay: '0.1s' }}>
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <div style={{ 
-            fontSize: '48px', 
-            marginBottom: '16px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
-            📸
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '56px',
+              height: '56px',
+              borderRadius: '16px',
+              background: 'rgba(255,255,255,0.6)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(17,24,39,0.08)',
+              boxShadow: '0 8px 18px rgba(17,24,39,0.06)',
+              marginBottom: '16px',
+            }}
+          >
+            <PhotoCameraOutlinedIcon fontSize="medium" sx={{ color: 'action.active', opacity: 0.9 }} />
           </div>
           <h3 style={{ 
             fontSize: '20px', 

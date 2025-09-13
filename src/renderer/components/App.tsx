@@ -291,13 +291,23 @@ const App: React.FC = () => {
         <div style={{ fontSize: 18, fontWeight: 800, color: '#1F2937' }}>Image Match</div>
         <div>
           <Tooltip title="Home">
-            <IconButton color="default" size="small" onClick={() => navigate('/home')} sx={{ mr: 1 }}>
-              <HomeIcon />
+            <IconButton
+              color="inherit"
+              size="small"
+              onClick={() => navigate('/home')}
+              sx={{ mr: 1, color: 'action.active', '&:hover': { backgroundColor: 'rgba(17,24,39,0.05)' } }}
+            >
+              <HomeIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Settings">
-            <IconButton color="default" size="small" onClick={() => setSettingsOpen(true)}>
-              <SettingsIcon />
+            <IconButton
+              color="inherit"
+              size="small"
+              onClick={() => setSettingsOpen(true)}
+              sx={{ color: 'action.active', '&:hover': { backgroundColor: 'rgba(17,24,39,0.05)' } }}
+            >
+              <SettingsIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>
