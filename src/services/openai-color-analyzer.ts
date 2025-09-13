@@ -3,6 +3,10 @@ import * as path from 'path';
 import sharp from 'sharp';
 
 export interface AIColorAdjustments {
+  // Rendering intent / profile
+  treatment?: 'color' | 'black_and_white';
+  camera_profile?: string; // e.g., 'Adobe Color', 'Adobe Monochrome'
+  monochrome?: boolean; // convenience flag indicating B&W output
   // All fields optional: include only settings that need changing
   exposure?: number; // -5.0 to +5.0 stops
   temperature?: number; // 2000K to 50000K
@@ -153,6 +157,19 @@ Please analyze both images and provide detailed Lightroom/Camera Raw adjustments
               parameters: {
                 type: 'object',
                 properties: {
+                  treatment: {
+                    type: 'string',
+                    description: "Overall treatment for the target image ('color' or 'black_and_white')",
+                    enum: ['color', 'black_and_white'],
+                  },
+                  camera_profile: {
+                    type: 'string',
+                    description: "Preferred camera profile (e.g., 'Adobe Color', 'Adobe Monochrome')",
+                  },
+                  monochrome: {
+                    type: 'boolean',
+                    description: 'If true, produce a black & white (monochrome) result',
+                  },
                   exposure: {
                     type: 'number',
                     description: 'Exposure adjustment in stops (-5.0 to +5.0)',

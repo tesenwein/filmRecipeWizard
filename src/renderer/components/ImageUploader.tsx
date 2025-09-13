@@ -48,11 +48,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         filters: [
           { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'] }
         ],
-        properties: ['openFile', 'multiSelections']
+        properties: ['openFile']
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(baseImage || '', result);
+        onImagesSelected(baseImage || '', [result[0]]);
       }
     } catch (error) {
       console.error('Error selecting target images:', error);

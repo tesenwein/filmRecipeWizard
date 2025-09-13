@@ -289,10 +289,10 @@ class ImageMatchApp {
       }
     });
 
-    // Handle batch processing for React frontend
+    // Handle processing for a single target (one reference + one target)
     ipcMain.handle('process-images', async (_event, data) => {
-      console.log('[IPC] process-images called with:', { 
-        baseImagePath: data?.baseImagePath, 
+      console.log('[IPC] process-images (single) called with:', {
+        baseImagePath: data?.baseImagePath,
         targetImageCount: data?.targetImagePaths?.length,
         hint: data?.hint,
         processId: data?.processId,
@@ -301,57 +301,43 @@ class ImageMatchApp {
       if (!this.mainWindow) return [];
 
       try {
-        const results = [];
-        const totalImages = data.targetImagePaths.length;
+        const targetPath = Array.isArray(data.targetImagePaths) && data.targetImagePaths.length > 0
+          ? data.targetImagePaths[0]
+          : undefined;
+        if (!targetPath) throw new Error('No target image provided');
 
-        for (let i = 0; i < totalImages; i++) {
-          const targetPath = data.targetImagePaths[i];
-          
-          // Send progress update
-          const progress = ((i + 0.1) / totalImages) * 100;
-          this.mainWindow.webContents.send('processing-progress', progress, 
-            `Processing image ${i + 1} of ${totalImages}...`);
+        this.mainWindow.webContents.send('processing-progress', 5, 'Starting analysis...');
 
-          try {
-            // Process individual image (generate adjusted output for a project view)
-            const result = await this.imageProcessor.matchStyle({
-              baseImagePath: data.baseImagePath,
-              targetImagePath: targetPath,
-              matchColors: true,
-              matchBrightness: true,
-              matchContrast: true,
-              matchSaturation: true,
-              ...data.options
-            });
-
-            results.push(result);
-            
-            // Update progress
-            const finalProgress = ((i + 1) / totalImages) * 100;
-            this.mainWindow.webContents.send('processing-progress', finalProgress, 
-              `Completed image ${i + 1} of ${totalImages}`);
-
-          } catch (error) {
-            console.error(`[IPC] Error processing image ${i + 1}:`, error);
-            results.push({
-              success: false,
-              error: error instanceof Error ? error.message : 'Unknown error'
-            });
-          }
+        let result: any;
+        try {
+          result = await this.imageProcessor.matchStyle({
+            baseImagePath: data.baseImagePath,
+            targetImagePath: targetPath,
+            matchColors: true,
+            matchBrightness: true,
+            matchContrast: true,
+            matchSaturation: true,
+            ...data.options,
+          });
+          this.mainWindow.webContents.send('processing-progress', 100, 'Completed');
+        } catch (error) {
+          console.error('[IPC] Error processing image:', error);
+          result = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
         }
 
-        // Persist results to history if a processId was provided
+        const results = [result];
+
         try {
           if (data?.processId) {
-            const persistedResults = results.map((r: any, i: number) => ({
-              inputPath: data.targetImagePaths?.[i],
-              outputPath: r.outputPath,
-              success: !!r.success,
-              error: r.error,
-              metadata: r.metadata,
-            }));
+            const persistedResults = [{
+              inputPath: targetPath,
+              outputPath: result.outputPath,
+              success: !!result.success,
+              error: result.error,
+              metadata: result.metadata,
+            }];
             await this.storageService.updateProcess(data.processId, { results: persistedResults as any });
-            console.log('[IPC] process-images: results persisted to process', { id: data.processId, count: results.length });
+            console.log('[IPC] process-images: results persisted to process', { id: data.processId, count: 1 });
           } else {
             console.warn('[IPC] process-images: no processId provided; results not persisted automatically');
           }
@@ -359,12 +345,10 @@ class ImageMatchApp {
           console.error('[IPC] process-images: failed to persist results', err);
         }
 
-        // Send completion event
         this.mainWindow.webContents.send('processing-complete', results);
         return results;
-
       } catch (error) {
-        console.error('[IPC] Error in batch processing:', error);
+        console.error('[IPC] Error in processing:', error);
         throw error;
       }
     });

@@ -1113,6 +1113,12 @@ export class ImageProcessor {
   ): string {
     console.log('[PROCESSOR] Generating XMP with adjustments:', adjustments);
 
+    const isBW = !!adjustments.monochrome || adjustments.treatment === 'black_and_white' ||
+      (typeof adjustments.camera_profile === 'string' && /monochrome/i.test(adjustments.camera_profile));
+    const cameraProfile = typeof adjustments.camera_profile === 'string'
+      ? adjustments.camera_profile
+      : (isBW ? 'Adobe Monochrome' : 'Adobe Color');
+
     // Use AI adjustments directly (no legacy mappings)
     let exposure, contrast, saturation, temperature, tint;
     let highlights, shadows, whites, blacks, clarity, vibrance;
@@ -1244,7 +1250,7 @@ export class ImageProcessor {
    crs:HasSettings="True"
    crs:Version="17.5"
    crs:ProcessVersion="15.4"
-   crs:CameraProfile="Adobe Color">
+   crs:CameraProfile="${cameraProfile}">
       <crs:Name>
         <rdf:Alt>
           <rdf:li xml:lang="x-default">${presetName}</rdf:li>
@@ -1261,6 +1267,7 @@ export class ImageProcessor {
         </rdf:Alt>
       </crs:Group>
       <crs:WhiteBalance>Custom</crs:WhiteBalance>
+      ${isBW ? '      <crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>' : '      <crs:Treatment>Color</crs:Treatment>'}
       <crs:Temperature>${Math.round(temperature)}</crs:Temperature>
       <crs:Tint>${Math.round(tint)}</crs:Tint>
       <crs:Exposure2012>${exposure.toFixed(2)}</crs:Exposure2012>
@@ -1273,7 +1280,7 @@ export class ImageProcessor {
       <crs:Clarity2012>${Math.round(clarity)}</crs:Clarity2012>
       <crs:Dehaze>${Math.round(dehaze)}</crs:Dehaze>
       <crs:Vibrance>${Math.round(vibrance)}</crs:Vibrance>
-      <crs:Saturation>${Math.round(saturation)}</crs:Saturation>
+      <crs:Saturation>${Math.round(isBW ? 0 : saturation)}</crs:Saturation>
       <crs:ParametricShadows>${Math.round(paramShadows)}</crs:ParametricShadows>
       <crs:ParametricDarks>${Math.round(paramDarks)}</crs:ParametricDarks>
       <crs:ParametricLights>${Math.round(paramLights)}</crs:ParametricLights>
@@ -1307,7 +1314,7 @@ ${(() => {
         }
         return parts.join('\n');
       })()}
-      <crs:HueAdjustmentRed>${Math.round((hueAdjustments as any).red || 0)}</crs:HueAdjustmentRed>
+${!isBW ? `      <crs:HueAdjustmentRed>${Math.round((hueAdjustments as any).red || 0)}</crs:HueAdjustmentRed>
       <crs:HueAdjustmentOrange>${Math.round((hueAdjustments as any).orange || 0)}</crs:HueAdjustmentOrange>
       <crs:HueAdjustmentYellow>${Math.round((hueAdjustments as any).yellow || 0)}</crs:HueAdjustmentYellow>
       <crs:HueAdjustmentGreen>${Math.round((hueAdjustments as any).green || 0)}</crs:HueAdjustmentGreen>
@@ -1330,7 +1337,7 @@ ${(() => {
       <crs:LuminanceAdjustmentAqua>${Math.round((lumAdjustments as any).aqua || 0)}</crs:LuminanceAdjustmentAqua>
       <crs:LuminanceAdjustmentBlue>${Math.round((lumAdjustments as any).blue || 0)}</crs:LuminanceAdjustmentBlue>
       <crs:LuminanceAdjustmentPurple>${Math.round((lumAdjustments as any).purple || 0)}</crs:LuminanceAdjustmentPurple>
-      <crs:LuminanceAdjustmentMagenta>${Math.round((lumAdjustments as any).magenta || 0)}</crs:LuminanceAdjustmentMagenta>
+      <crs:LuminanceAdjustmentMagenta>${Math.round((lumAdjustments as any).magenta || 0)}</crs:LuminanceAdjustmentMagenta>` : ''}
       
       <crs:ColorGradeShadowHue>${cg.shHue}</crs:ColorGradeShadowHue>
       <crs:ColorGradeShadowSat>${cg.shSat}</crs:ColorGradeShadowSat>
@@ -1716,6 +1723,15 @@ ${curveBlue}
 
       if (Object.keys(modulateOptions).length > 0) {
         image = image.modulate(modulateOptions);
+      }
+
+      // Apply grayscale if requested by AI (for monochrome looks)
+      const isBW = !!(aiAdjustments as any).monochrome ||
+        (aiAdjustments as any).treatment === 'black_and_white' ||
+        (typeof (aiAdjustments as any).camera_profile === 'string' && /monochrome/i.test((aiAdjustments as any).camera_profile));
+      if (isBW) {
+        console.log('[PROCESSOR] Applying grayscale (monochrome)');
+        image = image.grayscale();
       }
 
       // Apply contrast using gamma correction approximation

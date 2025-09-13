@@ -16,7 +16,8 @@
     "typecheck": "tsc -p src/main/tsconfig.json --noEmit && tsc -p src/renderer/tsconfig.json --noEmit",
     "clean": "rimraf dist",
     "package": "npm run build && electron-builder",
-    "test": "jest"
+    "test": "jest",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "keywords": [
     "electron",
@@ -37,6 +38,7 @@
     "css-loader": "^7.1.2",
     "electron": "^27.0.0",
     "electron-builder": "^24.6.4",
+    "electron-icon-builder": "^2.0.1",
     "eslint": "^8.45.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
@@ -77,14 +79,18 @@
       "node_modules/**/*",
       "package.json"
     ],
+    "icon": "build/icons/icon",
     "mac": {
-      "category": "public.app-category.photography"
+      "category": "public.app-category.photography",
+      "icon": "build/icons/icon.png"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icons/icon.png"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "build/icons"
     }
   }
 }

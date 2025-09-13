@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Box, Typography, Chip, Divider, Table, TableBody, TableRow, TableCell } from '@mui/material';
 import { ProcessingResult } from '../../shared/types';
 
 interface ResultsViewProps {
@@ -86,10 +87,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     wbBasic: true,
     exposure: false,
     hsl: true,
-    colorGrading: false,
+    colorGrading: true,
     curves: true,
     sharpenNoise: true,
-    vignette: true
+    vignette: true,
   } as const;
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
@@ -122,42 +123,23 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   return (
     <div>
       {/* Header */}
-      <div className="card" style={{ 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        textAlign: 'center',
-        border: 'none'
-      }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>
-          ✨
-        </div>
-        <h2 style={{ 
-          fontSize: '28px', 
-          fontWeight: '700', 
-          marginBottom: '8px'
-        }}>
-          Processing Complete!
+      <div className="card" style={{ textAlign: 'center' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#222', marginBottom: '6px' }}>
+          Processing complete
         </h2>
-        <p style={{ 
-          fontSize: '16px', 
-          opacity: 0.9,
-          marginBottom: '24px'
-        }}>
-          {successfulResults.length} of {results.length} images processed successfully
-        </p>
+        {results.length > 1 ? (
+          <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
+            {successfulResults.length} of {results.length} images processed successfully
+          </p>
+        ) : results.length === 1 ? (
+          <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
+            {successfulResults.length === 1 ? 'Image processed successfully' : 'Processing failed'}
+          </p>
+        ) : null}
 
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            className="button"
-            onClick={onReset}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              color: 'white',
-              backdropFilter: 'blur(10px)'
-            }}
-          >
-            🔄 Process New Images
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button className="button" onClick={onReset}>
+            New processing session
           </button>
         </div>
       </div>
@@ -197,7 +179,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                   <div>
                     <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600 }}>Base</div>
-                    <div style={{ width: '100%', height: '260px', borderRadius: '12px', overflow: 'hidden', border: '3px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                    <div style={{ width: '100%', height: '380px', borderRadius: '12px', overflow: 'hidden', border: '3px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
                       {_baseImage && (
                         <img
                           src={(() => {
@@ -212,7 +194,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   </div>
                   <div>
                     <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600 }}>Original</div>
-                    <div style={{ width: '100%', height: '260px', borderRadius: '12px', overflow: 'hidden', border: '3px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', position: 'relative' }}>
+                    <div style={{ width: '100%', height: '380px', borderRadius: '12px', overflow: 'hidden', border: '3px solid #f0f0f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', position: 'relative' }}>
                       <img
                         src={(() => {
                           const overallIndex = results.indexOf(result);
@@ -255,59 +237,64 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </span>
                       </div>
 
-                      {/* All Adjustments summary */}
-                      <div style={{ display: 'grid', gap: '6px', fontSize: '12px', color: '#555555' }}>
-                        {/* WB & Basic */}
-                        <div><strong>Temperature:</strong> {Math.round(result.metadata.aiAdjustments.temperature || 0)}K</div>
-                        <div><strong>Tint:</strong> {Math.round(result.metadata.aiAdjustments.tint || 0)}</div>
-                        <div><strong>Exposure:</strong> {(result.metadata.aiAdjustments.exposure || 0).toFixed(2)} stops</div>
-                        <div><strong>Contrast:</strong> {result.metadata.aiAdjustments.contrast}</div>
-                        <div><strong>Highlights:</strong> {result.metadata.aiAdjustments.highlights}</div>
-                        <div><strong>Shadows:</strong> {result.metadata.aiAdjustments.shadows}</div>
-                        <div><strong>Whites:</strong> {result.metadata.aiAdjustments.whites}</div>
-                        <div><strong>Blacks:</strong> {result.metadata.aiAdjustments.blacks}</div>
-                        <div><strong>Clarity:</strong> {result.metadata.aiAdjustments.clarity}</div>
-                        <div><strong>Vibrance:</strong> {result.metadata.aiAdjustments.vibrance}</div>
-                        <div><strong>Saturation:</strong> {result.metadata.aiAdjustments.saturation}</div>
-                        <div><strong>Texture:</strong> {(result.metadata.aiAdjustments as any).texture ?? 0}</div>
-                        <div><strong>Dehaze:</strong> {(result.metadata.aiAdjustments as any).dehaze ?? 0}</div>
-
-                        {/* Tone Curves */}
-                        <div><strong>Tone Curve points:</strong> {(result.metadata.aiAdjustments as any).tone_curve?.length ?? 0} (R {(result.metadata.aiAdjustments as any).tone_curve_red?.length ?? 0} / G {(result.metadata.aiAdjustments as any).tone_curve_green?.length ?? 0} / B {(result.metadata.aiAdjustments as any).tone_curve_blue?.length ?? 0})</div>
-
-                        {/* Parametric Regions */}
-                        <div><strong>Parametric Shadows/Darks/Lights/Highlights:</strong> {(result.metadata.aiAdjustments as any).parametric_shadows ?? 0} / {(result.metadata.aiAdjustments as any).parametric_darks ?? 0} / {(result.metadata.aiAdjustments as any).parametric_lights ?? 0} / {(result.metadata.aiAdjustments as any).parametric_highlights ?? 0}</div>
-                        <div><strong>Parametric Splits (S/M/H):</strong> {(result.metadata.aiAdjustments as any).parametric_shadow_split ?? 25} / {(result.metadata.aiAdjustments as any).parametric_midtone_split ?? 50} / {(result.metadata.aiAdjustments as any).parametric_highlight_split ?? 75}</div>
-
-                        {/* HSL Hue */}
-                        <div style={{ marginTop: '6px', fontWeight: 600, color: '#444' }}>HSL Hue</div>
-                        <div>R {(result.metadata.aiAdjustments as any).hue_red ?? 0}, O {(result.metadata.aiAdjustments as any).hue_orange ?? 0}, Y {(result.metadata.aiAdjustments as any).hue_yellow ?? 0}, G {(result.metadata.aiAdjustments as any).hue_green ?? 0}, A {(result.metadata.aiAdjustments as any).hue_aqua ?? 0}, B {(result.metadata.aiAdjustments as any).hue_blue ?? 0}, P {(result.metadata.aiAdjustments as any).hue_purple ?? 0}, M {(result.metadata.aiAdjustments as any).hue_magenta ?? 0}</div>
-
-                        {/* HSL Saturation */}
-                        <div style={{ marginTop: '6px', fontWeight: 600, color: '#444' }}>HSL Saturation</div>
-                        <div>R {(result.metadata.aiAdjustments as any).sat_red ?? 0}, O {(result.metadata.aiAdjustments as any).sat_orange ?? 0}, Y {(result.metadata.aiAdjustments as any).sat_yellow ?? 0}, G {(result.metadata.aiAdjustments as any).sat_green ?? 0}, A {(result.metadata.aiAdjustments as any).sat_aqua ?? 0}, B {(result.metadata.aiAdjustments as any).sat_blue ?? 0}, P {(result.metadata.aiAdjustments as any).sat_purple ?? 0}, M {(result.metadata.aiAdjustments as any).sat_magenta ?? 0}</div>
-
-                        {/* HSL Luminance */}
-                        <div style={{ marginTop: '6px', fontWeight: 600, color: '#444' }}>HSL Luminance</div>
-                        <div>R {(result.metadata.aiAdjustments as any).lum_red ?? 0}, O {(result.metadata.aiAdjustments as any).lum_orange ?? 0}, Y {(result.metadata.aiAdjustments as any).lum_yellow ?? 0}, G {(result.metadata.aiAdjustments as any).lum_green ?? 0}, A {(result.metadata.aiAdjustments as any).lum_aqua ?? 0}, B {(result.metadata.aiAdjustments as any).lum_blue ?? 0}, P {(result.metadata.aiAdjustments as any).lum_purple ?? 0}, M {(result.metadata.aiAdjustments as any).lum_magenta ?? 0}</div>
-
-                        {/* Color Grading */}
-                        <div style={{ marginTop: '6px', fontWeight: 600, color: '#444' }}>Color Grading</div>
-                        <div>Shadows: H {(result.metadata.aiAdjustments as any).color_grade_shadow_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_shadow_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_shadow_lum ?? 0}</div>
-                        <div>Midtones: H {(result.metadata.aiAdjustments as any).color_grade_midtone_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_midtone_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_midtone_lum ?? 0}</div>
-                        <div>Highlights: H {(result.metadata.aiAdjustments as any).color_grade_highlight_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_highlight_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_highlight_lum ?? 0}</div>
-                        <div>Global: H {(result.metadata.aiAdjustments as any).color_grade_global_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_global_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_global_lum ?? 0}</div>
-                        <div>Blending: {(result.metadata.aiAdjustments as any).color_grade_blending ?? 50}</div>
-
-                        {/* Detail & Vignette */}
-                        <div style={{ marginTop: '6px', fontWeight: 600, color: '#444' }}>Detail / Vignette</div>
-                        <div>Sharpen: {(result.metadata.aiAdjustments as any).sharpening ?? 0} (radius {(result.metadata.aiAdjustments as any).sharpening_radius ?? 1.0}, detail {(result.metadata.aiAdjustments as any).sharpening_detail ?? 25}, masking {(result.metadata.aiAdjustments as any).sharpening_masking ?? 0})</div>
-                        <div>Noise Reduction: Luma {(result.metadata.aiAdjustments as any).luminance_noise_reduction ?? 0} / Color {(result.metadata.aiAdjustments as any).color_noise_reduction ?? 0}</div>
-                        <div>Vignette: {(result.metadata.aiAdjustments as any).vignette ?? 0}</div>
-                      </div>
+                      {/* Nicer presentation using MUI */}
+                      <Table size="small" sx={{ '& td, & th': { borderBottom: '1px dashed #e5e7eb' } }}>
+                        <TableBody>
+                          <TableRow><TableCell>Temperature</TableCell><TableCell align="right">{Math.round(result.metadata.aiAdjustments.temperature || 0)} K</TableCell></TableRow>
+                          <TableRow><TableCell>Tint</TableCell><TableCell align="right">{Math.round(result.metadata.aiAdjustments.tint || 0)}</TableCell></TableRow>
+                          <TableRow><TableCell>Exposure</TableCell><TableCell align="right">{(result.metadata.aiAdjustments.exposure || 0).toFixed(2)} stops</TableCell></TableRow>
+                          <TableRow><TableCell>Contrast</TableCell><TableCell align="right">{result.metadata.aiAdjustments.contrast ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Highlights</TableCell><TableCell align="right">{result.metadata.aiAdjustments.highlights ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Shadows</TableCell><TableCell align="right">{result.metadata.aiAdjustments.shadows ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Whites</TableCell><TableCell align="right">{result.metadata.aiAdjustments.whites ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Blacks</TableCell><TableCell align="right">{result.metadata.aiAdjustments.blacks ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Clarity</TableCell><TableCell align="right">{result.metadata.aiAdjustments.clarity ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Vibrance</TableCell><TableCell align="right">{result.metadata.aiAdjustments.vibrance ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Saturation</TableCell><TableCell align="right">{result.metadata.aiAdjustments.saturation ?? 0}</TableCell></TableRow>
+                        </TableBody>
+                      </Table>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>HSL Hue</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                        {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
+                          <Chip key={`hue_${k}`} size="small" label={`${k[0].toUpperCase()} ${(result.metadata!.aiAdjustments as any)[`hue_${k}`] ?? 0}`} />
+                        ))}
+                      </Box>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444', mt: 1, display: 'block' }}>HSL Saturation</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                        {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
+                          <Chip key={`sat_${k}`} size="small" label={`${k[0].toUpperCase()} ${(result.metadata!.aiAdjustments as any)[`sat_${k}`] ?? 0}`} />
+                        ))}
+                      </Box>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444', mt: 1, display: 'block' }}>HSL Luminance</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                        {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
+                          <Chip key={`lum_${k}`} size="small" label={`${k[0].toUpperCase()} ${(result.metadata!.aiAdjustments as any)[`lum_${k}`] ?? 0}`} />
+                        ))}
+                      </Box>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>Color Grading</Typography>
+                      <Table size="small" sx={{ '& td, & th': { borderBottom: '1px dashed #e5e7eb' }, mt: 0.5 }}>
+                        <TableBody>
+                          <TableRow><TableCell>Shadows</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_shadow_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_shadow_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_shadow_lum ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Midtones</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_midtone_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_midtone_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_midtone_lum ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Highlights</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_highlight_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_highlight_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_highlight_lum ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Global</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_global_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_global_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_global_lum ?? 0}</TableCell></TableRow>
+                          <TableRow><TableCell>Blending</TableCell><TableCell align="right">{(result.metadata.aiAdjustments as any).color_grade_blending ?? 50}</TableCell></TableRow>
+                        </TableBody>
+                      </Table>
+                      {typeof result.metadata.aiAdjustments.reasoning === 'string' && result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
+                        <>
+                          <Divider sx={{ my: 1 }} />
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>AI Notes</Typography>
+                          <Box sx={{ mt: 0.5, fontSize: 12, color: '#374151', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 1, p: 1.25, whiteSpace: 'pre-wrap' }}>
+                            {result.metadata.aiAdjustments.reasoning}
+                          </Box>
+                        </>
+                      )}
                     </div>
 
-                    {/* Export options + action */}
+                    {/* Export options */}
                     <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: '8px', padding: '12px' }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: '#333' }}>Export XMP Options</div>
                       <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
@@ -328,24 +315,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         ))}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                        <button className="button" onClick={() => handleExportXMP(index, result)}>
-                          📋 Export XMP
-                        </button>
+                        <button className="button" onClick={() => handleExportXMP(index, result)}>📋 Export XMP</button>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                    className="button-secondary"
-                    onClick={() => window.electronAPI.openPath(result.outputPath!)}
-                    style={{ flex: '1', minWidth: '120px' }}
-                  >
-                    📂 Show File
-                  </button>
-                </div>
               </div>
             ))}
           </div>

@@ -115,10 +115,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
             <Grid item xs={12} sm={6} md={4} key={process.id}>
               <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
                 <IconButton
-                  aria-label="delete"
+                  aria-label="Delete"
                   size="small"
                   onClick={e => handleDeleteProcess(process.id, e)}
-                  sx={{ position: 'absolute', top: 8, left: 8, bgcolor: 'rgba(244, 67, 54, 0.06)' }}
+                  title="Delete"
+                  sx={{ position: 'absolute', top: 8, left: 8, bgcolor: 'rgba(244, 67, 54, 0.08)', zIndex: 2 }}
                 >
                   <DeleteOutlineIcon color="error" fontSize="small" />
                 </IconButton>
@@ -139,7 +140,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                   {basePreviews[index] && (
                     <CardMedia
                       component="img"
-                      height="160"
+                      height="240"
                       image={
                         basePreviews[index].startsWith('file://')
                           ? basePreviews[index]

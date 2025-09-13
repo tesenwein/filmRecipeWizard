@@ -10,14 +10,17 @@ import HomeIcon from '@mui/icons-material/Home';
 import { ProcessHistory, ProcessingResult, ProcessingState } from '../../shared/types';
 
 const App: React.FC = () => {
-  // Simple hash-based router
-  const getRoute = () => {
+  // Simple hash-based router with query support
+  const parseHash = () => {
     const raw = (typeof window !== 'undefined' ? window.location.hash : '') || '#/home';
     const path = raw.replace(/^#/, '');
-    const [route] = path.split('?');
-    return route || '/home';
+    const [route, queryStr = ''] = path.split('?');
+    const query = Object.fromEntries(new URLSearchParams(queryStr));
+    return { route: route || '/home', query } as { route: string; query: Record<string, string> };
   };
-  const [route, setRoute] = useState<string>(getRoute());
+  const initialHash = parseHash();
+  const [route, setRoute] = useState<string>(initialHash.route);
+  const [routeQuery, setRouteQuery] = useState<Record<string, string>>(initialHash.query);
 
   const [baseImage, setBaseImage] = useState<string | null>(null);
   const [targetImages, setTargetImages] = useState<string[]>([]);
@@ -184,7 +187,7 @@ const App: React.FC = () => {
     } finally {
       setProjectLoading(false);
       setCurrentStep('results');
-      navigate('/projectdetails');
+      navigate(`/projectdetails?id=${process.id}`);
     }
   };
 
@@ -205,7 +208,11 @@ const App: React.FC = () => {
 
   // Listen to hash changes for routing
   useEffect(() => {
-    const onHashChange = () => setRoute(getRoute());
+    const onHashChange = () => {
+      const h = parseHash();
+      setRoute(h.route);
+      setRouteQuery(h.query);
+    };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
@@ -217,33 +224,43 @@ const App: React.FC = () => {
     }
   }, [route]);
 
-  // If a project is selected and we're showing results, ensure we are on project details
+  // Restore project when landing directly on project details (e.g., after refresh)
   useEffect(() => {
-    if (currentProcessId && currentStep === 'results' && route !== '/projectdetails') {
-      navigate('/projectdetails');
-    }
-  }, [currentProcessId, currentStep]);
+    const restore = async () => {
+      if (route === '/projectdetails') {
+        const id = routeQuery?.id;
+        if (id) {
+          try {
+            setProjectLoading(true);
+            const res = await window.electronAPI.getProcess(id);
+            if (res?.success && res.process) {
+              setBaseImage(res.process.baseImage);
+              setTargetImages(res.process.targetImages || []);
+              setResults(Array.isArray(res.process.results) ? res.process.results : []);
+              setCurrentProcessId(res.process.id);
+              setCurrentStep('results');
+            }
+          } catch (e) {
+            console.warn('Failed to restore project from hash:', e);
+          } finally {
+            setProjectLoading(false);
+          }
+        }
+      }
+    };
+    restore();
+  }, [route, routeQuery]);
 
   const navigate = (to: string) => {
     window.location.hash = to.startsWith('#') ? to : `#${to}`;
   };
 
   const Header = (
-    <header style={{ marginBottom: '24px' }}>
+    <header style={{ marginBottom: '16px' }}>
+      <div className="drag-region" />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div
-          style={{
-            fontSize: '20px',
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          Image Match
-        </div>
-        <div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#1F2937' }}>Image Match</div>
+        <div className="no-drag">
           <Tooltip title="Home">
             <IconButton color="default" size="small" onClick={() => navigate('/home')} sx={{ mr: 1 }}>
               <HomeIcon />

@@ -6,7 +6,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background-color: #ffffff;
+  background-color: #FAFBFF;
   color: #333333;
   line-height: 1.6;
 }
@@ -14,14 +14,17 @@ body {
 #root {
   width: 100vw;
   height: 100vh;
-  background-color: #ffffff;
+  background: radial-gradient(1200px 800px at 80% -200px, rgba(102,126,234,0.08), transparent 60%),
+              radial-gradient(900px 600px at -200px -200px, rgba(118,75,162,0.06), transparent 60%),
+              #FAFBFF;
 }
 
 /* Base component styles */
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  /* Extra top padding to avoid macOS window controls overlap */
+  padding: 48px 20px 20px;
 }
 
 /* Results view should use full available width */
@@ -32,16 +35,23 @@ body {
 .card {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f0f0f0;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+  border: 1px solid #EEF2FF;
   padding: 24px;
   margin-bottom: 20px;
   transition: box-shadow 0.2s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.09);
 }
+
+/* Titlebar / drag region for a more native feel */
+.drag-region {
+  -webkit-app-region: drag;
+  height: 28px;
+}
+.no-drag { -webkit-app-region: no-drag; }
 
 .button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -217,7 +227,8 @@ body {
   }
   
   .container {
-    padding: 16px;
+    /* Keep extra top space on smaller screens as well */
+    padding: 44px 16px 16px;
   }
   
   .card {
