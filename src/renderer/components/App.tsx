@@ -8,6 +8,7 @@ import { Dialog, DialogTitle, DialogContent, IconButton, Tooltip } from '@mui/ma
 import SettingsIcon from '@mui/icons-material/Settings';
 import HomeIcon from '@mui/icons-material/Home';
 import { ProcessHistory, ProcessingResult, ProcessingState } from '../../shared/types';
+import IconSvg from '../../../assets/icons/icon.svg';
 
 const App: React.FC = () => {
   // Simple hash-based router with query support
@@ -333,11 +334,18 @@ const App: React.FC = () => {
           background: '#ffffff',
           border: '1px solid #EEF2FF',
           borderRadius: 12,
-          padding: '8px 12px',
+          padding: '12px 16px',
           boxShadow: '0 6px 14px rgba(17, 24, 39, 0.06)',
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 800, color: '#1F2937' }}>Image Match</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img 
+            src={IconSvg} 
+            alt="Image Match" 
+            style={{ width: 28, height: 28 }}
+          />
+          <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>Image Match</span>
+        </div>
         <div className="no-drag">
           <Tooltip title="Home">
             <IconButton

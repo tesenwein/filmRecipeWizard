@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const svgPath = path.join(__dirname, '../build/icons/icon.svg');
+const svgPath = path.join(__dirname, '../assets/icons/icon.svg');
 const iconsDir = path.join(__dirname, '../build/icons');
 
 const sizes = [16, 32, 48, 64, 128, 256, 512, 1024];
@@ -25,9 +25,9 @@ async function generateIcons() {
       console.log(`Generated ${size}x${size}.png`);
     }
 
-    // Copy 256x256 as the main icon.png
+    // Copy 512x512 as the main icon.png (electron-builder requires at least 512x512)
     await sharp(svgBuffer)
-      .resize(256, 256)
+      .resize(512, 512)
       .png()
       .toFile(path.join(iconsDir, 'icon.png'));
     console.log('Generated icon.png');
