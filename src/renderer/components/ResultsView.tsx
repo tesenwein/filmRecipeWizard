@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Chip, Divider, Table, TableBody, TableRow, TableCell } from '@mui/material';
+import { Box, Typography, Chip, Divider, Table, TableBody, TableRow, TableCell, Button, FormGroup, FormControlLabel, Checkbox, Card } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
 import { ProcessingResult } from '../../shared/types';
 
 interface ResultsViewProps {
@@ -295,9 +296,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     </div>
 
                     {/* Export options */}
-                    <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: '8px', padding: '12px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: '#333' }}>Export XMP Options</div>
-                      <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                    <Card variant="outlined" sx={{ 
+                      background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)',
+                      border: '1px solid #e9ecef',
+                      borderRadius: 2,
+                      p: 2
+                    }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary' }}>
+                        Export Settings
+                      </Typography>
+                      <FormGroup sx={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: 0.5
+                      }}>
                         {([
                           { key: 'exposure', label: 'Exposure (separate)' },
                           { key: 'wbBasic', label: 'Basic Adjustments' },
@@ -307,17 +319,36 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           { key: 'sharpenNoise', label: 'Sharpen & Noise' },
                           { key: 'vignette', label: 'Vignette' },
                         ] as const).map(opt => (
-                          <label key={opt.key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <input type="checkbox" checked={getOptions(index)[opt.key as keyof ReturnType<typeof getOptions>] as any}
-                              onChange={() => toggleOption(index, opt.key as any)} />
-                            <span style={{ fontSize: '12px', color: '#444' }}>{opt.label}</span>
-                          </label>
+                          <FormControlLabel
+                            key={opt.key}
+                            control={
+                              <Checkbox 
+                                size="small"
+                                checked={getOptions(index)[opt.key as keyof ReturnType<typeof getOptions>] as any}
+                                onChange={() => toggleOption(index, opt.key as any)}
+                                sx={{ py: 0.5 }}
+                              />
+                            }
+                            label={<Typography variant="body2">{opt.label}</Typography>}
+                          />
                         ))}
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                        <button className="button" onClick={() => handleExportXMP(index, result)}>📋 Export XMP</button>
-                      </div>
-                    </div>
+                      </FormGroup>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                        <Button 
+                          variant="contained" 
+                          startIcon={<DownloadIcon />}
+                          onClick={() => handleExportXMP(index, result)}
+                          sx={{ 
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            px: 3,
+                            py: 1.25
+                          }}
+                        >
+                          Export XMP
+                        </Button>
+                      </Box>
+                    </Card>
                   </div>
                 )}
 

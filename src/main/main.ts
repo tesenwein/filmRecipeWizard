@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
 import { StorageService } from './storage-service';
@@ -72,7 +72,7 @@ class ImageMatchApp {
   }
 
   private createMenu(): void {
-    const template: Electron.MenuItemConstructorOptions[] = [
+    const template: MenuItemConstructorOptions[] = [
       {
         label: 'File',
         submenu: [

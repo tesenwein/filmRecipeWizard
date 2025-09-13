@@ -603,7 +603,6 @@ export class ImageProcessor {
 
       // Use ColorMatcher for more accurate temperature calculation
       console.log('[PROCESSOR] Calculating color temperature and balance');
-      const temperature = ColorMatcher.calculateColorTemperature(averageColor);
       const colorBalance = ColorMatcher.analyzeColorBalance(dominantColors);
 
       console.log(
@@ -672,7 +671,7 @@ export class ImageProcessor {
     }
   }
 
-  private async tryHeicConversionFallback(imagePath: string): Promise<ColorAnalysis> {
+  private async tryHeicConversionFallback(_imagePath: string): Promise<ColorAnalysis> {
     console.log('[PROCESSOR] Attempting HEIC conversion fallback');
 
     // For now, provide detailed error with solution
@@ -688,7 +687,7 @@ export class ImageProcessor {
     );
   }
 
-  private async convertHeicWithImageMagick(heicPath: string): Promise<string> {
+  private async convertHeicWithImageMagick(_heicPath: string): Promise<string> {
     // Placeholder for ImageMagick conversion
     // For now, throw an error since the WASM API needs more work
     throw new Error(
@@ -755,7 +754,6 @@ export class ImageProcessor {
       .filter(color => color.percentage > 1);
 
     // Use ColorMatcher for temperature calculation
-    const temperature = ColorMatcher.calculateColorTemperature(averageColor);
     const colorBalance = ColorMatcher.analyzeColorBalance(dominantColors);
 
     console.log('[PROCESSOR] RAW buffer analysis complete');
@@ -823,7 +821,6 @@ export class ImageProcessor {
       })
       .filter(color => color.percentage > 1);
 
-    const temperature = ColorMatcher.calculateColorTemperature(averageColor);
     const colorBalance = ColorMatcher.analyzeColorBalance(dominantColors);
 
     return {

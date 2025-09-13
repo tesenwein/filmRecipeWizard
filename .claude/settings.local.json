@@ -23,7 +23,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx eslint:*)",
       "Bash(cat:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": [],

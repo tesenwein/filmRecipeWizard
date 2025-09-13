@@ -1,10 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { app } from 'electron';
-import { ProcessHistory, ProcessingResult } from '../shared/types';
-
-// Keep legacy alias for backward compatibility
-export type ProcessResult = ProcessingResult;
+import { ProcessHistory } from '../shared/types';
 
 export class StorageService {
   private storageFile: string;
