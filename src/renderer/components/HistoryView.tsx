@@ -119,9 +119,27 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                   size="small"
                   onClick={e => handleDeleteProcess(process.id, e)}
                   title="Delete"
-                  sx={{ position: 'absolute', top: 8, left: 8, bgcolor: 'rgba(17,24,39,0.04)', zIndex: 2, '&:hover': { bgcolor: 'rgba(17,24,39,0.08)' } }}
+                  sx={{ 
+                    position: 'absolute', 
+                    top: 8, 
+                    left: 8, 
+                    zIndex: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                    '&:hover': { 
+                      backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      '& .MuiSvgIcon-root': {
+                        color: 'white'
+                      }
+                    }
+                  }}
                 >
-                  <DeleteOutlineIcon fontSize="small" sx={{ color: 'action.active' }} />
+                  <DeleteOutlineIcon fontSize="small" sx={{ color: '#ef4444', transition: 'color 0.2s ease' }} />
                 </IconButton>
                 <CardActionArea
                   onClick={() => {

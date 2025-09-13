@@ -1,10 +1,12 @@
 export {}
 
 declare global {
-  // Add CSS properties for Electron
+  // Add CSS properties for Electron and modern browsers
   namespace React {
     interface CSSProperties {
       WebkitAppRegion?: 'drag' | 'no-drag';
+      WebkitBackdropFilter?: string;
+      backdropFilter?: string;
     }
   }
   interface Window {
