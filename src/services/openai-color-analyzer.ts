@@ -59,6 +59,7 @@ export interface AIColorAdjustments {
   color_grade_global_sat?: number; // 0-100
   color_grade_global_lum?: number; // -100 to 100
   color_grade_blending?: number; // 0-100
+  color_grade_balance?: number; // -100 to 100 (shadows/highlights balance)
   // Tone curves (0-255 input/output pairs)
   tone_curve?: Array<{ input: number; output: number }>;
   tone_curve_red?: Array<{ input: number; output: number }>;
@@ -685,6 +686,12 @@ Additionally, provide a short, human-friendly preset_name we can use for the XMP
                     type: 'number',
                     description: 'Color grade blending (0-100)',
                     minimum: 0,
+                    maximum: 100,
+                  },
+                  color_grade_balance: {
+                    type: 'number',
+                    description: 'Color grade balance between shadows/highlights (-100 to 100)',
+                    minimum: -100,
                     maximum: 100,
                   },
                   confidence: {

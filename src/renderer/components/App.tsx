@@ -221,13 +221,6 @@ const App: React.FC = () => {
     });
   };
 
-  const handleSelectProcess = (process: ProcessHistory) => {
-    setBaseImage(process.baseImage);
-    setTargetImages(process.targetImages);
-    setResults(process.results || []);
-    setCurrentProcessId(process.id);
-    setCurrentStep('results');
-  };
 
   const handleOpenProject = async (process: ProcessHistory) => {
     setProjectLoading(true);

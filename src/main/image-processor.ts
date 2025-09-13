@@ -259,7 +259,9 @@ export class ImageProcessor {
 
     try {
       console.log('[XMP] include flags:', inc);
-    } catch {}
+    } catch {
+      // Ignore logging errors
+    }
 
     // Build conditional blocks
     const wbBasicBlock = inc.wbBasic
@@ -280,7 +282,9 @@ export class ImageProcessor {
     const shouldIncludeExposure = inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
     try {
       console.log('[XMP] exposure:', { value: exposure, include: shouldIncludeExposure });
-    } catch {}
+    } catch {
+      // Ignore logging errors
+    }
     const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(exposure)) : '';
 
     const parametricCurvesBlock = inc.curves
@@ -356,6 +360,7 @@ export class ImageProcessor {
           tag('ColorGradeGlobalSat', round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100))),
           tag('ColorGradeGlobalLum', round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100))),
           tag('ColorGradeBlending', round(clamp((aiAdjustments as any).color_grade_blending, 0, 100))),
+          tag('ColorGradeBalance', round(clamp((aiAdjustments as any).color_grade_balance, -100, 100))),
         ].join('')
       : '';
 

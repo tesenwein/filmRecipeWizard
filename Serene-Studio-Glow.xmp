@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c140 79.160451, 2017/05/06-01:08:21">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+      xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/">
+      <crs:Name>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">Serene Studio Glow</rdf:li>
+        </rdf:Alt>
+      </crs:Name>
+      <crs:Group>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">image-match</rdf:li>
+        </rdf:Alt>
+      </crs:Group>
+      <crs:Treatment>Color</crs:Treatment>
+            <crs:CameraProfile>Adobe Portrait</crs:CameraProfile>
+
+            <crs:ProfileName>Adobe Portrait</crs:ProfileName>
+
+            <crs:Profile>Adobe Portrait</crs:Profile>
+
+      <crs:Look>
+        <rdf:Description crs:Name="Adobe Portrait" />
+      </crs:Look>
+
+            <crs:Temperature>5850</crs:Temperature>
+      <crs:Tint>9</crs:Tint>
+      <crs:Contrast2012>-5</crs:Contrast2012>
+      <crs:Highlights2012>-25</crs:Highlights2012>
+      <crs:Shadows2012>40</crs:Shadows2012>
+      <crs:Whites2012>20</crs:Whites2012>
+      <crs:Blacks2012>-12</crs:Blacks2012>
+      <crs:Clarity2012>-12</crs:Clarity2012>
+      <crs:Vibrance>12</crs:Vibrance>
+      <crs:Saturation>-4</crs:Saturation>
+
+            <crs:Exposure2012>1.70</crs:Exposure2012>
+
+
+      <!-- Parametric Tone Regions (optional) -->
+            <crs:ParametricShadows>12</crs:ParametricShadows>
+      <crs:ParametricDarks>-6</crs:ParametricDarks>
+      <crs:ParametricLights>6</crs:ParametricLights>
+      <crs:ParametricHighlights>-4</crs:ParametricHighlights>
+      <crs:ParametricShadowSplit>25</crs:ParametricShadowSplit>
+      <crs:ParametricMidtoneSplit>50</crs:ParametricMidtoneSplit>
+      <crs:ParametricHighlightSplit>75</crs:ParametricHighlightSplit>
+
+
+      <!-- PV2012 Tone Curves (optional) -->
+      <crs:ToneCurvePV2012>
+        <rdf:Seq>
+          <rdf:li>0, 8</rdf:li>
+          <rdf:li>32, 28</rdf:li>
+          <rdf:li>128, 132</rdf:li>
+          <rdf:li>192, 205</rdf:li>
+          <rdf:li>255, 246</rdf:li>
+        </rdf:Seq>
+      </crs:ToneCurvePV2012>
+<crs:ToneCurvePV2012Red>
+        <rdf:Seq>
+          <rdf:li>0, 2</rdf:li>
+          <rdf:li>64, 60</rdf:li>
+          <rdf:li>192, 204</rdf:li>
+          <rdf:li>255, 252</rdf:li>
+        </rdf:Seq>
+      </crs:ToneCurvePV2012Red>
+<crs:ToneCurvePV2012Green>
+        <rdf:Seq>
+          <rdf:li>0, 10</rdf:li>
+          <rdf:li>128, 130</rdf:li>
+          <rdf:li>255, 248</rdf:li>
+        </rdf:Seq>
+      </crs:ToneCurvePV2012Green>
+<crs:ToneCurvePV2012Blue>
+        <rdf:Seq>
+          <rdf:li>0, 0</rdf:li>
+          <rdf:li>192, 186</rdf:li>
+          <rdf:li>255, 244</rdf:li>
+        </rdf:Seq>
+      </crs:ToneCurvePV2012Blue>
+
+
+      <!-- HSL Adjustments (optional) -->
+            <crs:HueAdjustmentRed>5</crs:HueAdjustmentRed>
+      <crs:HueAdjustmentOrange>-6</crs:HueAdjustmentOrange>
+      <crs:HueAdjustmentYellow>-10</crs:HueAdjustmentYellow>
+      <crs:HueAdjustmentGreen>-18</crs:HueAdjustmentGreen>
+      <crs:HueAdjustmentAqua>-10</crs:HueAdjustmentAqua>
+      <crs:HueAdjustmentBlue>-8</crs:HueAdjustmentBlue>
+      <crs:HueAdjustmentPurple>6</crs:HueAdjustmentPurple>
+      <crs:HueAdjustmentMagenta>6</crs:HueAdjustmentMagenta>
+      <crs:SaturationAdjustmentRed>-8</crs:SaturationAdjustmentRed>
+      <crs:SaturationAdjustmentOrange>-6</crs:SaturationAdjustmentOrange>
+      <crs:SaturationAdjustmentYellow>-25</crs:SaturationAdjustmentYellow>
+      <crs:SaturationAdjustmentGreen>-40</crs:SaturationAdjustmentGreen>
+      <crs:SaturationAdjustmentAqua>-35</crs:SaturationAdjustmentAqua>
+      <crs:SaturationAdjustmentBlue>-40</crs:SaturationAdjustmentBlue>
+      <crs:SaturationAdjustmentPurple>-20</crs:SaturationAdjustmentPurple>
+      <crs:SaturationAdjustmentMagenta>-15</crs:SaturationAdjustmentMagenta>
+      <crs:LuminanceAdjustmentRed>10</crs:LuminanceAdjustmentRed>
+      <crs:LuminanceAdjustmentOrange>22</crs:LuminanceAdjustmentOrange>
+      <crs:LuminanceAdjustmentYellow>-5</crs:LuminanceAdjustmentYellow>
+      <crs:LuminanceAdjustmentGreen>8</crs:LuminanceAdjustmentGreen>
+      <crs:LuminanceAdjustmentAqua>5</crs:LuminanceAdjustmentAqua>
+      <crs:LuminanceAdjustmentBlue>2</crs:LuminanceAdjustmentBlue>
+      <crs:LuminanceAdjustmentPurple>0</crs:LuminanceAdjustmentPurple>
+      <crs:LuminanceAdjustmentMagenta>0</crs:LuminanceAdjustmentMagenta>
+
+
+      <!-- Color Grading (Modern) -->
+            <crs:ColorGradeShadowHue>160</crs:ColorGradeShadowHue>
+      <crs:ColorGradeShadowSat>8</crs:ColorGradeShadowSat>
+      <crs:ColorGradeShadowLum>6</crs:ColorGradeShadowLum>
+      <crs:ColorGradeMidtoneHue>35</crs:ColorGradeMidtoneHue>
+      <crs:ColorGradeMidtoneSat>12</crs:ColorGradeMidtoneSat>
+      <crs:ColorGradeMidtoneLum>6</crs:ColorGradeMidtoneLum>
+      <crs:ColorGradeHighlightHue>45</crs:ColorGradeHighlightHue>
+      <crs:ColorGradeHighlightSat>8</crs:ColorGradeHighlightSat>
+      <crs:ColorGradeHighlightLum>0</crs:ColorGradeHighlightLum>
+      <crs:ColorGradeGlobalHue>0</crs:ColorGradeGlobalHue>
+      <crs:ColorGradeGlobalSat>0</crs:ColorGradeGlobalSat>
+      <crs:ColorGradeGlobalLum>0</crs:ColorGradeGlobalLum>
+      <crs:ColorGradeBlending>60</crs:ColorGradeBlending>
+
+
+      <!-- Point Color (if provided) -->
+      
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>

@@ -27,6 +27,6 @@
     "node_modules/",
     "webpack.*.js",
     "*.js",
-    "*.d.ts"
+    "**/*.d.ts"
   ]
 }
