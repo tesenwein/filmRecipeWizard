@@ -53,6 +53,19 @@ body {
 }
 .no-drag { -webkit-app-region: no-drag; }
 
+/* Always-on top draggable strip to allow moving window even when modals are open */
+.global-drag-strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 28px; /* match traffic light area */
+  -webkit-app-region: drag;
+  z-index: 3000; /* above MUI dialogs/tooltips */
+  pointer-events: auto; /* must be interactive for drag to work */
+  /* transparent, no visual impact */
+}
+
 .button {
   background: linear-gradient(135deg, #5b6670 0%, #3d4853 100%);
   color: white;

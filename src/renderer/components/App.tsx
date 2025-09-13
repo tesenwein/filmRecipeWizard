@@ -366,6 +366,8 @@ const App: React.FC = () => {
 
   return (
     <div className={`container ${currentStep}`}>
+      {/* Global drag strip at very top so window can always be moved (even over modals) */}
+      <div className="global-drag-strip" />
       {Header}
       {route === '/home' && (
         <div className="fade-in">
