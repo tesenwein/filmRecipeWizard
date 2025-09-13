@@ -106,6 +106,39 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }));
   };
 
+  const allKeys = [
+    'exposure',
+    'wbBasic',
+    'hsl',
+    'colorGrading',
+    'curves',
+    'sharpenNoise',
+    'vignette',
+  ] as const;
+
+  const isAllSelected = (index: number) => {
+    const opts = getOptions(index) as any;
+    return allKeys.every(k => !!opts[k]);
+  };
+
+  const setAllOptions = (index: number, value: boolean) => {
+    setExportOptions(prev => ({
+      ...prev,
+      [index]: allKeys.reduce((acc, k) => ({ ...acc, [k]: value }), { ...(prev[index] || defaultOptions) }) as any,
+    }));
+  };
+
+  const applyOptionsToAll = (fromIndex: number) => {
+    const from = getOptions(fromIndex);
+    setExportOptions(prev => {
+      const next: typeof prev = { ...prev };
+      results.forEach((_r, i) => {
+        next[i] = { ...from } as any;
+      });
+      return next;
+    });
+  };
+
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
     const adjustments = result.metadata?.aiAdjustments;
     if (!adjustments) return;
@@ -395,6 +428,22 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary' }}>
                         Export Settings
                       </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              size="small"
+                              checked={isAllSelected(results.indexOf(result))}
+                              onChange={(e) => setAllOptions(results.indexOf(result), e.target.checked)}
+                              sx={{ py: 0.5 }}
+                            />
+                          }
+                          label={<Typography variant="body2">All types & groups</Typography>}
+                        />
+                        <Button size="small" variant="outlined" onClick={() => applyOptionsToAll(results.indexOf(result))} sx={{ textTransform: 'none' }}>
+                          Apply to all images
+                        </Button>
+                      </Box>
                       <FormGroup sx={{ 
                         display: 'grid', 
                         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',

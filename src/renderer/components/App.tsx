@@ -147,6 +147,12 @@ const App: React.FC = () => {
     }
 
     setCurrentStep('results');
+    
+    // Navigate back to project details if this was a new processing session
+    if (isNewProcessingSession && currentProcessIdRef.current) {
+      setIsNewProcessingSession(false);
+      navigate(`/projectdetails?id=${currentProcessIdRef.current}`);
+    }
   };
 
   const handleReset = () => {
@@ -155,6 +161,7 @@ const App: React.FC = () => {
     setResults([]);
     setCurrentProcessId(null);
     setCurrentStep('upload');
+    setIsNewProcessingSession(false);
     setProcessingState({
       isProcessing: false,
       progress: 0,
@@ -173,6 +180,7 @@ const App: React.FC = () => {
     setResults([]);
     setCurrentProcessId(null);
     setCurrentStep('processing');
+    setIsNewProcessingSession(true);
     setProcessingState({
       isProcessing: true,
       progress: 0,
