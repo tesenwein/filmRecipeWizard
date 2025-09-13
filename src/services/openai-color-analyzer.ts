@@ -115,27 +115,10 @@ export class OpenAIColorAnalyzer {
 
 1. BASE IMAGE: This is the reference photo with the desired color grading, mood, and style
 2. TARGET IMAGE: This is the photo I want to adjust to match the BASE IMAGE's color characteristics
+3. For portraits, ensure a match in skin tone and backdrop
+4. For landscapes, ensure a match in overall scene mood and lighting, specifically sky and foliage colors
 
-Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET IMAGE match the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
-
-Consider these aspects:
-- White balance (temperature and tint)
-- Exposure and brightness levels  
-- Contrast and clarity
-- Shadow and highlight recovery
-- Color grading and selective color adjustments
-- Saturation and vibrance
-- Individual color hue shifts
- - Tone curves: when needed, include multiple control points (3-7) for composite and per-channel curves (0-255 input/output) to shape contrast and color balance
- - watch out for skin tones and ensure they remain natural
-
-Also include modern Color Grading settings (Lightroom/ACR):
-- Shadow/Midtone/Highlight/Global color wheels with Hue (0-360), Sat (0-100), and Lum (-100 to 100)
-- Color grade blending (0-100)
-\nImportant: Use the Lightroom color wheel hue reference (0=red, 60=yellow, 120=green, 180=cyan/teal, 240=blue, 300=magenta). If the base image has a green/teal cast, favor teal/cyan hues (around 180–210) in shadows/midtones/highlights rather than red/magenta.
-
-Provide specific numeric values for each adjustment that would achieve the best match.
-Only include properties you actually intend to change; omit any settings that should remain as-is.`,
+Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET IMAGE match the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.`,
               },
               {
                 type: 'text',
