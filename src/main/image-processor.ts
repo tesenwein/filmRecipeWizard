@@ -319,6 +319,62 @@ export class ImageProcessor {
       ${tag('Clarity2012', aiAdjustments.clarity)}
       ${tag('Vibrance', aiAdjustments.vibrance)}
       ${tag('Saturation', isBW ? 0 : aiAdjustments.saturation)}
+
+      <!-- Parametric Tone Regions (optional) -->
+      ${tag('ParametricShadows', (aiAdjustments as any).parametric_shadows)}
+      ${tag('ParametricDarks', (aiAdjustments as any).parametric_darks)}
+      ${tag('ParametricLights', (aiAdjustments as any).parametric_lights)}
+      ${tag('ParametricHighlights', (aiAdjustments as any).parametric_highlights)}
+      ${tag('ParametricShadowSplit', (aiAdjustments as any).parametric_shadow_split)}
+      ${tag('ParametricMidtoneSplit', (aiAdjustments as any).parametric_midtone_split)}
+      ${tag('ParametricHighlightSplit', (aiAdjustments as any).parametric_highlight_split)}
+
+      <!-- PV2012 Tone Curves (optional) -->
+      ${(aiAdjustments as any).tone_curve ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n` : ''}
+      ${(aiAdjustments as any).tone_curve_red ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_red as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n` : ''}
+      ${(aiAdjustments as any).tone_curve_green ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_green as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n` : ''}
+      ${(aiAdjustments as any).tone_curve_blue ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_blue as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n` : ''}
+
+      <!-- HSL Adjustments (optional) -->
+      ${tag('HueAdjustmentRed', (aiAdjustments as any).hue_red)}
+      ${tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange)}
+      ${tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow)}
+      ${tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green)}
+      ${tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua)}
+      ${tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue)}
+      ${tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple)}
+      ${tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta)}
+      ${tag('SaturationAdjustmentRed', (aiAdjustments as any).sat_red)}
+      ${tag('SaturationAdjustmentOrange', (aiAdjustments as any).sat_orange)}
+      ${tag('SaturationAdjustmentYellow', (aiAdjustments as any).sat_yellow)}
+      ${tag('SaturationAdjustmentGreen', (aiAdjustments as any).sat_green)}
+      ${tag('SaturationAdjustmentAqua', (aiAdjustments as any).sat_aqua)}
+      ${tag('SaturationAdjustmentBlue', (aiAdjustments as any).sat_blue)}
+      ${tag('SaturationAdjustmentPurple', (aiAdjustments as any).sat_purple)}
+      ${tag('SaturationAdjustmentMagenta', (aiAdjustments as any).sat_magenta)}
+      ${tag('LuminanceAdjustmentRed', (aiAdjustments as any).lum_red)}
+      ${tag('LuminanceAdjustmentOrange', (aiAdjustments as any).lum_orange)}
+      ${tag('LuminanceAdjustmentYellow', (aiAdjustments as any).lum_yellow)}
+      ${tag('LuminanceAdjustmentGreen', (aiAdjustments as any).lum_green)}
+      ${tag('LuminanceAdjustmentAqua', (aiAdjustments as any).lum_aqua)}
+      ${tag('LuminanceAdjustmentBlue', (aiAdjustments as any).lum_blue)}
+      ${tag('LuminanceAdjustmentPurple', (aiAdjustments as any).lum_purple)}
+      ${tag('LuminanceAdjustmentMagenta', (aiAdjustments as any).lum_magenta)}
+
+      <!-- Color Grading (Modern) -->
+      ${tag('ColorGradeShadowHue', (aiAdjustments as any).color_grade_shadow_hue)}
+      ${tag('ColorGradeShadowSat', (aiAdjustments as any).color_grade_shadow_sat)}
+      ${tag('ColorGradeShadowLum', (aiAdjustments as any).color_grade_shadow_lum)}
+      ${tag('ColorGradeMidtoneHue', (aiAdjustments as any).color_grade_midtone_hue)}
+      ${tag('ColorGradeMidtoneSat', (aiAdjustments as any).color_grade_midtone_sat)}
+      ${tag('ColorGradeMidtoneLum', (aiAdjustments as any).color_grade_midtone_lum)}
+      ${tag('ColorGradeHighlightHue', (aiAdjustments as any).color_grade_highlight_hue)}
+      ${tag('ColorGradeHighlightSat', (aiAdjustments as any).color_grade_highlight_sat)}
+      ${tag('ColorGradeHighlightLum', (aiAdjustments as any).color_grade_highlight_lum)}
+      ${tag('ColorGradeGlobalHue', (aiAdjustments as any).color_grade_global_hue)}
+      ${tag('ColorGradeGlobalSat', (aiAdjustments as any).color_grade_global_sat)}
+      ${tag('ColorGradeGlobalLum', (aiAdjustments as any).color_grade_global_lum)}
+      ${tag('ColorGradeBlending', (aiAdjustments as any).color_grade_blending)}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
