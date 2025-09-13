@@ -63,21 +63,10 @@ export class ImageProcessor {
 
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
 
-      // Apply AI adjustments to target image
-      const targetExt = path.extname(data.targetImagePath).toLowerCase();
-      let outputPath = data.outputPath || this.generateOutputPath(data.targetImagePath);
-      if (this.isRawFormat(targetExt)) {
-        const dir = path.dirname(data.targetImagePath);
-        const name = path.basename(data.targetImagePath, targetExt);
-        outputPath = path.join(dir, `${name}_processed.jpg`);
-      }
-
-      console.log('[PROCESSOR] Applying AI-generated adjustments');
-      await this.applyAIAdjustments(data.targetImagePath, outputPath, aiAdjustments);
-
+      // No longer generating processed images - just return analysis
       return {
         success: true,
-        outputPath,
+        outputPath: data.targetImagePath, // Return original path since we're not processing
         metadata: {
           aiAdjustments,
           adjustments: aiAdjustments,
@@ -168,11 +157,44 @@ export class ImageProcessor {
     let processedImage = image;
 
     // Apply basic adjustments that Sharp supports
-    if (adjustments.brightness !== undefined || adjustments.saturation !== undefined) {
-      processedImage = processedImage.modulate({
-        brightness: adjustments.brightness ? 1 + (adjustments.brightness / 100) : undefined,
-        saturation: adjustments.saturation ? 1 + (adjustments.saturation / 100) : undefined,
-      });
+    const modulateOptions: { brightness?: number; saturation?: number } = {};
+
+    // Helper to ensure Sharp receives strictly positive values
+    const positive = (v: number, min = 0.01) => (Number.isFinite(v) && v > 0 ? v : min);
+
+    if (typeof adjustments.brightness === 'number' && Number.isFinite(adjustments.brightness)) {
+      const b = 1 + adjustments.brightness / 100;
+      if (b !== 1) modulateOptions.brightness = positive(b);
+    }
+
+    if (typeof adjustments.saturation === 'number' && Number.isFinite(adjustments.saturation)) {
+      const s = 1 + adjustments.saturation / 100;
+      if (s !== 1) modulateOptions.saturation = positive(s);
+    }
+    
+    if (Object.keys(modulateOptions).length > 0) {
+      const safeModulate: { brightness?: number; saturation?: number } = {};
+      if (
+        typeof modulateOptions.brightness === 'number' &&
+        Number.isFinite(modulateOptions.brightness) &&
+        modulateOptions.brightness > 0
+      ) {
+        safeModulate.brightness = modulateOptions.brightness;
+      }
+      if (
+        typeof modulateOptions.saturation === 'number' &&
+        Number.isFinite(modulateOptions.saturation) &&
+        modulateOptions.saturation > 0
+      ) {
+        safeModulate.saturation = modulateOptions.saturation;
+      }
+      if (Object.keys(safeModulate).length > 0) {
+        try {
+          processedImage = processedImage.modulate(safeModulate);
+        } catch (e) {
+          console.warn('[PROCESSOR] Sharp.modulate failed with options:', safeModulate, e);
+        }
+      }
     }
 
     await processedImage.jpeg({ quality: 95 }).toFile(outputPath);
@@ -252,22 +274,39 @@ export class ImageProcessor {
 
   generateXMPContent(aiAdjustments: AIColorAdjustments, _include: any): string {
     // Generate XMP content for Lightroom based on AI adjustments
+    const isBW = !!aiAdjustments.monochrome || aiAdjustments.treatment === 'black_and_white' ||
+      (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
+      (typeof aiAdjustments.saturation === 'number' && aiAdjustments.saturation <= -100);
+    const cameraProfile = aiAdjustments.camera_profile || (isBW ? 'Adobe Monochrome' : 'Adobe Color');
+    const profileName = cameraProfile;
+    const treatmentTag = isBW ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>' : '<crs:Treatment>Color</crs:Treatment>';
+    const tag = (name: string, val?: number | string) =>
+      (val === 0 || !!val) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
+
     const xmp = `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c140 79.160451, 2017/05/06-01:08:21">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about=""
       xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/">
-      ${aiAdjustments.temperature ? `<crs:Temperature>${aiAdjustments.temperature}</crs:Temperature>` : ''}
-      ${aiAdjustments.tint ? `<crs:Tint>${aiAdjustments.tint}</crs:Tint>` : ''}
-      ${aiAdjustments.exposure ? `<crs:Exposure2012>${aiAdjustments.exposure}</crs:Exposure2012>` : ''}
-      ${aiAdjustments.contrast ? `<crs:Contrast2012>${aiAdjustments.contrast}</crs:Contrast2012>` : ''}
-      ${aiAdjustments.highlights ? `<crs:Highlights2012>${aiAdjustments.highlights}</crs:Highlights2012>` : ''}
-      ${aiAdjustments.shadows ? `<crs:Shadows2012>${aiAdjustments.shadows}</crs:Shadows2012>` : ''}
-      ${aiAdjustments.whites ? `<crs:Whites2012>${aiAdjustments.whites}</crs:Whites2012>` : ''}
-      ${aiAdjustments.blacks ? `<crs:Blacks2012>${aiAdjustments.blacks}</crs:Blacks2012>` : ''}
-      ${aiAdjustments.clarity ? `<crs:Clarity2012>${aiAdjustments.clarity}</crs:Clarity2012>` : ''}
-      ${aiAdjustments.vibrance ? `<crs:Vibrance>${aiAdjustments.vibrance}</crs:Vibrance>` : ''}
-      ${aiAdjustments.saturation ? `<crs:Saturation>${aiAdjustments.saturation}</crs:Saturation>` : ''}
+      ${treatmentTag}
+      ${tag('CameraProfile', cameraProfile)}
+      ${tag('ProfileName', profileName)}
+      ${tag('Profile', profileName)}
+      <crs:Look>
+        <rdf:Description crs:Name="${profileName}" />
+      </crs:Look>
+
+      ${tag('Temperature', aiAdjustments.temperature)}
+      ${tag('Tint', aiAdjustments.tint)}
+      ${tag('Exposure2012', aiAdjustments.exposure)}
+      ${tag('Contrast2012', aiAdjustments.contrast)}
+      ${tag('Highlights2012', aiAdjustments.highlights)}
+      ${tag('Shadows2012', aiAdjustments.shadows)}
+      ${tag('Whites2012', aiAdjustments.whites)}
+      ${tag('Blacks2012', aiAdjustments.blacks)}
+      ${tag('Clarity2012', aiAdjustments.clarity)}
+      ${tag('Vibrance', aiAdjustments.vibrance)}
+      ${tag('Saturation', isBW ? 0 : aiAdjustments.saturation)}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;

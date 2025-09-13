@@ -320,7 +320,12 @@ class ImageMatchApp {
           this.mainWindow.webContents.send('processing-progress', 100, 'Completed');
         } catch (error) {
           console.error('[IPC] Error processing image:', error);
-          result = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+          const errMsg = error instanceof Error ? error.message : 'Unknown error';
+          // Emit a final failure status so the UI shows immediate feedback
+          try {
+            this.mainWindow.webContents.send('processing-progress', 100, `Failed: ${errMsg}`);
+          } catch {}
+          result = { success: false, error: errMsg };
         }
 
         const results = [result];

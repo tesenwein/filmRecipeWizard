@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { Box, LinearProgress, Paper, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
-import { LinearProgress, Paper, Typography, Grid, Box } from '@mui/material';
 
 interface ProcessingViewProps {
   processingState: ProcessingState;
@@ -11,16 +11,16 @@ interface ProcessingViewProps {
 const ProcessingView: React.FC<ProcessingViewProps> = ({
   processingState,
   baseImage,
-  targetImages
+  targetImages,
 }) => {
-  const { progress, status } = processingState;
+  const { status } = processingState;
   // Convert base image for display if unsupported
   const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
     const ext = p.split('.').pop()?.toLowerCase();
-    return !!ext && ['jpg','jpeg','png','webp','gif'].includes(ext);
+    return !!ext && ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
   };
   useEffect(() => {
     const run = async () => {
@@ -47,7 +47,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
       }
       try {
         const previews = await Promise.all(
-          targetImages.map(async (p) => {
+          targetImages.map(async p => {
             try {
               const res = await window.electronAPI.generatePreview({ path: p });
               return res?.success ? res.previewPath : p;
@@ -67,32 +67,57 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   return (
     <div className="container" style={{ maxWidth: 900, margin: '0 auto' }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h3" sx={{ mb: 1 }}>✨</Typography>
-        <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>Processing Image</Typography>
+        <Typography variant="h3" sx={{ mb: 1 }}>
+          ✨
+        </Typography>
+        <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+          Processing Image
+        </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           AI is analyzing your reference and generating color adjustments.
         </Typography>
         <Box sx={{ maxWidth: 400, mx: 'auto', width: '100%', mb: 1 }}>
           <LinearProgress variant="indeterminate" />
         </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>{status}</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          {status}
+        </Typography>
       </Box>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+        <Box>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="overline" color="primary">Reference Style</Typography>
+            <Typography variant="overline" color="primary">
+              Reference Style
+            </Typography>
             {baseImage && (
-              <Box sx={{ width: '100%', height: 200, borderRadius: 2, overflow: 'hidden', border: '1px solid #e8eaff', boxShadow: '0 2px 12px rgba(102,126,234,0.1)' }}>
-                <img src={(() => { const src = baseDisplay || baseImage; return src?.startsWith('file://') ? src : `file://${src}`; })()} alt="Base image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <Box
+                sx={{
+                  width: '100%',
+                  height: 200,
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: '1px solid #e8eaff',
+                  boxShadow: '0 2px 12px rgba(102,126,234,0.1)',
+                }}
+              >
+                <img
+                  src={(() => {
+                    const src = baseDisplay || baseImage;
+                    return src?.startsWith('file://') ? src : `file://${src}`;
+                  })()}
+                  alt="Base image"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               </Box>
             )}
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>{baseImage?.split('/').pop()}</Typography>
           </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
+        </Box>
+        <Box>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="overline" color="secondary">Processing</Typography>
+            <Typography variant="overline" color="secondary">
+              Processing
+            </Typography>
             {targetImages.length > 0 ? (
               <Box sx={{ width: '100%', maxHeight: 220, overflow: 'hidden' }}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
@@ -100,21 +125,51 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
                     const imgPath = targetImages[0];
                     const preview = targetPreviews[0] || imgPath;
                     return (
-                      <Box sx={{ position: 'relative', height: 200, borderRadius: 1.5, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-                        <img src={`file://${preview}`} alt={`Target`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          height: 200,
+                          borderRadius: 1.5,
+                          overflow: 'hidden',
+                          border: '1px solid #e5e7eb',
+                        }}
+                      >
+                        <img
+                          src={`file://${preview}`}
+                          alt={`Target`}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
                       </Box>
                     );
                   })()}
                 </Box>
               </Box>
             ) : (
-              <Box sx={{ width: '100%', height: 200, borderRadius: 2, border: '2px dashed #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
-                <Typography variant="body2" fontWeight={500}>Waiting for target</Typography>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: 200,
+                  borderRadius: 2,
+                  border: '2px dashed #e0e0e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#999',
+                }}
+              >
+                <Typography variant="body2" fontWeight={500}>
+                  Waiting for target
+                </Typography>
               </Box>
             )}
           </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <style>
         {`

@@ -8,13 +8,15 @@ interface ResultsViewProps {
   baseImage: string | null;
   targetImages: string[];
   onReset: () => void;
+  onRestart?: () => void;
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({
   results,
   baseImage: _baseImage,
   targetImages,
-  onReset
+  onReset,
+  onRestart
 }) => {
   // For display only: convert unsupported formats to JPEG (no adjustments)
   const [convertedBase, setConvertedBase] = useState<string | null>(null);
@@ -446,48 +448,66 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             Failed Processing ({failedResults.length} image{failedResults.length !== 1 ? 's' : ''})
           </h3>
 
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {failedResults.map((result, index) => (
-              <div key={index} className="card" style={{ 
-                border: '2px solid #ffebee',
-                background: '#fafafa'
+              <Card key={index} variant="outlined" sx={{ 
+                border: '2px solid #ffcdd2',
+                background: '#fff8f8',
+                p: 3
               }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '12px',
-                  marginBottom: '12px'
-                }}>
-                  <span style={{ fontSize: '24px' }}>❌</span>
-                  <div>
-                    <h4 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: '600', 
-                      color: '#d73027',
-                      marginBottom: '4px'
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+                  <Box sx={{ fontSize: '28px', lineHeight: 1 }}>❌</Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ 
+                      fontSize: '18px', 
+                      fontWeight: 600, 
+                      color: '#d32f2f',
+                      mb: 0.5
                     }}>
                       Processing Failed
-                    </h4>
-                    <p style={{ 
-                      fontSize: '12px', 
-                      color: '#666666'
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                      Image {results.indexOf(result) + 1} of {results.length}
+                    </Typography>
+                    
+                    <Box sx={{ 
+                      background: '#ffffff',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 2,
+                      mb: 2,
+                      fontFamily: 'monospace',
+                      fontSize: '13px',
+                      color: '#d32f2f',
+                      whiteSpace: 'pre-wrap',
+                      maxHeight: '200px',
+                      overflow: 'auto'
                     }}>
-                      Image {index + 1}
-                    </p>
-                  </div>
-                </div>
-                
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: '#666666',
-                  background: '#ffffff',
-                  padding: '12px',
-                  borderRadius: '6px',
-                  border: '1px solid #e0e0e0'
-                }}>
-                  {result.error || 'Unknown error occurred'}
-                </p>
-              </div>
+                      {result.error || 'Unknown error occurred'}
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                      {onRestart && (
+                        <Button 
+                          variant="contained" 
+                          color="primary"
+                          onClick={onRestart}
+                          sx={{ textTransform: 'none' }}
+                        >
+                          Try Again
+                        </Button>
+                      )}
+                      <Button 
+                        variant="outlined" 
+                        onClick={onReset}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Start Over
+                      </Button>
+                    </Box>
+                  </Box>
+                </Box>
+              </Card>
             ))}
           </div>
         </div>

@@ -341,6 +341,10 @@ const App: React.FC = () => {
                   handleReset();
                   navigate('/home');
                 }}
+                onRestart={() => {
+                  setCurrentStep('processing');
+                  handleStartProcessing();
+                }}
               />
             </div>
           )}
@@ -363,6 +367,10 @@ const App: React.FC = () => {
               onReset={() => {
                 handleReset();
                 navigate('/home');
+              }}
+              onRestart={() => {
+                setCurrentStep('processing');
+                handleStartProcessing();
               }}
             />
           )}

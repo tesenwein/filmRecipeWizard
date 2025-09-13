@@ -24,7 +24,9 @@
       "Bash(npx eslint:*)",
       "Bash(cat:*)",
       "Bash(grep:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npx knip:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": [],
