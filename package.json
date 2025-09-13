@@ -16,6 +16,9 @@
     "typecheck": "tsc -p src/main/tsconfig.json --noEmit && tsc -p src/renderer/tsconfig.json --noEmit",
     "clean": "rimraf dist",
     "package": "npm run build && electron-builder",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:mac:dmg": "npm run build && electron-builder --mac dmg",
+    "package:mac:universal": "npm run build && electron-builder --mac --universal",
     "generate-icons": "node scripts/generate-icons.js",
     "knip": "knip"
   },
@@ -53,12 +56,10 @@
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
-    "@imagemagick/magick-wasm": "^0.0.36",
     "@mui/icons-material": "^6.0.0",
     "@mui/material": "^6.0.0",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
-    "dotenv": "^17.2.2",
     "openai": "^5.20.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -73,12 +74,49 @@
     "files": [
       "dist/**/*",
       "node_modules/**/*",
-      "package.json"
+      "package.json",
+      "!**/.env*",
+      "!**/.*"
     ],
     "icon": "build/icons/icon",
     "mac": {
       "category": "public.app-category.photography",
-      "icon": "build/icons/icon.png"
+      "icon": "build/icons/icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "sign": false,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
     },
     "win": {
       "target": "nsis",

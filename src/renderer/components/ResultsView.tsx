@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Chip, Divider, Table, TableBody, TableRow, TableCell, Button, FormGroup, FormControlLabel, Checkbox, Card } from '@mui/material';
+import { Box, Typography, Divider, Button, FormGroup, FormControlLabel, Checkbox, Card } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { ProcessingResult } from '../../shared/types';
 
@@ -238,52 +238,128 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </span>
                       </div>
 
-                      {/* Nicer presentation using MUI */}
-                      <Table size="small" sx={{ '& td, & th': { borderBottom: '1px dashed #e5e7eb' } }}>
-                        <TableBody>
-                          <TableRow><TableCell>Temperature</TableCell><TableCell align="right">{Math.round(result.metadata.aiAdjustments.temperature || 0)} K</TableCell></TableRow>
-                          <TableRow><TableCell>Tint</TableCell><TableCell align="right">{Math.round(result.metadata.aiAdjustments.tint || 0)}</TableCell></TableRow>
-                          <TableRow><TableCell>Exposure</TableCell><TableCell align="right">{(result.metadata.aiAdjustments.exposure || 0).toFixed(2)} stops</TableCell></TableRow>
-                          <TableRow><TableCell>Contrast</TableCell><TableCell align="right">{result.metadata.aiAdjustments.contrast ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Highlights</TableCell><TableCell align="right">{result.metadata.aiAdjustments.highlights ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Shadows</TableCell><TableCell align="right">{result.metadata.aiAdjustments.shadows ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Whites</TableCell><TableCell align="right">{result.metadata.aiAdjustments.whites ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Blacks</TableCell><TableCell align="right">{result.metadata.aiAdjustments.blacks ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Clarity</TableCell><TableCell align="right">{result.metadata.aiAdjustments.clarity ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Vibrance</TableCell><TableCell align="right">{result.metadata.aiAdjustments.vibrance ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Saturation</TableCell><TableCell align="right">{result.metadata.aiAdjustments.saturation ?? 0}</TableCell></TableRow>
-                        </TableBody>
-                      </Table>
+                      {/* Basic adjustments in 2 columns */}
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1 }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#666', display: 'block', mb: 0.5 }}>Basic</Typography>
+                          <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Temperature</span>
+                              <strong>{Math.round(result.metadata.aiAdjustments.temperature || 0)} K</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Tint</span>
+                              <strong>{Math.round(result.metadata.aiAdjustments.tint || 0)}</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Exposure</span>
+                              <strong>{(result.metadata.aiAdjustments.exposure || 0).toFixed(2)}</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Contrast</span>
+                              <strong>{result.metadata.aiAdjustments.contrast ?? 0}</strong>
+                            </Box>
+                          </Box>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#666', display: 'block', mb: 0.5 }}>Tone</Typography>
+                          <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Highlights</span>
+                              <strong>{result.metadata.aiAdjustments.highlights ?? 0}</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Shadows</span>
+                              <strong>{result.metadata.aiAdjustments.shadows ?? 0}</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Whites</span>
+                              <strong>{result.metadata.aiAdjustments.whites ?? 0}</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Blacks</span>
+                              <strong>{result.metadata.aiAdjustments.blacks ?? 0}</strong>
+                            </Box>
+                          </Box>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#666', display: 'block', mb: 0.5 }}>Presence</Typography>
+                          <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Clarity</span>
+                              <strong>{result.metadata.aiAdjustments.clarity ?? 0}</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Vibrance</span>
+                              <strong>{result.metadata.aiAdjustments.vibrance ?? 0}</strong>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Saturation</span>
+                              <strong>{result.metadata.aiAdjustments.saturation ?? 0}</strong>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Box>
                       <Divider sx={{ my: 1 }} />
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>HSL Hue</Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                        {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
-                          <Chip key={`hue_${k}`} size="small" label={`${k[0].toUpperCase()} ${(result.metadata!.aiAdjustments as any)[`hue_${k}`] ?? 0}`} />
-                        ))}
-                      </Box>
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444', mt: 1, display: 'block' }}>HSL Saturation</Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                        {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
-                          <Chip key={`sat_${k}`} size="small" label={`${k[0].toUpperCase()} ${(result.metadata!.aiAdjustments as any)[`sat_${k}`] ?? 0}`} />
-                        ))}
-                      </Box>
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444', mt: 1, display: 'block' }}>HSL Luminance</Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                        {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
-                          <Chip key={`lum_${k}`} size="small" label={`${k[0].toUpperCase()} ${(result.metadata!.aiAdjustments as any)[`lum_${k}`] ?? 0}`} />
-                        ))}
+                      {/* HSL Adjustments in compact grid */}
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>HSL Adjustments</Typography>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mt: 0.5, fontSize: '11px' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#888', display: 'block', mb: 0.5 }}>Hue</Typography>
+                          {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
+                            <Box key={`hue_${k}`} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.25 }}>
+                              <span style={{ color: '#666' }}>{k[0].toUpperCase()}{k.slice(1,3)}</span>
+                              <strong>{(result.metadata!.aiAdjustments as any)[`hue_${k}`] ?? 0}</strong>
+                            </Box>
+                          ))}
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#888', display: 'block', mb: 0.5 }}>Saturation</Typography>
+                          {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
+                            <Box key={`sat_${k}`} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.25 }}>
+                              <span style={{ color: '#666' }}>{k[0].toUpperCase()}{k.slice(1,3)}</span>
+                              <strong>{(result.metadata!.aiAdjustments as any)[`sat_${k}`] ?? 0}</strong>
+                            </Box>
+                          ))}
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#888', display: 'block', mb: 0.5 }}>Luminance</Typography>
+                          {(['red','orange','yellow','green','aqua','blue','purple','magenta'] as const).map(k => (
+                            <Box key={`lum_${k}`} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.25 }}>
+                              <span style={{ color: '#666' }}>{k[0].toUpperCase()}{k.slice(1,3)}</span>
+                              <strong>{(result.metadata!.aiAdjustments as any)[`lum_${k}`] ?? 0}</strong>
+                            </Box>
+                          ))}
+                        </Box>
                       </Box>
                       <Divider sx={{ my: 1 }} />
                       <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>Color Grading</Typography>
-                      <Table size="small" sx={{ '& td, & th': { borderBottom: '1px dashed #e5e7eb' }, mt: 0.5 }}>
-                        <TableBody>
-                          <TableRow><TableCell>Shadows</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_shadow_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_shadow_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_shadow_lum ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Midtones</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_midtone_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_midtone_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_midtone_lum ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Highlights</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_highlight_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_highlight_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_highlight_lum ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Global</TableCell><TableCell align="right">H {(result.metadata.aiAdjustments as any).color_grade_global_hue ?? 0}° / S {(result.metadata.aiAdjustments as any).color_grade_global_sat ?? 0} / L {(result.metadata.aiAdjustments as any).color_grade_global_lum ?? 0}</TableCell></TableRow>
-                          <TableRow><TableCell>Blending</TableCell><TableCell align="right">{(result.metadata.aiAdjustments as any).color_grade_blending ?? 50}</TableCell></TableRow>
-                        </TableBody>
-                      </Table>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mt: 0.5, fontSize: '11px' }}>
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                            <span style={{ color: '#666' }}>Shadows</span>
+                            <strong>H{(result.metadata.aiAdjustments as any).color_grade_shadow_hue ?? 0}° S{(result.metadata.aiAdjustments as any).color_grade_shadow_sat ?? 0} L{(result.metadata.aiAdjustments as any).color_grade_shadow_lum ?? 0}</strong>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                            <span style={{ color: '#666' }}>Midtones</span>
+                            <strong>H{(result.metadata.aiAdjustments as any).color_grade_midtone_hue ?? 0}° S{(result.metadata.aiAdjustments as any).color_grade_midtone_sat ?? 0} L{(result.metadata.aiAdjustments as any).color_grade_midtone_lum ?? 0}</strong>
+                          </Box>
+                        </Box>
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                            <span style={{ color: '#666' }}>Highlights</span>
+                            <strong>H{(result.metadata.aiAdjustments as any).color_grade_highlight_hue ?? 0}° S{(result.metadata.aiAdjustments as any).color_grade_highlight_sat ?? 0} L{(result.metadata.aiAdjustments as any).color_grade_highlight_lum ?? 0}</strong>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                            <span style={{ color: '#666' }}>Global</span>
+                            <strong>H{(result.metadata.aiAdjustments as any).color_grade_global_hue ?? 0}° S{(result.metadata.aiAdjustments as any).color_grade_global_sat ?? 0} L{(result.metadata.aiAdjustments as any).color_grade_global_lum ?? 0}</strong>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                            <span style={{ color: '#666' }}>Blending</span>
+                            <strong>{(result.metadata.aiAdjustments as any).color_grade_blending ?? 50}</strong>
+                          </Box>
+                        </Box>
+                      </Box>
                       {typeof result.metadata.aiAdjustments.reasoning === 'string' && result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
                         <>
                           <Divider sx={{ my: 1 }} />

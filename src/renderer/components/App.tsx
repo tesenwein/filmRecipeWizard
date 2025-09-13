@@ -39,6 +39,23 @@ const App: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectLoading, setProjectLoading] = useState(false);
 
+  // Check if API key is configured on startup
+  useEffect(() => {
+    const checkApiKey = async () => {
+      try {
+        const response = await window.electronAPI.getSettings();
+        if (response.success && (!response.settings?.openaiKey || response.settings?.openaiKey === '')) {
+          console.log('[APP] No API key found, opening settings');
+          setSettingsOpen(true);
+        }
+      } catch (error) {
+        console.error('[APP] Error checking settings:', error);
+        setSettingsOpen(true); // Open settings if there's an error
+      }
+    };
+    checkApiKey();
+  }, []);
+
   const handleImagesSelected = (base: string, targets: string[]) => {
     setBaseImage(base);
     setTargetImages(targets);

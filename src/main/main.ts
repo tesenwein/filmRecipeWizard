@@ -224,10 +224,8 @@ class ImageMatchApp {
 
     // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
     ipcMain.handle('generate-preview', async (_event, args: { path?: string; dataUrl?: string }) => {
-      console.log('[IPC] generate-preview called with:', { hasPath: !!args?.path, hasDataUrl: !!args?.dataUrl });
       try {
         const previewPath = await this.imageProcessor.generatePreview(args);
-        console.log('[IPC] generate-preview completed:', { previewPath });
         return { success: true, previewPath };
       } catch (error) {
         console.error('[IPC] Error generating preview:', error);
@@ -431,7 +429,7 @@ class ImageMatchApp {
         const saved = await this.settingsService.saveSettings(partial);
         if (partial.openaiKey !== undefined) {
           // Update processor with new key (re-init AI analyzer lazily)
-          this.imageProcessor.setOpenAIKey(partial.openaiKey);
+          await this.imageProcessor.setOpenAIKey(partial.openaiKey);
         }
         return { success: true, settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined } };
       } catch (error) {

@@ -71,18 +71,19 @@ export interface AIColorAdjustments {
 export class OpenAIColorAnalyzer {
   private openai: OpenAI | null = null;
   private initialized = false;
-  private model: string = process.env.OPENAI_MODEL || 'gpt-5';
+  private model: string = 'gpt-5';
 
-  constructor() {
-    // OpenAI API key should be set as environment variable
-    if (process.env.OPENAI_API_KEY) {
+  constructor(apiKey?: string) {
+    // OpenAI API key from settings or environment variable
+    const key = apiKey || process.env.OPENAI_API_KEY;
+    if (key) {
       this.openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: key,
       });
       this.initialized = true;
       console.log('[AI] OpenAI Color Analyzer initialized');
     } else {
-      console.warn('[AI] OpenAI API key not found in environment variables');
+      console.warn('[AI] OpenAI API key not provided');
     }
   }
 
@@ -159,12 +160,14 @@ Please analyze both images and provide detailed Lightroom/Camera Raw adjustments
                 properties: {
                   treatment: {
                     type: 'string',
-                    description: "Overall treatment for the target image ('color' or 'black_and_white')",
+                    description:
+                      "Overall treatment for the target image ('color' or 'black_and_white')",
                     enum: ['color', 'black_and_white'],
                   },
                   camera_profile: {
                     type: 'string',
-                    description: "Preferred camera profile (e.g., 'Adobe Color', 'Adobe Monochrome')",
+                    description:
+                      "Preferred camera profile (e.g., 'Adobe Color', 'Adobe Monochrome')",
                   },
                   monochrome: {
                     type: 'boolean',
@@ -739,7 +742,9 @@ Please analyze both images and provide detailed Lightroom/Camera Raw adjustments
     } catch (error) {
       console.error('[AI] Failed to convert image:', error);
       throw new Error(
-        `Failed to convert image ${imagePath} to JPEG: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to convert image ${imagePath} to JPEG: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
       );
     }
   }
