@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Divider, Button, FormGroup, FormControlLabel, Checkbox, Card } from '@mui/material';
+import { Box, Typography, Divider, Button, FormGroup, FormControlLabel, Checkbox, Card, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { ProcessingResult } from '../../shared/types';
 
@@ -35,6 +35,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   const successfulResults = results.filter(result => result.success);
   const failedResults = results.filter(result => !result.success);
+  const [confirmNewGeneration, setConfirmNewGeneration] = useState(false);
 
   useEffect(() => {
     console.log('[RESULTS] Render with results', {
@@ -128,17 +129,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }));
   };
 
-  const applyOptionsToAll = (fromIndex: number) => {
-    const from = getOptions(fromIndex);
-    setExportOptions(prev => {
-      const next: typeof prev = { ...prev };
-      // Apply to all visible successful results (same indexing space)
-      successfulResults.forEach((_r, i) => {
-        next[i] = { ...from } as any;
-      });
-      return next;
-    });
-  };
+  // Single-image flow: no bulk apply needed
 
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
     const adjustments = result.metadata?.aiAdjustments;
@@ -178,7 +169,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           {onNewProcessingSession ? (
-            <button className="button" onClick={onNewProcessingSession}>
+            <button className="button" onClick={() => setConfirmNewGeneration(true)}>
               New processing session
             </button>
           ) : (
@@ -429,7 +420,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary' }}>
                         Export Settings
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', mb: 1 }}>
                         <FormControlLabel
                           control={
                             <Checkbox
@@ -441,9 +432,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           }
                           label={<Typography variant="body2">All types & groups</Typography>}
                         />
-                        <Button size="small" variant="outlined" onClick={() => applyOptionsToAll(index)} sx={{ textTransform: 'none' }}>
-                          Apply to all images
-                        </Button>
                       </Box>
                       <FormGroup sx={{ 
                         display: 'grid', 
@@ -574,6 +562,62 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog for New Generation */}
+      <Dialog
+        open={confirmNewGeneration}
+        onClose={() => setConfirmNewGeneration(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            Generate New Analysis?
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            This will create a new AI analysis using the same images but generate fresh results. 
+            The current analysis will be preserved as a separate version.
+          </Typography>
+          <Box sx={{ 
+            backgroundColor: '#f8f9fa', 
+            border: '1px solid #e9ecef',
+            borderRadius: 1,
+            p: 2,
+            mb: 1
+          }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+              ✨ What happens next:
+            </Typography>
+            <Typography variant="body2" component="div">
+              • New AI analysis will be generated<br/>
+              • Fresh color adjustments and recommendations<br/>
+              • Results saved as a new project version<br/>
+              • Previous analysis remains accessible
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={() => setConfirmNewGeneration(false)}
+            variant="outlined"
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => {
+              setConfirmNewGeneration(false);
+              onNewProcessingSession?.();
+            }}
+            variant="contained"
+            sx={{ textTransform: 'none' }}
+          >
+            Generate New Analysis
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* No modal; export is inline per result */}
     </div>
