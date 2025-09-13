@@ -66,6 +66,10 @@ export interface AIColorAdjustments {
   tone_curve_blue?: Array<{ input: number; output: number }>;
   confidence?: number; // 0.0 to 1.0 - AI confidence in recommendations
   reasoning?: string; // AI explanation of the adjustments
+  // Optional preset naming and point color corrections (advanced)
+  preset_name?: string;
+  point_colors?: number[][];
+  color_variance?: number[];
 }
 
 export class OpenAIColorAnalyzer {
@@ -182,6 +186,19 @@ Additionally, provide a short, human-friendly preset_name we can use for the XMP
                   monochrome: {
                     type: 'boolean',
                     description: 'If true, produce a black & white (monochrome) result',
+                  },
+                  point_colors: {
+                    type: 'array',
+                    description: 'Optional Lightroom Point Colors raw parameter arrays (advanced users)',
+                    items: {
+                      type: 'array',
+                      items: { type: 'number' },
+                    },
+                  },
+                  color_variance: {
+                    type: 'array',
+                    description: 'Optional Lightroom Point Colors variance array (advanced users)',
+                    items: { type: 'number' },
                   },
                   exposure: {
                     type: 'number',

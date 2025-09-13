@@ -336,6 +336,18 @@ export class ImageProcessor {
       ${tag('ColorGradeGlobalSat', round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100)))}
       ${tag('ColorGradeGlobalLum', round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100)))}
       ${tag('ColorGradeBlending', round(clamp((aiAdjustments as any).color_grade_blending, 0, 100)))}
+
+      <!-- Point Color (if provided) -->
+      ${Array.isArray((aiAdjustments as any).point_colors) && (aiAdjustments as any).point_colors.length > 0
+        ? `<crs:PointColors>\n    <rdf:Seq>\n${((aiAdjustments as any).point_colors as number[][])
+          .map(arr => `     <rdf:li>${arr.map(n => (Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000')).join(', ')}</rdf:li>`) 
+          .join('\n')}\n    </rdf:Seq>\n   </crs:PointColors>\n`
+        : ''}
+      ${Array.isArray((aiAdjustments as any).color_variance) && (aiAdjustments as any).color_variance.length > 0
+        ? `<crs:ColorVariance>\n    <rdf:Seq>\n${((aiAdjustments as any).color_variance as number[])
+          .map(n => `     <rdf:li>${Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000'}</rdf:li>`) 
+          .join('\n')}\n    </rdf:Seq>\n   </crs:ColorVariance>\n`
+        : ''}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
