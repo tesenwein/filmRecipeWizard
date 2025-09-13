@@ -31,6 +31,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     curves: boolean;
     sharpenNoise: boolean;
     vignette: boolean;
+    pointColor?: boolean;
   }>>({});
 
   const successfulResults = results.filter(result => result.success);
@@ -97,6 +98,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     curves: true,
     sharpenNoise: true,
     vignette: true,
+    pointColor: false,
   } as const;
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
@@ -115,6 +117,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     'curves',
     'sharpenNoise',
     'vignette',
+    'pointColor',
   ] as const;
 
   const isAllSelected = (index: number) => {
@@ -444,6 +447,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           { key: 'hsl', label: 'HSL Adjustments' },
                           { key: 'colorGrading', label: 'Color Grading' },
                           { key: 'curves', label: 'Tone Curves' },
+                          { key: 'pointColor', label: 'Point Color (advanced)' },
                           { key: 'sharpenNoise', label: 'Sharpen & Noise' },
                           { key: 'vignette', label: 'Vignette' },
                         ] as const).map(opt => (

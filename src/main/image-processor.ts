@@ -253,6 +253,7 @@ export class ImageProcessor {
       hsl: include?.hsl !== false,
       colorGrading: include?.colorGrading !== false,
       curves: include?.curves !== false,
+      pointColor: !!include?.pointColor,
       // sharpenNoise and vignette currently not emitted in XMP (placeholders)
     } as const;
 
@@ -358,18 +359,20 @@ export class ImageProcessor {
         ].join('')
       : '';
 
-    const pointColorBlocks = [
-      Array.isArray((aiAdjustments as any).point_colors) && (aiAdjustments as any).point_colors.length > 0
-        ? `<crs:PointColors>\n    <rdf:Seq>\n${((aiAdjustments as any).point_colors as number[][])
-            .map(arr => `     <rdf:li>${arr.map(n => (Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000')).join(', ')}</rdf:li>`) 
-            .join('\n')}\n    </rdf:Seq>\n   </crs:PointColors>\n`
-        : '',
-      Array.isArray((aiAdjustments as any).color_variance) && (aiAdjustments as any).color_variance.length > 0
-        ? `<crs:ColorVariance>\n    <rdf:Seq>\n${((aiAdjustments as any).color_variance as number[])
-            .map(n => `     <rdf:li>${Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000'}</rdf:li>`) 
-            .join('\n')}\n    </rdf:Seq>\n   </crs:ColorVariance>\n`
-        : '',
-    ].join('');
+    const pointColorBlocks = inc.pointColor
+      ? [
+          Array.isArray((aiAdjustments as any).point_colors) && (aiAdjustments as any).point_colors.length > 0
+            ? `<crs:PointColors>\n    <rdf:Seq>\n${((aiAdjustments as any).point_colors as number[][])
+                .map(arr => `     <rdf:li>${arr.map(n => (Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000')).join(', ')}</rdf:li>`) 
+                .join('\n')}\n    </rdf:Seq>\n   </crs:PointColors>\n`
+            : '',
+          Array.isArray((aiAdjustments as any).color_variance) && (aiAdjustments as any).color_variance.length > 0
+            ? `<crs:ColorVariance>\n    <rdf:Seq>\n${((aiAdjustments as any).color_variance as number[])
+                .map(n => `     <rdf:li>${Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000'}</rdf:li>`) 
+                .join('\n')}\n    </rdf:Seq>\n   </crs:ColorVariance>\n`
+            : '',
+        ].join('')
+      : '';
 
     const xmp = `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c140 79.160451, 2017/05/06-01:08:21">
