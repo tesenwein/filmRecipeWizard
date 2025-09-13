@@ -132,7 +132,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     const from = getOptions(fromIndex);
     setExportOptions(prev => {
       const next: typeof prev = { ...prev };
-      results.forEach((_r, i) => {
+      // Apply to all visible successful results (same indexing space)
+      successfulResults.forEach((_r, i) => {
         next[i] = { ...from } as any;
       });
       return next;
@@ -433,14 +434,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           control={
                             <Checkbox
                               size="small"
-                              checked={isAllSelected(results.indexOf(result))}
-                              onChange={(e) => setAllOptions(results.indexOf(result), e.target.checked)}
+                              checked={isAllSelected(index)}
+                              onChange={(e) => setAllOptions(index, e.target.checked)}
                               sx={{ py: 0.5 }}
                             />
                           }
                           label={<Typography variant="body2">All types & groups</Typography>}
                         />
-                        <Button size="small" variant="outlined" onClick={() => applyOptionsToAll(results.indexOf(result))} sx={{ textTransform: 'none' }}>
+                        <Button size="small" variant="outlined" onClick={() => applyOptionsToAll(index)} sx={{ textTransform: 'none' }}>
                           Apply to all images
                         </Button>
                       </Box>
