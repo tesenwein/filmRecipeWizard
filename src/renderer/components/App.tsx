@@ -273,11 +273,23 @@ const App: React.FC = () => {
   };
 
   const Header = (
-    <header style={{ marginBottom: '16px' }}>
+    <header style={{ position: 'sticky', top: 8, zIndex: 10, marginBottom: '16px' }}>
       <div className="drag-region" />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div
+        className="no-drag"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: '#ffffff',
+          border: '1px solid #EEF2FF',
+          borderRadius: 12,
+          padding: '8px 12px',
+          boxShadow: '0 6px 14px rgba(17, 24, 39, 0.06)',
+        }}
+      >
         <div style={{ fontSize: 18, fontWeight: 800, color: '#1F2937' }}>Image Match</div>
-        <div className="no-drag">
+        <div>
           <Tooltip title="Home">
             <IconButton color="default" size="small" onClick={() => navigate('/home')} sx={{ mr: 1 }}>
               <HomeIcon />

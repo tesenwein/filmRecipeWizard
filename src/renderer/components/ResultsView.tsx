@@ -220,7 +220,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   marginBottom: '8px',
                   wordBreak: 'break-word'
                 }}>
-                  {result.outputPath?.split('/').pop() || `Image ${index + 1}`}
+                  {(() => {
+                    const aiName = result?.metadata?.aiAdjustments && (result.metadata.aiAdjustments as any).preset_name;
+                    const fallback = result.outputPath?.split('/').pop() || `Image ${index + 1}`;
+                    return (typeof aiName === 'string' && aiName.trim().length > 0) ? aiName : fallback;
+                  })()}
                 </h4>
 
                 {/* Project Details and Export (inline) */}

@@ -123,7 +123,13 @@ export class OpenAIColorAnalyzer {
 3. For portraits, ensure a match in skin tone and backdrop
 4. For landscapes, ensure a match in overall scene mood and lighting, specifically sky and foliage colors
 
-Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET IMAGE match the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.`,
+Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET IMAGE match the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
+
+Additionally, provide a short, human-friendly preset_name we can use for the XMP preset and the project title. Naming rules:
+- 2–4 words, Title Case, descriptive of the look (e.g., “Warm Sunset Glow”, “Soft Mono Film”).
+- Do not include words like “Match”, “Target”, “Base”, “AI”, file names, or dates.
+- Avoid special characters (only letters, numbers, spaces, and hyphens).
+- Keep it unique to the style you are proposing.`,
               },
               {
                 type: 'text',

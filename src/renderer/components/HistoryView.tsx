@@ -151,7 +151,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                   )}
                   <CardContent>
                     <Typography variant="subtitle1" fontWeight={700} noWrap>
-                      {process.name || process.baseImage.split('/').pop()}
+                      {(() => {
+                        const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
+                        const name = process.name || (typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : undefined);
+                        return name || process.baseImage.split('/').pop();
+                      })()}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {formatDate(process.timestamp)}

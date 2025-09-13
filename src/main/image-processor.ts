@@ -281,9 +281,37 @@ export class ImageProcessor {
     const profileName = cameraProfile;
     const treatmentTag = isBW ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>' : '<crs:Treatment>Color</crs:Treatment>';
     const tag = (name: string, val?: number | string) =>
-      (val === 0 || !!val) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
+      (val === 0 || val === '0' || !!val) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
 
-    const presetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || `ImageMatch-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+    // Clamp helpers to keep values within Lightroom-expected ranges
+    const clamp = (v: any, min: number, max: number): number | undefined => {
+      if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
+      return Math.max(min, Math.min(max, v));
+    };
+    const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
+    const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
+
+    // Sanitize all inputs
+    const temp = round(clamp(aiAdjustments.temperature as any, 2000, 50000));
+    const tint = round(clamp(aiAdjustments.tint as any, -150, 150));
+    const exposure = clamp(aiAdjustments.exposure as any, -5, 5);
+    const contrast = round(clamp(aiAdjustments.contrast as any, -100, 100));
+    const highlights = round(clamp(aiAdjustments.highlights as any, -100, 100));
+    const shadows = round(clamp(aiAdjustments.shadows as any, -100, 100));
+    const whites = round(clamp(aiAdjustments.whites as any, -100, 100));
+    const blacks = round(clamp(aiAdjustments.blacks as any, -100, 100));
+    const clarity = round(clamp(aiAdjustments.clarity as any, -100, 100));
+    const vibrance = round(clamp(aiAdjustments.vibrance as any, -100, 100));
+    const saturation = round(clamp(aiAdjustments.saturation as any, -100, 100));
+
+    const sanitizeName = (n: string) =>
+      n
+        .replace(/\b(image\s*match|imagematch|match|target|base|ai)\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    const fallback = `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+    const rawPresetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || fallback;
+    const presetName = sanitizeName(rawPresetName) || fallback;
     const groupName = 'image-match';
     const xmp = `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c140 79.160451, 2017/05/06-01:08:21">
@@ -308,26 +336,26 @@ export class ImageProcessor {
         <rdf:Description crs:Name="${profileName}" />
       </crs:Look>
 
-      ${tag('Temperature', aiAdjustments.temperature)}
-      ${tag('Tint', aiAdjustments.tint)}
-      ${tag('Exposure2012', aiAdjustments.exposure)}
-      ${tag('Contrast2012', aiAdjustments.contrast)}
-      ${tag('Highlights2012', aiAdjustments.highlights)}
-      ${tag('Shadows2012', aiAdjustments.shadows)}
-      ${tag('Whites2012', aiAdjustments.whites)}
-      ${tag('Blacks2012', aiAdjustments.blacks)}
-      ${tag('Clarity2012', aiAdjustments.clarity)}
-      ${tag('Vibrance', aiAdjustments.vibrance)}
-      ${tag('Saturation', isBW ? 0 : aiAdjustments.saturation)}
+      ${tag('Temperature', temp)}
+      ${tag('Tint', tint)}
+      ${tag('Exposure2012', fixed2(exposure))}
+      ${tag('Contrast2012', contrast)}
+      ${tag('Highlights2012', highlights)}
+      ${tag('Shadows2012', shadows)}
+      ${tag('Whites2012', whites)}
+      ${tag('Blacks2012', blacks)}
+      ${tag('Clarity2012', clarity)}
+      ${tag('Vibrance', vibrance)}
+      ${tag('Saturation', isBW ? 0 : saturation)}
 
       <!-- Parametric Tone Regions (optional) -->
-      ${tag('ParametricShadows', (aiAdjustments as any).parametric_shadows)}
-      ${tag('ParametricDarks', (aiAdjustments as any).parametric_darks)}
-      ${tag('ParametricLights', (aiAdjustments as any).parametric_lights)}
-      ${tag('ParametricHighlights', (aiAdjustments as any).parametric_highlights)}
-      ${tag('ParametricShadowSplit', (aiAdjustments as any).parametric_shadow_split)}
-      ${tag('ParametricMidtoneSplit', (aiAdjustments as any).parametric_midtone_split)}
-      ${tag('ParametricHighlightSplit', (aiAdjustments as any).parametric_highlight_split)}
+      ${tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows, -100, 100)))}
+      ${tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks, -100, 100)))}
+      ${tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights, -100, 100)))}
+      ${tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights, -100, 100)))}
+      ${tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100)))}
+      ${tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100)))}
+      ${tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100)))}
 
       <!-- PV2012 Tone Curves (optional) -->
       ${(aiAdjustments as any).tone_curve ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n` : ''}
@@ -336,7 +364,7 @@ export class ImageProcessor {
       ${(aiAdjustments as any).tone_curve_blue ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_blue as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n` : ''}
 
       <!-- HSL Adjustments (optional) -->
-      ${tag('HueAdjustmentRed', (aiAdjustments as any).hue_red)}
+      ${tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100)))}
       ${tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange)}
       ${tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow)}
       ${tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green)}
@@ -344,7 +372,7 @@ export class ImageProcessor {
       ${tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue)}
       ${tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple)}
       ${tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta)}
-      ${tag('SaturationAdjustmentRed', (aiAdjustments as any).sat_red)}
+      ${tag('SaturationAdjustmentRed', round(clamp((aiAdjustments as any).sat_red, -100, 100)))}
       ${tag('SaturationAdjustmentOrange', (aiAdjustments as any).sat_orange)}
       ${tag('SaturationAdjustmentYellow', (aiAdjustments as any).sat_yellow)}
       ${tag('SaturationAdjustmentGreen', (aiAdjustments as any).sat_green)}
@@ -352,7 +380,7 @@ export class ImageProcessor {
       ${tag('SaturationAdjustmentBlue', (aiAdjustments as any).sat_blue)}
       ${tag('SaturationAdjustmentPurple', (aiAdjustments as any).sat_purple)}
       ${tag('SaturationAdjustmentMagenta', (aiAdjustments as any).sat_magenta)}
-      ${tag('LuminanceAdjustmentRed', (aiAdjustments as any).lum_red)}
+      ${tag('LuminanceAdjustmentRed', round(clamp((aiAdjustments as any).lum_red, -100, 100)))}
       ${tag('LuminanceAdjustmentOrange', (aiAdjustments as any).lum_orange)}
       ${tag('LuminanceAdjustmentYellow', (aiAdjustments as any).lum_yellow)}
       ${tag('LuminanceAdjustmentGreen', (aiAdjustments as any).lum_green)}
@@ -362,19 +390,19 @@ export class ImageProcessor {
       ${tag('LuminanceAdjustmentMagenta', (aiAdjustments as any).lum_magenta)}
 
       <!-- Color Grading (Modern) -->
-      ${tag('ColorGradeShadowHue', (aiAdjustments as any).color_grade_shadow_hue)}
-      ${tag('ColorGradeShadowSat', (aiAdjustments as any).color_grade_shadow_sat)}
-      ${tag('ColorGradeShadowLum', (aiAdjustments as any).color_grade_shadow_lum)}
-      ${tag('ColorGradeMidtoneHue', (aiAdjustments as any).color_grade_midtone_hue)}
-      ${tag('ColorGradeMidtoneSat', (aiAdjustments as any).color_grade_midtone_sat)}
-      ${tag('ColorGradeMidtoneLum', (aiAdjustments as any).color_grade_midtone_lum)}
-      ${tag('ColorGradeHighlightHue', (aiAdjustments as any).color_grade_highlight_hue)}
-      ${tag('ColorGradeHighlightSat', (aiAdjustments as any).color_grade_highlight_sat)}
-      ${tag('ColorGradeHighlightLum', (aiAdjustments as any).color_grade_highlight_lum)}
-      ${tag('ColorGradeGlobalHue', (aiAdjustments as any).color_grade_global_hue)}
-      ${tag('ColorGradeGlobalSat', (aiAdjustments as any).color_grade_global_sat)}
-      ${tag('ColorGradeGlobalLum', (aiAdjustments as any).color_grade_global_lum)}
-      ${tag('ColorGradeBlending', (aiAdjustments as any).color_grade_blending)}
+      ${tag('ColorGradeShadowHue', round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360)))}
+      ${tag('ColorGradeShadowSat', round(clamp((aiAdjustments as any).color_grade_shadow_sat, 0, 100)))}
+      ${tag('ColorGradeShadowLum', round(clamp((aiAdjustments as any).color_grade_shadow_lum, -100, 100)))}
+      ${tag('ColorGradeMidtoneHue', round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360)))}
+      ${tag('ColorGradeMidtoneSat', round(clamp((aiAdjustments as any).color_grade_midtone_sat, 0, 100)))}
+      ${tag('ColorGradeMidtoneLum', round(clamp((aiAdjustments as any).color_grade_midtone_lum, -100, 100)))}
+      ${tag('ColorGradeHighlightHue', round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360)))}
+      ${tag('ColorGradeHighlightSat', round(clamp((aiAdjustments as any).color_grade_highlight_sat, 0, 100)))}
+      ${tag('ColorGradeHighlightLum', round(clamp((aiAdjustments as any).color_grade_highlight_lum, -100, 100)))}
+      ${tag('ColorGradeGlobalHue', round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360)))}
+      ${tag('ColorGradeGlobalSat', round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100)))}
+      ${tag('ColorGradeGlobalLum', round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100)))}
+      ${tag('ColorGradeBlending', round(clamp((aiAdjustments as any).color_grade_blending, 0, 100)))}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
