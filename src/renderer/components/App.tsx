@@ -69,6 +69,7 @@ const App: React.FC = () => {
 
     // Save process to storage (converts to base64 and persists only base64 + results)
     let newProcessId: string | null = null;
+    let returnedBase64: { base?: string | null; targets?: string[] } = {};
     try {
       const processData = {
         baseImage,
@@ -81,6 +82,11 @@ const App: React.FC = () => {
         newProcessId = result.process.id;
         setCurrentProcessId(newProcessId);
         currentProcessIdRef.current = newProcessId;
+        // Capture base64 returned from save-process to pass through to processing
+        returnedBase64.base = result?.process?.baseImageData || null;
+        returnedBase64.targets = Array.isArray(result?.process?.targetImageData)
+          ? result.process.targetImageData
+          : [];
       } else {
         console.warn('[APP] Failed to save process', result.error);
       }
@@ -97,7 +103,12 @@ const App: React.FC = () => {
 
     // Kick off processing using stored base64 data
     if (newProcessId) {
-      window.electronAPI.processWithStoredImages({ processId: newProcessId, targetIndex: 0 });
+      window.electronAPI.processWithStoredImages({
+        processId: newProcessId,
+        targetIndex: 0,
+        baseImageData: returnedBase64.base || undefined,
+        targetImageData: returnedBase64.targets || undefined,
+      });
     }
   };
 

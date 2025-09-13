@@ -271,25 +271,40 @@ class ImageMatchApp {
     });
 
     // Handle processing with stored base64 data from project
-    ipcMain.handle('process-with-stored-images', async (_event, data: { processId: string; targetIndex?: number }) => {
-      console.log('[IPC] process-with-stored-images called with:', { processId: data.processId, targetIndex: data.targetIndex });
+    ipcMain.handle('process-with-stored-images', async (
+      _event,
+      data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[] }
+    ) => {
+      console.log('[IPC] process-with-stored-images called with:', {
+        processId: data.processId,
+        targetIndex: data.targetIndex,
+      });
 
       try {
-        // Get the stored process data
-        const process = await this.storageService.getProcess(data.processId);
-        if (!process) {
-          throw new Error('Process not found');
-        }
+        // Prefer inline base64 if provided by caller, otherwise load from storage
+        const stored = await this.storageService.getProcess(data.processId);
+        if (!stored) throw new Error('Process not found');
 
-        if (!process.baseImageData) {
+        const baseImageData = data.baseImageData || stored.baseImageData;
+        if (!baseImageData) {
+          console.error('[IPC] Missing baseImageData', {
+            inlineProvided: !!data.baseImageData,
+            storedHas: !!stored.baseImageData,
+          });
           throw new Error('No base image data stored in project');
         }
 
         // Determine which target image to use
         const targetIndex = data.targetIndex || 0;
-        const targetImageData = process.targetImageData?.[targetIndex];
+        const providedTargets = data.targetImageData || stored.targetImageData || [];
+        const targetImageData = providedTargets[targetIndex];
 
         if (!targetImageData) {
+          console.error('[IPC] Missing targetImageData', {
+            inlineProvidedCount: Array.isArray(data.targetImageData) ? data.targetImageData.length : 0,
+            storedCount: Array.isArray(stored.targetImageData) ? stored.targetImageData.length : 0,
+            targetIndex,
+          });
           throw new Error(`No target image data found at index ${targetIndex}`);
         }
 
@@ -297,14 +312,14 @@ class ImageMatchApp {
         try { this.mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...'); } catch {}
 
         // Create temporary files for processing
-        const baseImageTempPath = await this.storageService.base64ToTempFile(process.baseImageData, 'base.jpg');
+        const baseImageTempPath = await this.storageService.base64ToTempFile(baseImageData, 'base.jpg');
         const targetImageTempPath = await this.storageService.base64ToTempFile(targetImageData, 'target.jpg');
 
         // Process using the image processor
         const result = await this.imageProcessor.matchStyle({
           baseImagePath: baseImageTempPath,
           targetImagePath: targetImageTempPath,
-          baseImageBase64: process.baseImageData,
+          baseImageBase64: baseImageData,
           targetImageBase64: targetImageData
         });
 
@@ -473,7 +488,11 @@ class ImageMatchApp {
           // Convert base image to base64
           if (processData.baseImage) {
             baseImageData = await this.storageService.convertImageToBase64(processData.baseImage);
-            console.log('[IPC] Converted base image to base64');
+            console.log('[IPC] Converted base image to base64', {
+              sizeKB: baseImageData ? Math.round(baseImageData.length / 1024) : 0,
+            });
+          } else {
+            console.warn('[IPC] save-process called without baseImage path');
           }
 
           // Convert target images to base64
@@ -482,7 +501,9 @@ class ImageMatchApp {
             if (targetImage) {
               const base64Data = await this.storageService.convertImageToBase64(targetImage);
               targetImageData[i] = base64Data;
-              console.log(`[IPC] Converted target image ${i} to base64`);
+              console.log(`[IPC] Converted target image ${i} to base64`, {
+                sizeKB: Math.round(base64Data.length / 1024),
+              });
             }
           }
         } catch (conversionError) {
@@ -499,8 +520,20 @@ class ImageMatchApp {
           targetImageData,
         } as ProcessHistory;
 
+        // Validate that required images were converted
+        if (!process.baseImageData) {
+          throw new Error('Base image conversion failed. No base image data available.');
+        }
+        if (!Array.isArray(process.targetImageData) || process.targetImageData.length === 0) {
+          throw new Error('Target image conversion failed. No target images converted.');
+        }
+
         await this.storageService.addProcess(process);
-        console.log('[IPC] save-process completed:', { id: process.id });
+        console.log('[IPC] save-process completed:', {
+          id: process.id,
+          baseSet: !!process.baseImageData,
+          targetCount: process.targetImageData?.length || 0,
+        });
         return { success: true, process };
       } catch (error) {
         console.error('[IPC] Error saving process:', error);
