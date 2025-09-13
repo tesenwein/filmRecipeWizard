@@ -17,8 +17,8 @@ export interface ProcessHistory {
   id: string;
   timestamp: string;
   name?: string;
-  baseImage: string;
-  targetImages: string[];
+  baseImage?: string;
+  targetImages?: string[];
   results: ProcessingResult[];
   // Base64 image data for offline storage
   baseImageData?: string; // base64 encoded image

@@ -1,16 +1,8 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import {
-  Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  CardMedia,
-  Grid,
-  IconButton,
-  Typography,
-} from '@mui/material';
+import { Button, Card, CardActionArea, CardContent, Grid, IconButton, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessHistory } from '../../shared/types';
+import Base64Image from './Base64Image';
 
 interface HistoryViewProps {
   onOpenProject: (process: ProcessHistory) => void;
@@ -32,15 +24,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
       if (result.success) {
         const items = (result.history as any[]) || [];
         setHistory(items);
-        const previews = await Promise.all(
-          items.map(async (p: any) => {
-            try {
-              const res = await window.electronAPI.generatePreview({ path: p.baseImage });
-              return res?.previewPath || p.baseImage;
-            } catch {
-              return p.baseImage;
-            }
-          })
+        const previews = items.map((p: any) =>
+          p?.baseImageData && typeof p.baseImageData === 'string' && p.baseImageData.length > 0
+            ? `data:image/jpeg;base64,${p.baseImageData}`
+            : ''
         );
         setBasePreviews(previews);
       }
@@ -146,33 +133,28 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                     console.log('[HISTORY] Open clicked', {
                       id: process.id,
                       timestamp: process.timestamp,
-                      baseImage: process.baseImage,
-                      targetCount: process.targetImages?.length,
                       resultsCount: Array.isArray((process as any).results)
                         ? (process as any).results.length
                         : 0,
                     });
-                    onOpenProject(process);
+                  onOpenProject(process);
                   }}
                 >
-                  {basePreviews[index] && (
-                    <CardMedia
-                      component="img"
-                      height="240"
-                      image={
-                        basePreviews[index].startsWith('file://')
-                          ? basePreviews[index]
-                          : `file://${basePreviews[index]}`
-                      }
-                      alt={`Base preview ${index + 1}`}
-                    />
-                  )}
+                  <div style={{ height: 240, borderRadius: 8, overflow: 'hidden' }}>
+                    <Base64Image dataUrl={basePreviews[index] || undefined} alt={`Base preview ${index + 1}`} />
+                  </div>
                   <CardContent>
                     <Typography variant="subtitle1" fontWeight={700} noWrap>
                       {(() => {
                         const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
                         const name = process.name || (typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : undefined);
-                        return name || process.baseImage.split('/').pop();
+                        if (name && name.trim().length > 0) return name;
+                        // Fallback: human-friendly timestamp label
+                        try {
+                          return new Date(process.timestamp).toLocaleString();
+                        } catch {
+                          return `Project ${process.id}`;
+                        }
                       })()}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -189,8 +171,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                       console.log('[HISTORY] Open button', {
                         id: process.id,
                         timestamp: process.timestamp,
-                        baseImage: process.baseImage,
-                        targetCount: process.targetImages?.length,
                         resultsCount: Array.isArray((process as any).results)
                           ? (process as any).results.length
                           : 0,

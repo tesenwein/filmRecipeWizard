@@ -19,9 +19,11 @@ export class StorageService {
       const history: ProcessHistory[] = (raw || []).map((p: any) => ({
         id: p.id,
         timestamp: p.timestamp,
-        baseImage: p.baseImage,
-        targetImages: Array.isArray(p.targetImages) ? p.targetImages : [],
+        name: p.name,
         results: Array.isArray(p.results) ? p.results : [],
+        // Preserve stored base64 image data if present
+        baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,
+        targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
       }));
       return history;
     } catch (error) {

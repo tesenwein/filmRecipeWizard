@@ -13,8 +13,9 @@ import {
   FormGroup,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
+import Base64Image from './Base64Image';
 
 interface ResultsViewProps {
   results: ProcessingResult[];
@@ -63,11 +64,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       count: results.length,
       success: successfulResults.length,
       failed: failedResults.length,
-      targetCount: targetImages?.length,
-      baseImage: _baseImage,
       processId,
     });
-  }, [results, successfulResults.length, failedResults.length, targetImages?.length, _baseImage, processId]);
+  }, [results, successfulResults.length, failedResults.length, processId]);
 
   // Load base64 image data when processId is provided
   useEffect(() => {
@@ -84,19 +83,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         if (response.success) {
           setBaseImageDataUrl(response.baseImageUrl || null);
           setTargetImageDataUrls(response.targetImageUrls || []);
-          console.log('[RESULTS] Loaded base64 images for process', processId, {
-            hasBase: !!response.baseImageUrl,
-            targetCount: response.targetImageUrls?.length || 0,
-          });
+          console.log('[RESULTS] Loaded base64 images for process', processId);
         } else {
-          console.error('[RESULTS] Failed to load base64 images:', response.error);
-          // Fallback to empty state
-          setBaseImageDataUrl(null);
-          setTargetImageDataUrls([]);
+          throw new Error(response.error || 'Failed to load image data URLs');
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
-        // Fallback to empty state
         setBaseImageDataUrl(null);
         setTargetImageDataUrls([]);
       }
@@ -105,12 +97,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     loadBase64Images();
   }, [processId]);
 
-  // Helper function to get the best image source (prioritizing base64 data)
-  const getImageSource = (base64DataUrl?: string | null, filePath?: string | null) => {
-    if (base64DataUrl) return base64DataUrl;
-    if (filePath) return filePath.startsWith('file://') ? filePath : `file://${filePath}`;
-    return undefined;
-  };
+  // Derive successful target URLs to keep alignment with displayed cards
+  const successfulTargetUrls = useMemo(() => {
+    const pairs = results.map((r, i) => ({ ok: r.success, url: targetImageDataUrls[i] }));
+    return pairs.filter(p => p.ok).map(p => p.url);
+  }, [results, targetImageDataUrls]);
 
   const defaultOptions = {
     wbBasic: true,
@@ -277,13 +268,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                       }}
                     >
-                      {(baseImageDataUrl || _baseImage) && (
-                        <img
-                          src={getImageSource(baseImageDataUrl, _baseImage)}
-                          alt="Base"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      )}
+                      <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Base" />
                     </div>
                   </div>
                   <div>
@@ -310,17 +295,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       }}
                     >
                       {(() => {
-                        const overallIndex = results.indexOf(result);
-                        const targetBase64 = targetImageDataUrls[overallIndex];
-                        const targetPath = targetImages[overallIndex];
-                        const imgSrc = getImageSource(targetBase64, targetPath);
-
-                        return imgSrc ? (
-                          <img
-                            src={imgSrc}
-                            alt={`Processed image ${index + 1}`}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
+                        const targetUrl = successfulTargetUrls[index];
+                        return targetUrl ? (
+                          <Base64Image dataUrl={targetUrl} alt={`Processed image ${index + 1}`} />
                         ) : (
                           <div
                             style={{

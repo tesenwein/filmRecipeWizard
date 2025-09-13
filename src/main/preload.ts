@@ -16,6 +16,7 @@ const electronAPI = {
 
   // Image processing
   processImages: (data: any) => ipcRenderer.invoke('process-images', data),
+  processWithStoredImages: (data: any) => ipcRenderer.invoke('process-with-stored-images', data),
   processImage: (data: any) => ipcRenderer.invoke('process-image', data),
   analyzeColors: (imagePath: string) => ipcRenderer.invoke('analyze-colors', imagePath),
   analyzeColorMatch: (data: any) => ipcRenderer.invoke('analyze-color-match', data),

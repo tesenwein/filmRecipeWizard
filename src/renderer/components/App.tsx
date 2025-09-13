@@ -67,7 +67,8 @@ const App: React.FC = () => {
   const handleStartProcessing = async () => {
     if (!baseImage || targetImages.length === 0) return;
 
-    // Save process to storage
+    // Save process to storage (converts to base64 and persists only base64 + results)
+    let newProcessId: string | null = null;
     try {
       const processData = {
         baseImage,
@@ -77,9 +78,9 @@ const App: React.FC = () => {
       
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
-        console.log('[APP] Saved new process', { id: result.process.id, baseImage, targetCount: targetImages.length });
-        setCurrentProcessId(result.process.id);
-        currentProcessIdRef.current = result.process.id;
+        newProcessId = result.process.id;
+        setCurrentProcessId(newProcessId);
+        currentProcessIdRef.current = newProcessId;
       } else {
         console.warn('[APP] Failed to save process', result.error);
       }
@@ -94,15 +95,10 @@ const App: React.FC = () => {
       status: 'Starting AI analysis...'
     });
 
-    // Start processing through IPC
-    console.log('[APP] Starting processImages', { baseImage, targetCount: targetImages.length });
-    window.electronAPI.processImages({
-      baseImagePath: baseImage!,
-      targetImagePaths: targetImages,
-      hint: '', // Could be added as user input later
-      options: {},
-      processId: currentProcessIdRef.current || undefined,
-    });
+    // Kick off processing using stored base64 data
+    if (newProcessId) {
+      window.electronAPI.processWithStoredImages({ processId: newProcessId, targetIndex: 0 });
+    }
   };
 
   const handleProcessingUpdate = (progress: number, status: string) => {
@@ -189,6 +185,7 @@ const App: React.FC = () => {
     });
 
     // Save new process to storage
+    let newProcessId: string | null = null;
     try {
       const processData = {
         baseImage,
@@ -198,9 +195,9 @@ const App: React.FC = () => {
       
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
-        console.log('[APP] Saved new processing session', { id: result.process.id, baseImage, targetCount: targetImages.length });
-        setCurrentProcessId(result.process.id);
-        currentProcessIdRef.current = result.process.id;
+        newProcessId = result.process.id;
+        setCurrentProcessId(newProcessId);
+        currentProcessIdRef.current = newProcessId;
       } else {
         console.warn('[APP] Failed to save new processing session', result.error);
       }
@@ -212,29 +209,23 @@ const App: React.FC = () => {
     navigate('/create');
 
     // Start processing through IPC
-    console.log('[APP] Starting new processing session', { baseImage, targetCount: targetImages.length });
-    window.electronAPI.processImages({
-      baseImagePath: baseImage,
-      targetImagePaths: targetImages,
-      hint: '',
-      options: {},
-      processId: currentProcessIdRef.current || undefined,
-    });
+    if (newProcessId) {
+      window.electronAPI.processWithStoredImages({ processId: newProcessId, targetIndex: 0 });
+    }
   };
 
 
   const handleOpenProject = async (process: ProcessHistory) => {
     setProjectLoading(true);
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
-    setBaseImage(process.baseImage);
-    setTargetImages(process.targetImages);
+    // Do not rely on legacy file paths in stored project
+    setBaseImage(null);
+    setTargetImages([]);
     setCurrentProcessId(process.id);
     try {
       if (process.id) {
         console.log('[APP] Open project request', {
           id: process.id,
-          baseImage: process.baseImage,
-          targetCount: process.targetImages?.length,
           incomingResults: Array.isArray((process as any).results) ? (process as any).results.length : 0,
         });
         const res = await window.electronAPI.getProcess(process.id);
@@ -301,8 +292,8 @@ const App: React.FC = () => {
             setProjectLoading(true);
             const res = await window.electronAPI.getProcess(id);
             if (res?.success && res.process) {
-              setBaseImage(res.process.baseImage);
-              setTargetImages(res.process.targetImages || []);
+              setBaseImage(null);
+              setTargetImages([]);
               setResults(Array.isArray(res.process.results) ? res.process.results : []);
               setCurrentProcessId(res.process.id);
               setCurrentStep('results');

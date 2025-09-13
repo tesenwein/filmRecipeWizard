@@ -293,6 +293,9 @@ class ImageMatchApp {
           throw new Error(`No target image data found at index ${targetIndex}`);
         }
 
+        // Emit initial progress
+        try { this.mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...'); } catch {}
+
         // Create temporary files for processing
         const baseImageTempPath = await this.storageService.base64ToTempFile(process.baseImageData, 'base.jpg');
         const targetImageTempPath = await this.storageService.base64ToTempFile(targetImageData, 'target.jpg');
@@ -305,11 +308,36 @@ class ImageMatchApp {
           targetImageBase64: targetImageData
         });
 
+        try { this.mainWindow?.webContents.send('processing-progress', 100, 'Completed'); } catch {}
+
+        // Persist result
+        try {
+          await this.storageService.updateProcess(data.processId, {
+            results: [{
+              inputPath: '',
+              outputPath: result.outputPath,
+              success: !!result.success,
+              error: result.error,
+              metadata: result.metadata,
+            }]
+          } as any);
+        } catch (err) {
+          console.error('[IPC] process-with-stored-images: failed to persist results', err);
+        }
+
+        // Emit completion event in same shape as legacy API
+        try { this.mainWindow?.webContents.send('processing-complete', [result]); } catch {}
+
         console.log('[IPC] process-with-stored-images completed:', { success: result.success });
         return result;
 
       } catch (error) {
         console.error('[IPC] Error processing with stored images:', error);
+        // Emit a final failure status so the UI shows immediate feedback
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
+        try { this.mainWindow?.webContents.send('processing-progress', 100, `Failed: ${errMsg}`); } catch {}
+        // Emit completion with failure result
+        try { this.mainWindow?.webContents.send('processing-complete', [{ success: false, error: errMsg }]); } catch {}
         throw error;
       }
     });
@@ -449,8 +477,8 @@ class ImageMatchApp {
           }
 
           // Convert target images to base64
-          for (let i = 0; i < processData.targetImages.length; i++) {
-            const targetImage = processData.targetImages[i];
+          for (let i = 0; i < (processData.targetImages?.length || 0); i++) {
+            const targetImage = processData.targetImages![i];
             if (targetImage) {
               const base64Data = await this.storageService.convertImageToBase64(targetImage);
               targetImageData[i] = base64Data;
@@ -465,10 +493,11 @@ class ImageMatchApp {
         const process: ProcessHistory = {
           id: processId,
           timestamp: new Date().toISOString(),
-          ...processData,
+          name: (processData as any)?.name,
+          results: Array.isArray(processData.results) ? processData.results : [],
           baseImageData,
-          targetImageData
-        };
+          targetImageData,
+        } as ProcessHistory;
 
         await this.storageService.addProcess(process);
         console.log('[IPC] save-process completed:', { id: process.id });
