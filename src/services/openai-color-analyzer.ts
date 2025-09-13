@@ -71,6 +71,10 @@ export interface AIColorAdjustments {
   preset_name?: string;
   point_colors?: number[][];
   color_variance?: number[];
+  // Film Grain
+  grain_amount?: number; // 0 to 100
+  grain_size?: number; // 0 to 100
+  grain_frequency?: number; // 0 to 100
 }
 
 export class OpenAIColorAnalyzer {
@@ -704,6 +708,25 @@ Additionally, provide a short, human-friendly preset_name we can use for the XMP
                     type: 'string',
                     description:
                       'Explanation of why these adjustments were chosen and what they achieve',
+                  },
+                  // Film Grain
+                  grain_amount: {
+                    type: 'number',
+                    description: 'Film grain amount (0 to 100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  grain_size: {
+                    type: 'number',
+                    description: 'Film grain size (0 to 100)',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  grain_frequency: {
+                    type: 'number',
+                    description: 'Film grain frequency (0 to 100)',
+                    minimum: 0,
+                    maximum: 100,
                   },
                 },
               },

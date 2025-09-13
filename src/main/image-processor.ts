@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import sharp from 'sharp';
+import { app } from 'electron';
 import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
 import { SettingsService } from './settings-service';
 
@@ -114,12 +115,30 @@ export class ImageProcessor {
     }
   }
 
-  async generatePreview(args: { path?: string; dataUrl?: string }): Promise<string> {
-    const os = await import('os');
-    const tmpDir = path.join(os.tmpdir(), 'image-match-previews');
-    await fs.mkdir(tmpDir, { recursive: true });
+  async generatePreview(args: { path?: string; dataUrl?: string; processId?: string; subdir?: string }): Promise<string> {
+    // Choose a persistent per-project directory when processId is provided
+    let outDir: string;
+    if (args.processId) {
+      const userData = app.getPath('userData');
+      const baseDir = path.join(userData, 'projects', args.processId, 'previews');
+      outDir = args.subdir ? path.join(baseDir, args.subdir) : baseDir;
+    } else {
+      // Fall back to temp previews dir for ad-hoc previews (upload flow)
+      const os = await import('os');
+      outDir = path.join(os.tmpdir(), 'image-match-previews');
+    }
+    await fs.mkdir(outDir, { recursive: true });
 
-    const outPath = path.join(tmpDir, `prev-${Date.now()}-${Math.floor(Math.random() * 1e6)}.jpg`);
+    // Derive a stable-ish filename component from source when available
+    const srcName = (() => {
+      const p = args.path || '';
+      const name = p ? path.basename(p) : 'preview';
+      return name.replace(/\s+/g, '-').replace(/[^A-Za-z0-9._-]/g, '') || 'preview';
+    })();
+    const outPath = path.join(
+      outDir,
+      `${Date.now()}-${Math.floor(Math.random() * 1e6)}-${srcName}.jpg`
+    );
 
     try {
       let img = sharp();
@@ -253,7 +272,8 @@ export class ImageProcessor {
       hsl: include?.hsl !== false,
       colorGrading: include?.colorGrading !== false,
       curves: include?.curves !== false,
-      pointColor: !!include?.pointColor,
+      // Enable Point Color by default unless explicitly disabled
+      pointColor: include?.pointColor !== false,
       // sharpenNoise and vignette currently not emitted in XMP (placeholders)
     } as const;
 
@@ -419,6 +439,11 @@ export class ImageProcessor {
 
       <!-- Point Color (if provided) -->
       ${pointColorBlocks}
+
+      <!-- Film Grain -->
+      ${tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100)))}
+      ${tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100)))}
+      ${tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100)))}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
