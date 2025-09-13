@@ -150,6 +150,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                     />
                   )}
                   <CardContent>
+                    <Typography variant="subtitle1" fontWeight={700} noWrap>
+                      {process.name || process.baseImage.split('/').pop()}
+                    </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {formatDate(process.timestamp)}
                     </Typography>

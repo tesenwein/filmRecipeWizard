@@ -198,9 +198,12 @@ class ImageMatchApp {
         
         // Show save dialog
         const { dialog } = require('electron');
+        // Derive a friendly filename from AI if present
+        const rawName = (data?.adjustments?.preset_name as string | undefined) || `ImageMatch-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const safeName = rawName.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
         const result = await dialog.showSaveDialog({
           title: 'Save XMP Preset',
-          defaultPath: `ImageMatch-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xmp`,
+          defaultPath: `${safeName}.xmp`,
           filters: [
             { name: 'XMP Presets', extensions: ['xmp'] },
             { name: 'All Files', extensions: ['*'] }
@@ -339,7 +342,12 @@ class ImageMatchApp {
               error: result.error,
               metadata: result.metadata,
             }];
-            await this.storageService.updateProcess(data.processId, { results: persistedResults as any });
+            // Derive preset/project name from AI adjustments if provided
+            let name: string | undefined;
+            try {
+              name = result?.metadata?.aiAdjustments?.preset_name;
+            } catch {}
+            await this.storageService.updateProcess(data.processId, { results: persistedResults as any, ...(name ? { name } : {}) });
             console.log('[IPC] process-images: results persisted to process', { id: data.processId, count: 1 });
           } else {
             console.warn('[IPC] process-images: no processId provided; results not persisted automatically');

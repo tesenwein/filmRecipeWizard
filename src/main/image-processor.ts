@@ -283,11 +283,23 @@ export class ImageProcessor {
     const tag = (name: string, val?: number | string) =>
       (val === 0 || !!val) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
 
+    const presetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || `ImageMatch-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+    const groupName = 'image-match';
     const xmp = `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c140 79.160451, 2017/05/06-01:08:21">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about=""
       xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/">
+      <crs:Name>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${presetName}</rdf:li>
+        </rdf:Alt>
+      </crs:Name>
+      <crs:Group>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${groupName}</rdf:li>
+        </rdf:Alt>
+      </crs:Group>
       ${treatmentTag}
       ${tag('CameraProfile', cameraProfile)}
       ${tag('ProfileName', profileName)}

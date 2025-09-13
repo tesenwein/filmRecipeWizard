@@ -142,8 +142,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           {baseImage ? (
             <div style={{ marginBottom: '20px' }}>
               <div style={{
-                width: '300px',
-                height: '200px',
+                width: '320px',
+                height: '220px',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 margin: '0 auto',
@@ -185,8 +185,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             </div>
           ) : (
             <div style={{
-              width: '300px',
-              height: '200px',
+              width: '320px',
+              height: '220px',
               border: '3px dashed #d0d0d0',
               borderRadius: '12px',
               display: 'flex',
@@ -239,81 +239,27 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
           {targetImages.length > 0 ? (
             <div style={{ marginBottom: '20px' }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: targetImages.length === 1 ? '1fr' : '1fr 1fr',
-                gap: '12px',
-                maxHeight: '200px',
-                overflow: 'hidden',
-                width: '300px',
-                margin: '0 auto'
-              }}>
-                {targetImages.slice(0, 4).map((imgPath, index) => {
-                  const previewPath = targetPreviews[index] || imgPath;
+              <div style={{ width: '320px', height: '220px', borderRadius: '12px', overflow: 'hidden', border: '2px solid #e0e0e0', margin: '0 auto', position: 'relative', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+                {(() => {
+                  const imgPath = targetImages[0];
+                  const previewPath = targetPreviews[0] || imgPath;
                   return (
-                  <div
-                    key={index}
-                    style={{
-                      width: '100%',
-                      height: targetImages.length === 1 ? '180px' : '90px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '2px solid #e0e0e0',
-                      position: 'relative',
-                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
                     <img
                       src={`file://${previewPath}`}
-                      alt={`Target image ${index + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
+                      alt={`Target image`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '4px',
-                      right: '4px',
-                      background: 'rgba(0, 0, 0, 0.7)',
-                      color: 'white',
-                      borderRadius: '8px',
-                      padding: '2px 6px',
-                      fontSize: '10px',
-                      fontWeight: '600'
-                    }}>
-                      {index + 1}
-                    </div>
-                  </div>
                   );
-                })}
+                })()}
               </div>
-              {targetImages.length > 4 && (
-                <p style={{ 
-                  fontSize: '13px', 
-                  color: '#667eea', 
-                  marginTop: '12px',
-                  fontWeight: '600',
-                  textAlign: 'center'
-                }}>
-                  +{targetImages.length - 4} more images
-                </p>
-              )}
-              <p style={{ 
-                fontSize: '13px', 
-                color: '#555555', 
-                marginTop: '8px',
-                textAlign: 'center',
-                fontWeight: '500'
-              }}>
+              <p style={{ fontSize: '13px', color: '#555555', marginTop: '8px', textAlign: 'center', fontWeight: '500' }}>
                 {targetImages.length} image{targetImages.length !== 1 ? 's' : ''} selected
               </p>
             </div>
           ) : (
             <div style={{
-              width: '300px',
-              height: '200px',
+              width: '320px',
+              height: '220px',
               border: '3px dashed #d0d0d0',
               borderRadius: '12px',
               display: 'flex',

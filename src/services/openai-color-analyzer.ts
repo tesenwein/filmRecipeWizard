@@ -158,6 +158,10 @@ Please analyze both images and provide detailed Lightroom/Camera Raw adjustments
               parameters: {
                 type: 'object',
                 properties: {
+                  preset_name: {
+                    type: 'string',
+                    description: 'Short, friendly preset name to use for XMP and project title',
+                  },
                   treatment: {
                     type: 'string',
                     description:

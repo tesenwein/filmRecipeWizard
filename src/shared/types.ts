@@ -16,6 +16,7 @@ export interface ProcessingResult {
 export interface ProcessHistory {
   id: string;
   timestamp: string;
+  name?: string;
   baseImage: string;
   targetImages: string[];
   results: ProcessingResult[];
