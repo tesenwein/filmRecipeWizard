@@ -270,6 +270,50 @@ class ImageMatchApp {
       }
     });
 
+    // Handle processing with stored base64 data from project
+    ipcMain.handle('process-with-stored-images', async (_event, data: { processId: string; targetIndex?: number }) => {
+      console.log('[IPC] process-with-stored-images called with:', { processId: data.processId, targetIndex: data.targetIndex });
+
+      try {
+        // Get the stored process data
+        const process = await this.storageService.getProcess(data.processId);
+        if (!process) {
+          throw new Error('Process not found');
+        }
+
+        if (!process.baseImageData) {
+          throw new Error('No base image data stored in project');
+        }
+
+        // Determine which target image to use
+        const targetIndex = data.targetIndex || 0;
+        const targetImageData = process.targetImageData?.[targetIndex];
+
+        if (!targetImageData) {
+          throw new Error(`No target image data found at index ${targetIndex}`);
+        }
+
+        // Create temporary files for processing
+        const baseImageTempPath = await this.storageService.base64ToTempFile(process.baseImageData, 'base.jpg');
+        const targetImageTempPath = await this.storageService.base64ToTempFile(targetImageData, 'target.jpg');
+
+        // Process using the image processor
+        const result = await this.imageProcessor.matchStyle({
+          baseImagePath: baseImageTempPath,
+          targetImagePath: targetImageTempPath,
+          baseImageBase64: process.baseImageData,
+          targetImageBase64: targetImageData
+        });
+
+        console.log('[IPC] process-with-stored-images completed:', { success: result.success });
+        return result;
+
+      } catch (error) {
+        console.error('[IPC] Error processing with stored images:', error);
+        throw error;
+      }
+    });
+
     // New React frontend IPC handlers
     ipcMain.handle('select-files', async (_event, options) => {
       if (!this.mainWindow) return [];
@@ -291,7 +335,7 @@ class ImageMatchApp {
 
     ipcMain.handle('open-path', async (_event, path) => {
       try {
-        await shell.showItemInFolder(path);
+        shell.showItemInFolder(path);
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error opening path:', error);
@@ -391,11 +435,41 @@ class ImageMatchApp {
 
     ipcMain.handle('save-process', async (_event, processData: Omit<ProcessHistory, 'id' | 'timestamp'>) => {
       try {
+        const processId = this.storageService.generateProcessId();
+
+        // Convert images to base64 data
+        let baseImageData: string | undefined;
+        let targetImageData: string[] = [];
+
+        try {
+          // Convert base image to base64
+          if (processData.baseImage) {
+            baseImageData = await this.storageService.convertImageToBase64(processData.baseImage);
+            console.log('[IPC] Converted base image to base64');
+          }
+
+          // Convert target images to base64
+          for (let i = 0; i < processData.targetImages.length; i++) {
+            const targetImage = processData.targetImages[i];
+            if (targetImage) {
+              const base64Data = await this.storageService.convertImageToBase64(targetImage);
+              targetImageData[i] = base64Data;
+              console.log(`[IPC] Converted target image ${i} to base64`);
+            }
+          }
+        } catch (conversionError) {
+          console.error('[IPC] Error converting images to base64:', conversionError);
+          throw new Error(`Failed to convert images: ${conversionError instanceof Error ? conversionError.message : 'Unknown error'}`);
+        }
+
         const process: ProcessHistory = {
-          id: this.storageService.generateProcessId(),
+          id: processId,
           timestamp: new Date().toISOString(),
-          ...processData
+          ...processData,
+          baseImageData,
+          targetImageData
         };
+
         await this.storageService.addProcess(process);
         console.log('[IPC] save-process completed:', { id: process.id });
         return { success: true, process };
@@ -434,6 +508,40 @@ class ImageMatchApp {
         return { success: true, process };
       } catch (error) {
         console.error('[IPC] Error getting process:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Get image data URLs for UI display from stored base64 data
+    ipcMain.handle('get-image-data-urls', async (_event, processId: string) => {
+      try {
+        const process = await this.storageService.getProcess(processId);
+        if (!process) {
+          throw new Error('Process not found');
+        }
+
+        const result: { baseImageUrl?: string; targetImageUrls: string[] } = {
+          targetImageUrls: []
+        };
+
+        if (process.baseImageData) {
+          result.baseImageUrl = this.storageService.getImageDataUrl(process.baseImageData);
+        }
+
+        if (process.targetImageData) {
+          result.targetImageUrls = process.targetImageData.map(data =>
+            this.storageService.getImageDataUrl(data)
+          );
+        }
+
+        console.log('[IPC] get-image-data-urls completed:', {
+          processId,
+          hasBaseImage: !!result.baseImageUrl,
+          targetImageCount: result.targetImageUrls.length
+        });
+        return { success: true, ...result };
+      } catch (error) {
+        console.error('[IPC] Error getting image data URLs:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });

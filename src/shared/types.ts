@@ -20,6 +20,9 @@ export interface ProcessHistory {
   baseImage: string;
   targetImages: string[];
   results: ProcessingResult[];
+  // Base64 image data for offline storage
+  baseImageData?: string; // base64 encoded image
+  targetImageData?: string[]; // base64 encoded images
 }
 
 export interface ProcessingState {

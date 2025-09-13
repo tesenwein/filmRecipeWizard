@@ -13,6 +13,8 @@ export interface StyleMatchOptions {
   matchSaturation?: boolean;
   matchColorGrading?: boolean;
   aiAdjustments?: AIColorAdjustments;
+  baseImageBase64?: string;
+  targetImageBase64?: string;
 }
 
 export interface ProcessingResult {
@@ -58,7 +60,10 @@ export class ImageProcessor {
       console.log('[PROCESSOR] Analyzing images with AI');
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
-        data.targetImagePath
+        data.targetImagePath,
+        undefined, // hint
+        data.baseImageBase64,
+        data.targetImageBase64
       );
 
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
@@ -83,6 +88,8 @@ export class ImageProcessor {
   async analyzeColorMatch(data: {
     baseImagePath: string;
     targetImagePath: string;
+    baseImageBase64?: string;
+    targetImageBase64?: string;
   }): Promise<ProcessingResult> {
     console.log('[PROCESSOR] Starting AI color match analysis');
 
@@ -96,7 +103,10 @@ export class ImageProcessor {
     try {
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
-        data.targetImagePath
+        data.targetImagePath,
+        undefined, // hint
+        data.baseImageBase64,
+        data.targetImageBase64
       );
 
       return {

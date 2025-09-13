@@ -120,7 +120,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     curves: true,
     sharpenNoise: true,
     vignette: true,
-    pointColor: false,
+    // Enable Point Color by default in export options
+    pointColor: true,
   } as const;
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;

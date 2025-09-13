@@ -99,7 +99,9 @@ export class OpenAIColorAnalyzer {
   async analyzeColorMatch(
     baseImagePath: string,
     targetImagePath: string,
-    hint?: string
+    hint?: string,
+    baseImageBase64?: string,
+    targetImageBase64?: string
   ): Promise<AIColorAdjustments> {
     if (!this.initialized || !this.openai) {
       throw new Error(
@@ -109,9 +111,9 @@ export class OpenAIColorAnalyzer {
 
     console.log('[AI] Starting AI-powered color analysis');
 
-    // Convert both images to base64 JPEGs for OpenAI
-    const baseImageB64 = await this.convertToBase64Jpeg(baseImagePath);
-    const targetImageB64 = await this.convertToBase64Jpeg(targetImagePath);
+    // Use provided base64 data or convert from file paths
+    const baseImageB64 = baseImageBase64 || await this.convertToBase64Jpeg(baseImagePath);
+    const targetImageB64 = targetImageBase64 || await this.convertToBase64Jpeg(targetImagePath);
 
     let completion;
     try {
