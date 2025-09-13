@@ -25,6 +25,7 @@ const electronAPI = {
     targetImagePaths: string[];
     hint?: string;
     options: any;
+    processId?: string;
   }) => ipcRenderer.invoke('process-images', data),
   
   processImage: (data: any) => ipcRenderer.invoke('process-image', data),
@@ -52,6 +53,11 @@ const electronAPI = {
   saveProcess: (processData: any) => ipcRenderer.invoke('save-process', processData),
   updateProcess: (processId: string, updates: any) => ipcRenderer.invoke('update-process', processId, updates),
   deleteProcess: (processId: string) => ipcRenderer.invoke('delete-process', processId),
+  getProcess: (processId: string) => ipcRenderer.invoke('get-process', processId),
+
+  // Settings operations
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
 
   // Utility functions
   removeAllListeners: (channel: string) => {

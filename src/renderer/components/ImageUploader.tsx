@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@mui/material';
 
 interface ImageUploaderProps {
   onImagesSelected: (baseImage: string, targetImages: string[]) => void;
@@ -201,13 +202,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             </div>
           )}
 
-          <button
-            className="button"
-            onClick={handleBaseImageSelect}
-            style={{ width: '100%' }}
-          >
+          <Button variant="contained" onClick={handleBaseImageSelect} fullWidth>
             📂 Select Reference Image
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -332,13 +329,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             </div>
           )}
 
-          <button
-            className="button"
-            onClick={handleTargetImagesSelect}
-            style={{ width: '100%' }}
-          >
+          <Button variant="contained" onClick={handleTargetImagesSelect} fullWidth>
             📂 Select Target Images
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -366,22 +359,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               AI will analyze your reference image and generate complete color adjustments for all target images.
               You'll be able to selectively export XMP presets with your desired adjustments.
             </p>
-            <button
-              className="button"
-              onClick={onStartProcessing}
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                fontSize: '16px',
-                fontWeight: '600',
-                padding: '14px 32px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.2)'
-              }}
-            >
-              Start Processing
-            </button>
+            <Button variant="contained" onClick={onStartProcessing}>Start Processing</Button>
           </div>
         </div>
       )}

@@ -19,7 +19,6 @@ export interface ProcessHistory {
   baseImage: string;
   targetImages: string[];
   results: ProcessingResult[];
-  status: 'completed' | 'failed' | 'in_progress';
 }
 
 export interface ProcessingState {

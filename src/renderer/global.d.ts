@@ -18,6 +18,7 @@ declare global {
         targetImagePaths: string[];
         hint?: string;
         options: any;
+        processId?: string;
       }) => Promise<any[]>;
       
       processImage: (data: any) => Promise<any>;
@@ -40,6 +41,13 @@ declare global {
       saveProcess: (processData: any) => Promise<{ success: boolean; process?: any; error?: string }>;
       updateProcess: (processId: string, updates: any) => Promise<{ success: boolean; error?: string }>;
       deleteProcess: (processId: string) => Promise<{ success: boolean; error?: string }>;
+      getProcess: (processId: string) => Promise<{ success: boolean; process?: any; error?: string }>;
+
+      // Settings operations
+      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
+      saveSettings: (
+        settings: { openaiKey?: string }
+      ) => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
 
       // Utility functions
       removeAllListeners: (channel: string) => void;

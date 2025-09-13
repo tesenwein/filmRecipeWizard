@@ -17,29 +17,15 @@ export class StorageService {
   async loadHistory(): Promise<ProcessHistory[]> {
     try {
       const data = await fs.readFile(this.storageFile, 'utf8');
-      const history: ProcessHistory[] = JSON.parse(data);
-
-      // Normalize stale statuses so UI doesn't get stuck on "in_progress"
-      let mutated = false;
-      const normalized = history.map((p) => {
-        let status = p.status;
-        // If a process is marked in_progress but has results, infer final status
-        if (status === 'in_progress' && Array.isArray(p.results) && p.results.length > 0) {
-          const anySuccess = p.results.some((r) => r.success);
-          status = anySuccess ? 'completed' : 'failed';
-          mutated = true;
-        }
-        // Ensure required fields exist
-        const results = Array.isArray(p.results) ? p.results : [];
-        return { ...p, status, results } as ProcessHistory;
-      });
-
-      // If we normalized anything, persist it back to disk
-      if (mutated) {
-        await this.saveHistory(normalized);
-      }
-
-      return normalized;
+      const raw: any[] = JSON.parse(data);
+      const history: ProcessHistory[] = (raw || []).map((p: any) => ({
+        id: p.id,
+        timestamp: p.timestamp,
+        baseImage: p.baseImage,
+        targetImages: Array.isArray(p.targetImages) ? p.targetImages : [],
+        results: Array.isArray(p.results) ? p.results : [],
+      }));
+      return history;
     } catch (error) {
       // File doesn't exist or is invalid, return empty array
       console.log('[STORAGE] No existing history file, starting fresh');

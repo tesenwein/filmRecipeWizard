@@ -64,11 +64,26 @@ export class ImageProcessor {
   ];
   private readonly rawFormats = ['.dng', '.cr2', '.nef', '.arw'];
   private magickInitialized = false;
-  private aiAnalyzer: OpenAIColorAnalyzer;
+  private aiAnalyzer: OpenAIColorAnalyzer | null = null;
 
   constructor() {
     this.initializeImageMagick();
-    this.aiAnalyzer = new OpenAIColorAnalyzer();
+  }
+
+  private ensureAIAnalyzer(): OpenAIColorAnalyzer {
+    if (!this.aiAnalyzer) {
+      this.aiAnalyzer = new OpenAIColorAnalyzer();
+    }
+    return this.aiAnalyzer;
+  }
+
+  setOpenAIKey(key?: string): void {
+    if (key && key.trim()) {
+      process.env.OPENAI_API_KEY = key.trim();
+    } else {
+      delete process.env.OPENAI_API_KEY;
+    }
+    this.aiAnalyzer = null; // re-init on next use
   }
 
   private async initializeImageMagick(): Promise<void> {
@@ -151,7 +166,8 @@ export class ImageProcessor {
   }): Promise<ProcessingResult> {
     console.log('[PROCESSOR] Starting AI color match analysis');
 
-    if (!this.aiAnalyzer.isAvailable()) {
+    const analyzer = this.ensureAIAnalyzer();
+    if (!analyzer.isAvailable()) {
       throw new Error(
         'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable for AI analysis.'
       );
@@ -172,7 +188,7 @@ export class ImageProcessor {
         // Silently ignore preview generation errors
       }
 
-      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(
+      const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
         hint
@@ -200,8 +216,8 @@ export class ImageProcessor {
 
   async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
     console.log('[PROCESSOR] Starting AI-powered style matching');
-
-    if (!this.aiAnalyzer.isAvailable()) {
+    const analyzer = this.ensureAIAnalyzer();
+    if (!analyzer.isAvailable()) {
       throw new Error(
         'OpenAI API key not configured. This app requires OpenAI for color matching. Please set OPENAI_API_KEY environment variable.'
       );
@@ -228,7 +244,8 @@ export class ImageProcessor {
         // Best-effort hint; ignore errors
       }
 
-      const aiAdjustments = await this.aiAnalyzer.analyzeColorMatch(
+      const analyzer = this.ensureAIAnalyzer();
+      const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
         hint

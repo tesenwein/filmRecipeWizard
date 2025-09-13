@@ -30,6 +30,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const successfulResults = results.filter(result => result.success);
   const failedResults = results.filter(result => !result.success);
 
+  useEffect(() => {
+    console.log('[RESULTS] Render with results', {
+      count: results.length,
+      success: successfulResults.length,
+      failed: failedResults.length,
+      targetCount: targetImages?.length,
+      baseImage: _baseImage,
+    });
+  }, [results, successfulResults.length, failedResults.length, targetImages?.length, _baseImage]);
+
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
     const ext = p.split('.').pop()?.toLowerCase();

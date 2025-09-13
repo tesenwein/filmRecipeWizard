@@ -2,16 +2,19 @@ import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
 import { StorageService } from './storage-service';
+import { SettingsService, AppSettings } from './settings-service';
 import { ProcessHistory } from '../shared/types';
 
 class ImageMatchApp {
   private mainWindow: BrowserWindow | null = null;
   private imageProcessor: ImageProcessor;
   private storageService: StorageService;
+  private settingsService: SettingsService;
 
   constructor() {
     this.imageProcessor = new ImageProcessor();
     this.storageService = new StorageService();
+    this.settingsService = new SettingsService();
     this.setupApp();
     this.setupIPC();
   }
@@ -291,7 +294,8 @@ class ImageMatchApp {
       console.log('[IPC] process-images called with:', { 
         baseImagePath: data?.baseImagePath, 
         targetImageCount: data?.targetImagePaths?.length,
-        hint: data?.hint 
+        hint: data?.hint,
+        processId: data?.processId,
       });
 
       if (!this.mainWindow) return [];
@@ -334,6 +338,25 @@ class ImageMatchApp {
               error: error instanceof Error ? error.message : 'Unknown error'
             });
           }
+        }
+
+        // Persist results to history if a processId was provided
+        try {
+          if (data?.processId) {
+            const persistedResults = results.map((r: any, i: number) => ({
+              inputPath: data.targetImagePaths?.[i],
+              outputPath: r.outputPath,
+              success: !!r.success,
+              error: r.error,
+              metadata: r.metadata,
+            }));
+            await this.storageService.updateProcess(data.processId, { results: persistedResults as any });
+            console.log('[IPC] process-images: results persisted to process', { id: data.processId, count: results.length });
+          } else {
+            console.warn('[IPC] process-images: no processId provided; results not persisted automatically');
+          }
+        } catch (err) {
+          console.error('[IPC] process-images: failed to persist results', err);
         }
 
         // Send completion event
@@ -392,6 +415,43 @@ class ImageMatchApp {
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error deleting process:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Fetch a single process by id
+    ipcMain.handle('get-process', async (_event, processId: string) => {
+      try {
+        const process = await this.storageService.getProcess(processId);
+        return { success: true, process };
+      } catch (error) {
+        console.error('[IPC] Error getting process:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Settings IPC handlers
+    ipcMain.handle('get-settings', async () => {
+      try {
+        const settings = await this.settingsService.loadSettings();
+        // Do not log sensitive data
+        return { success: true, settings: { ...settings, openaiKey: settings.openaiKey ? '***' : undefined } };
+      } catch (error) {
+        console.error('[IPC] Error loading settings:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    ipcMain.handle('save-settings', async (_event, partial: Partial<AppSettings>) => {
+      try {
+        const saved = await this.settingsService.saveSettings(partial);
+        if (partial.openaiKey !== undefined) {
+          // Update processor with new key (re-init AI analyzer lazily)
+          this.imageProcessor.setOpenAIKey(partial.openaiKey);
+        }
+        return { success: true, settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined } };
+      } catch (error) {
+        console.error('[IPC] Error saving settings:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });

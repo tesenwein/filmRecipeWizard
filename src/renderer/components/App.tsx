@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ImageUploader from './ImageUploader';
 import ProcessingView from './ProcessingView';
 import ResultsView from './ResultsView';
 import HistoryView from './HistoryView';
+import Settings from './Settings';
+import { Dialog, DialogTitle, DialogContent, IconButton, Tooltip } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import HomeIcon from '@mui/icons-material/Home';
 import { ProcessHistory, ProcessingResult, ProcessingState } from '../../shared/types';
 
 const App: React.FC = () => {
+  // Simple hash-based router
+  const getRoute = () => {
+    const raw = (typeof window !== 'undefined' ? window.location.hash : '') || '#/home';
+    const path = raw.replace(/^#/, '');
+    const [route] = path.split('?');
+    return route || '/home';
+  };
+  const [route, setRoute] = useState<string>(getRoute());
+
   const [baseImage, setBaseImage] = useState<string | null>(null);
   const [targetImages, setTargetImages] = useState<string[]>([]);
   const [processingState, setProcessingState] = useState<ProcessingState>({
@@ -16,6 +29,12 @@ const App: React.FC = () => {
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [currentStep, setCurrentStep] = useState<'history' | 'upload' | 'processing' | 'results'>('history');
   const [currentProcessId, setCurrentProcessId] = useState<string | null>(null);
+  const currentProcessIdRef = useRef<string | null>(null);
+  useEffect(() => { currentProcessIdRef.current = currentProcessId; }, [currentProcessId]);
+  const targetImagesRef = useRef<string[]>([]);
+  useEffect(() => { targetImagesRef.current = targetImages; }, [targetImages]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [projectLoading, setProjectLoading] = useState(false);
 
   const handleImagesSelected = (base: string, targets: string[]) => {
     setBaseImage(base);
@@ -31,13 +50,16 @@ const App: React.FC = () => {
       const processData = {
         baseImage,
         targetImages,
-        results: [],
-        status: 'in_progress' as const
+        results: []
       };
       
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
+        console.log('[APP] Saved new process', { id: result.process.id, baseImage, targetCount: targetImages.length });
         setCurrentProcessId(result.process.id);
+        currentProcessIdRef.current = result.process.id;
+      } else {
+        console.warn('[APP] Failed to save process', result.error);
       }
     } catch (error) {
       console.error('Failed to save process:', error);
@@ -51,11 +73,13 @@ const App: React.FC = () => {
     });
 
     // Start processing through IPC
+    console.log('[APP] Starting processImages', { baseImage, targetCount: targetImages.length });
     window.electronAPI.processImages({
       baseImagePath: baseImage!,
       targetImagePaths: targetImages,
       hint: '', // Could be added as user input later
-      options: {}
+      options: {},
+      processId: currentProcessIdRef.current || undefined,
     });
   };
 
@@ -69,8 +93,9 @@ const App: React.FC = () => {
 
   const handleProcessingComplete = async (processingResults: any[]) => {
     // Convert the results to include inputPath for proper storage
+    const inputs = targetImagesRef.current || [];
     const results: ProcessingResult[] = processingResults.map((result, index) => ({
-      inputPath: targetImages[index],
+      inputPath: inputs[index],
       outputPath: result.outputPath,
       success: result.success,
       error: result.error,
@@ -78,6 +103,7 @@ const App: React.FC = () => {
     }));
     
     setResults(results);
+    console.log('[APP] Processing complete', { count: results.length, success: results.filter(r => r.success).length });
     setProcessingState(prev => ({
       ...prev,
       isProcessing: false,
@@ -86,13 +112,14 @@ const App: React.FC = () => {
     }));
 
     // Update process in storage
-    if (currentProcessId) {
+    const pid = currentProcessIdRef.current;
+    if (pid) {
       try {
-        const status = results.some(r => r.success) ? 'completed' as const : 'failed' as const;
-        await window.electronAPI.updateProcess(currentProcessId, {
-          results,
-          status
+        console.log('[APP] Persisting results', { id: pid, count: results.length });
+        await window.electronAPI.updateProcess(pid, {
+          results
         });
+        console.log('[APP] Results persisted', { id: pid });
       } catch (error) {
         console.error('Failed to update process:', error);
       }
@@ -126,18 +153,38 @@ const App: React.FC = () => {
     setCurrentStep('results');
   };
 
-  const handleOpenProject = (process: ProcessHistory) => {
+  const handleOpenProject = async (process: ProcessHistory) => {
+    setProjectLoading(true);
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
     setBaseImage(process.baseImage);
     setTargetImages(process.targetImages);
-    setResults(process.results || []);
     setCurrentProcessId(process.id);
-    
-    // If project has results, go to results view, otherwise go to upload view
-    if (process.results && process.results.length > 0) {
+    try {
+      if (process.id) {
+        console.log('[APP] Open project request', {
+          id: process.id,
+          baseImage: process.baseImage,
+          targetCount: process.targetImages?.length,
+          incomingResults: Array.isArray((process as any).results) ? (process as any).results.length : 0,
+        });
+        const res = await window.electronAPI.getProcess(process.id);
+        console.log('[APP] getProcess response', {
+          id: process.id,
+          success: res?.success,
+          resultsCount: Array.isArray(res?.process?.results) ? res?.process?.results.length : 0,
+        });
+        if (res?.success && res.process && Array.isArray(res.process.results) && res.process.results.length > 0) {
+          setResults(res.process.results);
+        } else {
+          setResults(process.results || []);
+        }
+      } else {
+        setResults(process.results || []);
+      }
+    } finally {
+      setProjectLoading(false);
       setCurrentStep('results');
-    } else {
-      setCurrentStep('upload');
+      navigate('/projectdetails');
     }
   };
 
@@ -156,87 +203,152 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Listen to hash changes for routing
+  useEffect(() => {
+    const onHashChange = () => setRoute(getRoute());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // When navigating to create, default to upload step if nothing selected
+  useEffect(() => {
+    if (route === '/create' && !processingState.isProcessing && currentStep === 'history') {
+      setCurrentStep('upload');
+    }
+  }, [route]);
+
+  // If a project is selected and we're showing results, ensure we are on project details
+  useEffect(() => {
+    if (currentProcessId && currentStep === 'results' && route !== '/projectdetails') {
+      navigate('/projectdetails');
+    }
+  }, [currentProcessId, currentStep]);
+
+  const navigate = (to: string) => {
+    window.location.hash = to.startsWith('#') ? to : `#${to}`;
+  };
+
+  const Header = (
+    <header style={{ marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div
+          style={{
+            fontSize: '20px',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Image Match
+        </div>
+        <div>
+          <Tooltip title="Home">
+            <IconButton color="default" size="small" onClick={() => navigate('/home')} sx={{ mr: 1 }}>
+              <HomeIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Settings">
+            <IconButton color="default" size="small" onClick={() => setSettingsOpen(true)}>
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
+      </div>
+    </header>
+  );
+
   return (
     <div className={`container ${currentStep}`}>
-      <header style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
-        {currentStep !== 'history' && (
-          <button
-            className="button-secondary"
-            onClick={() => setCurrentStep('history')}
-            style={{
-              position: 'absolute',
-              left: '0',
-              top: '0',
-              padding: '12px 20px',
-              fontSize: '14px',
-              minHeight: 'auto'
-            }}
-          >
-            ← Back to History
-          </button>
-        )}
-        
-        <h1 style={{ 
-          fontSize: '32px', 
-          fontWeight: '700', 
-          color: '#333333',
-          marginBottom: '8px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
-        }}>
-          Image Match
-        </h1>
-        <p style={{ 
-          fontSize: '16px', 
-          color: '#666666',
-          fontWeight: '400'
-        }}>
-          AI-powered color grading and style matching for your photos
-        </p>
-      </header>
-
-      {currentStep === 'history' && (
+      {Header}
+      {route === '/home' && (
         <div className="fade-in">
           <HistoryView
-            onOpenProject={handleOpenProject}
-            onNewProcess={handleNewProcess}
+            onOpenProject={(process) => {
+              handleOpenProject(process);
+            }}
+            onNewProcess={() => {
+              handleNewProcess();
+              navigate('/create');
+            }}
           />
         </div>
       )}
 
-      {currentStep === 'upload' && (
-        <div className="fade-in">
-          <ImageUploader
-            onImagesSelected={handleImagesSelected}
-            onStartProcessing={handleStartProcessing}
-            baseImage={baseImage}
-            targetImages={targetImages}
-          />
+      {route === '/create' && (
+        <div>
+          {currentStep === 'upload' && (
+            <div className="fade-in">
+              <ImageUploader
+                onImagesSelected={handleImagesSelected}
+                onStartProcessing={handleStartProcessing}
+                baseImage={baseImage}
+                targetImages={targetImages}
+              />
+            </div>
+          )}
+          {currentStep === 'processing' && (
+            <div className="fade-in">
+              <ProcessingView
+                processingState={processingState}
+                baseImage={baseImage}
+                targetImages={targetImages}
+              />
+            </div>
+          )}
+          {currentStep === 'results' && (
+            <div className="fade-in">
+              <ResultsView
+                results={results}
+                baseImage={baseImage}
+                targetImages={targetImages}
+                onReset={() => {
+                  handleReset();
+                  navigate('/home');
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {currentStep === 'processing' && (
+      {route === '/projectdetails' && (
         <div className="fade-in">
-          <ProcessingView
-            processingState={processingState}
-            baseImage={baseImage}
-            targetImages={targetImages}
-          />
+          {projectLoading && (
+            <div className="card" style={{ padding: 24, textAlign: 'center' }}>
+              <div style={{ fontSize: 24, marginBottom: 8 }}>⏳</div>
+              <div>Loading project...</div>
+            </div>
+          )}
+          {!projectLoading && currentProcessId && (
+            <ResultsView
+              results={results}
+              baseImage={baseImage}
+              targetImages={targetImages}
+              onReset={() => {
+                handleReset();
+                navigate('/home');
+              }}
+            />
+          )}
+          {!projectLoading && !currentProcessId && (
+            <div className="card" style={{ padding: 24 }}>
+              <div style={{ marginBottom: 8, fontWeight: 600 }}>No project selected</div>
+              <div style={{ color: '#6b7280' }}>Choose one from Home → Your Projects.</div>
+            </div>
+          )}
         </div>
       )}
 
-      {currentStep === 'results' && (
-        <div className="fade-in">
-          <ResultsView
-            results={results}
-            baseImage={baseImage}
-            targetImages={targetImages}
-            onReset={handleReset}
-          />
-        </div>
-      )}
+      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Settings</DialogTitle>
+        <DialogContent>
+          <div style={{ paddingTop: 8, paddingBottom: 8 }}>
+            <Settings />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
