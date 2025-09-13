@@ -1,6 +1,12 @@
 export {}
 
 declare global {
+  // Add CSS properties for Electron
+  namespace React {
+    interface CSSProperties {
+      WebkitAppRegion?: 'drag' | 'no-drag';
+    }
+  }
   interface Window {
     electronAPI: {
       // File operations

@@ -30,7 +30,6 @@ export interface ProcessingResult {
 
 export class ImageProcessor {
   private aiAnalyzer: OpenAIColorAnalyzer | null = null;
-  private rawFormats = ['.dng', '.cr2', '.cr3', '.nef', '.arw', '.orf', '.rw2', '.raf', '.3fr', '.fff'];
   private settingsService = new SettingsService();
 
   constructor() {
@@ -146,72 +145,6 @@ export class ImageProcessor {
     }
   }
 
-  private async applyAIAdjustments(
-    inputPath: string,
-    outputPath: string,
-    adjustments: AIColorAdjustments
-  ): Promise<void> {
-    console.log('[PROCESSOR] Applying AI adjustments with Sharp');
-    
-    const image = sharp(inputPath);
-    let processedImage = image;
-
-    // Apply basic adjustments that Sharp supports
-    const modulateOptions: { brightness?: number; saturation?: number } = {};
-
-    // Helper to ensure Sharp receives strictly positive values
-    const positive = (v: number, min = 0.01) => (Number.isFinite(v) && v > 0 ? v : min);
-
-    if (typeof adjustments.brightness === 'number' && Number.isFinite(adjustments.brightness)) {
-      const b = 1 + adjustments.brightness / 100;
-      if (b !== 1) modulateOptions.brightness = positive(b);
-    }
-
-    if (typeof adjustments.saturation === 'number' && Number.isFinite(adjustments.saturation)) {
-      const s = 1 + adjustments.saturation / 100;
-      if (s !== 1) modulateOptions.saturation = positive(s);
-    }
-    
-    if (Object.keys(modulateOptions).length > 0) {
-      const safeModulate: { brightness?: number; saturation?: number } = {};
-      if (
-        typeof modulateOptions.brightness === 'number' &&
-        Number.isFinite(modulateOptions.brightness) &&
-        modulateOptions.brightness > 0
-      ) {
-        safeModulate.brightness = modulateOptions.brightness;
-      }
-      if (
-        typeof modulateOptions.saturation === 'number' &&
-        Number.isFinite(modulateOptions.saturation) &&
-        modulateOptions.saturation > 0
-      ) {
-        safeModulate.saturation = modulateOptions.saturation;
-      }
-      if (Object.keys(safeModulate).length > 0) {
-        try {
-          processedImage = processedImage.modulate(safeModulate);
-        } catch (e) {
-          console.warn('[PROCESSOR] Sharp.modulate failed with options:', safeModulate, e);
-        }
-      }
-    }
-
-    await processedImage.jpeg({ quality: 95 }).toFile(outputPath);
-    console.log('[PROCESSOR] AI adjustments applied successfully');
-  }
-
-  private generateOutputPath(inputPath: string): string {
-    const dir = path.dirname(inputPath);
-    const ext = path.extname(inputPath);
-    const name = path.basename(inputPath, ext);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    return path.join(dir, `${name}_matched_${timestamp}.jpg`);
-  }
-
-  private isRawFormat(extension: string): boolean {
-    return this.rawFormats.includes(extension.toLowerCase());
-  }
 
   // Legacy method for compatibility
   async processImage(data: StyleMatchOptions): Promise<ProcessingResult> {

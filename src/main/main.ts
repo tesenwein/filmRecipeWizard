@@ -333,7 +333,9 @@ class ImageMatchApp {
           // Emit a final failure status so the UI shows immediate feedback
           try {
             this.mainWindow.webContents.send('processing-progress', 100, `Failed: ${errMsg}`);
-          } catch {}
+          } catch {
+            // Ignore IPC send errors
+          }
           result = { success: false, error: errMsg };
         }
 
@@ -352,7 +354,9 @@ class ImageMatchApp {
             let name: string | undefined;
             try {
               name = result?.metadata?.aiAdjustments?.preset_name;
-            } catch {}
+            } catch {
+              // Ignore preset name extraction errors
+            }
             await this.storageService.updateProcess(data.processId, { results: persistedResults as any, ...(name ? { name } : {}) });
             console.log('[IPC] process-images: results persisted to process', { id: data.processId, count: 1 });
           } else {
