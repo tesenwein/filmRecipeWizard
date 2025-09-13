@@ -276,8 +276,8 @@ const App: React.FC = () => {
     <header style={{ position: 'sticky', top: 8, zIndex: 10, marginBottom: '16px' }}>
       <div className="drag-region" />
       <div
-        className="no-drag"
         style={{
+          WebkitAppRegion: 'drag',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -289,7 +289,7 @@ const App: React.FC = () => {
         }}
       >
         <div style={{ fontSize: 18, fontWeight: 800, color: '#1F2937' }}>Image Match</div>
-        <div>
+        <div className="no-drag">
           <Tooltip title="Home">
             <IconButton
               color="inherit"
