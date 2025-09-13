@@ -14,7 +14,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   onImagesSelected,
   onStartProcessing,
   baseImage,
-  targetImages
+  targetImages,
 }) => {
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
@@ -22,7 +22,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
     const ext = p.split('.').pop()?.toLowerCase();
-    return !!ext && ['jpg','jpeg','png','webp','gif'].includes(ext);
+    return !!ext && ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
   };
 
   const handleBaseImageSelect = async () => {
@@ -30,9 +30,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       const result = await window.electronAPI.selectFiles({
         title: 'Select Base Image (Reference Style)',
         filters: [
-          { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'] }
+          {
+            name: 'Images',
+            extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'],
+          },
         ],
-        properties: ['openFile']
+        properties: ['openFile'],
       });
 
       if (result && result.length > 0) {
@@ -46,11 +49,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const handleTargetImagesSelect = async () => {
     try {
       const result = await window.electronAPI.selectFiles({
-        title: 'Select Target Images to Process',
+        title: 'Select Target Image to Process',
         filters: [
-          { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'] }
+          {
+            name: 'Images',
+            extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'],
+          },
         ],
-        properties: ['openFile']
+        properties: ['openFile'],
       });
 
       if (result && result.length > 0) {
@@ -90,7 +96,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       try {
         const previews = await Promise.all(
-          targetImages.map(async (imagePath) => {
+          targetImages.map(async imagePath => {
             try {
               const result = await window.electronAPI.generatePreview({ path: imagePath });
               return result.success ? result.previewPath : imagePath;
@@ -132,82 +138,94 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           >
             <PaletteOutlinedIcon fontSize="medium" sx={{ color: 'action.active', opacity: 0.9 }} />
           </div>
-          <h3 style={{ 
-            fontSize: '20px', 
-            fontWeight: '600', 
-            color: '#333333', 
-            marginBottom: '8px' 
-          }}>
+          <h3
+            style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#333333',
+              marginBottom: '8px',
+            }}
+          >
             Reference Image
           </h3>
-          <p style={{ 
-            fontSize: '14px', 
-            color: '#666666', 
-            marginBottom: '24px',
-            lineHeight: '1.5'
-          }}>
+          <p
+            style={{
+              fontSize: '14px',
+              color: '#666666',
+              marginBottom: '24px',
+              lineHeight: '1.5',
+            }}
+          >
             Select the image with the style and color grading you want to match
           </p>
 
           {baseImage ? (
             <div style={{ marginBottom: '20px' }}>
-              <div style={{
-                width: '320px',
-                height: '220px',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                margin: '0 auto',
-                border: '3px solid #667eea',
-                position: 'relative',
-                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)'
-              }}>
+              <div
+                style={{
+                  width: '320px',
+                  height: '220px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  margin: '0 auto',
+                  border: '3px solid #667eea',
+                  position: 'relative',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)',
+                }}
+              >
                 {baseDisplay && (
-                  <img 
+                  <img
                     src={baseDisplay.startsWith('file://') ? baseDisplay : `file://${baseDisplay}`}
                     alt="Base image"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 )}
-                <div style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  background: 'rgba(102, 126, 234, 0.95)',
-                  color: 'white',
-                  borderRadius: '16px',
-                  padding: '4px 12px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-                }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    background: 'rgba(102, 126, 234, 0.95)',
+                    color: 'white',
+                    borderRadius: '16px',
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
                   ✓ Reference
                 </div>
               </div>
-              <p style={{ 
-                fontSize: '13px', 
-                color: '#555555', 
-                marginTop: '12px',
-                textAlign: 'center',
-                fontWeight: '500'
-              }}>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: '#555555',
+                  marginTop: '12px',
+                  textAlign: 'center',
+                  fontWeight: '500',
+                }}
+              >
                 {(baseImage || '').split('/').pop()}
               </p>
             </div>
           ) : (
-            <div style={{
-              width: '320px',
-              height: '220px',
-              border: '3px dashed #d0d0d0',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 20px',
-              background: '#fafafa',
-              color: '#999999',
-              fontSize: '16px',
-              fontWeight: '500'
-            }}>
+            <div
+              style={{
+                width: '320px',
+                height: '220px',
+                border: '3px dashed #d0d0d0',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px',
+                background: '#fafafa',
+                color: '#999999',
+                fontSize: '16px',
+                fontWeight: '500',
+              }}
+            >
               No image selected
             </div>
           )}
@@ -236,28 +254,46 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               marginBottom: '16px',
             }}
           >
-            <PhotoCameraOutlinedIcon fontSize="medium" sx={{ color: 'action.active', opacity: 0.9 }} />
+            <PhotoCameraOutlinedIcon
+              fontSize="medium"
+              sx={{ color: 'action.active', opacity: 0.9 }}
+            />
           </div>
-          <h3 style={{ 
-            fontSize: '20px', 
-            fontWeight: '600', 
-            color: '#333333', 
-            marginBottom: '8px' 
-          }}>
-            Target Images
+          <h3
+            style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#333333',
+              marginBottom: '8px',
+            }}
+          >
+            Target Image
           </h3>
-          <p style={{ 
-            fontSize: '14px', 
-            color: '#666666', 
-            marginBottom: '24px',
-            lineHeight: '1.5'
-          }}>
+          <p
+            style={{
+              fontSize: '14px',
+              color: '#666666',
+              marginBottom: '24px',
+              lineHeight: '1.5',
+            }}
+          >
             Select the images you want to process and match to the reference style
           </p>
 
           {targetImages.length > 0 ? (
             <div style={{ marginBottom: '20px' }}>
-              <div style={{ width: '320px', height: '220px', borderRadius: '12px', overflow: 'hidden', border: '2px solid #e0e0e0', margin: '0 auto', position: 'relative', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+              <div
+                style={{
+                  width: '320px',
+                  height: '220px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '2px solid #e0e0e0',
+                  margin: '0 auto',
+                  position: 'relative',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                }}
+              >
                 {(() => {
                   const imgPath = targetImages[0];
                   const previewPath = targetPreviews[0] || imgPath;
@@ -270,60 +306,80 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                   );
                 })()}
               </div>
-              <p style={{ fontSize: '13px', color: '#555555', marginTop: '8px', textAlign: 'center', fontWeight: '500' }}>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: '#555555',
+                  marginTop: '8px',
+                  textAlign: 'center',
+                  fontWeight: '500',
+                }}
+              >
                 {targetImages.length} image{targetImages.length !== 1 ? 's' : ''} selected
               </p>
             </div>
           ) : (
-            <div style={{
-              width: '320px',
-              height: '220px',
-              border: '3px dashed #d0d0d0',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 20px',
-              background: '#fafafa',
-              color: '#999999',
-              fontSize: '16px',
-              fontWeight: '500'
-            }}>
+            <div
+              style={{
+                width: '320px',
+                height: '220px',
+                border: '3px dashed #d0d0d0',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px',
+                background: '#fafafa',
+                color: '#999999',
+                fontSize: '16px',
+                fontWeight: '500',
+              }}
+            >
               No images selected
             </div>
           )}
 
           <Button variant="contained" onClick={handleTargetImagesSelect} fullWidth>
-            📂 Select Target Images
+            📂 Select Target Image
           </Button>
         </div>
       </div>
 
       {canProcess && (
         <div className="fade-in" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
-          <div className="card" style={{ 
-            background: 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)',
-            border: '1px solid #e8eaff',
-            boxShadow: '0 2px 12px rgba(102, 126, 234, 0.08)'
-          }}>
-            <h3 style={{ 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              marginBottom: '12px',
-              color: '#333'
-            }}>
+          <div
+            className="card"
+            style={{
+              background: 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)',
+              border: '1px solid #e8eaff',
+              boxShadow: '0 2px 12px rgba(102, 126, 234, 0.08)',
+            }}
+          >
+            <h3
+              style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                color: '#333',
+              }}
+            >
               Ready to Process
             </h3>
-            <p style={{ 
-              fontSize: '14px', 
-              marginBottom: '24px',
-              color: '#666',
-              lineHeight: '1.5'
-            }}>
-              AI will analyze your reference image and generate complete color adjustments for all target images.
-              You'll be able to selectively export XMP presets with your desired adjustments.
+            <p
+              style={{
+                fontSize: '14px',
+                marginBottom: '24px',
+                color: '#666',
+                lineHeight: '1.5',
+              }}
+            >
+              AI will analyze your reference image and generate complete color adjustments for all
+              target images. You'll be able to selectively export XMP presets with your desired
+              adjustments.
             </p>
-            <Button variant="contained" onClick={onStartProcessing}>Start Processing</Button>
+            <Button variant="contained" onClick={onStartProcessing}>
+              Start Processing
+            </Button>
           </div>
         </div>
       )}
