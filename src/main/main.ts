@@ -191,7 +191,10 @@ class ImageMatchApp {
 
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
-      console.log('[IPC] download-xmp called with data');
+      console.log('[IPC] download-xmp called with data', {
+        include: data?.include,
+        hasAdjustments: !!data?.adjustments,
+      });
       try {
         // Generate XMP content
         const xmpContent = this.imageProcessor.generateXMPContent(data.adjustments, data.include);

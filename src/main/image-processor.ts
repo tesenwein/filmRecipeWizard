@@ -256,6 +256,10 @@ export class ImageProcessor {
       // sharpenNoise and vignette currently not emitted in XMP (placeholders)
     } as const;
 
+    try {
+      console.log('[XMP] include flags:', inc);
+    } catch {}
+
     // Build conditional blocks
     const wbBasicBlock = inc.wbBasic
       ? [
@@ -272,7 +276,11 @@ export class ImageProcessor {
         ].join('')
       : '';
 
-    const exposureBlock = inc.exposure ? tag('Exposure2012', fixed2(exposure)) : '';
+    const shouldIncludeExposure = inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
+    try {
+      console.log('[XMP] exposure:', { value: exposure, include: shouldIncludeExposure });
+    } catch {}
+    const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(exposure)) : '';
 
     const parametricCurvesBlock = inc.curves
       ? [
