@@ -1,14 +1,14 @@
+import HomeIcon from '@mui/icons-material/Home';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import ImageUploader from './ImageUploader';
+import IconSvg from '../../../assets/icons/icon.svg';
+import { ProcessHistory, ProcessingResult, ProcessingState } from '../../shared/types';
+import ColorMatchingStudio from './ColorMatchingStudio';
+import HistoryView from './HistoryView';
 import ProcessingView from './ProcessingView';
 import ResultsView from './ResultsView';
-import HistoryView from './HistoryView';
 import Settings from './Settings';
-import { Dialog, DialogTitle, DialogContent, IconButton, Tooltip } from '@mui/material';
-import SettingsIcon from '@mui/icons-material/Settings';
-import HomeIcon from '@mui/icons-material/Home';
-import { ProcessHistory, ProcessingResult, ProcessingState } from '../../shared/types';
-import IconSvg from '../../../assets/icons/icon.svg';
 
 const App: React.FC = () => {
   // Simple hash-based router with query support
@@ -28,26 +28,45 @@ const App: React.FC = () => {
   const [processingState, setProcessingState] = useState<ProcessingState>({
     isProcessing: false,
     progress: 0,
-    status: ''
+    status: '',
   });
   const [prompt, setPrompt] = useState<string>('');
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [currentStep, setCurrentStep] = useState<'history' | 'upload' | 'processing' | 'results'>('history');
+  const [currentStep, setCurrentStep] = useState<'history' | 'upload' | 'processing' | 'results'>(
+    'history'
+  );
   const [currentProcessId, setCurrentProcessId] = useState<string | null>(null);
   const currentProcessIdRef = useRef<string | null>(null);
-  useEffect(() => { currentProcessIdRef.current = currentProcessId; }, [currentProcessId]);
+  useEffect(() => {
+    currentProcessIdRef.current = currentProcessId;
+  }, [currentProcessId]);
   const targetImagesRef = useRef<string[]>([]);
-  useEffect(() => { targetImagesRef.current = targetImages; }, [targetImages]);
+  useEffect(() => {
+    targetImagesRef.current = targetImages;
+  }, [targetImages]);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [projectLoading, setProjectLoading] = useState(false);
   const [isNewProcessingSession, setIsNewProcessingSession] = useState(false);
+  const [styleOptions, setStyleOptions] = useState<{
+    warmth?: number;
+    tint?: number;
+    contrast?: number;
+    vibrance?: number;
+    moodiness?: number;
+    saturationBias?: number;
+    filmGrain?: boolean;
+    vibe?: string;
+    artistStyle?: { key: string; name: string; category: string; blurb: string };
+  }>({});
 
   // Check if API key is configured on startup
   useEffect(() => {
     const checkApiKey = async () => {
       try {
         const response = await window.electronAPI.getSettings();
-        if (response.success && (!response.settings?.openaiKey || response.settings?.openaiKey === '')) {
+        if (
+          response.success &&
+          (!response.settings?.openaiKey || response.settings?.openaiKey === '')
+        ) {
           console.log('[APP] No API key found, opening settings');
           setSettingsOpen(true);
         }
@@ -66,7 +85,8 @@ const App: React.FC = () => {
   };
 
   const handleStartProcessing = async () => {
-    if ((!baseImage && (!prompt || prompt.trim() === '')) || targetImages.length === 0) return;
+    // Allow processing as long as there are target images; base/prompt optional
+    if (targetImages.length === 0) return;
 
     // Save process to storage (converts to base64 and persists only base64 + results)
     let newProcessId: string | null = null;
@@ -77,8 +97,9 @@ const App: React.FC = () => {
         targetImages,
         results: [],
         prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
+        userOptions: styleOptions,
       } as any;
-      
+
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
         newProcessId = result.process.id;
@@ -100,7 +121,7 @@ const App: React.FC = () => {
     setProcessingState({
       isProcessing: true,
       progress: 0,
-      status: 'Starting AI analysis...'
+      status: 'Starting AI analysis...',
     });
 
     // Kick off processing using stored base64 data
@@ -119,7 +140,7 @@ const App: React.FC = () => {
     setProcessingState(prev => ({
       ...prev,
       progress,
-      status
+      status,
     }));
   };
 
@@ -131,16 +152,19 @@ const App: React.FC = () => {
       outputPath: result.outputPath,
       success: result.success,
       error: result.error,
-      metadata: result.metadata
+      metadata: result.metadata,
     }));
-    
+
     setResults(results);
-    console.log('[APP] Processing complete', { count: results.length, success: results.filter(r => r.success).length });
+    console.log('[APP] Processing complete', {
+      count: results.length,
+      success: results.filter(r => r.success).length,
+    });
     setProcessingState(prev => ({
       ...prev,
       isProcessing: false,
       progress: 100,
-      status: 'Processing complete!'
+      status: 'Processing complete!',
     }));
 
     // Update process in storage
@@ -149,7 +173,7 @@ const App: React.FC = () => {
       try {
         console.log('[APP] Persisting results', { id: pid, count: results.length });
         await window.electronAPI.updateProcess(pid, {
-          results
+          results,
         });
         console.log('[APP] Results persisted', { id: pid });
       } catch (error) {
@@ -158,11 +182,11 @@ const App: React.FC = () => {
     }
 
     setCurrentStep('results');
-    
-    // Navigate back to project details if this was a new processing session
+
+    // Navigate back to recipe details if this was a new processing session
     if (isNewProcessingSession && currentProcessIdRef.current) {
       setIsNewProcessingSession(false);
-      navigate(`/projectdetails?id=${currentProcessIdRef.current}`);
+      navigate(`/recipedetails?id=${currentProcessIdRef.current}`);
     }
   };
 
@@ -174,10 +198,11 @@ const App: React.FC = () => {
     setCurrentStep('upload');
     setIsNewProcessingSession(false);
     setPrompt('');
+    setStyleOptions({});
     setProcessingState({
       isProcessing: false,
       progress: 0,
-      status: ''
+      status: '',
     });
   };
 
@@ -187,8 +212,8 @@ const App: React.FC = () => {
 
   const handleNewProcessingSession = async () => {
     // Keep the same images but create a new processing session
-    if ((!baseImage && (!prompt || prompt.trim() === '')) || targetImages.length === 0) return;
-    
+    if (targetImages.length === 0) return;
+
     setResults([]);
     setCurrentProcessId(null);
     setCurrentStep('processing');
@@ -196,7 +221,7 @@ const App: React.FC = () => {
     setProcessingState({
       isProcessing: true,
       progress: 0,
-      status: 'Starting new AI analysis...'
+      status: 'Starting new AI analysis...',
     });
 
     // Save new process to storage
@@ -207,8 +232,9 @@ const App: React.FC = () => {
         targetImages,
         results: [],
         prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
+        userOptions: styleOptions,
       } as any;
-      
+
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
         newProcessId = result.process.id;
@@ -234,19 +260,19 @@ const App: React.FC = () => {
     }
   };
 
-
-  const handleOpenProject = async (process: ProcessHistory) => {
-    setProjectLoading(true);
+  const handleOpenRecipe = async (process: ProcessHistory) => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
-    // Do not rely on legacy file paths in stored project
+    // Do not rely on legacy file paths in stored recipe
     setBaseImage(null);
     setTargetImages([]);
     setCurrentProcessId(process.id);
     try {
       if (process.id) {
-        console.log('[APP] Open project request', {
+        console.log('[APP] Open recipe request', {
           id: process.id,
-          incomingResults: Array.isArray((process as any).results) ? (process as any).results.length : 0,
+          incomingResults: Array.isArray((process as any).results)
+            ? (process as any).results.length
+            : 0,
         });
         const res = await window.electronAPI.getProcess(process.id);
         console.log('[APP] getProcess response', {
@@ -254,7 +280,12 @@ const App: React.FC = () => {
           success: res?.success,
           resultsCount: Array.isArray(res?.process?.results) ? res?.process?.results.length : 0,
         });
-        if (res?.success && res.process && Array.isArray(res.process.results) && res.process.results.length > 0) {
+        if (
+          res?.success &&
+          res.process &&
+          Array.isArray(res.process.results) &&
+          res.process.results.length > 0
+        ) {
           setResults(res.process.results);
         } else {
           setResults(process.results || []);
@@ -263,9 +294,8 @@ const App: React.FC = () => {
         setResults(process.results || []);
       }
     } finally {
-      setProjectLoading(false);
       setCurrentStep('results');
-      navigate(`/projectdetails?id=${process.id}`);
+      navigate(`/recipedetails?id=${process.id}`);
     }
   };
 
@@ -302,14 +332,13 @@ const App: React.FC = () => {
     }
   }, [route]);
 
-  // Restore project when landing directly on project details (e.g., after refresh)
+  // Restore recipe when landing directly on recipe details (e.g., after refresh)
   useEffect(() => {
     const restore = async () => {
-      if (route === '/projectdetails') {
+      if (route === '/recipedetails') {
         const id = routeQuery?.id;
         if (id) {
           try {
-            setProjectLoading(true);
             const res = await window.electronAPI.getProcess(id);
             if (res?.success && res.process) {
               setBaseImage(null);
@@ -319,9 +348,7 @@ const App: React.FC = () => {
               setCurrentStep('results');
             }
           } catch (e) {
-            console.warn('Failed to restore project from hash:', e);
-          } finally {
-            setProjectLoading(false);
+            console.warn('Failed to restore recipe from hash:', e);
           }
         }
       }
@@ -350,12 +377,10 @@ const App: React.FC = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img 
-            src={IconSvg} 
-            alt="Image Match" 
-            style={{ width: 28, height: 28 }}
-          />
-          <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>Image Match</span>
+          <img src={IconSvg} alt="Foto Recipe Wizard" style={{ width: 28, height: 28 }} />
+          <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>
+            Foto Recipe Wizard
+          </span>
         </div>
         <div className="no-drag">
           <Tooltip title="Home">
@@ -363,7 +388,11 @@ const App: React.FC = () => {
               color="inherit"
               size="small"
               onClick={() => navigate('/home')}
-              sx={{ mr: 1, color: 'action.active', '&:hover': { backgroundColor: 'rgba(17,24,39,0.05)' } }}
+              sx={{
+                mr: 1,
+                color: 'action.active',
+                '&:hover': { backgroundColor: 'rgba(17,24,39,0.05)' },
+              }}
             >
               <HomeIcon fontSize="small" />
             </IconButton>
@@ -391,8 +420,8 @@ const App: React.FC = () => {
       {route === '/home' && (
         <div className="fade-in">
           <HistoryView
-            onOpenProject={(process) => {
-              handleOpenProject(process);
+            onOpenRecipe={process => {
+              handleOpenRecipe(process);
             }}
             onNewProcess={() => {
               handleNewProcess();
@@ -406,13 +435,15 @@ const App: React.FC = () => {
         <div>
           {currentStep === 'upload' && (
             <div className="fade-in">
-              <ImageUploader
+              <ColorMatchingStudio
                 onImagesSelected={handleImagesSelected}
                 onStartProcessing={handleStartProcessing}
                 baseImage={baseImage}
                 targetImages={targetImages}
                 prompt={prompt}
                 onPromptChange={setPrompt}
+                styleOptions={styleOptions}
+                onStyleOptionsChange={u => setStyleOptions(prev => ({ ...prev, ...u }))}
               />
             </div>
           )}
@@ -448,15 +479,15 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {route === '/projectdetails' && (
+      {route === '/recipedetails' && (
         <div className="fade-in">
-          {projectLoading && (
+          {false && (
             <div className="card" style={{ padding: 24, textAlign: 'center' }}>
               <div style={{ fontSize: 24, marginBottom: 8 }}>⏳</div>
-              <div>Loading project...</div>
+              <div>Loading recipe...</div>
             </div>
           )}
-          {!projectLoading && currentProcessId && (
+          {currentProcessId && (
             <ResultsView
               results={results}
               baseImage={baseImage}
@@ -474,7 +505,7 @@ const App: React.FC = () => {
               onNewProcessingSession={handleNewProcessingSession}
             />
           )}
-          {!projectLoading && !currentProcessId && (
+          {!currentProcessId && (
             <div className="card" style={{ padding: 24 }}>
               <div style={{ marginBottom: 8, fontWeight: 600 }}>No project selected</div>
               <div style={{ color: '#6b7280' }}>Choose one from Home → Your Projects.</div>
@@ -483,9 +514,18 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} fullWidth maxWidth="sm">
+      <Dialog 
+        open={settingsOpen} 
+        onClose={() => setSettingsOpen(false)} 
+        fullWidth 
+        maxWidth="sm"
+        disablePortal
+        disableScrollLock
+        PaperProps={{ className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } }}
+        BackdropProps={{ className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } }}
+      >
         <DialogTitle>Settings</DialogTitle>
-        <DialogContent>
+        <DialogContent className="no-drag" sx={{ WebkitAppRegion: 'no-drag' }}>
           <div style={{ paddingTop: 8, paddingBottom: 8 }}>
             <Settings />
           </div>

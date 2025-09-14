@@ -2,14 +2,14 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { Button, Card, CardActionArea, CardContent, Grid, IconButton, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessHistory } from '../../shared/types';
-import Base64Image from './Base64Image';
+import SingleImage from './SingleImage';
 
 interface HistoryViewProps {
-  onOpenProject: (process: ProcessHistory) => void;
+  onOpenRecipe: (process: ProcessHistory) => void;
   onNewProcess: () => void;
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }) => {
+const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess }) => {
   const [history, setHistory] = useState<ProcessHistory[]>([]);
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +68,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
       <Grid container alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Grid item>
           <Typography variant="h5" fontWeight={700}>
-            Your Projects
+            Your Recipes
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Past color matching sessions
@@ -76,7 +76,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
         </Grid>
         <Grid item>
           <Button variant="contained" onClick={onNewProcess}>
-            New Project
+            New Recipe
           </Button>
         </Grid>
       </Grid>
@@ -87,13 +87,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
             📥
           </Typography>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            No projects yet
+            No recipes yet
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Create your first color project to get started
+            Create your first color recipe to get started
           </Typography>
           <Button variant="contained" onClick={onNewProcess}>
-            Create First Project
+            Create First Recipe
           </Button>
         </Card>
       ) : (
@@ -137,11 +137,15 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                         ? (process as any).results.length
                         : 0,
                     });
-                  onOpenProject(process);
+                  onOpenRecipe(process);
                   }}
                 >
                   <div style={{ height: 240, borderRadius: 8, overflow: 'hidden' }}>
-                    <Base64Image dataUrl={basePreviews[index] || undefined} alt={`Base preview ${index + 1}`} />
+                    <SingleImage
+                      source={basePreviews[index] || undefined}
+                      alt={`Base preview ${index + 1}`}
+                      fit="contain"
+                    />
                   </div>
                   <CardContent>
                     <Typography variant="subtitle1" fontWeight={700} noWrap>
@@ -153,7 +157,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                         try {
                           return new Date(process.timestamp).toLocaleString();
                         } catch {
-                          return `Project ${process.id}`;
+                          return `Recipe ${process.id}`;
                         }
                       })()}
                     </Typography>
@@ -175,10 +179,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenProject, onNewProcess }
                           ? (process as any).results.length
                           : 0,
                       });
-                      onOpenProject(process);
+                      onOpenRecipe(process);
                     }}
                   >
-                    Open Project
+                    Open Recipe
                   </Button>
                 </CardContent>
               </Card>

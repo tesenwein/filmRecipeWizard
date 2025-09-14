@@ -14,6 +14,7 @@ body {
 #root {
   width: 100vw;
   height: 100vh;
+  overflow: auto; /* ensure app remains scrollable even if body is locked */
   background: radial-gradient(1200px 800px at 80% -200px, rgba(102,126,234,0.08), transparent 60%),
               radial-gradient(900px 600px at -200px -200px, rgba(118,75,162,0.06), transparent 60%),
               #FAFBFF;
@@ -61,8 +62,10 @@ body {
   width: 100vw;
   height: 28px; /* match traffic light area */
   -webkit-app-region: drag;
-  z-index: 3000; /* above MUI dialogs/tooltips */
-  pointer-events: auto; /* must be interactive for drag to work */
+  /* Keep below MUI dialogs to avoid blocking inputs */
+  z-index: 1000;
+  /* Do not intercept clicks/typing; dragging still works on explicit drag regions */
+  pointer-events: none;
   /* transparent, no visual impact */
 }
 

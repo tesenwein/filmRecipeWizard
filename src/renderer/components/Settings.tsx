@@ -73,7 +73,7 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 2 }}>
+    <Container maxWidth="sm" sx={{ py: 2 }} className="no-drag">
       <Typography variant="h5" fontWeight={700} gutterBottom>
         LLM Settings
       </Typography>
@@ -96,6 +96,8 @@ const Settings: React.FC = () => {
               placeholder={masked ? '••••••••••••••••' : 'sk-...'}
               value={openaiKey}
               onChange={e => setOpenaiKey(e.target.value)}
+              className="no-drag"
+              inputProps={{ className: 'no-drag', style: { WebkitAppRegion: 'no-drag' } }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -104,6 +106,8 @@ const Settings: React.FC = () => {
                       onClick={() => setShowKey(s => !s)}
                       edge="end"
                       size="small"
+                      className="no-drag"
+                      sx={{ WebkitAppRegion: 'no-drag' }}
                     >
                       {showKey ? <VisibilityOff /> : <Visibility />}
                     </IconButton>

@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Checkbox,
+  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,8 +12,10 @@ import {
   Divider,
   FormControlLabel,
   FormGroup,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
 import Base64Image from './Base64Image';
@@ -31,7 +34,7 @@ interface ResultsViewProps {
 const ResultsView: React.FC<ResultsViewProps> = ({
   results,
   baseImage: _baseImage,
-  targetImages,
+  targetImages: _targetImages,
   onReset,
   onRestart,
   onNewProcessingSession,
@@ -62,6 +65,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const failedResults = results.filter(result => !result.success);
   const [confirmNewGeneration, setConfirmNewGeneration] = useState(false);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
+  const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
 
   useEffect(() => {
     console.log('[RESULTS] Render with results', {
@@ -97,6 +101,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         }
         if (processResponse.success && processResponse.process) {
           setProcessPrompt(processResponse.process.prompt);
+          setProcessOptions(processResponse.process.userOptions);
         } else {
           setProcessPrompt(prompt);
         }
@@ -105,11 +110,36 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         setBaseImageDataUrl(null);
         setTargetImageDataUrls([]);
         setProcessPrompt(prompt);
+        setProcessOptions(undefined);
       }
     };
 
     loadBase64Images();
   }, [processId, prompt]);
+
+  const handleAttachBaseImage = async () => {
+    try {
+      if (!processId) return;
+      const files = await window.electronAPI.selectFiles({
+        title: 'Select Base Image (Reference Style)',
+        filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'] }],
+        properties: ['openFile'],
+      });
+      if (files && files[0]) {
+        const res = await window.electronAPI.setBaseImage(processId, files[0]);
+        if (res.success) {
+          const data = await window.electronAPI.getImageDataUrls(processId);
+          if (data.success) {
+            setBaseImageDataUrl(data.baseImageUrl || null);
+          }
+        } else {
+          alert(res.error || 'Failed to set base image');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to attach base image:', e);
+    }
+  };
 
   // Derive successful target URLs to keep alignment with displayed cards
   const successfulTargetUrls = useMemo(() => {
@@ -129,6 +159,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     pointColor: true,
     // Film Grain optional export (default ON)
     grain: true,
+    // Masks (local adjustments) optional export (default OFF)
+    masks: false,
   } as const;
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
@@ -152,6 +184,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     'vignette',
     'pointColor',
     'grain',
+    'masks',
   ] as const;
 
   const isAllSelected = (index: number) => {
@@ -283,9 +316,34 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         overflow: 'hidden',
                         border: '3px solid #f0f0f0',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        position: 'relative',
                       }}
                     >
                       <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Base" />
+                      {!baseImageDataUrl && processId && (
+                        <Tooltip title="Add base image">
+                          <IconButton
+                            size="small"
+                            onClick={handleAttachBaseImage}
+                            className="no-drag"
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              left: 8,
+                              zIndex: 2,
+                              backgroundColor: 'rgba(255,255,255,0.7)',
+                              backdropFilter: 'blur(10px)',
+                              WebkitBackdropFilter: 'blur(10px)',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                              '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
+                            }}
+                            aria-label="Add base image"
+                          >
+                            <AddPhotoAlternateOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -417,6 +475,36 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             }}
                           >
                             {processPrompt}
+                          </Box>
+                        </>
+                      )}
+
+                      {/* User Options, if available */}
+                      {processOptions && (
+                        <>
+                          <Divider sx={{ my: 1 }} />
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
+                            Your Settings
+                          </Typography>
+                          <Box
+                            sx={{
+                              mt: 0.5,
+                              fontSize: 12,
+                              color: '#374151',
+                              background: '#ffffff',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: 1,
+                              p: 1.25,
+                            }}
+                          >
+                            <div>Vibe: {processOptions.vibe || '—'}</div>
+                            <div>Warmth: {processOptions.warmth ?? '—'}</div>
+                            <div>Tint: {processOptions.tint ?? '—'}</div>
+                            <div>Contrast: {processOptions.contrast ?? '—'}</div>
+                            <div>Vibrance: {processOptions.vibrance ?? '—'}</div>
+                            <div>Moodiness: {processOptions.moodiness ?? '—'}</div>
+                            <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
+                            <div>Film Grain: {processOptions.filmGrain ? 'On' : 'Off'}</div>
                           </Box>
                         </>
                       )}
@@ -757,6 +845,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             { key: 'sharpenNoise', label: 'Sharpen & Noise' },
                             { key: 'vignette', label: 'Vignette' },
                             { key: 'grain', label: 'Film Grain' },
+                            { key: 'masks', label: 'Masks (Local Adjustments)' },
                           ] as const
                         ).map(opt => (
                           <FormControlLabel

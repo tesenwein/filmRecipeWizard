@@ -75,6 +75,41 @@ export interface AIColorAdjustments {
   grain_amount?: number; // 0 to 100
   grain_size?: number; // 0 to 100
   grain_frequency?: number; // 0 to 100
+  // Local masks proposed by AI
+  masks?: Array<{
+    name?: string;
+    type: 'radial' | 'linear';
+    adjustments?: {
+      local_exposure?: number;
+      local_contrast?: number;
+      local_highlights?: number;
+      local_shadows?: number;
+      local_whites?: number;
+      local_blacks?: number;
+      local_clarity?: number;
+      local_dehaze?: number;
+      local_temperature?: number;
+      local_tint?: number;
+      local_texture?: number;
+      local_saturation?: number;
+    };
+    // Radial geometry
+    top?: number;
+    left?: number;
+    bottom?: number;
+    right?: number;
+    angle?: number;
+    midpoint?: number;
+    roundness?: number;
+    feather?: number;
+    inverted?: boolean;
+    flipped?: boolean;
+    // Linear geometry
+    zeroX?: number;
+    zeroY?: number;
+    fullX?: number;
+    fullY?: number;
+  }>;
 }
 
 export class OpenAIColorAnalyzer {
@@ -115,7 +150,7 @@ export class OpenAIColorAnalyzer {
     const baseImageB64 = baseImagePath
       ? baseImageBase64 || (await this.convertToBase64Jpeg(baseImagePath))
       : undefined;
-    const targetImageB64 = targetImageBase64 || await this.convertToBase64Jpeg(targetImagePath);
+    const targetImageB64 = targetImageBase64 || (await this.convertToBase64Jpeg(targetImagePath));
 
     let completion;
     try {
@@ -136,23 +171,32 @@ export class OpenAIColorAnalyzer {
 3. For portraits, ensure a match in skin tone and backdrop
 4. For landscapes, ensure a match in overall scene mood and lighting, specifically sky and foliage colors
 
-Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET IMAGE match the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
+Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET Foto Recipe Wizard the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
 
-Additionally, provide a short, human-friendly preset_name we can use for the XMP preset and the project title. Naming rules:
+Additionally, provide a short, human-friendly preset_name we can use for the XMP preset and the recipe title. Naming rules:
 - 2–4 words, Title Case, descriptive of the look (e.g., “Warm Sunset Glow”, “Soft Mono Film”).
 - Do not include words like “Match”, “Target”, “Base”, “AI”, file names, or dates.
 - Avoid special characters (only letters, numbers, spaces, and hyphens).
-- Keep it unique to the style you are proposing.`,
+- Keep it unique to the style you are proposing.
+
+Additionally, propose up to 3 local adjustment masks (radial or linear) that subtly enhance the look (e.g., subject pop, gentle sky soften). Use normalized geometry (0..1) and conservative values.`,
           },
           { type: 'text' as const, text: 'BASE IMAGE (reference style):' },
-          { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${baseImageB64}` } },
+          {
+            type: 'image_url' as const,
+            image_url: { url: `data:image/jpeg;base64,${baseImageB64}` },
+          },
           { type: 'text' as const, text: 'TARGET IMAGE (to be adjusted):' },
-          { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${targetImageB64}` } },
+          {
+            type: 'image_url' as const,
+            image_url: { url: `data:image/jpeg;base64,${targetImageB64}` },
+          }
         );
       } else {
-        if (!hint || hint.trim().length === 0) {
-          throw new Error('Either a reference image or a prompt is required for analysis.');
-        }
+        // No base/reference: allow prompt-less processing by using a neutral default style
+        const effectiveHint = (hint && hint.trim().length > 0)
+          ? hint
+          : 'Apply natural, balanced color grading with clean contrast, pleasing skin tones, and faithful color.';
         userContent.push(
           {
             type: 'text' as const,
@@ -160,17 +204,22 @@ Additionally, provide a short, human-friendly preset_name we can use for the XMP
 
 • TARGET IMAGE: Apply Lightroom/Camera Raw adjustments to achieve the following style description.
 
-Style description:\n${hint}
+Style description:\n${effectiveHint}
 
 Please provide a complete set of adjustments that best produces this look on the target image, including white balance, tone, HSL, curves, and color grading as needed.
 
 Also include a short preset_name following these rules:
 - 2–4 words, Title Case, descriptive of the look
 - Avoid words like “AI”, file names, or dates
-- Only letters, numbers, spaces, and hyphens.`,
+- Only letters, numbers, spaces, and hyphens.
+
+Additionally, propose up to 3 local adjustment masks (radial or linear) that subtly enhance the look (e.g., subject pop, gentle sky soften). Use normalized geometry (0..1) and conservative values.`,
           },
           { type: 'text' as const, text: 'TARGET IMAGE:' },
-          { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${targetImageB64}` } },
+          {
+            type: 'image_url' as const,
+            image_url: { url: `data:image/jpeg;base64,${targetImageB64}` },
+          }
         );
       }
 
@@ -194,7 +243,7 @@ Also include a short preset_name following these rules:
                 properties: {
                   preset_name: {
                     type: 'string',
-                    description: 'Short, friendly preset name to use for XMP and project title',
+                    description: 'Short, friendly preset name to use for XMP and recipe title',
                   },
                   treatment: {
                     type: 'string',
@@ -213,7 +262,8 @@ Also include a short preset_name following these rules:
                   },
                   point_colors: {
                     type: 'array',
-                    description: 'Optional Lightroom Point Colors raw parameter arrays (advanced users)',
+                    description:
+                      'Optional Lightroom Point Colors raw parameter arrays (advanced users)',
                     items: {
                       type: 'array',
                       items: { type: 'number' },
@@ -746,6 +796,49 @@ Also include a short preset_name following these rules:
                     description: 'Film grain frequency (0 to 100)',
                     minimum: 0,
                     maximum: 100,
+                  },
+                  masks: {
+                    type: 'array',
+                    description: 'Optional local adjustment masks to refine the look',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        type: { type: 'string', enum: ['radial', 'linear'] },
+                        adjustments: {
+                          type: 'object',
+                          properties: {
+                            local_exposure: { type: 'number', minimum: -5, maximum: 5 },
+                            local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                            local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                            local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                            local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                            local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                            local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                            local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                            local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                            local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                            local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                            local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                          },
+                        },
+                        top: { type: 'number', minimum: 0, maximum: 1 },
+                        left: { type: 'number', minimum: 0, maximum: 1 },
+                        bottom: { type: 'number', minimum: 0, maximum: 1 },
+                        right: { type: 'number', minimum: 0, maximum: 1 },
+                        angle: { type: 'number', minimum: -360, maximum: 360 },
+                        midpoint: { type: 'number', minimum: 0, maximum: 100 },
+                        roundness: { type: 'number', minimum: -100, maximum: 100 },
+                        feather: { type: 'number', minimum: 0, maximum: 100 },
+                        inverted: { type: 'boolean' },
+                        flipped: { type: 'boolean' },
+                        zeroX: { type: 'number', minimum: 0, maximum: 1 },
+                        zeroY: { type: 'number', minimum: 0, maximum: 1 },
+                        fullX: { type: 'number', minimum: 0, maximum: 1 },
+                        fullY: { type: 'number', minimum: 0, maximum: 1 },
+                      },
+                      required: ['type'],
+                    },
                   },
                 },
               },

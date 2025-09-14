@@ -128,16 +128,16 @@ export class ImageProcessor {
   }
 
   async generatePreview(args: { path?: string; dataUrl?: string; processId?: string; subdir?: string }): Promise<string> {
-    // Choose a persistent per-project directory when processId is provided
+    // Choose a persistent per-recipe directory when processId is provided
     let outDir: string;
     if (args.processId) {
       const userData = app.getPath('userData');
-      const baseDir = path.join(userData, 'projects', args.processId, 'previews');
+      const baseDir = path.join(userData, 'recipes', args.processId, 'previews');
       outDir = args.subdir ? path.join(baseDir, args.subdir) : baseDir;
     } else {
       // Fall back to temp previews dir for ad-hoc previews (upload flow)
       const os = await import('os');
-      outDir = path.join(os.tmpdir(), 'image-match-previews');
+      outDir = path.join(os.tmpdir(), 'foto-recipe-wizard-previews');
     }
     await fs.mkdir(outDir, { recursive: true });
 
@@ -210,7 +210,7 @@ export class ImageProcessor {
       await fs.mkdir(presetsDir, { recursive: true });
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const presetPath = path.join(presetsDir, `ImageMatch-${timestamp}.xmp`);
+      const presetPath = path.join(presetsDir, `FotoRecipeWizard-${timestamp}.xmp`);
 
       // Generate XMP preset content
       const xmpContent = this.generateXMPContent(data.adjustments, data.include);
@@ -222,8 +222,8 @@ export class ImageProcessor {
         success: true,
         outputPath: presetPath,
         metadata: {
-          presetName: `ImageMatch-${timestamp}.xmp`,
-          groupFolder: 'image-match',
+          presetName: `FotoRecipeWizard-${timestamp}.xmp`,
+          groupFolder: 'foto-recipe-wizard',
           adjustments: data.adjustments,
         },
       };
@@ -270,13 +270,13 @@ export class ImageProcessor {
 
     const sanitizeName = (n: string) =>
       n
-        .replace(/\b(image\s*match|imagematch|match|target|base|ai)\b/gi, '')
+        .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
         .replace(/\s{2,}/g, ' ')
         .trim();
     const fallback = `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
     const rawPresetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || fallback;
     const presetName = sanitizeName(rawPresetName) || fallback;
-    const groupName = 'image-match';
+    const groupName = 'foto-recipe-wizard';
     // Inclusion flags with sane defaults (back-compat: include everything when not specified)
     const inc = {
       wbBasic: include?.wbBasic !== false,
@@ -288,6 +288,8 @@ export class ImageProcessor {
       pointColor: include?.pointColor !== false,
       // Film Grain optional export flag (default ON for back-compat)
       grain: include?.grain !== false,
+      // Masks/local adjustments export flag (default OFF)
+      masks: !!include?.masks,
       // sharpenNoise and vignette currently not emitted in XMP (placeholders)
     } as const;
 
@@ -413,6 +415,61 @@ export class ImageProcessor {
         ].join('')
       : '';
 
+    // Optional Masks block (local adjustments) from AI
+    const masksBlock = (() => {
+      if (!inc.masks) return '';
+      const masks = (aiAdjustments as any)?.masks as any[] | undefined;
+      if (!Array.isArray(masks) || masks.length === 0) return '';
+      const num = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+      const fmt = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? (Math.round(v * 1000000) / 1000000).toFixed(6) : undefined);
+      const corrAttrs = (adj: any) => {
+        const map: Record<string, any> = {
+          LocalExposure2012: num(adj?.local_exposure),
+          LocalContrast2012: num(adj?.local_contrast),
+          LocalHighlights2012: num(adj?.local_highlights),
+          LocalShadows2012: num(adj?.local_shadows),
+          LocalWhites2012: num(adj?.local_whites),
+          LocalBlacks2012: num(adj?.local_blacks),
+          LocalClarity2012: num(adj?.local_clarity),
+          LocalDehaze: num(adj?.local_dehaze),
+          LocalTemperature: num(adj?.local_temperature),
+          LocalTint: num(adj?.local_tint),
+          LocalTexture: num(adj?.local_texture),
+          LocalSaturation: num(adj?.local_saturation),
+        };
+        return Object.entries(map)
+          .filter(([, v]) => typeof v === 'number')
+          .map(([k, v]) => ` crs:${k}="${fmt(v)}"`)
+          .join('');
+      };
+      const items = masks.map((m, i) => {
+        const name = (m?.name && String(m.name).trim()) || `Mask ${i + 1}`;
+        const cAttrs = corrAttrs(m?.adjustments || {});
+        let maskGeom = '';
+        if (m?.type === 'radial') {
+          maskGeom = `<rdf:li crs:What="Mask/CircularGradient" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${m?.inverted ? 'true' : 'false'}" crs:MaskValue="1" crs:Top="${fmt(m?.top) || '0.15'}" crs:Left="${fmt(m?.left) || '0.15'}" crs:Bottom="${fmt(m?.bottom) || '0.85'}" crs:Right="${fmt(m?.right) || '0.85'}" crs:Angle="${num(m?.angle) ?? 0}" crs:Midpoint="${num(m?.midpoint) ?? 50}" crs:Roundness="${num(m?.roundness) ?? 0}" crs:Feather="${num(m?.feather) ?? 50}" crs:Flipped="${m?.flipped ? 'true' : 'true'}" crs:Version="2"/>`;
+        } else if (m?.type === 'linear') {
+          maskGeom = `<rdf:li crs:What="Mask/Gradient" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${m?.inverted ? 'true' : 'false'}" crs:MaskValue="1" crs:ZeroX="${fmt(m?.zeroX) || '0.50'}" crs:ZeroY="${fmt(m?.zeroY) || '0.00'}" crs:FullX="${fmt(m?.fullX) || '0.50'}" crs:FullY="${fmt(m?.fullY) || '0.40'}"/>`;
+        }
+        return `
+          <rdf:li>
+            <rdf:Description crs:What="Correction" crs:CorrectionAmount="1" crs:CorrectionActive="true" crs:CorrectionName="${name}"${cAttrs}>
+              <crs:CorrectionMasks>
+                <rdf:Seq>
+                  ${maskGeom}
+                </rdf:Seq>
+              </crs:CorrectionMasks>
+            </rdf:Description>
+          </rdf:li>`;
+      }).join('\n');
+      return `
+      <crs:MaskGroupBasedCorrections>
+        <rdf:Seq>
+          ${items}
+        </rdf:Seq>
+      </crs:MaskGroupBasedCorrections>`;
+    })();
+
     const xmp = `<?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c140 79.160451, 2017/05/06-01:08:21">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -462,6 +519,9 @@ export class ImageProcessor {
             tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
           ].join('')
         : ''}
+
+      <!-- Masks (optional) -->
+      ${masksBlock}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;

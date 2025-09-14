@@ -1,7 +1,7 @@
 {
-  "name": "image-match",
+  "name": "foto-recipe-wizard",
   "version": "1.0.0",
-  "description": "Match image colors and style from a base image with DNG RAW processing support",
+  "description": "Create and apply photo recipes with AI-powered color grading and DNG RAW processing support",
   "main": "dist/main/main.js",
   "scripts": {
     "start": "npm run build && electron .",
@@ -24,13 +24,15 @@
   },
   "keywords": [
     "electron",
+    "photo-recipes",
     "image-processing",
     "dng",
     "raw",
-    "color-matching",
+    "color-grading",
     "style-transfer",
     "lightroom",
-    "photography"
+    "photography",
+    "ai-photo-editing"
   ],
   "author": "Theodore Senwein",
   "license": "MIT",
@@ -66,8 +68,8 @@
     "sharp": "^0.32.6"
   },
   "build": {
-    "appId": "com.theodoresenwein.imagematch",
-    "productName": "Image Match",
+    "appId": "com.theodoresenwein.fotorecipewizard",
+    "productName": "Foto Recipe Wizard",
     "directories": {
       "output": "release"
     },

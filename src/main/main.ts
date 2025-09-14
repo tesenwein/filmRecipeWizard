@@ -1,11 +1,12 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
 import { StorageService } from './storage-service';
 import { SettingsService, AppSettings } from './settings-service';
 import { ProcessHistory } from '../shared/types';
 
-class ImageMatchApp {
+class FotoRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
   private imageProcessor: ImageProcessor;
   private storageService: StorageService;
@@ -204,7 +205,7 @@ class ImageMatchApp {
         // Derive a friendly filename from AI if present
         const sanitizeName = (n: string) =>
           n
-            .replace(/\b(image\s*match|imagematch|match|target|base|ai)\b/gi, '')
+            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
             .replace(/\s{2,}/g, ' ')
             .trim();
         const rawName = (data?.adjustments?.preset_name as string | undefined) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
@@ -270,7 +271,7 @@ class ImageMatchApp {
       }
     });
 
-    // Handle processing with stored base64 data from project
+    // Handle processing with stored base64 data from recipe
     ipcMain.handle('process-with-stored-images', async (
       _event,
       data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[]; prompt?: string }
@@ -286,7 +287,36 @@ class ImageMatchApp {
         if (!stored) throw new Error('Process not found');
 
         const baseImageData = data.baseImageData || stored.baseImageData;
-        const prompt = data.prompt ?? stored.prompt;
+        const basePrompt = data.prompt ?? stored.prompt;
+        // Build an additional hint from userOptions if present
+        const options = (stored as any)?.userOptions || {};
+        const optionsHintParts: string[] = [];
+        if (typeof options.vibe === 'string' && options.vibe.trim().length > 0) {
+          optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
+        }
+        const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
+        const signed = (v?: number) => (typeof v === 'number' ? v : undefined);
+        if (options.warmth !== undefined) optionsHintParts.push(`Warmth: ${pct(options.warmth)}`);
+        if (options.tint !== undefined) optionsHintParts.push(`Tint: ${signed(options.tint)}`);
+        if (options.contrast !== undefined) optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);
+        if (options.vibrance !== undefined) optionsHintParts.push(`Vibrance: ${pct(options.vibrance)}`);
+        if (options.moodiness !== undefined) optionsHintParts.push(`Moodiness: ${pct(options.moodiness)}`);
+        if (options.saturationBias !== undefined)
+          optionsHintParts.push(`Saturation Bias: ${pct(options.saturationBias)}`);
+        if (options.filmGrain !== undefined) optionsHintParts.push(`Film Grain: ${options.filmGrain ? 'On' : 'Off'}`);
+        if (options.artistStyle && typeof options.artistStyle.name === 'string') {
+          const name = String(options.artistStyle.name).trim();
+          const category = String(options.artistStyle.category || '').trim();
+          const blurb = String(options.artistStyle.blurb || '').trim();
+          optionsHintParts.push(
+            `Artist Style: ${name}${category ? ` (${category})` : ''}` + (blurb ? `\nNotes: ${blurb}` : '')
+          );
+        }
+        const optionsHint = optionsHintParts.length > 0
+          ? `\nPreferences:\n- ${optionsHintParts.join('\n- ')}`
+          : '';
+        // Compose prompt from user text and preferences; fall back to a neutral default
+        const prompt = ((basePrompt || '') + optionsHint).trim() || 'Apply natural, balanced color grading with clean contrast and faithful skin tones.';
 
         // Determine which target image to use
         const targetIndex = data.targetIndex || 0;
@@ -303,14 +333,9 @@ class ImageMatchApp {
         }
 
         // Emit initial progress
-        try { this.mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...'); } catch {}
+        try { this.mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...'); } catch { /* Ignore IPC send errors */ }
 
-        // Validate inputs: either a base image or a prompt is required
-        if (!baseImageData && (!prompt || String(prompt).trim().length === 0)) {
-          const msg = 'Please provide a reference image or a prompt before processing.';
-          try { this.mainWindow?.webContents.send('processing-progress', 100, `Failed: ${msg}`); } catch {}
-          return { success: false, error: msg } as any;
-        }
+        // No strict validation: prompt/reference optional; defaults applied in analyzer
 
         // Create temporary files for processing
         const baseImageTempPath = baseImageData
@@ -328,7 +353,7 @@ class ImageMatchApp {
           prompt,
         });
 
-        try { this.mainWindow?.webContents.send('processing-progress', 100, 'Completed'); } catch {}
+        try { this.mainWindow?.webContents.send('processing-progress', 100, 'Completed'); } catch { /* Ignore IPC send errors */ }
 
         // Persist result
         try {
@@ -346,7 +371,7 @@ class ImageMatchApp {
         }
 
         // Emit completion event in same shape as legacy API
-        try { this.mainWindow?.webContents.send('processing-complete', [result]); } catch {}
+        try { this.mainWindow?.webContents.send('processing-complete', [result]); } catch { /* Ignore IPC send errors */ }
 
         console.log('[IPC] process-with-stored-images completed:', { success: result.success });
         return result;
@@ -355,9 +380,9 @@ class ImageMatchApp {
         console.error('[IPC] Error processing with stored images:', error);
         // Emit a final failure status so the UI shows immediate feedback
         const errMsg = error instanceof Error ? error.message : 'Unknown error';
-        try { this.mainWindow?.webContents.send('processing-progress', 100, `Failed: ${errMsg}`); } catch {}
+        try { this.mainWindow?.webContents.send('processing-progress', 100, `Failed: ${errMsg}`); } catch { /* Ignore IPC send errors */ }
         // Emit completion with failure result
-        try { this.mainWindow?.webContents.send('processing-complete', [{ success: false, error: errMsg }]); } catch {}
+        try { this.mainWindow?.webContents.send('processing-complete', [{ success: false, error: errMsg }]); } catch { /* Ignore IPC send errors */ }
         throw error;
       }
     });
@@ -451,7 +476,7 @@ class ImageMatchApp {
               error: result.error,
               metadata: result.metadata,
             }];
-            // Derive preset/project name from AI adjustments if provided
+            // Derive preset/recipe name from AI adjustments if provided
             let name: string | undefined;
             try {
               name = result?.metadata?.aiAdjustments?.preset_name;
@@ -527,6 +552,7 @@ class ImageMatchApp {
           timestamp: new Date().toISOString(),
           name: (processData as any)?.name,
           prompt: (processData as any)?.prompt,
+          userOptions: (processData as any)?.userOptions,
           results: Array.isArray(processData.results) ? processData.results : [],
           baseImageData,
           targetImageData,
@@ -617,6 +643,31 @@ class ImageMatchApp {
       }
     });
 
+    // Set or replace the base image of an existing process (converts to base64 and persists)
+    ipcMain.handle('set-base-image', async (_event, processId: string, filePath: string) => {
+      try {
+        if (!processId || !filePath) throw new Error('Invalid arguments');
+        let baseImageData: string | undefined;
+        try {
+          baseImageData = await this.storageService.convertImageToBase64(filePath);
+        } catch (convErr) {
+          // Fallback: generate a JPEG preview then base64 it
+          try {
+            const previewPath = await this.imageProcessor.generatePreview({ path: filePath, processId, subdir: 'base' } as any);
+            const buf = await fs.readFile(previewPath);
+            baseImageData = buf.toString('base64');
+          } catch (fallbackErr) {
+            throw convErr instanceof Error ? convErr : new Error('Failed to convert image');
+          }
+        }
+        await this.storageService.updateProcess(processId, { baseImageData } as any);
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error setting base image:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Settings IPC handlers
     ipcMain.handle('get-settings', async () => {
       try {
@@ -646,4 +697,4 @@ class ImageMatchApp {
 }
 
 // Create and start the application
-new ImageMatchApp();
+new FotoRecipeWizardApp();

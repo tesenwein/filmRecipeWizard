@@ -13,6 +13,18 @@ export interface ProcessingResult {
   };
 }
 
+export interface StyleOptions {
+  // 0-100 sliders; neutral around 50
+  warmth?: number;
+  tint?: number; // -50..50 where 0 is neutral; UI can map 0-100
+  contrast?: number;
+  vibrance?: number;
+  moodiness?: number; // overall curve mood
+  saturationBias?: number;
+  filmGrain?: boolean;
+  vibe?: string; // e.g., Cinematic, Soft Pastel
+}
+
 export interface ProcessHistory {
   id: string;
   timestamp: string;
@@ -25,6 +37,8 @@ export interface ProcessHistory {
   // Base64 image data for offline storage
   baseImageData?: string; // base64 encoded image
   targetImageData?: string[]; // base64 encoded images
+  // User-selected style options (sliders/toggles)
+  userOptions?: StyleOptions;
 }
 
 export interface ProcessingState {

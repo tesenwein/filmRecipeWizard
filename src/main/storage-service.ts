@@ -9,7 +9,7 @@ export class StorageService {
 
   constructor() {
     const userDataPath = app.getPath('userData');
-    this.storageFile = path.join(userDataPath, 'imageMatch-history.json');
+    this.storageFile = path.join(userDataPath, 'fotoRecipeWizard-history.json');
   }
 
   async loadHistory(): Promise<ProcessHistory[]> {
@@ -21,6 +21,7 @@ export class StorageService {
         timestamp: p.timestamp,
         name: p.name,
         prompt: p.prompt,
+        userOptions: p.userOptions,
         results: Array.isArray(p.results) ? p.results : [],
         // Preserve stored base64 image data if present
         baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,
@@ -112,7 +113,7 @@ export class StorageService {
   // Convert base64 data back to a temporary file path for processing
   async base64ToTempFile(base64Data: string, filename: string = 'temp.jpg'): Promise<string> {
     const os = await import('os');
-    const tmpDir = path.join(os.tmpdir(), 'image-match-base64');
+    const tmpDir = path.join(os.tmpdir(), 'foto-recipe-wizard-base64');
     await fs.mkdir(tmpDir, { recursive: true });
 
     const tempPath = path.join(tmpDir, `${Date.now()}-${filename}`);
@@ -133,7 +134,7 @@ export class StorageService {
   async cleanupTempFiles(): Promise<void> {
     try {
       const os = await import('os');
-      const tmpDir = path.join(os.tmpdir(), 'image-match-base64');
+      const tmpDir = path.join(os.tmpdir(), 'foto-recipe-wizard-base64');
       await fs.rm(tmpDir, { recursive: true, force: true });
       console.log(`[STORAGE] Cleaned up temp files: ${tmpDir}`);
     } catch (error) {

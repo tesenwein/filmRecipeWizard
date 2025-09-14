@@ -1,6 +1,8 @@
-import { Box, LinearProgress, Paper, Typography } from '@mui/material';
+import { Box, LinearProgress, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
+import SingleImage from './SingleImage';
+import NoImagePlaceholder from './NoImagePlaceholder';
 
 interface ProcessingViewProps {
   processingState: ProcessingState;
@@ -67,20 +69,13 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   }, [targetImages]);
 
   return (
-    <div className="container" style={{ maxWidth: 900, margin: '0 auto' }}>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h3" sx={{ mb: 1 }}>
-          ✨
-        </Typography>
-        <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+    <div className="container" style={{ maxWidth: 980, margin: '0 auto' }}>
+      <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Typography variant="h3" sx={{ mb: 1 }}>✨</Typography>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
           Processing Image
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {baseImage
-            ? 'AI is analyzing your reference and generating color adjustments.'
-            : 'AI is applying your prompt and generating color adjustments.'}
-        </Typography>
-        <Box sx={{ maxWidth: 400, mx: 'auto', width: '100%', mb: 1 }}>
+        <Box sx={{ maxWidth: 420, mx: 'auto', width: '100%', mb: 1 }}>
           <LinearProgress variant="indeterminate" />
         </Box>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
@@ -88,118 +83,54 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-        <Box>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="overline" color="primary">
-              {baseImage ? 'Reference Style' : 'Prompt'}
-            </Typography>
-            {baseImage ? (
-              <Box
-                sx={{
-                  width: '100%',
-                  height: 200,
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  border: '1px solid #e8eaff',
-                  boxShadow: '0 2px 12px rgba(102,126,234,0.1)',
-                }}
-              >
-                <img
-                  src={(() => {
-                    const src = baseDisplay || baseImage;
-                    return src?.startsWith('file://') ? src : `file://${src}`;
-                  })()}
-                  alt="Base image"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+      {targetImages.length > 0 ? (
+        (() => {
+          const imgPath = targetImages[0];
+          const preview = targetPreviews[0] || imgPath;
+          return (
+            <Box
+              sx={{
+                position: 'relative',
+                width: '100%',
+                height: { xs: 320, sm: 420, md: 520 },
+                borderRadius: 2,
+                overflow: 'hidden',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                background:
+                  'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
+                  'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +
+                  '#f8fafc',
+              }}
+            >
+              {/* Animated image */}
+              <Box sx={{ position: 'absolute', inset: 0, animation: 'breathe 4s ease-in-out infinite' }}>
+                <SingleImage source={preview} alt="Processing" fit="contain" backgroundBlur={0} backgroundOpacity={0} />
               </Box>
-            ) : (
-              <Box
-                sx={{
-                  width: '100%',
-                  minHeight: 120,
-                  borderRadius: 2,
-                  border: '1px solid #e5e7eb',
-                  backgroundColor: '#ffffff',
-                  p: 1.5,
-                  fontSize: 14,
-                  color: '#374151',
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
-                {prompt && prompt.trim().length > 0 ? prompt : 'No prompt provided'}
-              </Box>
-            )}
-          </Paper>
-        </Box>
-        <Box>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="overline" color="secondary">
-              Processing
-            </Typography>
-            {targetImages.length > 0 ? (
-              <Box sx={{ width: '100%', maxHeight: 220, overflow: 'hidden' }}>
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
-                  {(() => {
-                    const imgPath = targetImages[0];
-                    const preview = targetPreviews[0] || imgPath;
-                    return (
-                      <Box
-                        sx={{
-                          position: 'relative',
-                          height: 200,
-                          borderRadius: 1.5,
-                          overflow: 'hidden',
-                          border: '1px solid #e5e7eb',
-                        }}
-                      >
-                        <img
-                          src={`file://${preview}`}
-                          alt={`Target`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                        />
-                      </Box>
-                    );
-                  })()}
-                </Box>
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  width: '100%',
-                  height: 200,
-                  borderRadius: 2,
-                  border: '2px dashed #e0e0e0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#999',
-                }}
-              >
-                <Typography variant="body2" fontWeight={500}>
-                  Waiting for target
-                </Typography>
-              </Box>
-            )}
-          </Paper>
-        </Box>
-      </Box>
+              {/* Shimmer sweep overlay */}
+              <Box sx={{
+                position: 'absolute', inset: 0,
+                pointerEvents: 'none',
+                background: 'linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.25) 15%, transparent 30%)',
+                transform: 'translateX(-100%)',
+                animation: 'shine 2.8s linear infinite',
+              }} />
+            </Box>
+          );
+        })()
+      ) : (
+        <NoImagePlaceholder label="Waiting for target" height={420} />
+      )}
 
       <style>
         {`
-          @keyframes pulse {
-            0%, 100% {
-              opacity: 1;
-            }
-            50% {
-              opacity: 0.7;
-            }
+          @keyframes breathe {
+            0%, 100% { transform: scale(1.0); }
+            50% { transform: scale(1.01); }
+          }
+          @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
           }
         `}
       </style>

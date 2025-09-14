@@ -52,6 +52,7 @@ declare global {
       deleteProcess: (processId: string) => Promise<{ success: boolean; error?: string }>;
       getProcess: (processId: string) => Promise<{ success: boolean; process?: any; error?: string }>;
       getImageDataUrls: (processId: string) => Promise<{ success: boolean; baseImageUrl?: string; targetImageUrls?: string[]; error?: string }>;
+      setBaseImage: (processId: string, filePath: string) => Promise<{ success: boolean; error?: string }>;
 
       // Settings operations
       getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;

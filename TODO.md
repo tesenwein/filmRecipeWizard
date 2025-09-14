@@ -1,11 +1,11 @@
-# Image Match - Todo List
+# Foto Recipe Wizard - Todo List
 
-## Phase 1: Project Setup ✅
+## Phase 1: Recipe Setup ✅
 - [x] Initialize git repository and create .gitignore
-- [x] Set up Electron + TypeScript project structure
+- [x] Set up Electron + TypeScript recipe structure
 - [x] Configure build system (webpack/vite) and development environment
 - [x] Install core dependencies (Electron, Sharp, TypeScript)
-- [x] Create basic project structure (main/renderer/workers/algorithms directories)
+- [x] Create basic recipe structure (main/renderer/workers/algorithms directories)
 
 ## Phase 2: Core Application ✅
 - [x] Set up main Electron process with TypeScript
