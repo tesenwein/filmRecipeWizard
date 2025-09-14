@@ -178,7 +178,7 @@ jobs:
       # macOS builds
       - name: Build macOS app
         if: matrix.platform == 'mac'
-        run: npm run package:mac:universal
+        run: npm run package:mac:dmg
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false # Disable code signing for CI
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -293,9 +293,8 @@ jobs:
           echo "## 📦 Downloads" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "Choose the appropriate version for your platform:" >> CHANGELOG.md
-          echo "- **macOS**: \`.dmg\` (installer) or \`.zip\` (portable)" >> CHANGELOG.md
+          echo "- **macOS**: \`.dmg\` (installer)" >> CHANGELOG.md
           echo "- **Windows**: \`.exe\` (installer)" >> CHANGELOG.md
-          echo "- **Linux**: \`.AppImage\` (portable)" >> CHANGELOG.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -306,9 +305,7 @@ jobs:
           prerelease: ${{ needs.check-release.outputs.is_prerelease == 'true' }}
           files: |
             artifacts/**/*.dmg
-            artifacts/**/*.zip
             artifacts/**/*.exe
-            artifacts/**/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
