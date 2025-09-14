@@ -1,10 +1,10 @@
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
 import {
   Box,
   Button,
   Card,
   Checkbox,
-  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,10 +12,10 @@ import {
   Divider,
   FormControlLabel,
   FormGroup,
+  IconButton,
   Tooltip,
   Typography,
 } from '@mui/material';
-import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
 import Base64Image from './Base64Image';
@@ -122,7 +122,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (!processId) return;
       const files = await window.electronAPI.selectFiles({
         title: 'Select Base Image (Reference Style)',
-        filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'] }],
+        filters: [
+          {
+            name: 'Images',
+            extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'],
+          },
+        ],
         properties: ['openFile'],
       });
       if (files && files[0]) {
@@ -273,17 +278,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       {/* Successful Results */}
       {successfulResults.length > 0 && (
         <div>
-          <h3
-            style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#333333',
-              marginBottom: '20px',
-            }}
-          >
-            Successfully Processed Images
-          </h3>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {successfulResults.map((result, index) => (
               <div
@@ -312,10 +306,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       style={{
                         width: '100%',
                         height: '380px',
-                        borderRadius: '12px',
+                        borderRadius: 2,
                         overflow: 'hidden',
-                        border: '3px solid #f0f0f0',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        border: 'none',
+                        boxShadow: 'none',
                         position: 'relative',
                       }}
                     >
@@ -334,8 +328,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               backgroundColor: 'rgba(255,255,255,0.7)',
                               backdropFilter: 'blur(10px)',
                               WebkitBackdropFilter: 'blur(10px)',
-                              border: '1px solid rgba(255,255,255,0.2)',
-                              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                              border: 'none',
+                              boxShadow: 'none',
                               '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
                             }}
                             aria-label="Add base image"
@@ -362,10 +356,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       style={{
                         width: '100%',
                         height: '380px',
-                        borderRadius: '12px',
+                        borderRadius: 2,
                         overflow: 'hidden',
-                        border: '3px solid #f0f0f0',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        border: 'none',
+                        boxShadow: 'none',
                         position: 'relative',
                       }}
                     >
@@ -424,8 +418,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     <div
                       style={{
                         background: '#f8f9ff',
-                        border: '1px solid #e8eaff',
-                        borderRadius: '8px',
+                        border: 'none',
+                        borderRadius: 2,
                         padding: '12px',
                       }}
                     >
@@ -447,7 +441,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             color: 'white',
                             fontSize: '11px',
                             padding: '2px 6px',
-                            borderRadius: '10px',
+                            borderRadius: 2,
                             fontWeight: '600',
                           }}
                         >
@@ -456,7 +450,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       </div>
 
                       {/* Prompt, if available */}
-                      {(processPrompt && processPrompt.trim().length > 0) && (
+                      {processPrompt && processPrompt.trim().length > 0 && (
                         <>
                           <Divider sx={{ my: 1 }} />
                           <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
@@ -468,7 +462,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               fontSize: 12,
                               color: '#374151',
                               background: '#ffffff',
-                              border: '1px solid #e5e7eb',
+                              border: 'none',
                               borderRadius: 1,
                               p: 1.25,
                               whiteSpace: 'pre-wrap',
@@ -492,7 +486,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               fontSize: 12,
                               color: '#374151',
                               background: '#ffffff',
-                              border: '1px solid #e5e7eb',
+                              border: 'none',
                               borderRadius: 1,
                               p: 1.25,
                             }}
@@ -782,7 +776,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 fontSize: 12,
                                 color: '#374151',
                                 background: '#ffffff',
-                                border: '1px solid #e5e7eb',
+                                border: 'none',
                                 borderRadius: 1,
                                 p: 1.25,
                                 whiteSpace: 'pre-wrap',
@@ -799,7 +793,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       variant="outlined"
                       sx={{
                         background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)',
-                        border: '1px solid #e9ecef',
+                        border: 'none',
                         borderRadius: 2,
                         p: 2,
                       }}
@@ -910,7 +904,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 key={index}
                 variant="outlined"
                 sx={{
-                  border: '2px solid #ffcdd2',
+                  border: 'none',
                   background: '#fff8f8',
                   p: 3,
                 }}
@@ -936,7 +930,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     <Box
                       sx={{
                         background: '#ffffff',
-                        border: '1px solid #e0e0e0',
+                        border: 'none',
                         borderRadius: 1,
                         p: 2,
                         mb: 2,
@@ -994,7 +988,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           <Box
             sx={{
               backgroundColor: '#f8f9fa',
-              border: '1px solid #e9ecef',
+              border: 'none',
               borderRadius: 1,
               p: 2,
               mb: 1,

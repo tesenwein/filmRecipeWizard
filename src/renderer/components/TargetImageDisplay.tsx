@@ -41,9 +41,9 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
             minHeight: 350,
             borderRadius: 2,
             overflow: 'hidden',
-            border: '1px solid #e9ecef',
+            border: 'none',
             position: 'relative',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            boxShadow: 'none'
           }}>
             {(() => {
               const previewPath = targetPreviews[0] || targetImages[0];
@@ -97,7 +97,7 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
           <Box sx={{
             flex: 1,
             minHeight: 350,
-            border: '2px dashed #e9ecef',
+            border: 'none',
             borderRadius: 2,
             display: 'flex',
             alignItems: 'center',

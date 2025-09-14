@@ -39,7 +39,7 @@ const ReferenceImageCard: React.FC<ReferenceImageCardProps> = ({
             height: 100,
             borderRadius: 2,
             overflow: 'hidden',
-            border: '1px solid #e9ecef',
+            border: 'none',
             position: 'relative'
           }}>
             {baseDisplay && (
@@ -75,7 +75,7 @@ const ReferenceImageCard: React.FC<ReferenceImageCardProps> = ({
           textTransform: 'none',
           fontWeight: 600,
           py: 1,
-          borderRadius: '12px'
+          borderRadius: 2
         }}
       >
         Select Reference Image

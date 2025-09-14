@@ -31,7 +31,7 @@ const NoImagePlaceholder: React.FC<NoImagePlaceholderProps> = ({
     alignItems: 'center',
     justifyContent: 'center',
     color: '#7c8aa0',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+    boxShadow: 'none',
     ...style,
   };
 

@@ -35,16 +35,16 @@ body {
 
 .card {
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
-  border: 1px solid #EEF2FF;
+  border-radius: 2px;
+  box-shadow: none;
+  border: none;
   padding: 24px;
   margin-bottom: 20px;
-  transition: box-shadow 0.2s ease;
+  transition: none;
 }
 
 .card:hover {
-  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.09);
+  box-shadow: none;
 }
 
 /* Titlebar / drag region for a more native feel */
@@ -73,17 +73,17 @@ body {
   background: linear-gradient(135deg, #5b6670 0%, #3d4853 100%);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 2px;
   padding: 16px 28px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 15px rgba(61, 72, 83, 0.2);
+  box-shadow: none;
   position: relative;
   overflow: hidden;
   min-height: 48px;
@@ -101,8 +101,8 @@ body {
 }
 
 .button:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(61, 72, 83, 0.3);
+  transform: none;
+  box-shadow: none;
 }
 
 .button:hover::before {
@@ -110,8 +110,8 @@ body {
 }
 
 .button:active {
-  transform: translateY(-1px) scale(1.01);
-  box-shadow: 0 4px 15px rgba(61, 72, 83, 0.2);
+  transform: none;
+  box-shadow: none;
 }
 
 .button:disabled {
@@ -119,7 +119,7 @@ body {
   color: #999999;
   cursor: not-allowed;
   transform: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .button:disabled::before {
@@ -129,18 +129,18 @@ body {
 .button-secondary {
   background: white;
   color: #5b6670;
-  border: 2px solid #5b6670;
-  border-radius: 12px;
+  border: none;
+  border-radius: 2px;
   padding: 16px 28px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 15px rgba(91, 102, 112, 0.12);
+  box-shadow: none;
   position: relative;
   overflow: hidden;
   min-height: 48px;
@@ -159,9 +159,8 @@ body {
 
 .button-secondary:hover {
   background: #f8f9fa;
-  border-color: #3d4853;
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(91, 102, 112, 0.18);
+  transform: none;
+  box-shadow: none;
 }
 
 .button-secondary:hover::before {
@@ -169,8 +168,8 @@ body {
 }
 
 .button-secondary:active {
-  transform: translateY(-1px) scale(1.01);
-  box-shadow: 0 4px 15px rgba(91, 102, 112, 0.12);
+  transform: none;
+  box-shadow: none;
 }
 
 .input-group {
@@ -188,24 +187,23 @@ body {
 .input {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: none;
+  border-radius: 2px;
   font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: none;
   background: #ffffff;
 }
 
 .input:focus {
   outline: none;
-  border-color: #5b6670;
-  box-shadow: 0 0 0 3px rgba(91, 102, 112, 0.08);
+  box-shadow: none;
 }
 
 .progress-bar {
   width: 100%;
   height: 8px;
   background-color: #f0f0f0;
-  border-radius: 4px;
+  border-radius: 2px;
   overflow: hidden;
   margin: 16px 0;
 }
@@ -213,7 +211,7 @@ body {
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #5b6670 0%, #3d4853 100%);
-  border-radius: 4px;
+  border-radius: 2px;
   transition: width 0.3s ease;
 }
 

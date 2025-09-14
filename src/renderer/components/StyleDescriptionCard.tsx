@@ -61,7 +61,7 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
               sx={{
                 textTransform: 'none',
                 fontWeight: 500,
-                borderRadius: '20px',
+                borderRadius: 2,
                 fontSize: 12,
                 py: 0.5,
                 px: 1.5

@@ -122,8 +122,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                     backgroundColor: 'rgba(255, 255, 255, 0.7)',
                     backdropFilter: 'blur(10px)',
                     WebkitBackdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                    border: 'none',
+                    boxShadow: 'none',
                     '&:hover': {
                       backgroundColor: 'rgba(239, 68, 68, 0.9)',
                       backdropFilter: 'blur(10px)',
@@ -151,7 +151,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                     onOpenRecipe(process);
                   }}
                 >
-                  <div style={{ height: 240, borderRadius: 8, overflow: 'hidden' }}>
+                  <div style={{ height: 240, borderRadius: 2, overflow: 'hidden' }}>
                     <SingleImage
                       source={basePreviews[index] || undefined}
                       alt={`Base preview ${index + 1}`}

@@ -154,7 +154,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, p: 1 }}>
       {/* Header */}
-      <Paper className="card slide-in" elevation={0} sx={{ borderRadius: 3, p: 2.5, textAlign: 'center' }}>
+      <Paper className="card slide-in" elevation={0} sx={{ borderRadius: 2, p: 2.5, textAlign: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}>
           <AutoAwesomeIcon sx={{ fontSize: 28, color: 'primary.main' }} />
           <h2 style={{ fontSize: 24, fontWeight: 800, color: '#2c3338', margin: 0 }}>

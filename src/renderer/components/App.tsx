@@ -370,10 +370,10 @@ const App: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           background: '#ffffff',
-          border: '1px solid #EEF2FF',
-          borderRadius: 12,
+          border: 'none',
+          borderRadius: 2,
           padding: '12px 16px',
-          boxShadow: '0 6px 14px rgba(17, 24, 39, 0.06)',
+          boxShadow: 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

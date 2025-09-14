@@ -95,8 +95,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
                 height: { xs: 320, sm: 420, md: 520 },
                 borderRadius: 2,
                 overflow: 'hidden',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                border: 'none',
+                boxShadow: 'none',
                 background:
                   'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
                   'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +

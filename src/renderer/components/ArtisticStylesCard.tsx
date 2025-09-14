@@ -202,7 +202,7 @@ const ArtisticStylesCard: React.FC<ArtisticStylesCardProps> = ({ selected, onSel
                       borderColor: isSel ? 'primary.main' : undefined,
                       backgroundColor: isSel ? 'rgba(91,102,112,0.06)' : 'background.paper',
                       '&:hover': { backgroundColor: isSel ? 'rgba(91,102,112,0.08)' : 'rgba(91,102,112,0.04)' },
-                      '&:focus-visible': { boxShadow: (t) => `0 0 0 2px ${t.palette.primary.main}33` },
+                      '&:focus-visible': { boxShadow: 'none' },
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>

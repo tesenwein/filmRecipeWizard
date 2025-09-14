@@ -36,8 +36,8 @@ const ImageGrid: React.FC<ImageGridProps> = ({ sources, columns, gap = 6, tileHe
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            border: '1px solid #e5e7eb',
-            borderRadius: 8,
+            border: 'none',
+            borderRadius: 2,
           }}
         >
           <SingleImage source={s} alt={`thumb-${i}`} fit="contain" style={{ width: '100%', height: '100%' }} />

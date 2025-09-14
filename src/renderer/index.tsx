@@ -1,8 +1,7 @@
-import React from 'react';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { createRoot } from 'react-dom/client';
 import App from './components/App';
 import './styles/index.css';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 
 const container = document.getElementById('root');
 const root = createRoot(container!);
@@ -10,25 +9,25 @@ const root = createRoot(container!);
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { 
+    primary: {
       main: '#5b6670',
       light: '#7a8491',
       dark: '#3d4853',
-      contrastText: '#ffffff'
+      contrastText: '#ffffff',
     },
-    secondary: { 
+    secondary: {
       main: '#8b7e74',
       light: '#a89d94',
       dark: '#6b5f56',
-      contrastText: '#ffffff'
+      contrastText: '#ffffff',
     },
-    background: { 
-      default: '#FAFBFC', 
-      paper: '#FFFFFF' 
+    background: {
+      default: '#FAFBFC',
+      paper: '#FFFFFF',
     },
-    text: { 
-      primary: '#2c3338', 
-      secondary: '#5f6b74' 
+    text: {
+      primary: '#2c3338',
+      secondary: '#5f6b74',
     },
     grey: {
       50: '#f8f9fa',
@@ -45,15 +44,16 @@ const theme = createTheme({
     success: {
       main: '#6b8caf',
       light: '#8ba6c3',
-      dark: '#4d6d8f'
+      dark: '#4d6d8f',
     },
     info: {
       main: '#c9a961',
       light: '#d4ba82',
-      dark: '#a08843'
-    }
+      dark: '#a08843',
+    },
   },
-  shape: { borderRadius: 12 },
+  // Use minimal rounding (2px) across the UI for uniform look
+  shape: { borderRadius: 2 },
   typography: {
     fontFamily: [
       '-apple-system',
@@ -72,56 +72,54 @@ const theme = createTheme({
     MuiPaper: {
       defaultProps: { elevation: 0 },
       styleOverrides: {
-        root: { 
-          borderRadius: 12, 
-          border: '1px solid #e9ecef',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+        root: {
+          borderRadius: 2,
+          border: 'none',
+          boxShadow: 'none',
         },
       },
     },
     MuiCard: {
       defaultProps: { elevation: 0 },
       styleOverrides: {
-        root: { 
-          borderRadius: 12, 
-          border: '1px solid #e9ecef',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+        root: {
+          borderRadius: 2,
+          border: 'none',
+          boxShadow: 'none',
         },
       },
     },
     MuiButton: {
       styleOverrides: {
-        root: { 
-          textTransform: 'none', 
-          borderRadius: 10, 
+        root: {
+          textTransform: 'none',
+          borderRadius: 2,
           fontWeight: 600,
           padding: '10px 20px',
           boxShadow: 'none',
           '&:hover': {
-            boxShadow: '0 4px 12px rgba(91, 102, 112, 0.15)'
-          }
+            boxShadow: 'none',
+          },
         },
         contained: {
           '&:hover': {
-            transform: 'translateY(-1px)',
-          }
+            transform: 'none',
+          },
         },
         outlined: {
-          borderWidth: '2px',
           '&:hover': {
-            borderWidth: '2px',
-            backgroundColor: 'rgba(91, 102, 112, 0.04)'
-          }
-        }
+            backgroundColor: 'rgba(91, 102, 112, 0.04)',
+          },
+        },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
-          fontWeight: 500
-        }
-      }
+          borderRadius: 2,
+          fontWeight: 500,
+        },
+      },
     },
     MuiTextField: {
       styleOverrides: {
