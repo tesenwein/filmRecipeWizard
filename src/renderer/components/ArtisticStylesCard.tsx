@@ -155,7 +155,7 @@ const CATALOG: Record<string, ArtistStyle[]> = {
 const ArtisticStylesCard: React.FC<ArtisticStylesCardProps> = ({ selected, onSelect }) => {
   return (
     <Paper className="card slide-in" sx={{ p: 0, animationDelay: '0.08s' }}>
-      <Accordion defaultExpanded disableGutters elevation={0} sx={{ '&:before': { display: 'none' } }}>
+      <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2.5, py: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
             <BrushIcon sx={{ color: 'primary.main', fontSize: 20 }} />
