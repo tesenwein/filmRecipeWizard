@@ -66,7 +66,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
   return (
     <div className="container">
       <Grid container alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Grid item>
+        <Grid>
           <Typography variant="h5" fontWeight={700}>
             Your Recipes
           </Typography>
@@ -74,7 +74,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
             Past color matching sessions
           </Typography>
         </Grid>
-        <Grid item>
+        <Grid>
           <Button variant="contained" onClick={onNewProcess}>
             New Recipe
           </Button>
@@ -99,34 +99,37 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
       ) : (
         <Grid container spacing={2}>
           {history.map((process, index) => (
-            <Grid item xs={12} sm={6} md={4} key={process.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={process.id}>
               <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
                 <IconButton
                   aria-label="Delete"
                   size="small"
                   onClick={e => handleDeleteProcess(process.id, e)}
                   title="Delete"
-                  sx={{ 
-                    position: 'absolute', 
-                    top: 8, 
-                    left: 8, 
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    left: 8,
                     zIndex: 2,
                     backgroundColor: 'rgba(255, 255, 255, 0.7)',
                     backdropFilter: 'blur(10px)',
                     WebkitBackdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                    '&:hover': { 
+                    '&:hover': {
                       backgroundColor: 'rgba(239, 68, 68, 0.9)',
                       backdropFilter: 'blur(10px)',
                       WebkitBackdropFilter: 'blur(10px)',
                       '& .MuiSvgIcon-root': {
-                        color: 'white'
-                      }
-                    }
+                        color: 'white',
+                      },
+                    },
                   }}
                 >
-                  <DeleteOutlineIcon fontSize="small" sx={{ color: '#ef4444', transition: 'color 0.2s ease' }} />
+                  <DeleteOutlineIcon
+                    fontSize="small"
+                    sx={{ color: '#ef4444', transition: 'color 0.2s ease' }}
+                  />
                 </IconButton>
                 <CardActionArea
                   onClick={() => {
@@ -137,7 +140,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                         ? (process as any).results.length
                         : 0,
                     });
-                  onOpenRecipe(process);
+                    onOpenRecipe(process);
                   }}
                 >
                   <div style={{ height: 240, borderRadius: 8, overflow: 'hidden' }}>
@@ -150,8 +153,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                   <CardContent>
                     <Typography variant="subtitle1" fontWeight={700} noWrap>
                       {(() => {
-                        const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
-                        const name = process.name || (typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : undefined);
+                        const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments
+                          ?.preset_name as string | undefined;
+                        const name =
+                          process.name ||
+                          (typeof aiName === 'string' && aiName.trim().length > 0
+                            ? aiName
+                            : undefined);
                         if (name && name.trim().length > 0) return name;
                         // Fallback: human-friendly timestamp label
                         try {

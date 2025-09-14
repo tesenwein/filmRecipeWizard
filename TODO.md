@@ -102,3 +102,12 @@
 - Ready for production use with PNG/JPG workflow
 - DNG processing framework in place for future expansion
 - Comprehensive documentation and feature list complete
+
+## Recent Dependency Upgrades
+
+- Upgraded project dependencies and devDependencies to latest releases where possible (see `package.json`).
+- Notable upgrades: `electron`, `electron-builder`, `webpack`, `typescript`, `sharp`, `@mui/material` and related MUI packages.
+- Resolved TypeScript typing changes for MUI Grid by migrating `HistoryView.tsx` to the v7 Grid API (replaced `item`/`xs` props with `size` and adjusted imports).
+- Ran `npm install` and rebuilt the renderer; the app builds successfully after these changes.
+
+If you'd like, I can open a PR with these changes or pin specific versions instead of floating to `^latest` ranges.
