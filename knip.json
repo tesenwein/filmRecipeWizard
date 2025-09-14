@@ -1,20 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": [
-    "src/**/*.{ts,tsx}"
-  ],
-  "project": [
-    "src/**/*.{ts,tsx}"
-  ],
-  "ignore": [
-    "dist/**",
-    "node_modules/**",
-    "scripts/**",
-    "build/**"
-  ],
-  "ignoreDependencies": [
-    "electron-icon-builder"
-  ],
+  "entry": ["src/**/*.{ts,tsx}"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["dist/**", "node_modules/**", "scripts/**", "build/**"],
   "webpack": {
     "config": ["webpack.renderer.js"]
   },

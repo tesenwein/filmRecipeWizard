@@ -28,7 +28,8 @@
       "Bash(npx knip:*)",
       "mcp__ide__getDiagnostics",
       "Bash(git rm:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": [],
