@@ -12,10 +12,6 @@ import {
   Button,
   Checkbox,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControlLabel,
   Paper,
   Tab,
@@ -24,7 +20,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
-import Base64Image from './Base64Image';
+import SingleImage from './SingleImage';
 
 interface ResultsViewProps {
   results: ProcessingResult[];
@@ -32,7 +28,6 @@ interface ResultsViewProps {
   targetImages: string[];
   onReset: () => void;
   onRestart?: () => void;
-  onNewProcessingSession?: () => void;
   processId?: string; // Optional process ID to load base64 image data
   prompt?: string; // Optional prompt provided in this session
 }
@@ -43,7 +38,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   targetImages: _targetImages,
   onReset,
   onRestart,
-  onNewProcessingSession,
   processId,
   prompt,
 }) => {
@@ -68,7 +62,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   const successfulResults = results.filter(result => result.success);
   const failedResults = results.filter(result => !result.success);
-  const [confirmNewGeneration, setConfirmNewGeneration] = useState(false);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
 
@@ -252,33 +245,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   return (
     <Box sx={{ maxWidth: '100%', margin: '0 auto' }}>
-      {/* Header */}
-      <Paper className="card" sx={{ textAlign: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#222', mb: 1 }}>
-          Processing Complete
-        </Typography>
-        {results.length > 1 ? (
-          <Typography variant="body1" sx={{ color: '#555', mb: 2 }}>
-            {successfulResults.length} of {results.length} images processed successfully
-          </Typography>
-        ) : results.length === 1 ? (
-          <Typography variant="body1" sx={{ color: '#555', mb: 2 }}>
-            {successfulResults.length === 1 ? 'Image processed successfully' : 'Processing failed'}
-          </Typography>
-        ) : null}
-
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {onNewProcessingSession ? (
-            <Button variant="contained" onClick={() => setConfirmNewGeneration(true)}>
-              New Processing Session
-            </Button>
-          ) : (
-            <Button variant="contained" onClick={onReset}>
-              New Processing Session
-            </Button>
-          )}
-        </Box>
-      </Paper>
 
       {/* No Results Message */}
       {results.length === 0 && (
@@ -639,14 +605,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           <Box
                             sx={{
                               width: '100%',
-                              height: 300,
+                              height: 400,
                               borderRadius: 2,
                               overflow: 'hidden',
                               position: 'relative',
                               backgroundColor: 'grey.100',
                             }}
                           >
-                            <Base64Image dataUrl={baseImageDataUrl} alt="Recipe" />
+                            <SingleImage source={baseImageDataUrl} alt="Recipe" fit="contain" />
                           </Box>
                         </Paper>
                       ) : (
@@ -1445,57 +1411,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         </Paper>
       )}
 
-      {/* Confirmation Dialog */}
-      <Dialog
-        open={confirmNewGeneration}
-        onClose={() => setConfirmNewGeneration(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-            Generate New Analysis?
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            This will create a new AI analysis using the same images but generate fresh results. The
-            current analysis will be preserved as a separate version.
-          </Typography>
-          <Paper sx={{ backgroundColor: '#f8f9fa', p: 2, mb: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-              ✨ What happens next:
-            </Typography>
-            <Typography variant="body2" component="div">
-              • New AI analysis will be generated
-              <br />
-              • Fresh color adjustments and recommendations
-              <br />
-              • Results saved as a new project version
-              <br />• Previous analysis remains accessible
-            </Typography>
-          </Paper>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            onClick={() => setConfirmNewGeneration(false)}
-            variant="outlined"
-            sx={{ textTransform: 'none' }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              setConfirmNewGeneration(false);
-              onNewProcessingSession?.();
-            }}
-            variant="contained"
-            sx={{ textTransform: 'none' }}
-          >
-            Generate New Analysis
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
