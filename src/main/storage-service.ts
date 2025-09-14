@@ -28,7 +28,7 @@ export class StorageService {
         targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
       }));
       return history;
-    } catch (error) {
+    } catch {
       // File doesn't exist or is invalid, return empty array
       console.log('[STORAGE] No existing history file, starting fresh');
       return [];
@@ -137,7 +137,7 @@ export class StorageService {
       const tmpDir = path.join(os.tmpdir(), 'foto-recipe-wizard-base64');
       await fs.rm(tmpDir, { recursive: true, force: true });
       console.log(`[STORAGE] Cleaned up temp files: ${tmpDir}`);
-    } catch (error) {
+    } catch {
       // Directory might not exist, which is fine
       console.log(`[STORAGE] Temp directory already cleaned or doesn't exist`);
     }

@@ -20,7 +20,7 @@ export class SettingsService {
       const data = await fs.readFile(this.settingsFile, 'utf8');
       const settings: AppSettings = JSON.parse(data);
       return settings || {};
-    } catch (_err) {
+    } catch {
       return {};
     }
   }

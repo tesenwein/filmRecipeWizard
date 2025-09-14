@@ -342,7 +342,6 @@ class FotoRecipeWizardApp {
           optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
         }
         const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
-        const signed = (v?: number) => (typeof v === 'number' ? v : undefined);
         if (options.warmth !== undefined) {
           const w = Math.max(0, Math.min(100, Number(options.warmth)));
           const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
@@ -718,7 +717,7 @@ class FotoRecipeWizardApp {
             const previewPath = await this.imageProcessor.generatePreview({ path: filePath, processId, subdir: 'base' } as any);
             const buf = await fs.readFile(previewPath);
             baseImageData = buf.toString('base64');
-          } catch (fallbackErr) {
+          } catch {
             throw convErr instanceof Error ? convErr : new Error('Failed to convert image');
           }
         }

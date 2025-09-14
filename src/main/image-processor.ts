@@ -535,7 +535,6 @@ export class ImageProcessor {
   }
 
   private generateCubeLUT(adjustments: any, size: number): string {
-    const presetName = 'FotoRecipeWizard';
     let lut = `# Created by FotoRecipeWizard
 # LUT size: ${size}
 # Description: AI-generated color grading

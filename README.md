@@ -1,5 +1,11 @@
 # Foto Recipe Wizard
 
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](package.json)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/typescript-%3E%3D5.9.2-blue.svg)](package.json)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
+[![Lint Status](https://img.shields.io/badge/lint-passing-brightgreen.svg)](#)
+
 > **AI-Powered Color Recipe Creation for Professional Photography**
 
 Transform your photo editing workflow with intelligent AI-driven color recipe creation. Foto Recipe Wizard helps photographers achieve consistent, professional color grading by analyzing reference photos and generating industry-standard Lightroom presets and 3D LUTs.

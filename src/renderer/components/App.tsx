@@ -481,12 +481,6 @@ const App: React.FC = () => {
 
       {route === '/recipedetails' && (
         <div className="fade-in">
-          {false && (
-            <div className="card" style={{ padding: 24, textAlign: 'center' }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>⏳</div>
-              <div>Loading recipe...</div>
-            </div>
-          )}
           {currentProcessId && (
             <ResultsView
               results={results}
