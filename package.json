@@ -122,10 +122,6 @@
     "win": {
       "target": "nsis",
       "icon": "build/icons/icon.png"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "build/icons"
     }
   }
 }

@@ -487,12 +487,42 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               }}
                             >
                               {[
-                                { key: 'warmth', label: 'Warmth', value: processOptions.warmth, icon: '🌡️' },
-                                { key: 'tint', label: 'Tint', value: processOptions.tint, icon: '🎨' },
-                                { key: 'contrast', label: 'Contrast', value: processOptions.contrast, icon: '⚡' },
-                                { key: 'vibrance', label: 'Vibrance', value: processOptions.vibrance, icon: '🌈' },
-                                { key: 'moodiness', label: 'Moodiness', value: processOptions.moodiness, icon: '🎭' },
-                                { key: 'saturationBias', label: 'Saturation Bias', value: processOptions.saturationBias, icon: '🎪' },
+                                {
+                                  key: 'warmth',
+                                  label: 'Warmth',
+                                  value: processOptions.warmth,
+                                  icon: '🌡️',
+                                },
+                                {
+                                  key: 'tint',
+                                  label: 'Tint',
+                                  value: processOptions.tint,
+                                  icon: '🎨',
+                                },
+                                {
+                                  key: 'contrast',
+                                  label: 'Contrast',
+                                  value: processOptions.contrast,
+                                  icon: '⚡',
+                                },
+                                {
+                                  key: 'vibrance',
+                                  label: 'Vibrance',
+                                  value: processOptions.vibrance,
+                                  icon: '🌈',
+                                },
+                                {
+                                  key: 'moodiness',
+                                  label: 'Moodiness',
+                                  value: processOptions.moodiness,
+                                  icon: '🎭',
+                                },
+                                {
+                                  key: 'saturationBias',
+                                  label: 'Saturation Bias',
+                                  value: processOptions.saturationBias,
+                                  icon: '🎪',
+                                },
                               ].map(
                                 setting =>
                                   setting.value !== undefined && (
@@ -507,7 +537,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                         borderColor: 'grey.200',
                                       }}
                                     >
-                                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 1 }}>
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: 0.5,
+                                          mb: 1,
+                                        }}
+                                      >
                                         <Typography variant="body2" sx={{ fontSize: '16px' }}>
                                           {setting.icon}
                                         </Typography>
@@ -523,10 +561,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                         sx={{
                                           fontWeight: 700,
                                           color: 'primary.main',
-                                          fontSize: '18px'
+                                          fontSize: '18px',
                                         }}
                                       >
-                                        {setting.key === 'tint' ? setting.value + 50 : setting.value}
+                                        {setting.key === 'tint'
+                                          ? (setting.value + 50)
+                                          : setting.key === 'warmth'
+                                          ? ((setting.value ?? 50) - 50)
+                                          : setting.value}
                                       </Typography>
                                     </Paper>
                                   )
@@ -542,7 +584,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     borderColor: 'grey.200',
                                   }}
                                 >
-                                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 1 }}>
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: 0.5,
+                                      mb: 1,
+                                    }}
+                                  >
                                     <Typography variant="body2" sx={{ fontSize: '16px' }}>
                                       🎞️
                                     </Typography>
@@ -1036,10 +1086,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       elevation={1}
                       sx={{ p: 4, background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)' }}
                     >
-                      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                        XMP Sidecar Export
-                      </Typography>
-
                       <Box sx={{ mb: 3 }}>
                         <FormControlLabel
                           control={

@@ -3,6 +3,8 @@ import * as path from 'path';
 import sharp from 'sharp';
 import { app } from 'electron';
 import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
+import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
+import { generateXMPContent as generateXMPContentImpl } from './xmp-generator';
 import { SettingsService } from './settings-service';
 
 export interface StyleMatchOptions {
@@ -213,7 +215,7 @@ export class ImageProcessor {
       const presetPath = path.join(presetsDir, `FotoRecipeWizard-${timestamp}.xmp`);
 
       // Generate XMP preset content
-      const xmpContent = this.generateXMPContent(data.adjustments, data.include);
+      const xmpContent = generateXMPContentImpl(data.adjustments, data.include);
       await fs.writeFile(presetPath, xmpContent, 'utf8');
 
       console.log('[PROCESSOR] Lightroom preset saved to:', presetPath);
@@ -529,39 +531,7 @@ export class ImageProcessor {
   }
 
   generateLUTContent(aiAdjustments: AIColorAdjustments, size: number = 33, format: string = 'cube'): string {
-    console.log('[LUT] Generating LUT content:', { size, format, hasAdjustments: !!aiAdjustments });
-
-    // Sanitize and clamp adjustment values
-    const clamp = (v: any, min: number, max: number): number => {
-      if (typeof v !== 'number' || !Number.isFinite(v)) return 0;
-      return Math.max(min, Math.min(max, v));
-    };
-
-    // Extract and normalize key adjustments
-    const adjustments = {
-      exposure: clamp(aiAdjustments.exposure, -5, 5),
-      temperature: clamp(aiAdjustments.temperature, 2000, 50000),
-      tint: clamp(aiAdjustments.tint, -150, 150),
-      contrast: clamp(aiAdjustments.contrast, -100, 100) / 100,
-      highlights: clamp(aiAdjustments.highlights, -100, 100) / 100,
-      shadows: clamp(aiAdjustments.shadows, -100, 100) / 100,
-      whites: clamp(aiAdjustments.whites, -100, 100) / 100,
-      blacks: clamp(aiAdjustments.blacks, -100, 100) / 100,
-      vibrance: clamp(aiAdjustments.vibrance, -100, 100) / 100,
-      saturation: clamp(aiAdjustments.saturation, -100, 100) / 100,
-      clarity: clamp(aiAdjustments.clarity, -100, 100) / 100,
-    };
-
-    // Generate LUT based on format
-    if (format === 'cube') {
-      return this.generateCubeLUT(adjustments, size);
-    } else if (format === '3dl') {
-      return this.generate3DLLUT(adjustments, size);
-    } else if (format === 'lut') {
-      return this.generateDaVinciLUT(adjustments, size);
-    } else {
-      throw new Error(`Unsupported LUT format: ${format}`);
-    }
+    return generateLUTContentImpl(aiAdjustments, size, format);
   }
 
   private generateCubeLUT(adjustments: any, size: number): string {
@@ -649,12 +619,13 @@ Mesh ${size} ${size} ${size}
     let newG = g;
     let newB = b;
 
-    // Apply white balance (temperature and tint) first - this is likely the blue tint issue
+    // Apply white balance (temperature and tint) first
     if (adjustments.temperature !== 5000 || adjustments.tint !== 0) {
       // Convert temperature to color temperature multipliers
       // Simplified approximation - cooler temps increase blue, warmer increase red/yellow
-      const tempNormalized = (adjustments.temperature - 5000) / 2000; // -1.5 to 22.5 range
-      const tintNormalized = adjustments.tint / 150; // -1 to 1 range
+      // Clamp normalization to [-1, 1] to avoid extreme color casts
+      const tempNormalized = Math.max(-1, Math.min(1, (adjustments.temperature - 5000) / 2000));
+      const tintNormalized = Math.max(-1, Math.min(1, adjustments.tint / 150));
 
       // Apply temperature correction (simplified)
       if (tempNormalized < 0) {

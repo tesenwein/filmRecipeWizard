@@ -343,8 +343,15 @@ class FotoRecipeWizardApp {
         }
         const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
         const signed = (v?: number) => (typeof v === 'number' ? v : undefined);
-        if (options.warmth !== undefined) optionsHintParts.push(`Warmth: ${pct(options.warmth)}`);
-        if (options.tint !== undefined) optionsHintParts.push(`Tint: ${signed(options.tint)}`);
+        if (options.warmth !== undefined) {
+          const w = Math.max(0, Math.min(100, Number(options.warmth)));
+          const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
+          optionsHintParts.push(`White Balance Warmth Bias: ${warmthBias} (negative=cool, positive=warm)`);
+        }
+        if (options.tint !== undefined) {
+          const t = Math.max(-50, Math.min(50, Number(options.tint)));
+          optionsHintParts.push(`Tint Bias: ${t} (negative=green, positive=magenta)`);
+        }
         if (options.contrast !== undefined) optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);
         if (options.vibrance !== undefined) optionsHintParts.push(`Vibrance: ${pct(options.vibrance)}`);
         if (options.moodiness !== undefined) optionsHintParts.push(`Moodiness: ${pct(options.moodiness)}`);

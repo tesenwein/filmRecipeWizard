@@ -55,8 +55,8 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
         {/* Essential Controls */}
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🌡️ Warmth</span>
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>{styleOptions?.warmth ?? 50}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>❄️ Cool ↔ Warm 🌞</span>
+            <span style={{ fontSize: 11, color: '#9ca3af' }}>{(styleOptions?.warmth ?? 50) - 50}</span>
           </Box>
           <Slider
             size="small"
@@ -64,6 +64,13 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
             onChange={(_, v) => onStyleOptionsChange?.({ warmth: v as number })}
             min={0}
             max={100}
+            marks={[
+              { value: 0, label: 'Cool' },
+              { value: 50, label: 'Neutral' },
+              { value: 100, label: 'Warm' },
+            ]}
+            valueLabelDisplay="auto"
+            valueLabelFormat={(v) => `${(v as number) - 50}`}
             color="primary"
           />
         </Box>

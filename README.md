@@ -1,279 +1,261 @@
-# Foto Recipe Wizard ✨
+# Foto Recipe Wizard
 
-> **AI-Powered Photo Recipe Creator for Professional Workflows**
+[![Build and Release](https://github.com/tesenwein/fotoRecipeWizard/actions/workflows/build-and-release.yml/badge.svg)](https://github.com/tesenwein/fotoRecipeWizard/actions/workflows/build-and-release.yml)
+[![PR Validation](https://github.com/tesenwein/fotoRecipeWizard/actions/workflows/pr-check.yml/badge.svg)](https://github.com/tesenwein/fotoRecipeWizard/actions/workflows/pr-check.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tesenwein/fotoRecipeWizard)](https://github.com/tesenwein/fotoRecipeWizard/releases)
+[![Platform Support](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)](https://github.com/tesenwein/fotoRecipeWizard/releases)
 
-Transform your photo editing workflow with intelligent AI-driven color recipe creation. Foto Recipe Wizard helps photographers, designers, and content creators achieve consistent color grading across multiple images by analyzing reference photos and generating professional-grade Lightroom presets.
+> **AI-Powered Color Recipe Creation for Professional Photography**
 
-![Foto Recipe Wizard Screenshot](docs/images/app-screenshot.png)
+Transform your photo editing workflow with intelligent AI-driven color recipe creation. Foto Recipe Wizard helps photographers achieve consistent, professional color grading by analyzing reference photos and generating industry-standard Lightroom presets and 3D LUTs.
 
-## 🚀 Key Features
+![Foto Recipe Wizard Interface](https://raw.githubusercontent.com/tesenwein/fotoRecipeWizard/master/docs/images/app-overview.png)
 
-### 🤖 **AI-Powered Analysis**
+## ✨ Key Features
 
+### 🤖 **AI-Powered Color Intelligence**
 - **OpenAI Vision Integration**: Advanced computer vision for precise color analysis
-- **Intelligent Color Matching**: AI understands artistic intent, not just pixel values
+- **Intelligent Style Matching**: AI understands artistic intent beyond pixel values
 - **Confidence Scoring**: Each analysis includes AI confidence ratings
-- **Natural Language Reasoning**: AI explains its color decisions in plain English
+- **Natural Language Reasoning**: AI explains color decisions in plain English
 
 ### 🎨 **Professional Color Grading**
-
-- **Complete Lightroom Integration**: Generate industry-standard XMP presets
+- **Lightroom XMP Export**: Industry-standard preset generation
+- **3D LUT Generation**: .cube, .3dl, and DaVinci .lut formats
 - **Advanced HSL Controls**: Precise hue, saturation, and luminance adjustments
-- **Color Grading Wheels**: Professional shadows, midtones, and highlights control
-- **Tone Curve Adjustments**: Custom parametric and point curve modifications
+- **Complete Tone Control**: Exposure, highlights, shadows, whites, blacks
+- **Color Grading Wheels**: Professional shadows, midtones, and highlights
 
-### 📁 **Flexible Workflow**
+### 🎭 **Artistic Style Presets**
+- **Famous Photographers**: Annie Leibovitz, Ansel Adams, Henri Cartier-Bresson, and more
+- **Film Stock Emulation**: Kodak Portra, Fuji Velvia, Ilford HP5, and classic cinema stocks
+- **Fine-Tune Controls**: Warmth, tint, contrast, vibrance, moodiness, and film grain
 
-- **Recipe Management**: Save, organize, and revisit your color recipe sessions
-- **Version Control**: Generate multiple variations with the same source images
-- **Batch Processing**: Match colors across multiple images simultaneously
-- **History Tracking**: Complete recipe history with timestamps and metadata
+### 📁 **Recipe Management**
+- **Recipe History**: Save and revisit your color recipe sessions
+- **Version Control**: Generate multiple variations with the same images
+- **Recipe Images**: Use branding or film pack images to identify recipes
+- **Metadata Preservation**: Complete recipe history with AI analysis notes
 
 ### 🖼️ **Universal Format Support**
-
 - **RAW Formats**: DNG, CR2, CR3, NEF, ARW, ORF, RW2, RAF, and more
-- **Standard Formats**: JPEG, PNG, TIFF, WebP
-- **Smart Previews**: Automatic preview generation for unsupported display formats
-- **Non-Destructive**: Original files remain untouched
+- **Standard Formats**: JPEG, PNG, TIFF, WebP, HEIC
+- **Smart Previews**: Automatic preview generation for all formats
+- **Non-Destructive**: Original files remain completely untouched
 
-## 📥 Installation
+## 📦 Download & Installation
 
-### Option 1: Download Release (Recommended)
+### Quick Install
 
-1. Visit the [Releases page](https://github.com/your-repo/fotoRecipeWizard/releases)
-2. Download the latest `.dmg` file for macOS
-3. Drag Foto Recipe Wizard to your Applications folder
-4. Launch and enter your OpenAI API key when prompted
+Choose your platform and download the latest release:
 
-### Option 2: Build from Source
+| Platform | Download | Format |
+|----------|----------|--------|
+| **macOS** | [Download DMG](https://github.com/tesenwein/fotoRecipeWizard/releases/latest) | Universal (Intel + Apple Silicon) |
+| **Windows** | [Download EXE](https://github.com/tesenwein/fotoRecipeWizard/releases/latest) | Installer |
+
+### System Requirements
+
+- **macOS**: 10.15 (Catalina) or later
+- **Windows**: Windows 10 version 1903 or later
+- **Memory**: 4GB RAM minimum, 8GB recommended
+- **Storage**: 200MB free space
+- **Internet**: Required for AI processing (OpenAI API)
+
+## 🔑 Setup
+
+### OpenAI API Key (Required)
+
+1. Visit [OpenAI API Keys](https://platform.openai.com/api-keys)
+2. Create a new API key
+3. Launch Foto Recipe Wizard → Settings → Enter API key
+4. Your key is stored locally and encrypted
+
+**Pricing**: ~$0.01-0.05 per image analysis • [OpenAI Pricing Details](https://openai.com/pricing)
+
+## 🚀 Quick Start
+
+### 1. Create Your First Recipe
+- Launch the app and click **"Create New Recipe"**
+- The AI Color Matching Studio opens with professional interface
+
+### 2. Configure Your Style
+- **Recipe Image**: Upload a branding image or film pack (optional)
+- **Target Images**: Select photos to process (drag & drop supported)
+- **Style Prompt**: Describe your desired look in natural language
+- **Artistic Styles**: Choose from famous photographers (Leibovitz, Adams, etc.)
+- **Film Styles**: Select from classic film stocks (Portra 400, Velvia 50, etc.)
+- **Fine-Tune**: Adjust warmth, tint, contrast, vibrance, and moodiness
+
+### 3. AI Processing
+- Click **"Start Processing"** to begin AI analysis
+- Real-time progress with status updates
+- AI generates professional color adjustments
+
+### 4. Review & Export
+- **Overview Tab**: See AI analysis, confidence scores, and applied settings
+- **Adjustments Tab**: Detailed breakdown of all color modifications
+- **Lightroom Export**: Generate XMP sidecars for Lightroom/Photoshop
+- **LUT Export**: Create 3D LUTs for DaVinci, Final Cut Pro, and other software
+
+## 🎯 Professional Workflows
+
+### Portrait Photography
+```
+Recipe Image: Studio lighting reference
+Target Images: Portrait session batch
+Style: "Natural skin tones, warm highlights"
+Export: XMP presets for Lightroom batch processing
+```
+
+### Wedding Photography
+```
+Recipe Image: Film stock branding
+Artistic Style: Irving Penn
+Film Style: Kodak Portra 400
+Fine-Tune: Warmth +20, Moodiness +15
+```
+
+### Commercial Photography
+```
+Style Prompt: "Brand-consistent colors, clean whites"
+Export: 3D LUTs for video color grading
+Target: Product photography batch
+```
+
+## 🛠️ Development
+
+### Build from Source
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-repo/fotoRecipeWizard.git
+# Clone repository
+git clone https://github.com/tesenwein/fotoRecipeWizard.git
 cd fotoRecipeWizard
 
 # Install dependencies
 npm install
 
-# Build and run
-npm run build
-npm start
-```
-
-## 🔑 Setup Requirements
-
-### OpenAI API Key (Required)
-
-Foto Recipe Wizard requires an OpenAI API key for AI-powered color analysis:
-
-1. Visit [OpenAI API Keys](https://platform.openai.com/api-keys)
-2. Create a new API key
-3. Launch Foto Recipe Wizard and enter your key in Settings
-4. Your key is stored locally and never shared
-
-**Cost**: Typical usage costs ~$0.01-0.05 per image analysis.
-
-## 📖 How to Use
-
-### Quick Start Guide
-
-1. **🏠 Launch Foto Recipe Wizard**
-
-   - The app opens to your recipe history
-   - Click "Create First Recipe" to get started
-
-2. **📂 Select Your Images**
-
-   - Choose a **reference image** (the style you want to match)
-   - Select **target images** (photos to apply the style to)
-   - Supports drag-and-drop for easy file selection
-
-3. **🤖 AI Analysis**
-
-   - Click "Start Processing" to begin AI analysis
-   - Watch real-time progress as AI analyzes color relationships
-   - Review confidence scores and AI reasoning
-
-4. **🎛️ Export Settings**
-
-   - Choose which adjustments to include in your Lightroom preset
-   - Options: Basic adjustments, HSL, Color Grading, Tone Curves, etc.
-   - Click "Export XMP" to save your Lightroom preset
-
-5. **📁 Recipe Management**
-   - All recipes are automatically saved
-   - Generate new versions with "New Processing Session"
-   - Access your history anytime from the home screen
-
-### Advanced Workflows
-
-#### **For Portrait Photographers**
-
-- Use consistent studio lighting shots as references
-- Match skin tones across wedding or event photo series
-- Create signature color looks for your brand
-
-#### **For Content Creators**
-
-- Establish consistent brand colors across social media
-- Match product photos to brand guidelines
-- Create cohesive Instagram feed aesthetics
-
-#### **For Wedding Photographers**
-
-- Match ceremony and reception lighting conditions
-- Create consistent albums across different venues
-- Develop signature wedding color grades
-
-## 🛠️ Technical Architecture
-
-### Built With Modern Technologies
-
-- **Electron**: Cross-platform desktop application framework
-- **TypeScript**: Full type safety and modern JavaScript features
-- **React**: Component-based UI with Material-UI components
-- **Sharp**: High-performance image processing
-- **OpenAI GPT-4 Vision**: State-of-the-art computer vision API
-
-### Project Structure
-
-```
-src/
-├── main/                    # Electron main process
-│   ├── main.ts             # Application entry point
-│   ├── image-processor.ts  # AI-powered image analysis
-│   ├── settings-service.ts # Persistent settings management
-│   └── storage-service.ts  # Recipe data persistence
-├── renderer/               # React UI components
-│   ├── components/         # Reusable UI components
-│   ├── styles/            # CSS styling
-│   └── index.tsx          # UI entry point
-├── services/              # Shared business logic
-│   └── openai-color-analyzer.ts # OpenAI API integration
-└── shared/               # Type definitions and utilities
-    └── types.ts          # TypeScript interfaces
-```
-
-## 🔧 Development
-
-### Prerequisites
-
-- **Node.js** 18 or higher
-- **npm** 8 or higher
-- **OpenAI API Key**
-
-### Development Scripts
-
-```bash
-# Start development server with hot reload
+# Development with hot reload
 npm run dev
 
 # Build for production
 npm run build
 
-# Run tests
-npm test
-
-# Lint and fix code
-npm run lint
-
-# Type checking
-npm run typecheck
-
-# Check for unused dependencies
-npm run knip
-
 # Package for distribution
-npm run package:mac:dmg
+npm run package:mac        # macOS
+npm run package            # All supported platforms
 ```
 
-### Code Quality Standards
+### Development Scripts
 
-- **ESLint**: Enforced code style and best practices
-- **TypeScript**: Strict type checking enabled
-- **Prettier**: Consistent code formatting
-- **Knip**: Unused dependency detection
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development with hot reload |
+| `npm run build` | Build for production |
+| `npm run typecheck` | TypeScript validation |
+| `npm run lint` | Code linting and fixes |
+| `npm run knip` | Find unused dependencies |
+| `npm test` | Run test suite |
+| `npm run package:mac:dmg` | Create macOS DMG installer |
 
-### Contributing
+### Tech Stack
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and ensure all tests pass
-4. Commit with conventional commits: `git commit -m 'feat: add amazing feature'`
-5. Push to your fork: `git push origin feature/amazing-feature`
-6. Submit a Pull Request
+- **Framework**: Electron + TypeScript
+- **UI**: React + Material-UI (MUI)
+- **Image Processing**: Sharp (high-performance)
+- **AI**: OpenAI GPT-4 Vision API
+- **Build**: webpack + electron-builder
 
-## 🎯 Roadmap
+## 🔄 CI/CD Pipeline
+
+This project uses GitHub Actions for automated building and releasing:
+
+- **Conventional Commits**: `feat:`, `fix:`, `chore:` trigger appropriate version bumps
+- **Multi-Platform Builds**: Automatic macOS and Windows builds
+- **Semantic Versioning**: Automated version management
+- **Release Creation**: GitHub releases with changelogs and download links
+- **PR Validation**: Automated testing and code quality checks
+
+### Commit Convention
+
+```bash
+feat: add new LUT export feature       # Minor version bump
+fix: resolve blue tinting in LUTs      # Patch version bump
+chore: update dependencies             # No version bump (dev build)
+docs: update README                    # No version bump (dev build)
+
+# Breaking changes trigger major version bump
+feat!: redesign color processing API
+```
+
+## 📊 Project Status
+
+### Current Version: 1.0.0
+- ✅ Core AI color matching functionality
+- ✅ Lightroom XMP export
+- ✅ 3D LUT generation (.cube, .3dl, .lut)
+- ✅ Recipe management system
+- ✅ Professional artistic and film style presets
+- ✅ Multi-platform support (macOS, Windows)
 
 ### Planned Features
+- [ ] Batch preset application to new images
+- [ ] Cloud recipe syncing
+- [ ] Advanced AI model options
+- [ ] Video color matching support
+- [ ] Collaborative recipe sharing
+- [ ] GPU acceleration for faster processing
 
-- [ ] **Batch Preset Application**: Apply saved presets to new image batches
-- [ ] **Advanced AI Models**: Support for specialized photography AI models
-- [ ] **Color Palette Extraction**: Generate brand color palettes from images
-- [ ] **Video Color Matching**: Extend color matching to video files
-- [ ] **Cloud Sync**: Sync recipes across devices
-- [ ] **Collaborative Features**: Share recipes with team members
-
-### Performance Improvements
-
-- [ ] **GPU Acceleration**: Leverage Metal/CUDA for faster processing
-- [ ] **Streaming Processing**: Handle large image batches more efficiently
-- [ ] **Caching**: Intelligent caching for faster re-processing
-
-## 🐛 Troubleshooting
+## 🆘 Support
 
 ### Common Issues
 
-**"API key not configured" error**
+**Installation**
+- **macOS**: If blocked by Gatekeeper, right-click → Open, then click "Open" in dialog
+- **Windows**: Windows Defender may flag unsigned executable - click "More info" → "Run anyway"
 
-- Ensure you've entered a valid OpenAI API key in Settings
-- Check your API key has sufficient credits
-- Verify internet connection for API calls
+**API Issues**
+- **"API key not configured"**: Enter valid OpenAI API key in Settings
+- **"Insufficient credits"**: Check OpenAI billing and add credits
+- **"Network error"**: Verify internet connection
 
-**Slow processing times**
+**Performance**
+- **Slow processing**: Normal processing time is 10-30 seconds per image
+- **Memory issues**: Ensure 8GB+ RAM for large RAW files
+- **Preview not loading**: Some formats require conversion (processing unaffected)
 
-- Processing time depends on image size and complexity
-- Typical processing: 10-30 seconds per image
-- RAW files may take longer than JPEG
+### Get Help
 
-**Preview not showing**
+- 🐛 **[Report Issues](https://github.com/tesenwein/fotoRecipeWizard/issues/new?template=bug_report.md)**
+- 💡 **[Request Features](https://github.com/tesenwein/fotoRecipeWizard/issues/new?template=feature_request.md)**
+- 💬 **[GitHub Discussions](https://github.com/tesenwein/fotoRecipeWizard/discussions)**
+- 📖 **[Documentation](https://github.com/tesenwein/fotoRecipeWizard/wiki)**
 
-- Some RAW formats require conversion for preview
-- Original processing is unaffected by preview issues
-- Try using JPEG files to test the workflow first
+## 🤝 Contributing
 
-**Export fails**
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-- Ensure you have write permissions to the export directory
-- Check available disk space
-- Verify Lightroom preset export options are selected
-
-### Getting Help
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/your-repo/fotoRecipeWizard/issues)
-- **Documentation**: Check the `/docs` folder for detailed guides
-- **Community**: Join discussions in GitHub Discussions
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/amazing-feature`
+3. Follow conventional commits: `git commit -m 'feat: add amazing feature'`
+4. Push changes: `git push origin feat/amazing-feature`
+5. Open a Pull Request
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **OpenAI** for providing the GPT-4 Vision API that powers our AI analysis
-- **Sharp** library for high-performance image processing
-- **Electron** team for the excellent desktop app framework
-- **Material-UI** for beautiful, accessible UI components
-- Photography community for feedback and feature suggestions
-
-## 🌟 Star History
-
-If you find Foto Recipe Wizard helpful, please consider giving it a star on GitHub!
-
-[![Star History Chart](https://api.star-history.com/svg?repos=your-repo/fotoRecipeWizard&type=Date)](https://star-history.com/#your-repo/fotoRecipeWizard&Date)
+- **[OpenAI](https://openai.com)** for GPT-4 Vision API
+- **[Sharp](https://sharp.pixelplumbing.com)** for high-performance image processing
+- **[Electron](https://electronjs.org)** for cross-platform desktop framework
+- **[Material-UI](https://mui.com)** for beautiful React components
+- Photography community for invaluable feedback and testing
 
 ---
 
-**Made with ❤️ for photographers, by photographers**
+**Transform your photo editing workflow with AI-powered color intelligence.**
 
-_Transform your photo editing workflow with AI-powered color intelligence._
+*Made with ❤️ for photographers, by photographers*
