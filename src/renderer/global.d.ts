@@ -36,6 +36,11 @@ declare global {
       matchStyle: (data: any) => Promise<any>;
       generatePreset: (data: any) => Promise<any>;
       downloadXMP: (data: any) => Promise<any>;
+      generateLUT: (data: any) => Promise<any>;
+
+      // Recipe import/export
+      exportRecipe: (processId: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
+      importRecipe: () => Promise<{ success: boolean; count?: number; error?: string }>;
       
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;

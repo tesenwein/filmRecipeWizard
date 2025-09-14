@@ -754,6 +754,148 @@ class FotoRecipeWizardApp {
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
+
+    // Export a recipe (process) to a ZIP file
+    ipcMain.handle('export-recipe', async (_event, processId: string) => {
+      try {
+        if (!processId) throw new Error('No processId provided');
+        const process = await this.storageService.getProcess(processId);
+        if (!process) throw new Error('Recipe not found');
+
+        // Suggest a friendly default filename
+        const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
+        const rawName = (process.name || aiName || `Recipe-${process.id || 'export'}`).toString();
+        const safeName = rawName.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+
+        const saveRes = await dialog.showSaveDialog({
+          title: 'Export Recipe (ZIP)',
+          defaultPath: `${safeName || 'Recipe'}.frw.zip`,
+          filters: [
+            { name: 'Foto Recipe Wizard Zip', extensions: ['zip'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+        if (saveRes.canceled || !saveRes.filePath) {
+          return { success: false, error: 'Export canceled' };
+        }
+
+        // Build ZIP contents
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip();
+
+        // Write manifest with embedded base64 images and results
+        const manifest = {
+          schema: 'foto-recipe-wizard@1',
+          exportedAt: new Date().toISOString(),
+          process: process,
+        };
+        zip.addFile('recipe.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
+
+        // Also export images as files for convenience
+        if (process.baseImageData) {
+          const buf = Buffer.from(process.baseImageData, 'base64');
+          zip.addFile('images/base.jpg', buf);
+        }
+        if (Array.isArray(process.targetImageData)) {
+          process.targetImageData.forEach((b64, idx) => {
+            try {
+              const buf = Buffer.from(b64, 'base64');
+              zip.addFile(`images/target-${idx + 1}.jpg`, buf);
+            } catch {
+              // Ignore individual failures
+            }
+          });
+        }
+
+        // Optionally include XMP presets for each successful result
+        try {
+          const results = Array.isArray(process.results) ? process.results : [];
+          results.forEach((r, idx) => {
+            const adj = r?.metadata?.aiAdjustments;
+            if (!adj) return;
+            const include = {
+              wbBasic: true,
+              hsl: true,
+              colorGrading: true,
+              curves: true,
+              sharpenNoise: true,
+              vignette: true,
+              pointColor: true,
+              grain: true,
+              exposure: false,
+              masks: false,
+            } as any;
+            const xmp = this.imageProcessor.generateXMPContent(adj as any, include);
+            const name = (adj as any)?.preset_name as string | undefined;
+            const safePreset = (name || `Preset-${idx + 1}`)
+              .replace(/[^A-Za-z0-9 _-]+/g, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .replace(/\s/g, '-');
+            zip.addFile(`presets/${safePreset || `Preset-${idx + 1}`}.xmp`, Buffer.from(xmp, 'utf8'));
+          });
+        } catch (e) {
+          console.warn('[IPC] export-recipe: failed to add XMP presets:', e);
+        }
+
+        // Write out the zip
+        zip.writeZip(saveRes.filePath);
+        console.log('[IPC] export-recipe completed:', { filePath: saveRes.filePath });
+        return { success: true, filePath: saveRes.filePath };
+      } catch (error) {
+        console.error('[IPC] Error exporting recipe:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Import a recipe ZIP and add to history
+    ipcMain.handle('import-recipe', async () => {
+      try {
+        const openRes = await dialog.showOpenDialog({
+          title: 'Import Recipe (ZIP)',
+          filters: [
+            { name: 'ZIP Files', extensions: ['zip'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+          properties: ['openFile']
+        });
+        if (openRes.canceled || openRes.filePaths.length === 0) {
+          return { success: false, error: 'Import canceled' };
+        }
+
+        const filePath = openRes.filePaths[0];
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip(filePath);
+        const entry = zip.getEntry('recipe.json');
+        if (!entry) throw new Error('Invalid recipe file: recipe.json not found');
+        const json = entry.getData().toString('utf8');
+        const parsed = JSON.parse(json);
+        const process = parsed?.process;
+        if (!process || !Array.isArray(process.results)) {
+          throw new Error('Invalid recipe manifest');
+        }
+
+        // Normalize and assign a new id/timestamp to avoid collisions
+        const newId = this.storageService.generateProcessId();
+        const imported = {
+          id: newId,
+          timestamp: new Date().toISOString(),
+          name: process.name,
+          prompt: process.prompt,
+          userOptions: process.userOptions,
+          results: process.results,
+          baseImageData: process.baseImageData,
+          targetImageData: process.targetImageData,
+        } as any;
+
+        await this.storageService.addProcess(imported);
+        console.log('[IPC] import-recipe completed:', { id: newId });
+        return { success: true, count: 1 };
+      } catch (error) {
+        console.error('[IPC] Error importing recipe:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
   }
 }
 

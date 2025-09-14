@@ -1,4 +1,5 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DownloadIcon from '@mui/icons-material/Download';
 import {
   Button,
   Card,
@@ -82,7 +83,20 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
             Past color matching sessions
           </Typography>
         </Grid>
-        <Grid>
+        <Grid style={{ display: 'flex', gap: 8 }}>
+          <Button
+            variant="outlined"
+            onClick={async () => {
+              const res = await window.electronAPI.importRecipe();
+              if (res.success) {
+                await loadHistory();
+              } else if (res.error && res.error !== 'Import canceled') {
+                alert(`Import failed: ${res.error}`);
+              }
+            }}
+          >
+            Import Zip
+          </Button>
           <Button variant="contained" onClick={onNewProcess}>
             New Recipe
           </Button>
@@ -109,6 +123,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
           {history.map((process, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={process.id}>
               <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
+                {/* Delete icon (top-left) */}
                 <IconButton
                   aria-label="Delete"
                   size="small"
@@ -138,6 +153,41 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                     fontSize="small"
                     sx={{ color: '#ef4444', transition: 'color 0.2s ease' }}
                   />
+                </IconButton>
+
+                {/* Export icon (top-right) */}
+                <IconButton
+                  aria-label="Export"
+                  size="small"
+                  onClick={async e => {
+                    e.stopPropagation();
+                    const res = await window.electronAPI.exportRecipe(process.id);
+                    if (!res.success && res.error && res.error !== 'Export canceled') {
+                      alert(`Export failed: ${res.error}`);
+                    }
+                  }}
+                  title="Export Zip"
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: 'none',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      '& .MuiSvgIcon-root': {
+                        color: 'white',
+                      },
+                    },
+                  }}
+                >
+                  <DownloadIcon fontSize="small" sx={{ color: '#3b82f6' }} />
                 </IconButton>
                 <CardActionArea
                   onClick={() => {
@@ -198,7 +248,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                       onOpenRecipe(process);
                     }}
                   >
-                    Open Recipe
+                    Open
                   </Button>
                 </CardContent>
               </Card>
