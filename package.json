@@ -1,6 +1,6 @@
 {
   "name": "foto-recipe-wizard",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Create and apply photo recipes with AI-powered color grading and DNG RAW processing support",
   "main": "dist/main/main.js",
   "scripts": {
@@ -86,10 +86,9 @@
     "mac": {
       "category": "public.app-category.photography",
       "icon": "build/icons/icon.png",
-      "hardenedRuntime": true,
+      "identity": null,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
@@ -125,6 +124,12 @@
     "win": {
       "target": "nsis",
       "icon": "build/icons/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "packElevateHelper": false
     }
   }
 }
