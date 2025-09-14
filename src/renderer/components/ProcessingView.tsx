@@ -73,7 +73,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
       <Box sx={{ textAlign: 'center', mb: 3 }}>
         <Typography variant="h3" sx={{ mb: 1 }}>✨</Typography>
         <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
-          Processing Image
+          Applying Recipe
         </Typography>
         <Box sx={{ maxWidth: 420, mx: 'auto', width: '100%', mb: 1 }}>
           <LinearProgress variant="indeterminate" />

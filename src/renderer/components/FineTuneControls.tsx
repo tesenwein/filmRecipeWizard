@@ -1,5 +1,6 @@
 import TuneIcon from '@mui/icons-material/Tune';
-import { Button, FormControlLabel, Slider, Switch, Box, Paper } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Slider, Switch, Box, Paper, Chip, Button } from '@mui/material';
 import React, { useState } from 'react';
 
 interface StyleOptions {
@@ -31,32 +32,29 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
   const [expandedSettings, setExpandedSettings] = useState(false);
 
   return (
-    <Paper className="card slide-in" sx={{ p: 2.5, animationDelay: '0.15s' }}>
-      <Box sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        mb: 2,
-        cursor: 'pointer'
-      }}
-      onClick={() => setExpandedSettings(!expandedSettings)}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <TuneIcon sx={{ color: 'primary.main', fontSize: 20 }} />
-          <Box>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>
-              Fine Tune
-            </h3>
-            <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
-              Adjust color parameters
-            </p>
+    <Paper className="card slide-in" sx={{ p: 0, animationDelay: '0.15s' }}>
+      <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2.5, py: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+            <TuneIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+            <Box sx={{ flex: 1 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>
+                Fine Tune
+              </h3>
+              <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
+                Adjust color parameters
+              </p>
+            </Box>
+            <Chip label="Optional" size="small" variant="outlined" />
           </Box>
-        </Box>
-        <Button size="small" variant="text" color="primary">
-          {expandedSettings ? 'Less' : 'More'}
-        </Button>
-      </Box>
-
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pt: 0, pb: 2.5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+            <Chip size="small" variant="outlined" label={expandedSettings ? 'Advanced controls' : 'Essential controls'} sx={{ mr: 1 }} />
+            <Button size="small" variant="text" onClick={() => setExpandedSettings(!expandedSettings)}>
+              {expandedSettings ? 'Less' : 'More'}
+            </Button>
+          </Box>
       <Box sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -173,6 +171,8 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
           </>
         )}
       </Box>
+        </AccordionDetails>
+      </Accordion>
     </Paper>
   );
 };
