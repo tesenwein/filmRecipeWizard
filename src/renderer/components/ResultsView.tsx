@@ -327,9 +327,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {successfulResults.map((result, index) => {
                   const aiName = result?.metadata?.aiAdjustments &&
                     (result.metadata.aiAdjustments as any).preset_name;
-                  const name = typeof aiName === 'string' && aiName.trim().length > 0
-                    ? aiName
-                    : `Image ${index + 1}`;
+                  let name: string;
+                  if (typeof aiName === 'string' && aiName.trim().length > 0) {
+                    const extras: string[] = [];
+                    const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
+                    const film = (processOptions as any)?.filmStyle?.name as string | undefined;
+                    if (artist && artist.trim().length > 0) extras.push(artist.trim());
+                    if (film && film.trim().length > 0) extras.push(film.trim());
+                    name = extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
+                  } else {
+                    name = `Image ${index + 1}`;
+                  }
                   return (
                     <Chip
                       key={index}
@@ -384,18 +392,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             {!baseImageDataUrl && processId && (
                               <Tooltip title="Add reference image">
                                 <IconButton
-                                  size="large"
+                                  size="medium"
                                   onClick={handleAttachBaseImage}
                                   className="no-drag"
                                   sx={{
                                     position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
+                                    top: 12,
+                                    left: 12,
                                     backgroundColor: 'rgba(255,255,255,0.95)',
                                     backdropFilter: 'blur(10px)',
                                     '&:hover': { backgroundColor: 'rgba(255,255,255,1)' },
-                                    boxShadow: 3
+                                    boxShadow: 2
                                   }}
                                 >
                                   <AddPhotoAlternateOutlinedIcon />
@@ -413,7 +420,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             fontWeight: 600,
                             color: 'primary.main'
                           }}>
-                            Processed Result
+                            Original Image
                           </Typography>
                           <Box sx={{
                             width: '100%',
