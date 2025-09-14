@@ -3,8 +3,6 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PaletteIcon from '@mui/icons-material/Palette';
-import PhotoFilterIcon from '@mui/icons-material/PhotoFilter';
-import SettingsIcon from '@mui/icons-material/Settings';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
   Accordion,
@@ -694,9 +692,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                           <Typography
                             variant="h6"
-                            sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                            sx={{ fontWeight: 600 }}
                           >
-                            <SettingsIcon color="action" />
                             Processing Context
                           </Typography>
                         </AccordionSummary>
@@ -778,9 +775,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography
                           variant="h6"
-                          sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                          sx={{ fontWeight: 600 }}
                         >
-                          <PhotoFilterIcon color="action" />
                           Basic Adjustments
                         </Typography>
                       </AccordionSummary>
