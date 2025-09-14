@@ -314,7 +314,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           >
             <Tab icon={<CompareArrowsIcon />} label="Overview" iconPosition="start" />
             <Tab icon={<TuneIcon />} label="Adjustments Details" iconPosition="start" />
-            <Tab icon={<DownloadIcon />} label="Export Options" iconPosition="start" />
+            <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
           </Tabs>
 
@@ -482,63 +482,85 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             <Box
                               sx={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                                gap: 1.5,
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                gap: 2,
                               }}
                             >
                               {[
-                                { key: 'warmth', label: 'Warmth', value: processOptions.warmth },
-                                { key: 'tint', label: 'Tint', value: processOptions.tint },
-                                {
-                                  key: 'contrast',
-                                  label: 'Contrast',
-                                  value: processOptions.contrast,
-                                },
-                                {
-                                  key: 'vibrance',
-                                  label: 'Vibrance',
-                                  value: processOptions.vibrance,
-                                },
-                                {
-                                  key: 'moodiness',
-                                  label: 'Moodiness',
-                                  value: processOptions.moodiness,
-                                },
-                                {
-                                  key: 'saturationBias',
-                                  label: 'Saturation Bias',
-                                  value: processOptions.saturationBias,
-                                },
+                                { key: 'warmth', label: 'Warmth', value: processOptions.warmth, icon: '🌡️' },
+                                { key: 'tint', label: 'Tint', value: processOptions.tint, icon: '🎨' },
+                                { key: 'contrast', label: 'Contrast', value: processOptions.contrast, icon: '⚡' },
+                                { key: 'vibrance', label: 'Vibrance', value: processOptions.vibrance, icon: '🌈' },
+                                { key: 'moodiness', label: 'Moodiness', value: processOptions.moodiness, icon: '🎭' },
+                                { key: 'saturationBias', label: 'Saturation Bias', value: processOptions.saturationBias, icon: '🎪' },
                               ].map(
                                 setting =>
                                   setting.value !== undefined && (
-                                    <Box key={setting.key} sx={{ textAlign: 'center' }}>
+                                    <Paper
+                                      key={setting.key}
+                                      variant="outlined"
+                                      sx={{
+                                        p: 2,
+                                        textAlign: 'center',
+                                        backgroundColor: 'grey.50',
+                                        border: '1px solid',
+                                        borderColor: 'grey.200',
+                                      }}
+                                    >
+                                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 1 }}>
+                                        <Typography variant="body2" sx={{ fontSize: '16px' }}>
+                                          {setting.icon}
+                                        </Typography>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                        >
+                                          {setting.label}
+                                        </Typography>
+                                      </Box>
                                       <Typography
-                                        variant="caption"
-                                        sx={{ color: 'text.secondary', display: 'block' }}
+                                        variant="h6"
+                                        sx={{
+                                          fontWeight: 700,
+                                          color: 'primary.main',
+                                          fontSize: '18px'
+                                        }}
                                       >
-                                        {setting.label}
+                                        {setting.key === 'tint' ? setting.value + 50 : setting.value}
                                       </Typography>
-                                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                        {setting.key === 'tint'
-                                          ? setting.value + 50
-                                          : setting.value}
-                                      </Typography>
-                                    </Box>
+                                    </Paper>
                                   )
                               )}
                               {processOptions.filmGrain !== undefined && (
-                                <Box sx={{ textAlign: 'center' }}>
-                                  <Typography
-                                    variant="caption"
-                                    sx={{ color: 'text.secondary', display: 'block' }}
-                                  >
-                                    Film Grain
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {processOptions.filmGrain ? 'On' : 'Off'}
-                                  </Typography>
-                                </Box>
+                                <Paper
+                                  variant="outlined"
+                                  sx={{
+                                    p: 2,
+                                    textAlign: 'center',
+                                    backgroundColor: 'grey.50',
+                                    border: '1px solid',
+                                    borderColor: 'grey.200',
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 1 }}>
+                                    <Typography variant="body2" sx={{ fontSize: '16px' }}>
+                                      🎞️
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                    >
+                                      Film Grain
+                                    </Typography>
+                                  </Box>
+                                  <Chip
+                                    label={processOptions.filmGrain ? 'On' : 'Off'}
+                                    color={processOptions.filmGrain ? 'success' : 'default'}
+                                    variant="filled"
+                                    size="small"
+                                    sx={{ fontWeight: 600 }}
+                                  />
+                                </Paper>
                               )}
                             </Box>
                           </Box>
@@ -999,7 +1021,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   </Box>
                 )}
 
-                {/* Tab Panel 3: Export Options */}
+                {/* Tab Panel 3: Lightroom Export */}
                 {activeTab === 2 && (
                   <Box>
                     <Typography
@@ -1007,7 +1029,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
                     >
                       <DownloadIcon color="primary" />
-                      Export Options
+                      Lightroom Export
                     </Typography>
 
                     <Paper

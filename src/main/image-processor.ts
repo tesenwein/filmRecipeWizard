@@ -645,28 +645,71 @@ Mesh ${size} ${size} ${size}
   }
 
   private applyColorTransform(r: number, g: number, b: number, adjustments: any): [number, number, number] {
-    // Apply exposure adjustment
-    let newR = r * Math.pow(2, adjustments.exposure);
-    let newG = g * Math.pow(2, adjustments.exposure);
-    let newB = b * Math.pow(2, adjustments.exposure);
+    let newR = r;
+    let newG = g;
+    let newB = b;
 
-    // Apply basic tone curve adjustments (simplified)
-    if (adjustments.contrast !== 0) {
-      const contrast = 1 + adjustments.contrast * 0.5;
-      newR = Math.pow(newR, contrast);
-      newG = Math.pow(newG, contrast);
-      newB = Math.pow(newB, contrast);
+    // Apply white balance (temperature and tint) first - this is likely the blue tint issue
+    if (adjustments.temperature !== 5000 || adjustments.tint !== 0) {
+      // Convert temperature to color temperature multipliers
+      // Simplified approximation - cooler temps increase blue, warmer increase red/yellow
+      const tempNormalized = (adjustments.temperature - 5000) / 2000; // -1.5 to 22.5 range
+      const tintNormalized = adjustments.tint / 150; // -1 to 1 range
+
+      // Apply temperature correction (simplified)
+      if (tempNormalized < 0) {
+        // Cooler - reduce red, increase blue
+        newR *= (1 + tempNormalized * 0.2);
+        newB *= (1 - tempNormalized * 0.1);
+      } else {
+        // Warmer - increase red/yellow, reduce blue
+        newR *= (1 + tempNormalized * 0.1);
+        newG *= (1 + tempNormalized * 0.05);
+        newB *= (1 - tempNormalized * 0.1);
+      }
+
+      // Apply tint correction (green-magenta)
+      if (tintNormalized > 0) {
+        // More magenta
+        newR *= (1 + tintNormalized * 0.05);
+        newB *= (1 + tintNormalized * 0.05);
+        newG *= (1 - tintNormalized * 0.05);
+      } else {
+        // More green
+        newG *= (1 - tintNormalized * 0.05);
+      }
     }
 
-    // Apply highlight/shadow adjustments (simplified)
+    // Apply exposure adjustment
+    if (adjustments.exposure !== 0) {
+      const exposureFactor = Math.pow(2, adjustments.exposure);
+      newR *= exposureFactor;
+      newG *= exposureFactor;
+      newB *= exposureFactor;
+    }
+
+    // Apply contrast adjustment (fixed power curve)
+    if (adjustments.contrast !== 0) {
+      const contrast = adjustments.contrast > 0 ? (1 + adjustments.contrast) : (1 / (1 - adjustments.contrast));
+      newR = Math.pow(Math.max(0, newR), contrast);
+      newG = Math.pow(Math.max(0, newG), contrast);
+      newB = Math.pow(Math.max(0, newB), contrast);
+    }
+
+    // Apply highlight/shadow adjustments (improved)
     const luminance = 0.299 * newR + 0.587 * newG + 0.114 * newB;
-    if (luminance > 0.7 && adjustments.highlights !== 0) {
-      const factor = 1 + adjustments.highlights * 0.3;
+
+    if (adjustments.highlights !== 0 && luminance > 0.5) {
+      const highlightMask = Math.pow((luminance - 0.5) * 2, 2); // Smooth curve for highlights
+      const factor = 1 + (adjustments.highlights * highlightMask * 0.5);
       newR *= factor;
       newG *= factor;
       newB *= factor;
-    } else if (luminance < 0.3 && adjustments.shadows !== 0) {
-      const factor = 1 + adjustments.shadows * 0.3;
+    }
+
+    if (adjustments.shadows !== 0 && luminance < 0.5) {
+      const shadowMask = Math.pow((0.5 - luminance) * 2, 2); // Smooth curve for shadows
+      const factor = 1 + (adjustments.shadows * shadowMask * 0.5);
       newR *= factor;
       newG *= factor;
       newB *= factor;
@@ -681,16 +724,20 @@ Mesh ${size} ${size} ${size}
       newB = gray + (newB - gray) * satFactor;
     }
 
-    // Apply vibrance (affects less saturated colors more)
+    // Apply vibrance (fixed calculation)
     if (adjustments.vibrance !== 0) {
-      const vibFactor = 1 + adjustments.vibrance * 0.5;
-      const maxChannel = Math.max(newR, newG, newB);
-      const satLevel = 1 - (3 * maxChannel - newR - newG - newB);
-      const vibAdjust = 1 + adjustments.vibrance * satLevel * 0.5;
       const gray = 0.299 * newR + 0.587 * newG + 0.114 * newB;
-      newR = gray + (newR - gray) * vibAdjust;
-      newG = gray + (newG - gray) * vibAdjust;
-      newB = gray + (newB - gray) * vibAdjust;
+      const maxChannel = Math.max(newR, newG, newB);
+      const minChannel = Math.min(newR, newG, newB);
+      const currentSaturation = maxChannel > 0 ? (maxChannel - minChannel) / maxChannel : 0;
+
+      // Vibrance affects less saturated colors more
+      const vibranceEffect = (1 - currentSaturation) * adjustments.vibrance * 0.5;
+      const vibFactor = 1 + vibranceEffect;
+
+      newR = gray + (newR - gray) * vibFactor;
+      newG = gray + (newG - gray) * vibFactor;
+      newB = gray + (newB - gray) * vibFactor;
     }
 
     // Clamp values to valid range
