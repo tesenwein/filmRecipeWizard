@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 import { ProcessingResult } from '../../shared/types';
-import Base64Image from './Base64Image';
+import SingleImage from './SingleImage';
 
 interface ProcessedImageCardProps {
   result: ProcessingResult;
@@ -105,7 +105,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
               position: 'relative',
             }}
           >
-            <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Base" />
+            <SingleImage source={baseImageDataUrl || undefined} alt="Base" fit="contain" />
             {!baseImageDataUrl && processId && (
               <Tooltip title="Add base image">
                 <IconButton
@@ -155,7 +155,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
             }}
           >
             {targetImageDataUrl ? (
-              <Base64Image dataUrl={targetImageDataUrl} alt={`Processed image ${index + 1}`} />
+              <SingleImage source={targetImageDataUrl} alt={`Processed image ${index + 1}`} fit="contain" />
             ) : (
               <Box
                 sx={{
