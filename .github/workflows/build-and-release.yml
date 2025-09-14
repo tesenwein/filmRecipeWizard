@@ -103,9 +103,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install semver
-        run: npm install semver
-
       - name: Determine version
         id: version
         run: |
@@ -117,22 +114,10 @@ jobs:
             # Create prerelease version with commit SHA
             SHORT_SHA=$(git rev-parse --short HEAD)
             NEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
-          elif [ "$VERSION_BUMP" = "none" ]; then
-            # Version already bumped manually, use current version
+          else
+            # Version already bumped manually, use current version from package.json
             NEW_VERSION="$CURRENT_VERSION"
             VERSION_BUMPED=false
-          elif [ "$VERSION_BUMP" != "none" ]; then
-            # Calculate what the new version would be (for release naming)
-            if [ "$VERSION_BUMP" = "major" ]; then
-              NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'major')")
-            elif [ "$VERSION_BUMP" = "minor" ]; then
-              NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'minor')")
-            elif [ "$VERSION_BUMP" = "patch" ]; then
-              NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'patch')")
-            fi
-            VERSION_BUMPED=true
-          else
-            NEW_VERSION="$CURRENT_VERSION"
           fi
 
           echo "Current version: $CURRENT_VERSION"
@@ -188,7 +173,7 @@ jobs:
       # macOS builds
       - name: Build macOS app
         if: matrix.platform == 'mac'
-        run: npm run package:mac:dmg
+        run: npm run package:mac:universal
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false # Disable code signing for CI
           CSC_LINK: ""
