@@ -1,0 +1,282 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background-color: #FAFBFF;
+  color: #333333;
+  line-height: 1.6;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: auto; /* ensure app remains scrollable even if body is locked */
+  background: radial-gradient(1200px 800px at 80% -200px, rgba(102,126,234,0.08), transparent 60%),
+              radial-gradient(900px 600px at -200px -200px, rgba(118,75,162,0.06), transparent 60%),
+              #FAFBFF;
+}
+
+/* Base component styles */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  /* Extra top padding to avoid macOS window controls overlap */
+  padding: 48px 20px 20px;
+}
+
+/* Results view should use full available width */
+.container.results {
+  max-width: 100%;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 2px;
+  box-shadow: none;
+  border: none;
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: none;
+}
+
+.card:hover {
+  box-shadow: none;
+}
+
+/* Titlebar / drag region for a more native feel */
+.drag-region {
+  -webkit-app-region: drag;
+  height: 28px;
+}
+.no-drag { -webkit-app-region: no-drag; }
+
+/* Always-on top draggable strip to allow moving window even when modals are open */
+.global-drag-strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 28px; /* match traffic light area */
+  -webkit-app-region: drag;
+  /* Keep below MUI dialogs to avoid blocking inputs */
+  z-index: 1000;
+  /* Do not intercept clicks/typing; dragging still works on explicit drag regions */
+  pointer-events: none;
+  /* transparent, no visual impact */
+}
+
+.button {
+  background: linear-gradient(135deg, #5b6670 0%, #3d4853 100%);
+  color: white;
+  border: none;
+  border-radius: 2px;
+  padding: 16px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: none;
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.button:disabled {
+  background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+  color: #999999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.button:disabled::before {
+  display: none;
+}
+
+.button-secondary {
+  background: white;
+  color: #5b6670;
+  border: none;
+  border-radius: 2px;
+  padding: 16px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: none;
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+}
+
+.button-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(91, 102, 112, 0.08), transparent);
+  transition: left 0.5s;
+}
+
+.button-secondary:hover {
+  background: #f8f9fa;
+  transform: none;
+  box-shadow: none;
+}
+
+.button-secondary:hover::before {
+  left: 100%;
+}
+
+.button-secondary:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555555;
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 2px;
+  font-size: 14px;
+  transition: none;
+  background: #ffffff;
+}
+
+.input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #5b6670 0%, #3d4853 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.status-message {
+  font-size: 14px;
+  color: #666666;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+}
+
+.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .container {
+    /* Keep extra top space on smaller screens as well */
+    padding: 44px 16px 16px;
+  }
+  
+  .card {
+    padding: 20px;
+  }
+}
+
+/* Animation utilities */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
