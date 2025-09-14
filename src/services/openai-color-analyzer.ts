@@ -146,9 +146,11 @@ export class OpenAIColorAnalyzer {
 
     console.log('[AI] Starting AI-powered color analysis');
 
-    // Use provided base64 data or convert from file paths
-    const baseImageB64 = baseImagePath
-      ? baseImageBase64 || (await this.convertToBase64Jpeg(baseImagePath))
+    // Use provided base64 data first; otherwise, convert from file path if available
+    const baseImageB64 = baseImageBase64
+      ? baseImageBase64
+      : baseImagePath
+      ? await this.convertToBase64Jpeg(baseImagePath)
       : undefined;
     const targetImageB64 = targetImageBase64 || (await this.convertToBase64Jpeg(targetImagePath));
 
@@ -172,7 +174,7 @@ export class OpenAIColorAnalyzer {
 3. For portraits, ensure a match in skin tone and backdrop
 4. For landscapes, ensure a match in overall scene mood and lighting, specifically sky and foliage colors
 
-Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET Foto Recipe Wizard the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
+Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET IMAGE match the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
 
 Additionally, provide a short, human-friendly preset_name we can use for the XMP preset and the recipe title. Naming rules:
 - 2–4 words, Title Case, descriptive of the look and Artist or Film type if provided (e.g., “Warm Sunset Glow”, “Soft Mono Film”).
@@ -911,7 +913,7 @@ Additionally, propose up to 3 local adjustment masks (radial or linear) that sub
         const adjustments = JSON.parse(jsonMatch[0]) as AIColorAdjustments;
         console.log('[AI] Parsed adjustments from text fallback');
         return adjustments;
-      } catch (e) {
+      } catch {
         console.warn('[AI] Failed to parse JSON from text fallback');
       }
     }

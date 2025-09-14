@@ -29,7 +29,7 @@ const Settings: React.FC = () => {
             setMasked(true);
           }
         }
-      } catch (e) {
+      } catch {
         setStatus({ type: 'error', msg: 'Failed to load settings' });
       }
     };
@@ -50,7 +50,7 @@ const Settings: React.FC = () => {
       } else {
         setStatus({ type: 'error', msg: res.error || 'Failed to save settings' });
       }
-    } catch (e) {
+    } catch {
       setStatus({ type: 'error', msg: 'Failed to save settings' });
     }
   };
@@ -67,7 +67,7 @@ const Settings: React.FC = () => {
       } else {
         setStatus({ type: 'error', msg: res.error || 'Failed to clear key' });
       }
-    } catch (e) {
+    } catch {
       setStatus({ type: 'error', msg: 'Failed to clear key' });
     }
   };

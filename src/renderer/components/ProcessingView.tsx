@@ -15,11 +15,10 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   processingState,
   baseImage,
   targetImages,
-  prompt,
 }) => {
   const { status } = processingState;
   // Convert base image for display if unsupported
-  const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
+  const [, setBaseDisplay] = useState<string | null>(null);
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
