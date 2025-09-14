@@ -17,6 +17,8 @@ export interface ProcessHistory {
   id: string;
   timestamp: string;
   name?: string;
+  // Optional freeform text prompt used instead of a reference image
+  prompt?: string;
   baseImage?: string;
   targetImages?: string[];
   results: ProcessingResult[];

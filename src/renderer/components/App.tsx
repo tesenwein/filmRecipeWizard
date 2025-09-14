@@ -30,6 +30,7 @@ const App: React.FC = () => {
     progress: 0,
     status: ''
   });
+  const [prompt, setPrompt] = useState<string>('');
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [currentStep, setCurrentStep] = useState<'history' | 'upload' | 'processing' | 'results'>('history');
   const [currentProcessId, setCurrentProcessId] = useState<string | null>(null);
@@ -65,17 +66,18 @@ const App: React.FC = () => {
   };
 
   const handleStartProcessing = async () => {
-    if (!baseImage || targetImages.length === 0) return;
+    if ((!baseImage && (!prompt || prompt.trim() === '')) || targetImages.length === 0) return;
 
     // Save process to storage (converts to base64 and persists only base64 + results)
     let newProcessId: string | null = null;
     let returnedBase64: { base?: string | null; targets?: string[] } = {};
     try {
       const processData = {
-        baseImage,
+        baseImage: baseImage || undefined,
         targetImages,
-        results: []
-      };
+        results: [],
+        prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
+      } as any;
       
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
@@ -108,6 +110,7 @@ const App: React.FC = () => {
         targetIndex: 0,
         baseImageData: returnedBase64.base || undefined,
         targetImageData: returnedBase64.targets || undefined,
+        prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
       });
     }
   };
@@ -170,6 +173,7 @@ const App: React.FC = () => {
     setCurrentProcessId(null);
     setCurrentStep('upload');
     setIsNewProcessingSession(false);
+    setPrompt('');
     setProcessingState({
       isProcessing: false,
       progress: 0,
@@ -183,7 +187,7 @@ const App: React.FC = () => {
 
   const handleNewProcessingSession = async () => {
     // Keep the same images but create a new processing session
-    if (!baseImage || targetImages.length === 0) return;
+    if ((!baseImage && (!prompt || prompt.trim() === '')) || targetImages.length === 0) return;
     
     setResults([]);
     setCurrentProcessId(null);
@@ -199,10 +203,11 @@ const App: React.FC = () => {
     let newProcessId: string | null = null;
     try {
       const processData = {
-        baseImage,
+        baseImage: baseImage || undefined,
         targetImages,
-        results: []
-      };
+        results: [],
+        prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
+      } as any;
       
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
@@ -221,7 +226,11 @@ const App: React.FC = () => {
 
     // Start processing through IPC
     if (newProcessId) {
-      window.electronAPI.processWithStoredImages({ processId: newProcessId, targetIndex: 0 });
+      window.electronAPI.processWithStoredImages({
+        processId: newProcessId,
+        targetIndex: 0,
+        prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
+      });
     }
   };
 
@@ -402,6 +411,8 @@ const App: React.FC = () => {
                 onStartProcessing={handleStartProcessing}
                 baseImage={baseImage}
                 targetImages={targetImages}
+                prompt={prompt}
+                onPromptChange={setPrompt}
               />
             </div>
           )}
@@ -411,6 +422,7 @@ const App: React.FC = () => {
                 processingState={processingState}
                 baseImage={baseImage}
                 targetImages={targetImages}
+                prompt={prompt}
               />
             </div>
           )}
@@ -420,6 +432,7 @@ const App: React.FC = () => {
                 results={results}
                 baseImage={baseImage}
                 targetImages={targetImages}
+                prompt={prompt}
                 processId={currentProcessId || undefined}
                 onReset={() => {
                   handleReset();
@@ -448,6 +461,7 @@ const App: React.FC = () => {
               results={results}
               baseImage={baseImage}
               targetImages={targetImages}
+              prompt={prompt}
               processId={currentProcessId || undefined}
               onReset={() => {
                 handleReset();

@@ -97,7 +97,7 @@ export class OpenAIColorAnalyzer {
   }
 
   async analyzeColorMatch(
-    baseImagePath: string,
+    baseImagePath: string | undefined,
     targetImagePath: string,
     hint?: string,
     baseImageBase64?: string,
@@ -112,22 +112,24 @@ export class OpenAIColorAnalyzer {
     console.log('[AI] Starting AI-powered color analysis');
 
     // Use provided base64 data or convert from file paths
-    const baseImageB64 = baseImageBase64 || await this.convertToBase64Jpeg(baseImagePath);
+    const baseImageB64 = baseImagePath
+      ? baseImageBase64 || (await this.convertToBase64Jpeg(baseImagePath))
+      : undefined;
     const targetImageB64 = targetImageBase64 || await this.convertToBase64Jpeg(targetImagePath);
 
     let completion;
     try {
       console.log(`[AI] Calling OpenAI API with model: ${this.model}`);
-      completion = await this.openai.chat.completions.create({
-        model: this.model,
-        messages: [
+      // Build content dynamically to support prompt-only flow
+      const userContent: any[] = [];
+      if (hint) {
+        userContent.push({ type: 'text' as const, text: `Hint: ${hint}` });
+      }
+      if (baseImageB64) {
+        userContent.push(
           {
-            role: 'user',
-            content: [
-              ...(hint ? [{ type: 'text' as const, text: `Hint: ${hint}` }] : []),
-              {
-                type: 'text',
-                text: `You are a professional photo editor and colorist. I have two images:
+            type: 'text' as const,
+            text: `You are a professional photo editor and colorist. I have two images:
 
 1. BASE IMAGE: This is the reference photo with the desired color grading, mood, and style
 2. TARGET IMAGE: This is the photo I want to adjust to match the BASE IMAGE's color characteristics
@@ -141,28 +143,43 @@ Additionally, provide a short, human-friendly preset_name we can use for the XMP
 - Do not include words like “Match”, “Target”, “Base”, “AI”, file names, or dates.
 - Avoid special characters (only letters, numbers, spaces, and hyphens).
 - Keep it unique to the style you are proposing.`,
-              },
-              {
-                type: 'text',
-                text: 'BASE IMAGE (reference style):',
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${baseImageB64}`,
-                },
-              },
-              {
-                type: 'text',
-                text: 'TARGET IMAGE (to be adjusted):',
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${targetImageB64}`,
-                },
-              },
-            ],
+          },
+          { type: 'text' as const, text: 'BASE IMAGE (reference style):' },
+          { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${baseImageB64}` } },
+          { type: 'text' as const, text: 'TARGET IMAGE (to be adjusted):' },
+          { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${targetImageB64}` } },
+        );
+      } else {
+        if (!hint || hint.trim().length === 0) {
+          throw new Error('Either a reference image or a prompt is required for analysis.');
+        }
+        userContent.push(
+          {
+            type: 'text' as const,
+            text: `You are a professional photo editor and colorist. I have one image:
+
+• TARGET IMAGE: Apply Lightroom/Camera Raw adjustments to achieve the following style description.
+
+Style description:\n${hint}
+
+Please provide a complete set of adjustments that best produces this look on the target image, including white balance, tone, HSL, curves, and color grading as needed.
+
+Also include a short preset_name following these rules:
+- 2–4 words, Title Case, descriptive of the look
+- Avoid words like “AI”, file names, or dates
+- Only letters, numbers, spaces, and hyphens.`,
+          },
+          { type: 'text' as const, text: 'TARGET IMAGE:' },
+          { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${targetImageB64}` } },
+        );
+      }
+
+      completion = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'user',
+            content: userContent,
           },
         ],
         tools: [

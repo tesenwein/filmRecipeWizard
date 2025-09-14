@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@mui/material';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
+import { Button } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 
 interface ImageUploaderProps {
   onImagesSelected: (baseImage: string, targetImages: string[]) => void;
   onStartProcessing: () => void;
   baseImage: string | null;
   targetImages: string[];
+  prompt: string;
+  onPromptChange: (value: string) => void;
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -15,6 +17,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   onStartProcessing,
   baseImage,
   targetImages,
+  prompt,
+  onPromptChange,
 }) => {
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
@@ -67,7 +71,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
-  const canProcess = baseImage && targetImages.length > 0;
+  const canProcess =
+    (Boolean(baseImage) || (prompt && prompt.trim().length > 0)) && targetImages.length > 0;
 
   // Convert base image for display if unsupported
   useEffect(() => {
@@ -118,6 +123,58 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   return (
     <div className="grid grid-2">
+      {/* Prompt card full width on top */}
+      <div className="card slide-in" style={{ gridColumn: '1 / -1' }}>
+        <div style={{ padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.6)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(17,24,39,0.08)',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>✍️</span>
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#1f2937' }}>
+                Describe the Look (optional)
+              </div>
+              <div style={{ fontSize: 13, color: '#6b7280' }}>
+                Use a prompt if you don’t have a reference image.
+              </div>
+            </div>
+          </div>
+
+          <textarea
+            id="prompt-input"
+            value={prompt}
+            onChange={e => onPromptChange(e.target.value)}
+            placeholder="e.g., Warm golden hour tones, soft contrast, teal shadows, gentle film grain"
+            rows={4}
+            style={{
+              width: '100%',
+              marginTop: 6,
+              resize: 'vertical',
+              borderRadius: 8,
+              border: '1px solid #e5e7eb',
+              padding: 10,
+              fontSize: 14,
+              outline: 'none',
+            }}
+          />
+          <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
+            Provide a brief style description if no reference image.
+          </div>
+        </div>
+      </div>
       <div className="card slide-in">
         <div style={{ textAlign: 'center', padding: '20px' }}>
           <div
@@ -146,7 +203,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               marginBottom: '8px',
             }}
           >
-            Reference Image
+            Reference Image (optional)
           </h3>
           <p
             style={{

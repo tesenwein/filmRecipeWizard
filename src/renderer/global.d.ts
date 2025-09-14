@@ -28,7 +28,7 @@ declare global {
         options: any;
         processId?: string;
       }) => Promise<any[]>;
-      processWithStoredImages: (data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[] }) => Promise<any>;
+      processWithStoredImages: (data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[]; prompt?: string }) => Promise<any>;
       
       processImage: (data: any) => Promise<any>;
       analyzeColors: (imagePath: string) => Promise<any>;

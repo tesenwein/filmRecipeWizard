@@ -6,7 +6,7 @@ import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-colo
 import { SettingsService } from './settings-service';
 
 export interface StyleMatchOptions {
-  baseImagePath: string;
+  baseImagePath?: string;
   targetImagePath: string;
   outputPath?: string;
   matchBrightness?: boolean;
@@ -15,6 +15,7 @@ export interface StyleMatchOptions {
   aiAdjustments?: AIColorAdjustments;
   baseImageBase64?: string;
   targetImageBase64?: string;
+  prompt?: string;
 }
 
 export interface ProcessingResult {
@@ -61,7 +62,7 @@ export class ImageProcessor {
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
-        undefined, // hint
+        data.prompt, // hint/prompt
         data.baseImageBase64,
         data.targetImageBase64
       );
@@ -86,10 +87,11 @@ export class ImageProcessor {
   }
 
   async analyzeColorMatch(data: {
-    baseImagePath: string;
+    baseImagePath?: string;
     targetImagePath: string;
     baseImageBase64?: string;
     targetImageBase64?: string;
+    prompt?: string;
   }): Promise<ProcessingResult> {
     console.log('[PROCESSOR] Starting AI color match analysis');
 
@@ -104,7 +106,7 @@ export class ImageProcessor {
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
-        undefined, // hint
+        data.prompt,
         data.baseImageBase64,
         data.targetImageBase64
       );

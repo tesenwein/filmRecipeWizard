@@ -273,7 +273,7 @@ class ImageMatchApp {
     // Handle processing with stored base64 data from project
     ipcMain.handle('process-with-stored-images', async (
       _event,
-      data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[] }
+      data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[]; prompt?: string }
     ) => {
       console.log('[IPC] process-with-stored-images called with:', {
         processId: data.processId,
@@ -286,13 +286,7 @@ class ImageMatchApp {
         if (!stored) throw new Error('Process not found');
 
         const baseImageData = data.baseImageData || stored.baseImageData;
-        if (!baseImageData) {
-          console.error('[IPC] Missing baseImageData', {
-            inlineProvided: !!data.baseImageData,
-            storedHas: !!stored.baseImageData,
-          });
-          throw new Error('No base image data stored in project');
-        }
+        const prompt = data.prompt ?? stored.prompt;
 
         // Determine which target image to use
         const targetIndex = data.targetIndex || 0;
@@ -311,8 +305,17 @@ class ImageMatchApp {
         // Emit initial progress
         try { this.mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...'); } catch {}
 
+        // Validate inputs: either a base image or a prompt is required
+        if (!baseImageData && (!prompt || String(prompt).trim().length === 0)) {
+          const msg = 'Please provide a reference image or a prompt before processing.';
+          try { this.mainWindow?.webContents.send('processing-progress', 100, `Failed: ${msg}`); } catch {}
+          return { success: false, error: msg } as any;
+        }
+
         // Create temporary files for processing
-        const baseImageTempPath = await this.storageService.base64ToTempFile(baseImageData, 'base.jpg');
+        const baseImageTempPath = baseImageData
+          ? await this.storageService.base64ToTempFile(baseImageData, 'base.jpg')
+          : undefined as unknown as string; // optional
         const targetImageTempPath = await this.storageService.base64ToTempFile(targetImageData, 'target.jpg');
 
         // Process using the image processor
@@ -320,7 +323,9 @@ class ImageMatchApp {
           baseImagePath: baseImageTempPath,
           targetImagePath: targetImageTempPath,
           baseImageBase64: baseImageData,
-          targetImageBase64: targetImageData
+          targetImageBase64: targetImageData,
+          aiAdjustments: undefined,
+          prompt,
         });
 
         try { this.mainWindow?.webContents.send('processing-progress', 100, 'Completed'); } catch {}
@@ -402,6 +407,11 @@ class ImageMatchApp {
           ? data.targetImagePaths[0]
           : undefined;
         if (!targetPath) throw new Error('No target image provided');
+        const prompt = (typeof data?.hint === 'string' && data.hint.trim().length > 0)
+          ? data.hint.trim()
+          : (typeof data?.prompt === 'string' && data.prompt.trim().length > 0)
+            ? data.prompt.trim()
+            : undefined;
 
         this.mainWindow.webContents.send('processing-progress', 5, 'Starting analysis...');
 
@@ -414,6 +424,7 @@ class ImageMatchApp {
             matchBrightness: true,
             matchContrast: true,
             matchSaturation: true,
+            prompt,
             ...data.options,
           });
           this.mainWindow.webContents.send('processing-progress', 100, 'Completed');
@@ -515,15 +526,13 @@ class ImageMatchApp {
           id: processId,
           timestamp: new Date().toISOString(),
           name: (processData as any)?.name,
+          prompt: (processData as any)?.prompt,
           results: Array.isArray(processData.results) ? processData.results : [],
           baseImageData,
           targetImageData,
         } as ProcessHistory;
 
-        // Validate that required images were converted
-        if (!process.baseImageData) {
-          throw new Error('Base image conversion failed. No base image data available.');
-        }
+        // Validate that required images were converted (base image optional when prompt is used)
         if (!Array.isArray(process.targetImageData) || process.targetImageData.length === 0) {
           throw new Error('Target image conversion failed. No target images converted.');
         }

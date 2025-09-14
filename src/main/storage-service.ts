@@ -20,6 +20,7 @@ export class StorageService {
         id: p.id,
         timestamp: p.timestamp,
         name: p.name,
+        prompt: p.prompt,
         results: Array.isArray(p.results) ? p.results : [],
         // Preserve stored base64 image data if present
         baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,

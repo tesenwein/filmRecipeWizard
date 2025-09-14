@@ -25,6 +25,7 @@ interface ResultsViewProps {
   onRestart?: () => void;
   onNewProcessingSession?: () => void;
   processId?: string; // Optional process ID to load base64 image data
+  prompt?: string; // Optional prompt provided in this session
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({
@@ -35,6 +36,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   onRestart,
   onNewProcessingSession,
   processId,
+  prompt,
 }) => {
   // Base64 image data URLs for display
   const [baseImageDataUrl, setBaseImageDataUrl] = useState<string | null>(null);
@@ -59,6 +61,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const successfulResults = results.filter(result => result.success);
   const failedResults = results.filter(result => !result.success);
   const [confirmNewGeneration, setConfirmNewGeneration] = useState(false);
+  const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     console.log('[RESULTS] Render with results', {
@@ -76,27 +79,37 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         // Clear base64 data when no processId
         setBaseImageDataUrl(null);
         setTargetImageDataUrls([]);
+        setProcessPrompt(prompt);
         return;
       }
 
       try {
-        const response = await window.electronAPI.getImageDataUrls(processId);
-        if (response.success) {
-          setBaseImageDataUrl(response.baseImageUrl || null);
-          setTargetImageDataUrls(response.targetImageUrls || []);
+        const [imgResponse, processResponse] = await Promise.all([
+          window.electronAPI.getImageDataUrls(processId),
+          window.electronAPI.getProcess(processId),
+        ]);
+        if (imgResponse.success) {
+          setBaseImageDataUrl(imgResponse.baseImageUrl || null);
+          setTargetImageDataUrls(imgResponse.targetImageUrls || []);
           console.log('[RESULTS] Loaded base64 images for process', processId);
         } else {
-          throw new Error(response.error || 'Failed to load image data URLs');
+          throw new Error(imgResponse.error || 'Failed to load image data URLs');
+        }
+        if (processResponse.success && processResponse.process) {
+          setProcessPrompt(processResponse.process.prompt);
+        } else {
+          setProcessPrompt(prompt);
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
         setBaseImageDataUrl(null);
         setTargetImageDataUrls([]);
+        setProcessPrompt(prompt);
       }
     };
 
     loadBase64Images();
-  }, [processId]);
+  }, [processId, prompt]);
 
   // Derive successful target URLs to keep alignment with displayed cards
   const successfulTargetUrls = useMemo(() => {
@@ -383,6 +396,30 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           {Math.round((result.metadata.aiAdjustments.confidence || 0) * 100)}%
                         </span>
                       </div>
+
+                      {/* Prompt, if available */}
+                      {(processPrompt && processPrompt.trim().length > 0) && (
+                        <>
+                          <Divider sx={{ my: 1 }} />
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
+                            Prompt
+                          </Typography>
+                          <Box
+                            sx={{
+                              mt: 0.5,
+                              fontSize: 12,
+                              color: '#374151',
+                              background: '#ffffff',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: 1,
+                              p: 1.25,
+                              whiteSpace: 'pre-wrap',
+                            }}
+                          >
+                            {processPrompt}
+                          </Box>
+                        </>
+                      )}
 
                       {/* Basic adjustments in 2 columns */}
                       <Box

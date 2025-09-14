@@ -6,12 +6,14 @@ interface ProcessingViewProps {
   processingState: ProcessingState;
   baseImage: string | null;
   targetImages: string[];
+  prompt?: string;
 }
 
 const ProcessingView: React.FC<ProcessingViewProps> = ({
   processingState,
   baseImage,
   targetImages,
+  prompt,
 }) => {
   const { status } = processingState;
   // Convert base image for display if unsupported
@@ -74,7 +76,9 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
           Processing Image
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          AI is analyzing your reference and generating color adjustments.
+          {baseImage
+            ? 'AI is analyzing your reference and generating color adjustments.'
+            : 'AI is applying your prompt and generating color adjustments.'}
         </Typography>
         <Box sx={{ maxWidth: 400, mx: 'auto', width: '100%', mb: 1 }}>
           <LinearProgress variant="indeterminate" />
@@ -88,9 +92,9 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
         <Box>
           <Paper sx={{ p: 2 }}>
             <Typography variant="overline" color="primary">
-              Reference Style
+              {baseImage ? 'Reference Style' : 'Prompt'}
             </Typography>
-            {baseImage && (
+            {baseImage ? (
               <Box
                 sx={{
                   width: '100%',
@@ -109,6 +113,22 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
                   alt="Base image"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  width: '100%',
+                  minHeight: 120,
+                  borderRadius: 2,
+                  border: '1px solid #e5e7eb',
+                  backgroundColor: '#ffffff',
+                  p: 1.5,
+                  fontSize: 14,
+                  color: '#374151',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {prompt && prompt.trim().length > 0 ? prompt : 'No prompt provided'}
               </Box>
             )}
           </Paper>
