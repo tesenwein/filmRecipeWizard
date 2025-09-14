@@ -57,6 +57,11 @@ jobs:
           if [ "${{ github.event.inputs.force_release }}" = "true" ]; then
             SHOULD_RELEASE=true
             VERSION_BUMP="patch"
+          # Check for manual version bump commits (should create proper releases)
+          elif echo "$COMMIT_MSG" | grep -qE "^chore:.*bump version to [0-9]+\.[0-9]+\.[0-9]+"; then
+            SHOULD_RELEASE=true
+            VERSION_BUMP="none"  # Version already bumped manually
+            IS_PRERELEASE=false
           # Check for version-bumping commit types
           elif echo "$COMMIT_MSG" | grep -qE "^(feat|fix|perf)(\(.+\))?\!?:"; then
             SHOULD_RELEASE=true
@@ -112,6 +117,10 @@ jobs:
             # Create prerelease version with commit SHA
             SHORT_SHA=$(git rev-parse --short HEAD)
             NEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
+          elif [ "$VERSION_BUMP" = "none" ]; then
+            # Version already bumped manually, use current version
+            NEW_VERSION="$CURRENT_VERSION"
+            VERSION_BUMPED=false
           elif [ "$VERSION_BUMP" != "none" ]; then
             # Calculate what the new version would be (for release naming)
             if [ "$VERSION_BUMP" = "major" ]; then
