@@ -155,6 +155,7 @@ export class OpenAIColorAnalyzer {
     let completion;
     try {
       console.log(`[AI] Calling OpenAI API with model: ${this.model}`);
+
       // Build content dynamically to support prompt-only flow
       const userContent: any[] = [];
       if (hint) {
@@ -174,7 +175,7 @@ export class OpenAIColorAnalyzer {
 Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET Foto Recipe Wizard the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
 
 Additionally, provide a short, human-friendly preset_name we can use for the XMP preset and the recipe title. Naming rules:
-- 2–4 words, Title Case, descriptive of the look (e.g., “Warm Sunset Glow”, “Soft Mono Film”).
+- 2–4 words, Title Case, descriptive of the look and Artist or Film type if provided (e.g., “Warm Sunset Glow”, “Soft Mono Film”).
 - Do not include words like “Match”, “Target”, “Base”, “AI”, file names, or dates.
 - Avoid special characters (only letters, numbers, spaces, and hyphens).
 - Keep it unique to the style you are proposing.
@@ -194,9 +195,10 @@ Additionally, propose up to 3 local adjustment masks (radial or linear) that sub
         );
       } else {
         // No base/reference: allow prompt-less processing by using a neutral default style
-        const effectiveHint = (hint && hint.trim().length > 0)
-          ? hint
-          : 'Apply natural, balanced color grading with clean contrast, pleasing skin tones, and faithful color.';
+        const effectiveHint =
+          hint && hint.trim().length > 0
+            ? hint
+            : 'Apply natural, balanced color grading with clean contrast, pleasing skin tones, and faithful color.';
         userContent.push(
           {
             type: 'text' as const,
@@ -222,6 +224,21 @@ Additionally, propose up to 3 local adjustment masks (radial or linear) that sub
           }
         );
       }
+
+      // Debug: Log the complete prompt content being sent
+      console.log('[AI] === PROMPT DEBUG START ===');
+      console.log('[AI] Model:', this.model);
+      console.log('[AI] User content parts:', userContent.length);
+      userContent.forEach((content, index) => {
+        if (content.type === 'text') {
+          console.log(`[AI] Text part ${index + 1}:`, content.text);
+        } else if (content.type === 'image_url') {
+          console.log(
+            `[AI] Image part ${index + 1}: Base64 image (${content.image_url.url.length} chars)`
+          );
+        }
+      });
+      console.log('[AI] === PROMPT DEBUG END ===');
 
       completion = await this.openai.chat.completions.create({
         model: this.model,
@@ -855,7 +872,13 @@ Additionally, propose up to 3 local adjustment masks (radial or linear) that sub
       );
     }
 
-    console.log('[AI] OpenAI response:', JSON.stringify(completion.choices[0]?.message, null, 2));
+    // Debug: Log the complete response details
+    console.log('[AI] === RESPONSE DEBUG START ===');
+    console.log('[AI] Model used:', completion.model);
+    console.log('[AI] Usage:', completion.usage);
+    console.log('[AI] Finish reason:', completion.choices[0]?.finish_reason);
+    console.log('[AI] Response message:', JSON.stringify(completion.choices[0]?.message, null, 2));
+    console.log('[AI] === RESPONSE DEBUG END ===');
 
     // Parse tool calls response
     const message = completion.choices[0]?.message;

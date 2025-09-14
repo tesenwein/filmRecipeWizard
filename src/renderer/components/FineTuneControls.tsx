@@ -1,6 +1,16 @@
-import TuneIcon from '@mui/icons-material/Tune';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Slider, Switch, Box, Paper, Chip } from '@mui/material';
+import TuneIcon from '@mui/icons-material/Tune';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Chip,
+  FormControlLabel,
+  Paper,
+  Slider,
+  Switch,
+} from '@mui/material';
 import React from 'react';
 
 interface StyleOptions {
@@ -39,62 +49,89 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>
                 Fine Tune
               </h3>
-              <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
-                Adjust color parameters
-              </p>
+              <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>Adjust color parameters</p>
             </Box>
             <Chip label="Optional" size="small" variant="outlined" />
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pt: 0, pb: 2.5 }}>
-      <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1.5
-      }}>
-        {/* Essential Controls */}
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>❄️ Cool ↔ Warm 🌞</span>
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>{(styleOptions?.warmth ?? 50) - 50}</span>
-          </Box>
-          <Slider
-            size="small"
-            value={styleOptions?.warmth ?? 50}
-            onChange={(_, v) => onStyleOptionsChange?.({ warmth: v as number })}
-            min={0}
-            max={100}
-            marks={[
-              { value: 0, label: 'Cool' },
-              { value: 50, label: 'Neutral' },
-              { value: 100, label: 'Warm' },
-            ]}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(v) => `${(v as number) - 50}`}
-            color="primary"
-          />
-        </Box>
-
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>⚡ Contrast</span>
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>{styleOptions?.contrast ?? 50}</span>
-          </Box>
-          <Slider
-            size="small"
-            value={styleOptions?.contrast ?? 50}
-            onChange={(_, v) => onStyleOptionsChange?.({ contrast: v as number })}
-            min={0}
-            max={100}
-            color="primary"
-          />
-        </Box>
-
-        {/* Additional Controls */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+            }}
+          >
+            {/* Essential Controls */}
             <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 0.5,
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Temperature</span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  {(styleOptions?.warmth ?? 50) - 50}
+                </span>
+              </Box>
+              <Slider
+                size="small"
+                value={styleOptions?.warmth ?? 50}
+                onChange={(_, v) => onStyleOptionsChange?.({ warmth: v as number })}
+                min={0}
+                max={100}
+                marks={[
+                  { value: 0, label: 'Cool' },
+                  { value: 50, label: 'Neutral' },
+                  { value: 100, label: 'Warm' },
+                ]}
+                valueLabelDisplay="auto"
+                valueLabelFormat={v => `${(v as number) - 50}`}
+                color="primary"
+              />
+            </Box>
+
+            <Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 0.5,
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>⚡ Contrast</span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  {styleOptions?.contrast ?? 50}
+                </span>
+              </Box>
+              <Slider
+                size="small"
+                value={styleOptions?.contrast ?? 50}
+                onChange={(_, v) => onStyleOptionsChange?.({ contrast: v as number })}
+                min={0}
+                max={100}
+                color="primary"
+              />
+            </Box>
+
+            {/* Additional Controls */}
+            <Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 0.5,
+                }}
+              >
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🎨 Tint</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>{(styleOptions?.tint ?? 0) + 50}</span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  {(styleOptions?.tint ?? 0) + 50}
+                </span>
               </Box>
               <Slider
                 size="small"
@@ -107,9 +144,18 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
             </Box>
 
             <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 0.5,
+                }}
+              >
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🌈 Vibrance</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>{styleOptions?.vibrance ?? 50}</span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  {styleOptions?.vibrance ?? 50}
+                </span>
               </Box>
               <Slider
                 size="small"
@@ -122,9 +168,20 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
             </Box>
 
             <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🌙 Moodiness</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>{styleOptions?.moodiness ?? 50}</span>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 0.5,
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                  🌙 Moodiness
+                </span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  {styleOptions?.moodiness ?? 50}
+                </span>
               </Box>
               <Slider
                 size="small"
@@ -137,9 +194,20 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
             </Box>
 
             <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🎭 Saturation</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>{styleOptions?.saturationBias ?? 50}</span>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 0.5,
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                  🎭 Saturation
+                </span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  {styleOptions?.saturationBias ?? 50}
+                </span>
               </Box>
               <Slider
                 size="small"
@@ -162,7 +230,7 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
               label="🎞️ Film Grain"
               sx={{ mt: 0.5 }}
             />
-      </Box>
+          </Box>
         </AccordionDetails>
       </Accordion>
     </Paper>
