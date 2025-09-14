@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
-import Base64Image from './Base64Image';
+import SingleImage from './SingleImage';
 
 interface ResultsViewProps {
   results: ProcessingResult[];
@@ -639,14 +639,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           <Box
                             sx={{
                               width: '100%',
-                              height: 300,
+                              height: 400,
                               borderRadius: 2,
                               overflow: 'hidden',
                               position: 'relative',
                               backgroundColor: 'grey.100',
                             }}
                           >
-                            <Base64Image dataUrl={baseImageDataUrl} alt="Recipe" />
+                            <SingleImage source={baseImageDataUrl} alt="Recipe" fit="contain" />
                           </Box>
                         </Paper>
                       ) : (
