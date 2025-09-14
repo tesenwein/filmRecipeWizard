@@ -10,7 +10,7 @@
     "config": ["tsconfig.json", "src/main/tsconfig.json", "src/renderer/tsconfig.json"]
   },
   "eslint": {
-    "config": [".eslintrc.json"]
+    "config": ["eslint.config.js"]
   },
   "prettier": {
     "config": [".prettierrc"]
