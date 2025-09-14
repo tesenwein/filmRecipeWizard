@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/**/*.{ts,tsx}"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["dist/**", "node_modules/**", "scripts/**", "build/**"],
+  "webpack": {
+    "config": ["webpack.renderer.js"]
+  },
+  "typescript": {
+    "config": ["tsconfig.json", "src/main/tsconfig.json", "src/renderer/tsconfig.json"]
+  },
+  "eslint": {
+    "config": [".eslintrc.json"]
+  },
+  "prettier": {
+    "config": [".prettierrc"]
+  },
+  "ignoreBinaries": [],
+  "ignoreExportsUsedInFile": true,
+  "includeEntryExports": false
+}
