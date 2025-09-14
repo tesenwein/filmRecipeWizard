@@ -5,6 +5,7 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TuneIcon from '@mui/icons-material/Tune';
 import PhotoFilterIcon from '@mui/icons-material/PhotoFilter';
+import PaletteIcon from '@mui/icons-material/Palette';
 import {
   Box,
   Button,
@@ -76,6 +77,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // New state for tab management
   const [activeTab, setActiveTab] = useState(0);
   const [selectedResult, setSelectedResult] = useState(0);
+
+  // LUT export state
+  const [lutSize, setLutSize] = useState<'17' | '33' | '65'>('33');
+  const [lutFormat, setLutFormat] = useState<'cube' | '3dl' | 'lut'>('cube');
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -229,6 +234,31 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
+  const handleExportLUT = async (result: ProcessingResult) => {
+    const adjustments = result.metadata?.aiAdjustments;
+    if (!adjustments) return;
+
+    // TODO: Implement generateLUT in electronAPI
+    // For now, show a placeholder message
+    alert(`LUT export requested: ${lutSize}³ ${lutFormat.toUpperCase()} format\nThis feature needs to be implemented in the backend.`);
+
+    /* Backend implementation needed:
+    try {
+      const res = await window.electronAPI.generateLUT({
+        adjustments,
+        size: parseInt(lutSize),
+        format: lutFormat,
+      });
+      if (!res.success) {
+        alert(`LUT export failed: ${res.error}`);
+      }
+    } catch (e) {
+      console.error('LUT export error:', e);
+      alert('LUT export failed.');
+    }
+    */
+  };
+
   return (
     <Box sx={{ maxWidth: '100%', margin: '0 auto' }}>
       {/* Header */}
@@ -302,6 +332,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             <Tab
               icon={<DownloadIcon />}
               label="Export Options"
+              iconPosition="start"
+            />
+            <Tab
+              icon={<PaletteIcon />}
+              label="LUT Export"
               iconPosition="start"
             />
           </Tabs>
@@ -771,6 +806,129 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </Button>
                       </Box>
                     </Paper>
+                  </Box>
+                )}
+
+                {/* Tab Panel 4: LUT Export */}
+                {activeTab === 3 && (
+                  <Box>
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PaletteIcon color="primary" />
+                      LUT Export
+                    </Typography>
+
+                    <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+                      {/* LUT Export Options */}
+                      <Paper elevation={1} sx={{ p: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                          3D LUT Creation
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+                          Generate a 3D LUT file that captures the color transformations from this processing session.
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+                          <Box>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                              LUT Size
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              {[
+                                { value: '17', label: '17³ (Small)' },
+                                { value: '33', label: '33³ (Standard)' },
+                                { value: '65', label: '65³ (High Quality)' }
+                              ].map(option => (
+                                <Chip
+                                  key={option.value}
+                                  label={option.label}
+                                  variant={lutSize === option.value ? 'filled' : 'outlined'}
+                                  color={lutSize === option.value ? 'primary' : 'default'}
+                                  clickable
+                                  onClick={() => setLutSize(option.value as '17' | '33' | '65')}
+                                  sx={{ cursor: 'pointer' }}
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+
+                          <Box>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                              Format
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              {[
+                                { value: 'cube', label: '.cube (Adobe)' },
+                                { value: '3dl', label: '.3dl (Autodesk)' },
+                                { value: 'lut', label: '.lut (DaVinci)' }
+                              ].map(format => (
+                                <Chip
+                                  key={format.value}
+                                  label={format.label}
+                                  variant={lutFormat === format.value ? 'filled' : 'outlined'}
+                                  color={lutFormat === format.value ? 'primary' : 'default'}
+                                  clickable
+                                  onClick={() => setLutFormat(format.value as 'cube' | '3dl' | 'lut')}
+                                  sx={{ cursor: 'pointer' }}
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                        </Box>
+
+                        <Button
+                          variant="contained"
+                          size="large"
+                          startIcon={<PaletteIcon />}
+                          fullWidth
+                          onClick={() => handleExportLUT(result)}
+                          sx={{
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            py: 1.5,
+                          }}
+                        >
+                          Generate {lutSize}³ .{lutFormat} LUT
+                        </Button>
+                      </Paper>
+
+                      {/* LUT Information */}
+                      <Paper elevation={1} sx={{ p: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                          About LUTs
+                        </Typography>
+
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
+                            What is a 3D LUT?
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                            A 3D Lookup Table captures the exact color transformations applied by the AI, allowing you to recreate this look in other software.
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
+                            Compatible Software
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Adobe Lightroom & Photoshop</Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• DaVinci Resolve</Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Final Cut Pro</Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Luminar & Aurora HDR</Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Most video editing software</Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ p: 2, backgroundColor: 'info.light', borderRadius: 1, color: 'info.contrastText' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                            💡 Pro Tip
+                          </Typography>
+                          <Typography variant="body2">
+                            33³ LUTs offer the best balance of quality and file size for most applications.
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    </Box>
                   </Box>
                 )}
               </Box>
