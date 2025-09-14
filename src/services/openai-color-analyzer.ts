@@ -78,7 +78,8 @@ export interface AIColorAdjustments {
   // Local masks proposed by AI
   masks?: Array<{
     name?: string;
-    type: 'radial' | 'linear';
+    // 'person' corresponds to Lightroom's AI Subject/People mask
+    type: 'radial' | 'linear' | 'person';
     adjustments?: {
       local_exposure?: number;
       local_contrast?: number;
@@ -109,6 +110,9 @@ export interface AIColorAdjustments {
     zeroY?: number;
     fullX?: number;
     fullY?: number;
+    // Person mask reference point (normalized 0..1, defaults to 0.5,0.5)
+    referenceX?: number;
+    referenceY?: number;
   }>;
 }
 
@@ -182,7 +186,7 @@ Additionally, provide a short, human-friendly preset_name we can use for the XMP
 - Avoid special characters (only letters, numbers, spaces, and hyphens).
 - Keep it unique to the style you are proposing.
 
-Additionally, propose up to 3 local adjustment masks (radial or linear) that subtly enhance the look (e.g., subject pop, gentle sky soften). Use normalized geometry (0..1) and conservative values.`,
+Additionally, propose up to 3 local adjustment masks (radial, linear, or person/subject). Use normalized geometry (0..1) and conservative values. For person masks, provide a reference point near the face (referenceX/referenceY).`,
           },
           { type: 'text' as const, text: 'BASE IMAGE (reference style):' },
           {
@@ -217,7 +221,7 @@ Also include a short preset_name following these rules:
 - Avoid words like “AI”, file names, or dates
 - Only letters, numbers, spaces, and hyphens.
 
-Additionally, propose up to 3 local adjustment masks (radial or linear) that subtly enhance the look (e.g., subject pop, gentle sky soften). Use normalized geometry (0..1) and conservative values.`,
+Additionally, propose up to 3 local adjustment masks (radial, linear, or person/subject). Use normalized geometry (0..1) and conservative values. For person masks, provide a reference point near the face (referenceX/referenceY).`,
           },
           { type: 'text' as const, text: 'TARGET IMAGE:' },
           {
@@ -823,7 +827,7 @@ Additionally, propose up to 3 local adjustment masks (radial or linear) that sub
                       type: 'object',
                       properties: {
                         name: { type: 'string' },
-                        type: { type: 'string', enum: ['radial', 'linear'] },
+                        type: { type: 'string', enum: ['radial', 'linear', 'person'] },
                         adjustments: {
                           type: 'object',
                           properties: {
@@ -855,6 +859,8 @@ Additionally, propose up to 3 local adjustment masks (radial or linear) that sub
                         zeroY: { type: 'number', minimum: 0, maximum: 1 },
                         fullX: { type: 'number', minimum: 0, maximum: 1 },
                         fullY: { type: 'number', minimum: 0, maximum: 1 },
+                        referenceX: { type: 'number', minimum: 0, maximum: 1 },
+                        referenceY: { type: 'number', minimum: 0, maximum: 1 },
                       },
                       required: ['type'],
                     },
