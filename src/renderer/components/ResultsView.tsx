@@ -5,7 +5,6 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TuneIcon from '@mui/icons-material/Tune';
 import PhotoFilterIcon from '@mui/icons-material/PhotoFilter';
-import PaletteIcon from '@mui/icons-material/Palette';
 import {
   Box,
   Button,
@@ -24,7 +23,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
-  Grid,
   Paper,
 } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -611,8 +609,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {/* HSL Adjustments */}
                     <Accordion sx={{ mb: 2 }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <PaletteIcon color="action" />
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
                           HSL Color Adjustments
                         </Typography>
                       </AccordionSummary>
@@ -689,7 +686,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         />
                       </Box>
 
-                      <Grid container spacing={2}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                         {[
                           { key: 'exposure', label: 'Exposure', description: 'Basic exposure adjustments' },
                           { key: 'wbBasic', label: 'Basic Adjustments', description: 'White balance, contrast, highlights, shadows' },
@@ -702,34 +699,32 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           { key: 'grain', label: 'Film Grain', description: 'Analog film texture simulation' },
                           { key: 'masks', label: 'Masks (Local Adjustments)', description: 'Area-specific modifications' },
                         ].map(opt => (
-                          <Grid item xs={12} sm={6} key={opt.key}>
-                            <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={
-                                      getOptions(index)[
-                                        opt.key as keyof ReturnType<typeof getOptions>
-                                      ] as any
-                                    }
-                                    onChange={() => toggleOption(index, opt.key as any)}
-                                  />
-                                }
-                                label={
-                                  <Box>
-                                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                      {opt.label}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                      {opt.description}
-                                    </Typography>
-                                  </Box>
-                                }
-                              />
-                            </Paper>
-                          </Grid>
+                          <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={
+                                    getOptions(index)[
+                                      opt.key as keyof ReturnType<typeof getOptions>
+                                    ] as any
+                                  }
+                                  onChange={() => toggleOption(index, opt.key as any)}
+                                />
+                              }
+                              label={
+                                <Box>
+                                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                    {opt.label}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                    {opt.description}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                          </Paper>
                         ))}
-                      </Grid>
+                      </Box>
 
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
                         <Button
