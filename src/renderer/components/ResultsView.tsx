@@ -474,7 +474,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           )}
 
                         {/* Fine-tune Settings */}
-                        {processOptions && (
+                        {processOptions &&
+                         (processOptions.warmth !== undefined ||
+                          processOptions.tint !== undefined ||
+                          processOptions.contrast !== undefined ||
+                          processOptions.vibrance !== undefined ||
+                          processOptions.moodiness !== undefined ||
+                          processOptions.saturationBias !== undefined ||
+                          processOptions.filmGrain !== undefined) && (
                           <Box>
                             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                               Fine-tune Settings
