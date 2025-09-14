@@ -14,8 +14,6 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  IconButton,
-  Tooltip,
   Typography,
   Tabs,
   Tab,
@@ -25,7 +23,7 @@ import {
   Chip,
   Paper,
 } from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
 import Base64Image from './Base64Image';
 
@@ -52,7 +50,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 }) => {
   // Base64 image data URLs for display
   const [baseImageDataUrl, setBaseImageDataUrl] = useState<string | null>(null);
-  const [targetImageDataUrls, setTargetImageDataUrls] = useState<string[]>([]);
   const [exportOptions, setExportOptions] = useState<
     Record<
       number,
@@ -99,7 +96,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (!processId) {
         // Clear base64 data when no processId
         setBaseImageDataUrl(null);
-        setTargetImageDataUrls([]);
         setProcessPrompt(prompt);
         return;
       }
@@ -111,7 +107,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         ]);
         if (imgResponse.success) {
           setBaseImageDataUrl(imgResponse.baseImageUrl || null);
-          setTargetImageDataUrls(imgResponse.targetImageUrls || []);
           console.log('[RESULTS] Loaded base64 images for process', processId);
         } else {
           throw new Error(imgResponse.error || 'Failed to load image data URLs');
@@ -125,7 +120,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
         setBaseImageDataUrl(null);
-        setTargetImageDataUrls([]);
         setProcessPrompt(prompt);
         setProcessOptions(undefined);
       }
@@ -163,11 +157,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
-  // Derive successful target URLs to keep alignment with displayed cards
-  const successfulTargetUrls = useMemo(() => {
-    const pairs = results.map((r, i) => ({ ok: r.success, url: targetImageDataUrls[i] }));
-    return pairs.filter(p => p.ok).map(p => p.url);
-  }, [results, targetImageDataUrls]);
 
   const defaultOptions = {
     wbBasic: true,
@@ -365,92 +354,58 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 1: Image Comparison */}
                 {activeTab === 0 && (
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CompareArrowsIcon color="primary" />
-                      Before & After Comparison
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-                      <Box sx={{ flex: 1.2 }}>
-                        <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
-                          <Typography variant="h6" sx={{
-                            display: 'block',
-                            mb: 2,
-                            fontWeight: 600,
-                            color: 'primary.main'
-                          }}>
-                            Recipe Image
-                          </Typography>
-                          <Box sx={{
-                            width: '100%',
-                            height: 450,
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            position: 'relative',
-                            backgroundColor: 'grey.100'
-                          }}>
-                            <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Recipe" />
-                            {!baseImageDataUrl && processId && (
-                              <Tooltip title="Add recipe image">
-                                <IconButton
-                                  size="medium"
-                                  onClick={handleAttachBaseImage}
-                                  className="no-drag"
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 12,
-                                    left: 12,
-                                    backgroundColor: 'rgba(255,255,255,0.95)',
-                                    backdropFilter: 'blur(10px)',
-                                    '&:hover': { backgroundColor: 'rgba(255,255,255,1)' },
-                                    boxShadow: 2
-                                  }}
-                                >
-                                  <AddPhotoAlternateOutlinedIcon />
-                                </IconButton>
-                              </Tooltip>
-                            )}
+                    {baseImageDataUrl ? (
+                      <>
+                        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CompareArrowsIcon color="primary" />
+                          Recipe Image
+                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <Box sx={{ maxWidth: 600, width: '100%' }}>
+                            <Paper elevation={2} sx={{ p: 3 }}>
+                              <Typography variant="h6" sx={{
+                                display: 'block',
+                                mb: 2,
+                                fontWeight: 600,
+                                color: 'primary.main',
+                                textAlign: 'center'
+                              }}>
+                                Recipe Image
+                              </Typography>
+                              <Box sx={{
+                                width: '100%',
+                                height: 450,
+                                borderRadius: 2,
+                                overflow: 'hidden',
+                                position: 'relative',
+                                backgroundColor: 'grey.100'
+                              }}>
+                                <Base64Image dataUrl={baseImageDataUrl} alt="Recipe" />
+                              </Box>
+                            </Paper>
                           </Box>
-                        </Paper>
+                        </Box>
+                      </>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 8 }}>
+                        <Box sx={{ fontSize: '64px', mb: 3, opacity: 0.5 }}>🎨</Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#666', mb: 2 }}>
+                          No Recipe Image
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#999', mb: 4 }}>
+                          Add a recipe image to identify the style used for this processing.
+                        </Typography>
+                        {processId && (
+                          <Button
+                            variant="contained"
+                            onClick={handleAttachBaseImage}
+                            startIcon={<AddPhotoAlternateOutlinedIcon />}
+                          >
+                            Add Recipe Image
+                          </Button>
+                        )}
                       </Box>
-                      <Box sx={{ flex: 0.8 }}>
-                        <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
-                          <Typography variant="h6" sx={{
-                            display: 'block',
-                            mb: 2,
-                            fontWeight: 600,
-                            color: 'text.secondary'
-                          }}>
-                            Original Image
-                          </Typography>
-                          <Box sx={{
-                            width: '100%',
-                            height: 450,
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            position: 'relative',
-                            backgroundColor: 'grey.100'
-                          }}>
-                            {(() => {
-                              const targetUrl = successfulTargetUrls[index];
-                              return targetUrl ? (
-                                <Base64Image dataUrl={targetUrl} alt={`Processed image ${index + 1}`} />
-                              ) : (
-                                <Box sx={{
-                                  width: '100%',
-                                  height: '100%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: 'text.secondary'
-                                }}>
-                                  <Typography>No image available</Typography>
-                                </Box>
-                              );
-                            })()}
-                          </Box>
-                        </Paper>
-                      </Box>
-                    </Box>
+                    )}
                   </Box>
                 )}
 

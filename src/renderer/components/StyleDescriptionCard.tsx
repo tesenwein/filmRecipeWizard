@@ -19,7 +19,18 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
     '🎬 Cinematic',
     '🌸 Soft Pastel',
     '🌊 Moody Ocean',
-    '📽️ Vintage'
+    '📽️ Vintage',
+    '🔥 High Contrast',
+    '🌫️ Desaturated',
+    '🌇 Warm Sunset',
+    '🌌 Cool Blue Hour',
+    '🎞️ Matte Film',
+    '🎨 Punchy Pop',
+    '✨ Soft Glow',
+    '🌿 Earthy Tones',
+    '🫧 Pastel Dream',
+    '🔆 Golden Hour',
+    '🧊 Teal & Orange'
   ];
 
   return (

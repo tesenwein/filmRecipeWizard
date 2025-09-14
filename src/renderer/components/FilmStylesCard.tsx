@@ -40,13 +40,13 @@ const CATALOG: Record<string, FilmStyle[]> = {
     { key: 'lomo_color_400', name: 'Lomography Color 400', category: 'Color Negative', blurb: 'Playful color shifts, strong grain, flexible exposure for fun looks.' },
     { key: 'lomo_800', name: 'Lomography 800', category: 'Color Negative', blurb: 'Night-friendly color with punchy contrast and prominent grain.' },
   ],
-  'Slide (E-6)': [
-    { key: 'kodachrome_64', name: 'Kodachrome 64', category: 'Slide', blurb: 'Rich reds, deep blacks, high micro-contrast, classic vintage slide.' },
-    { key: 'velvia_50', name: 'Fujifilm Velvia 50', category: 'Slide', blurb: 'Super-saturated color, strong contrast, especially vivid greens and reds.' },
-    { key: 'provia_100f', name: 'Fujifilm Provia 100F', category: 'Slide', blurb: 'Neutral color slide, moderate contrast, clean and crisp tones.' },
-    { key: 'velvia_100', name: 'Fujifilm Velvia 100', category: 'Slide', blurb: 'Slightly faster Velvia with bold saturation and high contrast.' },
-    { key: 'astia_100f', name: 'Fujifilm Astia 100F', category: 'Slide', blurb: 'Soft contrast, gentle color, flattering skin tones for fashion.' },
-    { key: 'ektachrome_e100', name: 'Kodak Ektachrome E100', category: 'Slide', blurb: 'Cool-neutral balance, crisp detail, modern slide with clean saturation.' },
+  'Color Positive': [
+    { key: 'kodachrome_64', name: 'Kodachrome 64', category: 'Color Positive', blurb: 'Rich reds, deep blacks, high micro-contrast, classic vintage slide.' },
+    { key: 'velvia_50', name: 'Fujifilm Velvia 50', category: 'Color Positive', blurb: 'Super-saturated color, strong contrast, especially vivid greens and reds.' },
+    { key: 'provia_100f', name: 'Fujifilm Provia 100F', category: 'Color Positive', blurb: 'Neutral color slide, moderate contrast, clean and crisp tones.' },
+    { key: 'velvia_100', name: 'Fujifilm Velvia 100', category: 'Color Positive', blurb: 'Slightly faster Velvia with bold saturation and high contrast.' },
+    { key: 'astia_100f', name: 'Fujifilm Astia 100F', category: 'Color Positive', blurb: 'Soft contrast, gentle color, flattering skin tones for fashion.' },
+    { key: 'ektachrome_e100', name: 'Kodak Ektachrome E100', category: 'Color Positive', blurb: 'Cool-neutral balance, crisp detail, modern slide with clean saturation.' },
   ],
   'Black & White': [
     { key: 'ilford_hp5_400', name: 'Ilford HP5 Plus 400', category: 'B&W', blurb: 'Classic grain, flexible contrast, versatile for street and portrait.' },
