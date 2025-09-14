@@ -291,7 +291,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           >
             <Tab
               icon={<CompareArrowsIcon />}
-              label="Image Comparison"
+              label="Overview"
               iconPosition="start"
             />
             <Tab
@@ -351,61 +351,127 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   display: selectedResult === index ? 'block' : 'none'
                 }}
               >
-                {/* Tab Panel 1: Image Comparison */}
+                {/* Tab Panel 1: Overview */}
                 {activeTab === 0 && (
                   <Box>
-                    {baseImageDataUrl ? (
-                      <>
-                        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <CompareArrowsIcon color="primary" />
-                          Recipe Image
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CompareArrowsIcon color="primary" />
+                      Overview
+                    </Typography>
+
+                    <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: baseImageDataUrl ? '1fr 1fr' : '1fr' } }}>
+                      {/* Basic Information */}
+                      <Paper elevation={1} sx={{ p: 3 }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                          Processing Information
                         </Typography>
-                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                          <Box sx={{ maxWidth: 600, width: '100%' }}>
-                            <Paper elevation={2} sx={{ p: 3 }}>
-                              <Typography variant="h6" sx={{
-                                display: 'block',
-                                mb: 2,
-                                fontWeight: 600,
-                                color: 'primary.main',
-                                textAlign: 'center'
-                              }}>
-                                Recipe Image
+
+                        {/* AI Analysis */}
+                        {result.metadata?.aiAdjustments?.reasoning && (
+                          <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                              AI Analysis
+                            </Typography>
+                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                {result.metadata.aiAdjustments.reasoning}
                               </Typography>
-                              <Box sx={{
-                                width: '100%',
-                                height: 450,
-                                borderRadius: 2,
-                                overflow: 'hidden',
-                                position: 'relative',
-                                backgroundColor: 'grey.100'
-                              }}>
-                                <Base64Image dataUrl={baseImageDataUrl} alt="Recipe" />
-                              </Box>
                             </Paper>
                           </Box>
-                        </Box>
-                      </>
-                    ) : (
-                      <Box sx={{ textAlign: 'center', py: 8 }}>
-                        <Box sx={{ fontSize: '64px', mb: 3, opacity: 0.5 }}>🎨</Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#666', mb: 2 }}>
-                          No Recipe Image
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: '#999', mb: 4 }}>
-                          Add a recipe image to identify the style used for this processing.
-                        </Typography>
-                        {processId && (
-                          <Button
-                            variant="contained"
-                            onClick={handleAttachBaseImage}
-                            startIcon={<AddPhotoAlternateOutlinedIcon />}
-                          >
-                            Add Recipe Image
-                          </Button>
                         )}
-                      </Box>
-                    )}
+
+                        {/* User Prompt */}
+                        {processPrompt && processPrompt.trim().length > 0 && (
+                          <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                              User Prompt
+                            </Typography>
+                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                {processPrompt}
+                              </Typography>
+                            </Paper>
+                          </Box>
+                        )}
+
+                        {/* Processing Stats */}
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                          <Box>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>Confidence</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                              {Math.round((result.metadata?.aiAdjustments?.confidence || 0) * 100)}%
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>Preset Name</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                              {result.metadata?.aiAdjustments && (result.metadata.aiAdjustments as any).preset_name || 'Custom'}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Style Information */}
+                        {processOptions && (processOptions.artistStyle || processOptions.filmStyle) && (
+                          <Box>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                              Applied Styles
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              {processOptions.artistStyle?.name && (
+                                <Chip label={`Artist: ${processOptions.artistStyle.name}`} variant="outlined" />
+                              )}
+                              {processOptions.filmStyle?.name && (
+                                <Chip label={`Film: ${processOptions.filmStyle.name}`} variant="outlined" />
+                              )}
+                            </Box>
+                          </Box>
+                        )}
+                      </Paper>
+
+                      {/* Recipe Image */}
+                      {baseImageDataUrl ? (
+                        <Paper elevation={1} sx={{ p: 3 }}>
+                          <Typography variant="h6" sx={{
+                            mb: 2,
+                            fontWeight: 600,
+                            color: 'primary.main',
+                            textAlign: 'center'
+                          }}>
+                            Recipe Image
+                          </Typography>
+                          <Box sx={{
+                            width: '100%',
+                            height: 300,
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            position: 'relative',
+                            backgroundColor: 'grey.100'
+                          }}>
+                            <Base64Image dataUrl={baseImageDataUrl} alt="Recipe" />
+                          </Box>
+                        </Paper>
+                      ) : (
+                        <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
+                          <Box sx={{ fontSize: '48px', mb: 2, opacity: 0.5 }}>🎨</Box>
+                          <Typography variant="h6" sx={{ fontWeight: 600, color: '#666', mb: 1 }}>
+                            No Recipe Image
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#999', mb: 2 }}>
+                            Add a recipe image to identify the style
+                          </Typography>
+                          {processId && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={handleAttachBaseImage}
+                              startIcon={<AddPhotoAlternateOutlinedIcon />}
+                            >
+                              Add Recipe Image
+                            </Button>
+                          )}
+                        </Paper>
+                      )}
+                    </Box>
                   </Box>
                 )}
 
