@@ -25,6 +25,9 @@ const electronAPI = {
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
   downloadXMP: (data: any) => ipcRenderer.invoke('download-xmp', data),
   generateLUT: (data: any) => ipcRenderer.invoke('generate-lut', data),
+  // Recipe import/export
+  exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
+  importRecipe: () => ipcRenderer.invoke('import-recipe'),
 
   // Progress monitoring
   onProcessingProgress: (callback: (progress: number, status: string) => void) => {
