@@ -23,6 +23,9 @@ export interface StyleOptions {
   saturationBias?: number;
   filmGrain?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
+  // Optional artist and film selections
+  artistStyle?: { key: string; name: string; category: string; blurb: string };
+  filmStyle?: { key: string; name: string; category: string; blurb: string };
 }
 
 export interface ProcessHistory {

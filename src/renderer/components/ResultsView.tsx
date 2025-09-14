@@ -1,20 +1,31 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import SettingsIcon from '@mui/icons-material/Settings';
+import TuneIcon from '@mui/icons-material/Tune';
+import PhotoFilterIcon from '@mui/icons-material/PhotoFilter';
+import PaletteIcon from '@mui/icons-material/Palette';
 import {
   Box,
   Button,
-  Card,
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   FormControlLabel,
-  FormGroup,
   IconButton,
   Tooltip,
   Typography,
+  Tabs,
+  Tab,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip,
+  Grid,
+  Paper,
 } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
@@ -66,6 +77,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [confirmNewGeneration, setConfirmNewGeneration] = useState(false);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
+
+  // New state for tab management
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedResult, setSelectedResult] = useState(0);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
 
   useEffect(() => {
     console.log('[RESULTS] Render with results', {
@@ -206,8 +225,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }));
   };
 
-  // Single-image flow: no bulk apply needed
-
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
     const adjustments = result.metadata?.aiAdjustments;
     if (!adjustments) return;
@@ -225,686 +242,533 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
-  // No preview generation effects
-
   return (
-    <div>
+    <Box sx={{ maxWidth: '100%', margin: '0 auto' }}>
       {/* Header */}
-      <div className="card" style={{ textAlign: 'center' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#222', marginBottom: '6px' }}>
-          Processing complete
-        </h2>
+      <Paper className="card" sx={{ textAlign: 'center', mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#222', mb: 1 }}>
+          Processing Complete
+        </Typography>
         {results.length > 1 ? (
-          <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
+          <Typography variant="body1" sx={{ color: '#555', mb: 2 }}>
             {successfulResults.length} of {results.length} images processed successfully
-          </p>
+          </Typography>
         ) : results.length === 1 ? (
-          <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
+          <Typography variant="body1" sx={{ color: '#555', mb: 2 }}>
             {successfulResults.length === 1 ? 'Image processed successfully' : 'Processing failed'}
-          </p>
+          </Typography>
         ) : null}
 
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
           {onNewProcessingSession ? (
-            <button className="button" onClick={() => setConfirmNewGeneration(true)}>
-              New processing session
-            </button>
+            <Button variant="contained" onClick={() => setConfirmNewGeneration(true)}>
+              New Processing Session
+            </Button>
           ) : (
-            <button className="button" onClick={onReset}>
-              New processing session
-            </button>
+            <Button variant="contained" onClick={onReset}>
+              New Processing Session
+            </Button>
           )}
-        </div>
-      </div>
+        </Box>
+      </Paper>
 
       {/* No Results Message */}
       {results.length === 0 && (
-        <div className="card" style={{ textAlign: 'center', padding: '60px' }}>
-          <div style={{ fontSize: '64px', marginBottom: '24px', opacity: 0.5 }}>📭</div>
-          <h3
-            style={{ fontSize: '24px', fontWeight: '600', color: '#666666', marginBottom: '16px' }}
-          >
+        <Paper className="card" sx={{ textAlign: 'center', py: 8 }}>
+          <Box sx={{ fontSize: '64px', mb: 3, opacity: 0.5 }}>📭</Box>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: '#666', mb: 2 }}>
             No Results Available
-          </h3>
-          <p style={{ fontSize: '16px', color: '#999999', marginBottom: '30px' }}>
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#999', mb: 4 }}>
             This project doesn't have any processing results yet, or they failed to load.
-          </p>
-          <button className="button" onClick={onReset}>
+          </Typography>
+          <Button variant="contained" onClick={onReset}>
             🔄 Start New Process
-          </button>
-        </div>
+          </Button>
+        </Paper>
       )}
 
-      {/* Successful Results */}
+      {/* Main Content with Tabs */}
       {successfulResults.length > 0 && (
-        <div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <Paper className="card" sx={{ p: 0, overflow: 'hidden' }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              px: 3,
+              pt: 2,
+              '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 }
+            }}
+          >
+            <Tab
+              icon={<CompareArrowsIcon />}
+              label="Image Comparison"
+              iconPosition="start"
+            />
+            <Tab
+              icon={<TuneIcon />}
+              label="Adjustments Details"
+              iconPosition="start"
+            />
+            <Tab
+              icon={<DownloadIcon />}
+              label="Export Options"
+              iconPosition="start"
+            />
+          </Tabs>
+
+          {/* Image Selection */}
+          {successfulResults.length > 1 && (
+            <Box sx={{ p: 3, pb: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                Select Image:
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {successfulResults.map((result, index) => {
+                  const aiName = result?.metadata?.aiAdjustments &&
+                    (result.metadata.aiAdjustments as any).preset_name;
+                  const name = typeof aiName === 'string' && aiName.trim().length > 0
+                    ? aiName
+                    : `Image ${index + 1}`;
+                  return (
+                    <Chip
+                      key={index}
+                      label={name}
+                      onClick={() => setSelectedResult(index)}
+                      color={selectedResult === index ? 'primary' : 'default'}
+                      variant={selectedResult === index ? 'filled' : 'outlined'}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+
+          {/* Tab Content */}
+          <Box sx={{ p: 3 }}>
             {successfulResults.map((result, index) => (
-              <div
+              <Box
                 key={index}
-                className="card slide-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                sx={{
+                  display: selectedResult === index ? 'block' : 'none'
+                }}
               >
-                {/* Image Previews: Base vs Result */}
-                <div
-                  className="grid"
-                  style={{ gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '11px',
-                        color: '#888',
-                        marginBottom: '6px',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Base
-                    </div>
-                    <div
-                      style={{
-                        width: '100%',
-                        height: '380px',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        border: 'none',
-                        boxShadow: 'none',
-                        position: 'relative',
-                      }}
-                    >
-                      <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Base" />
-                      {!baseImageDataUrl && processId && (
-                        <Tooltip title="Add base image">
-                          <IconButton
-                            size="small"
-                            onClick={handleAttachBaseImage}
-                            className="no-drag"
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              left: 8,
-                              zIndex: 2,
-                              backgroundColor: 'rgba(255,255,255,0.7)',
-                              backdropFilter: 'blur(10px)',
-                              WebkitBackdropFilter: 'blur(10px)',
-                              border: 'none',
-                              boxShadow: 'none',
-                              '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
-                            }}
-                            aria-label="Add base image"
-                          >
-                            <AddPhotoAlternateOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '11px',
-                        color: '#888',
-                        marginBottom: '6px',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Original
-                    </div>
-                    <div
-                      style={{
-                        width: '100%',
-                        height: '380px',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        border: 'none',
-                        boxShadow: 'none',
-                        position: 'relative',
-                      }}
-                    >
-                      {(() => {
-                        const targetUrl = successfulTargetUrls[index];
-                        return targetUrl ? (
-                          <Base64Image dataUrl={targetUrl} alt={`Processed image ${index + 1}`} />
-                        ) : (
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: '#f5f5f5',
-                              color: '#999',
-                              fontSize: '14px',
-                            }}
-                          >
-                            No image available
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Filename */}
-                <h4
-                  style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: '#333333',
-                    marginBottom: '8px',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {(() => {
-                    const aiName =
-                      result?.metadata?.aiAdjustments &&
-                      (result.metadata.aiAdjustments as any).preset_name;
-                    const fallback = result.outputPath?.split('/').pop() || `Image ${index + 1}`;
-                    return typeof aiName === 'string' && aiName.trim().length > 0
-                      ? aiName
-                      : fallback;
-                  })()}
-                </h4>
-
-                {/* Project Details and Export (inline) */}
-                {result.metadata?.aiAdjustments && (
-                  <div
-                    className="grid"
-                    style={{ gridTemplateColumns: '1fr', gap: '12px', marginTop: '8px' }}
-                  >
-                    <div
-                      style={{
-                        background: '#f8f9ff',
-                        border: 'none',
-                        borderRadius: 2,
-                        padding: '12px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '8px',
-                        }}
-                      >
-                        <span style={{ fontSize: '16px' }}>🤖</span>
-                        <span style={{ fontSize: '14px', fontWeight: '600', color: '#667eea' }}>
-                          AI Analysis
-                        </span>
-                        <span
-                          style={{
-                            background: '#667eea',
-                            color: 'white',
-                            fontSize: '11px',
-                            padding: '2px 6px',
+                {/* Tab Panel 1: Image Comparison */}
+                {activeTab === 0 && (
+                  <Box>
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CompareArrowsIcon color="primary" />
+                      Before & After Comparison
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
+                          <Typography variant="h6" sx={{
+                            display: 'block',
+                            mb: 2,
+                            fontWeight: 600,
+                            color: 'text.secondary'
+                          }}>
+                            Reference Style
+                          </Typography>
+                          <Box sx={{
+                            width: '100%',
+                            height: 450,
                             borderRadius: 2,
-                            fontWeight: '600',
-                          }}
-                        >
-                          {Math.round((result.metadata.aiAdjustments.confidence || 0) * 100)}%
-                        </span>
-                      </div>
-
-                      {/* Prompt, if available */}
-                      {processPrompt && processPrompt.trim().length > 0 && (
-                        <>
-                          <Divider sx={{ my: 1 }} />
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
-                            Prompt
-                          </Typography>
-                          <Box
-                            sx={{
-                              mt: 0.5,
-                              fontSize: 12,
-                              color: '#374151',
-                              background: '#ffffff',
-                              border: 'none',
-                              borderRadius: 1,
-                              p: 1.25,
-                              whiteSpace: 'pre-wrap',
-                            }}
-                          >
-                            {processPrompt}
+                            overflow: 'hidden',
+                            position: 'relative',
+                            backgroundColor: 'grey.100'
+                          }}>
+                            <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Reference" />
+                            {!baseImageDataUrl && processId && (
+                              <Tooltip title="Add reference image">
+                                <IconButton
+                                  size="large"
+                                  onClick={handleAttachBaseImage}
+                                  className="no-drag"
+                                  sx={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    backgroundColor: 'rgba(255,255,255,0.95)',
+                                    backdropFilter: 'blur(10px)',
+                                    '&:hover': { backgroundColor: 'rgba(255,255,255,1)' },
+                                    boxShadow: 3
+                                  }}
+                                >
+                                  <AddPhotoAlternateOutlinedIcon />
+                                </IconButton>
+                              </Tooltip>
+                            )}
                           </Box>
-                        </>
-                      )}
-
-                      {/* User Options, if available */}
-                      {processOptions && (
-                        <>
-                          <Divider sx={{ my: 1 }} />
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
-                            Your Settings
-                          </Typography>
-                          <Box
-                            sx={{
-                              mt: 0.5,
-                              fontSize: 12,
-                              color: '#374151',
-                              background: '#ffffff',
-                              border: 'none',
-                              borderRadius: 1,
-                              p: 1.25,
-                            }}
-                          >
-                            <div>Vibe: {processOptions.vibe || '—'}</div>
-                            <div>Warmth: {processOptions.warmth ?? '—'}</div>
-                            <div>Tint: {processOptions.tint ?? '—'}</div>
-                            <div>Contrast: {processOptions.contrast ?? '—'}</div>
-                            <div>Vibrance: {processOptions.vibrance ?? '—'}</div>
-                            <div>Moodiness: {processOptions.moodiness ?? '—'}</div>
-                            <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
-                            <div>Film Grain: {processOptions.filmGrain ? 'On' : 'Off'}</div>
-                          </Box>
-                        </>
-                      )}
-
-                      {/* Basic adjustments in 2 columns */}
-                      <Box
-                        sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1 }}
-                      >
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 700, color: '#666', display: 'block', mb: 0.5 }}
-                          >
-                            Basic
-                          </Typography>
-                          <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Temperature</span>
-                              <strong>
-                                {Math.round(result.metadata.aiAdjustments.temperature || 0)} K
-                              </strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Tint</span>
-                              <strong>{Math.round(result.metadata.aiAdjustments.tint || 0)}</strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Exposure</span>
-                              <strong>
-                                {(result.metadata.aiAdjustments.exposure || 0).toFixed(2)}
-                              </strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Contrast</span>
-                              <strong>{result.metadata.aiAdjustments.contrast ?? 0}</strong>
-                            </Box>
-                          </Box>
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 700, color: '#666', display: 'block', mb: 0.5 }}
-                          >
-                            Tone
-                          </Typography>
-                          <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Highlights</span>
-                              <strong>{result.metadata.aiAdjustments.highlights ?? 0}</strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Shadows</span>
-                              <strong>{result.metadata.aiAdjustments.shadows ?? 0}</strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Whites</span>
-                              <strong>{result.metadata.aiAdjustments.whites ?? 0}</strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Blacks</span>
-                              <strong>{result.metadata.aiAdjustments.blacks ?? 0}</strong>
-                            </Box>
-                          </Box>
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 700, color: '#666', display: 'block', mb: 0.5 }}
-                          >
-                            Presence
-                          </Typography>
-                          <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Clarity</span>
-                              <strong>{result.metadata.aiAdjustments.clarity ?? 0}</strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Vibrance</span>
-                              <strong>{result.metadata.aiAdjustments.vibrance ?? 0}</strong>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span>Saturation</span>
-                              <strong>{result.metadata.aiAdjustments.saturation ?? 0}</strong>
-                            </Box>
-                          </Box>
-                        </Box>
+                        </Paper>
                       </Box>
-                      <Divider sx={{ my: 1 }} />
-                      {/* HSL Adjustments in compact grid */}
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
-                        HSL Adjustments
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(3, 1fr)',
-                          gap: 1,
-                          mt: 0.5,
-                          fontSize: '11px',
-                        }}
-                      >
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 600, color: '#888', display: 'block', mb: 0.5 }}
-                          >
-                            Hue
+                      <Box sx={{ flex: 1 }}>
+                        <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
+                          <Typography variant="h6" sx={{
+                            display: 'block',
+                            mb: 2,
+                            fontWeight: 600,
+                            color: 'primary.main'
+                          }}>
+                            Processed Result
                           </Typography>
-                          {(
-                            [
-                              'red',
-                              'orange',
-                              'yellow',
-                              'green',
-                              'aqua',
-                              'blue',
-                              'purple',
-                              'magenta',
-                            ] as const
-                          ).map(k => (
-                            <Box
-                              key={`hue_${k}`}
-                              sx={{ display: 'flex', justifyContent: 'space-between', py: 0.25 }}
-                            >
-                              <span style={{ color: '#666' }}>
-                                {k[0].toUpperCase()}
-                                {k.slice(1, 3)}
-                              </span>
-                              <strong>
-                                {(result.metadata!.aiAdjustments as any)[`hue_${k}`] ?? 0}
-                              </strong>
-                            </Box>
-                          ))}
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 600, color: '#888', display: 'block', mb: 0.5 }}
-                          >
-                            Saturation
-                          </Typography>
-                          {(
-                            [
-                              'red',
-                              'orange',
-                              'yellow',
-                              'green',
-                              'aqua',
-                              'blue',
-                              'purple',
-                              'magenta',
-                            ] as const
-                          ).map(k => (
-                            <Box
-                              key={`sat_${k}`}
-                              sx={{ display: 'flex', justifyContent: 'space-between', py: 0.25 }}
-                            >
-                              <span style={{ color: '#666' }}>
-                                {k[0].toUpperCase()}
-                                {k.slice(1, 3)}
-                              </span>
-                              <strong>
-                                {(result.metadata!.aiAdjustments as any)[`sat_${k}`] ?? 0}
-                              </strong>
-                            </Box>
-                          ))}
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 600, color: '#888', display: 'block', mb: 0.5 }}
-                          >
-                            Luminance
-                          </Typography>
-                          {(
-                            [
-                              'red',
-                              'orange',
-                              'yellow',
-                              'green',
-                              'aqua',
-                              'blue',
-                              'purple',
-                              'magenta',
-                            ] as const
-                          ).map(k => (
-                            <Box
-                              key={`lum_${k}`}
-                              sx={{ display: 'flex', justifyContent: 'space-between', py: 0.25 }}
-                            >
-                              <span style={{ color: '#666' }}>
-                                {k[0].toUpperCase()}
-                                {k.slice(1, 3)}
-                              </span>
-                              <strong>
-                                {(result.metadata!.aiAdjustments as any)[`lum_${k}`] ?? 0}
-                              </strong>
-                            </Box>
-                          ))}
-                        </Box>
+                          <Box sx={{
+                            width: '100%',
+                            height: 450,
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            position: 'relative',
+                            backgroundColor: 'grey.100'
+                          }}>
+                            {(() => {
+                              const targetUrl = successfulTargetUrls[index];
+                              return targetUrl ? (
+                                <Base64Image dataUrl={targetUrl} alt={`Processed image ${index + 1}`} />
+                              ) : (
+                                <Box sx={{
+                                  width: '100%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'text.secondary'
+                                }}>
+                                  <Typography>No image available</Typography>
+                                </Box>
+                              );
+                            })()}
+                          </Box>
+                        </Paper>
                       </Box>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
-                        Color Grading
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: 1,
-                          mt: 0.5,
-                          fontSize: '11px',
-                        }}
-                      >
-                        <Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-                            <span style={{ color: '#666' }}>Shadows</span>
-                            <strong>
-                              H{(result.metadata.aiAdjustments as any).color_grade_shadow_hue ?? 0}°
-                              S{(result.metadata.aiAdjustments as any).color_grade_shadow_sat ?? 0}{' '}
-                              L{(result.metadata.aiAdjustments as any).color_grade_shadow_lum ?? 0}
-                            </strong>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Tab Panel 2: Adjustments */}
+                {activeTab === 1 && result.metadata?.aiAdjustments && (
+                  <Box>
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TuneIcon color="primary" />
+                      Applied Adjustments
+                      <Chip
+                        label={`${Math.round((result.metadata.aiAdjustments.confidence || 0) * 100)}% Confidence`}
+                        size="medium"
+                        color="primary"
+                        sx={{ ml: 'auto' }}
+                      />
+                    </Typography>
+
+                    {/* Processing Context */}
+                    {(processPrompt || processOptions) && (
+                      <Accordion sx={{ mb: 2 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <SettingsIcon color="action" />
+                            Processing Context
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            {processPrompt && processPrompt.trim().length > 0 && (
+                              <Box>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                                  Prompt
+                                </Typography>
+                                <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
+                                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                                    {processPrompt}
+                                  </Typography>
+                                </Paper>
+                              </Box>
+                            )}
+                            {processOptions && (
+                              <Box>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                                  User Settings
+                                </Typography>
+                                <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
+                                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                                    <Typography variant="body1"><strong>Vibe:</strong> {processOptions.vibe || '—'}</Typography>
+                                    <Typography variant="body1"><strong>Warmth:</strong> {processOptions.warmth ?? '—'}</Typography>
+                                    <Typography variant="body1"><strong>Tint:</strong> {processOptions.tint ?? '—'}</Typography>
+                                    <Typography variant="body1"><strong>Contrast:</strong> {processOptions.contrast ?? '—'}</Typography>
+                                    <Typography variant="body1"><strong>Vibrance:</strong> {processOptions.vibrance ?? '—'}</Typography>
+                                    <Typography variant="body1"><strong>Moodiness:</strong> {processOptions.moodiness ?? '—'}</Typography>
+                                    <Typography variant="body1"><strong>Saturation Bias:</strong> {processOptions.saturationBias ?? '—'}</Typography>
+                                    <Typography variant="body1"><strong>Film Grain:</strong> {processOptions.filmGrain ? 'On' : 'Off'}</Typography>
+                                    {processOptions.artistStyle?.name && (
+                                      <Typography variant="body1"><strong>Artist Style:</strong> {processOptions.artistStyle.name}</Typography>
+                                    )}
+                                    {processOptions.filmStyle?.name && (
+                                      <Typography variant="body1"><strong>Film Stock:</strong> {processOptions.filmStyle.name}</Typography>
+                                    )}
+                                  </Box>
+                                </Paper>
+                              </Box>
+                            )}
                           </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-                            <span style={{ color: '#666' }}>Midtones</span>
-                            <strong>
-                              H{(result.metadata.aiAdjustments as any).color_grade_midtone_hue ?? 0}
-                              ° S
-                              {(result.metadata.aiAdjustments as any).color_grade_midtone_sat ?? 0}{' '}
-                              L{(result.metadata.aiAdjustments as any).color_grade_midtone_lum ?? 0}
-                            </strong>
-                          </Box>
-                        </Box>
-                        <Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-                            <span style={{ color: '#666' }}>Highlights</span>
-                            <strong>
-                              H
-                              {(result.metadata.aiAdjustments as any).color_grade_highlight_hue ??
-                                0}
-                              ° S
-                              {(result.metadata.aiAdjustments as any).color_grade_highlight_sat ??
-                                0}{' '}
-                              L
-                              {(result.metadata.aiAdjustments as any).color_grade_highlight_lum ??
-                                0}
-                            </strong>
-                          </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-                            <span style={{ color: '#666' }}>Global</span>
-                            <strong>
-                              H{(result.metadata.aiAdjustments as any).color_grade_global_hue ?? 0}°
-                              S{(result.metadata.aiAdjustments as any).color_grade_global_sat ?? 0}{' '}
-                              L{(result.metadata.aiAdjustments as any).color_grade_global_lum ?? 0}
-                            </strong>
-                          </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-                            <span style={{ color: '#666' }}>Blending</span>
-                            <strong>
-                              {(result.metadata.aiAdjustments as any).color_grade_blending ?? 50}
-                            </strong>
-                          </Box>
-                        </Box>
-                      </Box>
-                      {typeof result.metadata.aiAdjustments.reasoning === 'string' &&
-                        result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
-                          <>
-                            <Divider sx={{ my: 1 }} />
-                            <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
-                              AI Notes
+                        </AccordionDetails>
+                      </Accordion>
+                    )}
+
+                    {/* Basic Adjustments */}
+                    <Accordion defaultExpanded sx={{ mb: 2 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PhotoFilterIcon color="action" />
+                          Basic Adjustments
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Box sx={{ display: 'flex', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                              White Balance
                             </Typography>
-                            <Box
-                              sx={{
-                                mt: 0.5,
-                                fontSize: 12,
-                                color: '#374151',
-                                background: '#ffffff',
-                                border: 'none',
-                                borderRadius: 1,
-                                p: 1.25,
-                                whiteSpace: 'pre-wrap',
-                              }}
-                            >
-                              {result.metadata.aiAdjustments.reasoning}
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Temperature</Typography>
+                                <Chip label={`${Math.round(result.metadata.aiAdjustments.temperature || 0)} K`} variant="outlined" />
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Tint</Typography>
+                                <Chip label={Math.round(result.metadata.aiAdjustments.tint || 0)} variant="outlined" />
+                              </Box>
                             </Box>
-                          </>
-                        )}
-                    </div>
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                              Exposure
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Exposure</Typography>
+                                <Chip label={(result.metadata.aiAdjustments.exposure || 0).toFixed(2)} variant="outlined" />
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Contrast</Typography>
+                                <Chip label={result.metadata.aiAdjustments.contrast ?? 0} variant="outlined" />
+                              </Box>
+                            </Box>
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                              Tone
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Highlights</Typography>
+                                <Chip label={result.metadata.aiAdjustments.highlights ?? 0} variant="outlined" />
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Shadows</Typography>
+                                <Chip label={result.metadata.aiAdjustments.shadows ?? 0} variant="outlined" />
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Whites</Typography>
+                                <Chip label={result.metadata.aiAdjustments.whites ?? 0} variant="outlined" />
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1">Blacks</Typography>
+                                <Chip label={result.metadata.aiAdjustments.blacks ?? 0} variant="outlined" />
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
 
-                    {/* Export options */}
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)',
-                        border: 'none',
-                        borderRadius: 2,
-                        p: 2,
-                      }}
-                    >
-                      <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary' }}>
-                        Export Settings
+                    {/* Presence & Color */}
+                    <Accordion sx={{ mb: 2 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Presence & Color
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body1">Clarity</Typography>
+                            <Chip label={result.metadata.aiAdjustments.clarity ?? 0} variant="outlined" />
+                          </Box>
+                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body1">Vibrance</Typography>
+                            <Chip label={result.metadata.aiAdjustments.vibrance ?? 0} variant="outlined" />
+                          </Box>
+                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body1">Saturation</Typography>
+                            <Chip label={result.metadata.aiAdjustments.saturation ?? 0} variant="outlined" />
+                          </Box>
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
+
+                    {/* HSL Adjustments */}
+                    <Accordion sx={{ mb: 2 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PaletteIcon color="action" />
+                          HSL Color Adjustments
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                          {['Hue', 'Saturation', 'Luminance'].map((adjustmentType) => (
+                            <Box key={adjustmentType} sx={{ flex: 1 }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                                {adjustmentType}
+                              </Typography>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                {['red', 'orange', 'yellow', 'green', 'aqua', 'blue', 'purple', 'magenta'].map(color => {
+                                  const key = `${adjustmentType.toLowerCase().slice(0, 3)}_${color}`;
+                                  const value = (result.metadata!.aiAdjustments as any)[key] ?? 0;
+                                  return (
+                                    <Box key={color} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                                        {color}
+                                      </Typography>
+                                      <Chip size="small" label={value} variant="outlined" />
+                                    </Box>
+                                  );
+                                })}
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
+
+                    {/* AI Notes */}
+                    {typeof result.metadata.aiAdjustments.reasoning === 'string' &&
+                      result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
+                        <Accordion>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                              AI Analysis Notes
+                            </Typography>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
+                              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                                {result.metadata.aiAdjustments.reasoning}
+                              </Typography>
+                            </Paper>
+                          </AccordionDetails>
+                        </Accordion>
+                      )}
+                  </Box>
+                )}
+
+                {/* Tab Panel 3: Export Options */}
+                {activeTab === 2 && (
+                  <Box>
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <DownloadIcon color="primary" />
+                      Export Options
+                    </Typography>
+
+                    <Paper elevation={1} sx={{ p: 4, background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)' }}>
+                      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                        XMP Sidecar Export
                       </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'flex-start',
-                          mb: 1,
-                        }}
-                      >
+
+                      <Box sx={{ mb: 3 }}>
                         <FormControlLabel
                           control={
                             <Checkbox
-                              size="small"
                               checked={isAllSelected(index)}
                               onChange={e => setAllOptions(index, e.target.checked)}
-                              sx={{ py: 0.5 }}
                             />
                           }
-                          label={<Typography variant="body2">All types & groups</Typography>}
+                          label={<Typography variant="body1" sx={{ fontWeight: 600 }}>Select All Adjustment Types</Typography>}
                         />
                       </Box>
-                      <FormGroup
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                          gap: 0.5,
-                        }}
-                      >
-                        {(
-                          [
-                            { key: 'exposure', label: 'Exposure' },
-                            { key: 'wbBasic', label: 'Basic Adjustments' },
-                            { key: 'hsl', label: 'HSL Adjustments' },
-                            { key: 'colorGrading', label: 'Color Grading' },
-                            { key: 'curves', label: 'Tone Curves' },
-                            { key: 'pointColor', label: 'Point Color' },
-                            { key: 'sharpenNoise', label: 'Sharpen & Noise' },
-                            { key: 'vignette', label: 'Vignette' },
-                            { key: 'grain', label: 'Film Grain' },
-                            { key: 'masks', label: 'Masks (Local Adjustments)' },
-                          ] as const
-                        ).map(opt => (
-                          <FormControlLabel
-                            key={opt.key}
-                            control={
-                              <Checkbox
-                                size="small"
-                                checked={
-                                  getOptions(index)[
-                                    opt.key as keyof ReturnType<typeof getOptions>
-                                  ] as any
+
+                      <Grid container spacing={2}>
+                        {[
+                          { key: 'exposure', label: 'Exposure', description: 'Basic exposure adjustments' },
+                          { key: 'wbBasic', label: 'Basic Adjustments', description: 'White balance, contrast, highlights, shadows' },
+                          { key: 'hsl', label: 'HSL Adjustments', description: 'Hue, saturation, and luminance per color' },
+                          { key: 'colorGrading', label: 'Color Grading', description: 'Shadow, midtone, highlight color wheels' },
+                          { key: 'curves', label: 'Tone Curves', description: 'RGB and luminance curve adjustments' },
+                          { key: 'pointColor', label: 'Point Color', description: 'Targeted color adjustments' },
+                          { key: 'sharpenNoise', label: 'Sharpen & Noise', description: 'Detail enhancement settings' },
+                          { key: 'vignette', label: 'Vignette', description: 'Edge darkening effects' },
+                          { key: 'grain', label: 'Film Grain', description: 'Analog film texture simulation' },
+                          { key: 'masks', label: 'Masks (Local Adjustments)', description: 'Area-specific modifications' },
+                        ].map(opt => (
+                          <Grid item xs={12} sm={6} key={opt.key}>
+                            <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={
+                                      getOptions(index)[
+                                        opt.key as keyof ReturnType<typeof getOptions>
+                                      ] as any
+                                    }
+                                    onChange={() => toggleOption(index, opt.key as any)}
+                                  />
                                 }
-                                onChange={() => toggleOption(index, opt.key as any)}
-                                sx={{ py: 0.5 }}
+                                label={
+                                  <Box>
+                                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                      {opt.label}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                      {opt.description}
+                                    </Typography>
+                                  </Box>
+                                }
                               />
-                            }
-                            label={<Typography variant="body2">{opt.label}</Typography>}
-                          />
+                            </Paper>
+                          </Grid>
                         ))}
-                      </FormGroup>
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                      </Grid>
+
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
                         <Button
                           variant="contained"
+                          size="large"
                           startIcon={<DownloadIcon />}
                           onClick={() => handleExportXMP(index, result)}
                           sx={{
                             textTransform: 'none',
                             fontWeight: 600,
-                            px: 3,
-                            py: 1.25,
+                            px: 4,
+                            py: 1.5,
                           }}
                         >
-                          Export XMP
+                          Export XMP Sidecar
                         </Button>
                       </Box>
-                    </Card>
-                  </div>
+                    </Paper>
+                  </Box>
                 )}
-              </div>
+              </Box>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Paper>
       )}
 
       {/* Failed Results */}
       {failedResults.length > 0 && (
-        <div style={{ marginTop: '40px' }}>
-          <h3
-            style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#d73027',
-              marginBottom: '20px',
-            }}
-          >
+        <Paper className="card" sx={{ mt: 4 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: '#d73027', mb: 3 }}>
             Failed Processing ({failedResults.length} image{failedResults.length !== 1 ? 's' : ''})
-          </h3>
+          </Typography>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {failedResults.map((result, index) => (
-              <Card
+              <Paper
                 key={index}
                 variant="outlined"
                 sx={{
-                  border: 'none',
                   background: '#fff8f8',
                   p: 3,
                 }}
@@ -912,47 +776,30 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
                   <Box sx={{ fontSize: '28px', lineHeight: 1 }}>❌</Box>
                   <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontSize: '18px',
-                        fontWeight: 600,
-                        color: '#d32f2f',
-                        mb: 0.5,
-                      }}
-                    >
+                    <Typography variant="h6" sx={{ fontSize: '18px', fontWeight: 600, color: '#d32f2f', mb: 0.5 }}>
                       Processing Failed
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                       Image {results.indexOf(result) + 1} of {results.length}
                     </Typography>
 
-                    <Box
-                      sx={{
-                        background: '#ffffff',
-                        border: 'none',
-                        borderRadius: 1,
-                        p: 2,
-                        mb: 2,
-                        fontFamily: 'monospace',
-                        fontSize: '13px',
-                        color: '#d32f2f',
-                        whiteSpace: 'pre-wrap',
-                        maxHeight: '200px',
-                        overflow: 'auto',
-                      }}
-                    >
+                    <Paper sx={{
+                      p: 2,
+                      mb: 2,
+                      fontFamily: 'monospace',
+                      fontSize: '13px',
+                      color: '#d32f2f',
+                      whiteSpace: 'pre-wrap',
+                      maxHeight: '200px',
+                      overflow: 'auto',
+                      backgroundColor: '#ffffff'
+                    }}>
                       {result.error || 'Unknown error occurred'}
-                    </Box>
+                    </Paper>
 
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                       {onRestart && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={onRestart}
-                          sx={{ textTransform: 'none' }}
-                        >
+                        <Button variant="contained" color="primary" onClick={onRestart} sx={{ textTransform: 'none' }}>
                           Try Again
                         </Button>
                       )}
@@ -962,19 +809,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     </Box>
                   </Box>
                 </Box>
-              </Card>
+              </Paper>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Paper>
       )}
 
-      {/* Confirmation Dialog for New Generation */}
-      <Dialog
-        open={confirmNewGeneration}
-        onClose={() => setConfirmNewGeneration(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmNewGeneration} onClose={() => setConfirmNewGeneration(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
             Generate New Analysis?
@@ -982,18 +824,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            This will create a new AI analysis using the same images but generate fresh results. The
-            current analysis will be preserved as a separate version.
+            This will create a new AI analysis using the same images but generate fresh results. The current analysis will be preserved as a separate version.
           </Typography>
-          <Box
-            sx={{
-              backgroundColor: '#f8f9fa',
-              border: 'none',
-              borderRadius: 1,
-              p: 2,
-              mb: 1,
-            }}
-          >
+          <Paper sx={{ backgroundColor: '#f8f9fa', p: 2, mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
               ✨ What happens next:
             </Typography>
@@ -1005,14 +838,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
               • Results saved as a new project version
               <br />• Previous analysis remains accessible
             </Typography>
-          </Box>
+          </Paper>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            onClick={() => setConfirmNewGeneration(false)}
-            variant="outlined"
-            sx={{ textTransform: 'none' }}
-          >
+          <Button onClick={() => setConfirmNewGeneration(false)} variant="outlined" sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
           <Button
@@ -1027,9 +856,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* No modal; export is inline per result */}
-    </div>
+    </Box>
   );
 };
 

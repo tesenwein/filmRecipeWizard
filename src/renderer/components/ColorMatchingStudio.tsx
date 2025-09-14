@@ -6,6 +6,7 @@ import StyleDescriptionCard from './StyleDescriptionCard';
 import ReferenceImageCard from './ReferenceImageCard';
 import FineTuneControls from './FineTuneControls';
 import ArtisticStylesCard from './ArtisticStylesCard';
+import FilmStylesCard from './FilmStylesCard';
 import ProcessButton from './ProcessButton';
 
 interface StyleOptions {
@@ -18,6 +19,12 @@ interface StyleOptions {
   filmGrain?: boolean;
   vibe?: string;
   artistStyle?: {
+    key: string;
+    name: string;
+    category: string;
+    blurb: string;
+  };
+  filmStyle?: {
     key: string;
     name: string;
     category: string;
@@ -187,6 +194,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           <ArtisticStylesCard
             selected={styleOptions?.artistStyle?.key}
             onSelect={(s) => onStyleOptionsChange?.({ artistStyle: s })}
+          />
+
+          <FilmStylesCard
+            selected={styleOptions?.filmStyle?.key}
+            onSelect={(s) => onStyleOptionsChange?.({ filmStyle: s })}
           />
 
           <ReferenceImageCard

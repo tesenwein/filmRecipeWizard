@@ -312,6 +312,14 @@ class FotoRecipeWizardApp {
             `Artist Style: ${name}${category ? ` (${category})` : ''}` + (blurb ? `\nNotes: ${blurb}` : '')
           );
         }
+        if (options.filmStyle && typeof options.filmStyle.name === 'string') {
+          const name = String(options.filmStyle.name).trim();
+          const category = String(options.filmStyle.category || '').trim();
+          const blurb = String(options.filmStyle.blurb || '').trim();
+          optionsHintParts.push(
+            `Film Stock: ${name}${category ? ` (${category})` : ''}` + (blurb ? `\nTraits: ${blurb}` : '')
+          );
+        }
         const optionsHint = optionsHintParts.length > 0
           ? `\nPreferences:\n- ${optionsHintParts.join('\n- ')}`
           : '';
