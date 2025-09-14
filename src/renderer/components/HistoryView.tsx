@@ -1,5 +1,6 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Button,
   Card,
@@ -7,6 +8,10 @@ import {
   CardContent,
   Grid,
   IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
@@ -22,6 +27,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
   const [history, setHistory] = useState<ProcessHistory[]>([]);
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null);
 
   useEffect(() => {
     loadHistory();
@@ -47,15 +54,36 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
     }
   };
 
-  const handleDeleteProcess = async (processId: string, event: React.MouseEvent) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, processId: string) => {
     event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedProcessId(processId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedProcessId(null);
+  };
+
+  const handleDeleteProcess = async () => {
+    if (!selectedProcessId) return;
+    handleMenuClose();
     if (confirm('Are you sure you want to delete this process?')) {
       try {
-        await window.electronAPI.deleteProcess(processId);
+        await window.electronAPI.deleteProcess(selectedProcessId);
         await loadHistory(); // Reload history
       } catch (error) {
         console.error('Failed to delete process:', error);
       }
+    }
+  };
+
+  const handleExportProcess = async () => {
+    if (!selectedProcessId) return;
+    handleMenuClose();
+    const res = await window.electronAPI.exportRecipe(selectedProcessId);
+    if (!res.success && res.error && res.error !== 'Export canceled') {
+      alert(`Export failed: ${res.error}`);
     }
   };
 
@@ -123,50 +151,12 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
           {history.map((process, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={process.id}>
               <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
-                {/* Delete icon (top-left) */}
+                {/* Menu button (top-right) */}
                 <IconButton
-                  aria-label="Delete"
+                  aria-label="Options"
                   size="small"
-                  onClick={e => handleDeleteProcess(process.id, e)}
-                  title="Delete"
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    zIndex: 2,
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: 'none',
-                    boxShadow: 'none',
-                    '&:hover': {
-                      backgroundColor: 'rgba(239, 68, 68, 0.9)',
-                      backdropFilter: 'blur(10px)',
-                      WebkitBackdropFilter: 'blur(10px)',
-                      '& .MuiSvgIcon-root': {
-                        color: 'white',
-                      },
-                    },
-                  }}
-                >
-                  <DeleteOutlineIcon
-                    fontSize="small"
-                    sx={{ color: '#ef4444', transition: 'color 0.2s ease' }}
-                  />
-                </IconButton>
-
-                {/* Export icon (top-right) */}
-                <IconButton
-                  aria-label="Export"
-                  size="small"
-                  onClick={async e => {
-                    e.stopPropagation();
-                    const res = await window.electronAPI.exportRecipe(process.id);
-                    if (!res.success && res.error && res.error !== 'Export canceled') {
-                      alert(`Export failed: ${res.error}`);
-                    }
-                  }}
-                  title="Export Zip"
+                  onClick={e => handleMenuOpen(e, process.id)}
+                  title="Options"
                   sx={{
                     position: 'absolute',
                     top: 8,
@@ -178,16 +168,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                     border: 'none',
                     boxShadow: 'none',
                     '&:hover': {
-                      backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.08)',
                       backdropFilter: 'blur(10px)',
                       WebkitBackdropFilter: 'blur(10px)',
-                      '& .MuiSvgIcon-root': {
-                        color: 'white',
-                      },
                     },
                   }}
                 >
-                  <DownloadIcon fontSize="small" sx={{ color: '#3b82f6' }} />
+                  <MoreVertIcon fontSize="small" sx={{ color: '#666' }} />
                 </IconButton>
                 <CardActionArea
                   onClick={() => {
@@ -256,6 +243,34 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
           ))}
         </Grid>
       )}
+
+      {/* Context Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleExportProcess}>
+          <ListItemIcon>
+            <DownloadIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Export Zip</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDeleteProcess} sx={{ color: 'error.main' }}>
+          <ListItemIcon>
+            <DeleteOutlineIcon fontSize="small" sx={{ color: 'error.main' }} />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
     </div>
   );
 };

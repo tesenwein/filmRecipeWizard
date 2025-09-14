@@ -45,7 +45,6 @@ const App: React.FC = () => {
     targetImagesRef.current = targetImages;
   }, [targetImages]);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [isNewProcessingSession, setIsNewProcessingSession] = useState(false);
   const [styleOptions, setStyleOptions] = useState<{
     warmth?: number;
     tint?: number;
@@ -183,11 +182,6 @@ const App: React.FC = () => {
 
     setCurrentStep('results');
 
-    // Navigate back to recipe details if this was a new processing session
-    if (isNewProcessingSession && currentProcessIdRef.current) {
-      setIsNewProcessingSession(false);
-      navigate(`/recipedetails?id=${currentProcessIdRef.current}`);
-    }
   };
 
   const handleReset = () => {
@@ -196,7 +190,6 @@ const App: React.FC = () => {
     setResults([]);
     setCurrentProcessId(null);
     setCurrentStep('upload');
-    setIsNewProcessingSession(false);
     setPrompt('');
     setStyleOptions({});
     setProcessingState({
@@ -210,55 +203,6 @@ const App: React.FC = () => {
     handleReset();
   };
 
-  const handleNewProcessingSession = async () => {
-    // Keep the same images but create a new processing session
-    if (targetImages.length === 0) return;
-
-    setResults([]);
-    setCurrentProcessId(null);
-    setCurrentStep('processing');
-    setIsNewProcessingSession(true);
-    setProcessingState({
-      isProcessing: true,
-      progress: 0,
-      status: 'Starting new AI analysis...',
-    });
-
-    // Save new process to storage
-    let newProcessId: string | null = null;
-    try {
-      const processData = {
-        baseImage: baseImage || undefined,
-        targetImages,
-        results: [],
-        prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
-        userOptions: styleOptions,
-      } as any;
-
-      const result = await window.electronAPI.saveProcess(processData);
-      if (result.success) {
-        newProcessId = result.process.id;
-        setCurrentProcessId(newProcessId);
-        currentProcessIdRef.current = newProcessId;
-      } else {
-        console.warn('[APP] Failed to save new processing session', result.error);
-      }
-    } catch (error) {
-      console.error('Failed to save new processing session:', error);
-    }
-
-    // Navigate to create route to show processing view
-    navigate('/create');
-
-    // Start processing through IPC
-    if (newProcessId) {
-      window.electronAPI.processWithStoredImages({
-        processId: newProcessId,
-        targetIndex: 0,
-        prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
-      });
-    }
-  };
 
   const handleOpenRecipe = async (process: ProcessHistory) => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
@@ -496,7 +440,6 @@ const App: React.FC = () => {
                 setCurrentStep('processing');
                 handleStartProcessing();
               }}
-              onNewProcessingSession={handleNewProcessingSession}
             />
           )}
           {!currentProcessId && (
