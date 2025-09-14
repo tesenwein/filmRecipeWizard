@@ -1,5 +1,13 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { Button, Card, CardActionArea, CardContent, Grid, IconButton, Typography } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  Grid,
+  IconButton,
+  Typography,
+} from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessHistory } from '../../shared/types';
 import SingleImage from './SingleImage';
