@@ -78,12 +78,58 @@ jobs:
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
           echo "Should release: $SHOULD_RELEASE (bump: $VERSION_BUMP, prerelease: $IS_PRERELEASE)"
 
+  # Bump version in package.json before building
+  bump-version:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    needs: check-release
+    if: needs.check-release.outputs.should_release == 'true' && needs.check-release.outputs.is_prerelease != 'true' && needs.check-release.outputs.version_bump != 'none'
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Bump version
+        id: bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          VERSION_BUMP="${{ needs.check-release.outputs.version_bump }}"
+
+          # Use npm version to bump
+          if [ "$VERSION_BUMP" = "major" ]; then
+            NEW_VERSION=$(npm version major --no-git-tag-version)
+          elif [ "$VERSION_BUMP" = "minor" ]; then
+            NEW_VERSION=$(npm version minor --no-git-tag-version)
+          elif [ "$VERSION_BUMP" = "patch" ]; then
+            NEW_VERSION=$(npm version patch --no-git-tag-version)
+          fi
+
+          # Remove the 'v' prefix that npm adds
+          NEW_VERSION=${NEW_VERSION#v}
+          echo "New version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+          # Commit and push the version bump
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git push
+
   # Build the application for all platforms
   build:
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: check-release
-    if: needs.check-release.outputs.should_release == 'true'
+    needs: [check-release, bump-version]
+    if: always() && needs.check-release.outputs.should_release == 'true'
 
     strategy:
       fail-fast: false
@@ -151,14 +197,15 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [check-release, build]
-    if: needs.check-release.outputs.should_release == 'true'
+    needs: [check-release, bump-version, build]
+    if: always() && needs.check-release.outputs.should_release == 'true' && needs.build.result == 'success'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Needed for changelog generation
+          ref: ${{ github.ref }} # Make sure we have the latest changes
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -181,32 +228,23 @@ jobs:
       - name: Determine version
         id: version
         run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
+          # Pull latest changes to get the bumped version
+          git pull origin ${{ github.ref_name }}
 
-          VERSION_BUMP="${{ needs.check-release.outputs.version_bump }}"
-          IS_PRERELEASE="${{ needs.check-release.outputs.is_prerelease }}"
-
-          if [ "$IS_PRERELEASE" = "true" ]; then
-            # Create prerelease version with commit SHA
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            NEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
-          elif [ "$VERSION_BUMP" != "none" ]; then
-            # Parse semantic version
-            IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-            MAJOR=${VERSION_PARTS[0]}
-            MINOR=${VERSION_PARTS[1]}
-            PATCH=${VERSION_PARTS[2]}
-
-            case $VERSION_BUMP in
-              major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-              minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-              patch) PATCH=$((PATCH + 1)) ;;
-            esac
-
-            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          # Get the version from package.json (already bumped by bump-version job)
+          if [ "${{ needs.bump-version.outputs.new_version }}" != "" ]; then
+            NEW_VERSION="${{ needs.bump-version.outputs.new_version }}"
           else
-            NEW_VERSION="$CURRENT_VERSION"
+            # For prereleases or when no version bump needed
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+            if [ "${{ needs.check-release.outputs.is_prerelease }}" = "true" ]; then
+              # Create prerelease version with commit SHA
+              SHORT_SHA=$(git rev-parse --short HEAD)
+              NEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
+            else
+              NEW_VERSION="$CURRENT_VERSION"
+            fi
           fi
 
           echo "New version: $NEW_VERSION"
@@ -267,13 +305,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update package.json version (if not prerelease)
-        if: needs.check-release.outputs.is_prerelease != 'true' && needs.check-release.outputs.version_bump != 'none'
-        run: |
-          NEW_VERSION="${{ steps.version.outputs.version }}"
-          npm version $NEW_VERSION --no-git-tag-version
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add package.json package-lock.json
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]" || exit 0
-          git push
+      # Version already updated by bump-version job, no need to update again
