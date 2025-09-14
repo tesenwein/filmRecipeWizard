@@ -235,6 +235,53 @@ class FotoRecipeWizardApp {
       }
     });
 
+    // Generate 3D LUT from AI adjustments
+    ipcMain.handle('generate-lut', async (_event, data) => {
+      console.log('[IPC] generate-lut called with data', {
+        size: data?.size,
+        format: data?.format,
+        hasAdjustments: !!data?.adjustments,
+      });
+      try {
+        // Generate LUT content
+        const lutContent = this.imageProcessor.generateLUTContent(data.adjustments, data.size || 33, data.format || 'cube');
+
+        // Show save dialog
+        const { dialog } = require('electron');
+        // Derive a friendly filename from AI if present
+        const sanitizeName = (n: string) =>
+          n
+            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        const rawName = (data?.adjustments?.preset_name as string | undefined) || `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean = sanitizeName(rawName) || `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const safeName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const ext = data.format === '3dl' ? '3dl' : data.format === 'lut' ? 'lut' : 'cube';
+        const result = await dialog.showSaveDialog({
+          title: `Save ${data.size}³ ${ext.toUpperCase()} LUT`,
+          defaultPath: `${safeName}_${data.size}.${ext}`,
+          filters: [
+            { name: `${ext.toUpperCase()} Files`, extensions: [ext] },
+            { name: 'All Files', extensions: ['*'] }
+          ]
+        });
+
+        if (!result.canceled && result.filePath) {
+          // Write the file
+          const fs = require('fs').promises;
+          await fs.writeFile(result.filePath, lutContent, 'utf8');
+          console.log('[IPC] generate-lut completed:', { filePath: result.filePath });
+          return { success: true, filePath: result.filePath };
+        } else {
+          return { success: false, error: 'Save canceled' };
+        }
+      } catch (error) {
+        console.error('[IPC] Error generating LUT:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
     ipcMain.handle('generate-preview', async (_event, args: { path?: string; dataUrl?: string }) => {
       try {

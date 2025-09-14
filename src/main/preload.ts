@@ -24,6 +24,7 @@ const electronAPI = {
   matchStyle: (data: any) => ipcRenderer.invoke('match-style', data),
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
   downloadXMP: (data: any) => ipcRenderer.invoke('download-xmp', data),
+  generateLUT: (data: any) => ipcRenderer.invoke('generate-lut', data),
 
   // Progress monitoring
   onProcessingProgress: (callback: (progress: number, status: string) => void) => {

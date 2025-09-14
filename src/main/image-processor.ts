@@ -527,4 +527,177 @@ export class ImageProcessor {
 </x:xmpmeta>`;
     return xmp;
   }
+
+  generateLUTContent(aiAdjustments: AIColorAdjustments, size: number = 33, format: string = 'cube'): string {
+    console.log('[LUT] Generating LUT content:', { size, format, hasAdjustments: !!aiAdjustments });
+
+    // Sanitize and clamp adjustment values
+    const clamp = (v: any, min: number, max: number): number => {
+      if (typeof v !== 'number' || !Number.isFinite(v)) return 0;
+      return Math.max(min, Math.min(max, v));
+    };
+
+    // Extract and normalize key adjustments
+    const adjustments = {
+      exposure: clamp(aiAdjustments.exposure, -5, 5),
+      temperature: clamp(aiAdjustments.temperature, 2000, 50000),
+      tint: clamp(aiAdjustments.tint, -150, 150),
+      contrast: clamp(aiAdjustments.contrast, -100, 100) / 100,
+      highlights: clamp(aiAdjustments.highlights, -100, 100) / 100,
+      shadows: clamp(aiAdjustments.shadows, -100, 100) / 100,
+      whites: clamp(aiAdjustments.whites, -100, 100) / 100,
+      blacks: clamp(aiAdjustments.blacks, -100, 100) / 100,
+      vibrance: clamp(aiAdjustments.vibrance, -100, 100) / 100,
+      saturation: clamp(aiAdjustments.saturation, -100, 100) / 100,
+      clarity: clamp(aiAdjustments.clarity, -100, 100) / 100,
+    };
+
+    // Generate LUT based on format
+    if (format === 'cube') {
+      return this.generateCubeLUT(adjustments, size);
+    } else if (format === '3dl') {
+      return this.generate3DLLUT(adjustments, size);
+    } else if (format === 'lut') {
+      return this.generateDaVinciLUT(adjustments, size);
+    } else {
+      throw new Error(`Unsupported LUT format: ${format}`);
+    }
+  }
+
+  private generateCubeLUT(adjustments: any, size: number): string {
+    const presetName = 'FotoRecipeWizard';
+    let lut = `# Created by FotoRecipeWizard
+# LUT size: ${size}
+# Description: AI-generated color grading
+
+LUT_3D_SIZE ${size}
+
+`;
+
+    // Generate 3D LUT entries
+    for (let r = 0; r < size; r++) {
+      for (let g = 0; g < size; g++) {
+        for (let b = 0; b < size; b++) {
+          // Normalize input values to [0,1]
+          const inputR = r / (size - 1);
+          const inputG = g / (size - 1);
+          const inputB = b / (size - 1);
+
+          // Apply color transformations
+          const [outputR, outputG, outputB] = this.applyColorTransform(inputR, inputG, inputB, adjustments);
+
+          // Write LUT entry
+          lut += `${outputR.toFixed(6)} ${outputG.toFixed(6)} ${outputB.toFixed(6)}\n`;
+        }
+      }
+    }
+
+    return lut;
+  }
+
+  private generate3DLLUT(adjustments: any, size: number): string {
+    let lut = `3DMESH
+Mesh ${size} ${size} ${size}
+
+`;
+
+    // Generate 3D LUT entries for Autodesk format
+    for (let r = 0; r < size; r++) {
+      for (let g = 0; g < size; g++) {
+        for (let b = 0; b < size; b++) {
+          const inputR = r / (size - 1);
+          const inputG = g / (size - 1);
+          const inputB = b / (size - 1);
+
+          const [outputR, outputG, outputB] = this.applyColorTransform(inputR, inputG, inputB, adjustments);
+
+          lut += `${(outputR * 1023).toFixed(0)} ${(outputG * 1023).toFixed(0)} ${(outputB * 1023).toFixed(0)}\n`;
+        }
+      }
+    }
+
+    return lut;
+  }
+
+  private generateDaVinciLUT(adjustments: any, size: number): string {
+    let lut = `# Created by FotoRecipeWizard
+# DaVinci Resolve LUT
+# Size: ${size}x${size}x${size}
+
+`;
+
+    // Generate entries in DaVinci format
+    for (let r = 0; r < size; r++) {
+      for (let g = 0; g < size; g++) {
+        for (let b = 0; b < size; b++) {
+          const inputR = r / (size - 1);
+          const inputG = g / (size - 1);
+          const inputB = b / (size - 1);
+
+          const [outputR, outputG, outputB] = this.applyColorTransform(inputR, inputG, inputB, adjustments);
+
+          lut += `${outputR.toFixed(6)} ${outputG.toFixed(6)} ${outputB.toFixed(6)}\n`;
+        }
+      }
+    }
+
+    return lut;
+  }
+
+  private applyColorTransform(r: number, g: number, b: number, adjustments: any): [number, number, number] {
+    // Apply exposure adjustment
+    let newR = r * Math.pow(2, adjustments.exposure);
+    let newG = g * Math.pow(2, adjustments.exposure);
+    let newB = b * Math.pow(2, adjustments.exposure);
+
+    // Apply basic tone curve adjustments (simplified)
+    if (adjustments.contrast !== 0) {
+      const contrast = 1 + adjustments.contrast * 0.5;
+      newR = Math.pow(newR, contrast);
+      newG = Math.pow(newG, contrast);
+      newB = Math.pow(newB, contrast);
+    }
+
+    // Apply highlight/shadow adjustments (simplified)
+    const luminance = 0.299 * newR + 0.587 * newG + 0.114 * newB;
+    if (luminance > 0.7 && adjustments.highlights !== 0) {
+      const factor = 1 + adjustments.highlights * 0.3;
+      newR *= factor;
+      newG *= factor;
+      newB *= factor;
+    } else if (luminance < 0.3 && adjustments.shadows !== 0) {
+      const factor = 1 + adjustments.shadows * 0.3;
+      newR *= factor;
+      newG *= factor;
+      newB *= factor;
+    }
+
+    // Apply saturation
+    if (adjustments.saturation !== 0) {
+      const satFactor = 1 + adjustments.saturation;
+      const gray = 0.299 * newR + 0.587 * newG + 0.114 * newB;
+      newR = gray + (newR - gray) * satFactor;
+      newG = gray + (newG - gray) * satFactor;
+      newB = gray + (newB - gray) * satFactor;
+    }
+
+    // Apply vibrance (affects less saturated colors more)
+    if (adjustments.vibrance !== 0) {
+      const vibFactor = 1 + adjustments.vibrance * 0.5;
+      const maxChannel = Math.max(newR, newG, newB);
+      const satLevel = 1 - (3 * maxChannel - newR - newG - newB);
+      const vibAdjust = 1 + adjustments.vibrance * satLevel * 0.5;
+      const gray = 0.299 * newR + 0.587 * newG + 0.114 * newB;
+      newR = gray + (newR - gray) * vibAdjust;
+      newG = gray + (newG - gray) * vibAdjust;
+      newB = gray + (newB - gray) * vibAdjust;
+    }
+
+    // Clamp values to valid range
+    newR = Math.max(0, Math.min(1, newR));
+    newG = Math.max(0, Math.min(1, newG));
+    newB = Math.max(0, Math.min(1, newB));
+
+    return [newR, newG, newB];
+  }
 }

@@ -1,28 +1,28 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import PaletteIcon from '@mui/icons-material/Palette';
+import PhotoFilterIcon from '@mui/icons-material/PhotoFilter';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TuneIcon from '@mui/icons-material/Tune';
-import PhotoFilterIcon from '@mui/icons-material/PhotoFilter';
-import PaletteIcon from '@mui/icons-material/Palette';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  Typography,
-  Tabs,
-  Tab,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
   Paper,
+  Tab,
+  Tabs,
+  Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
@@ -162,7 +162,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
-
   const defaultOptions = {
     wbBasic: true,
     exposure: false,
@@ -238,13 +237,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     const adjustments = result.metadata?.aiAdjustments;
     if (!adjustments) return;
 
-    // TODO: Implement generateLUT in electronAPI
-    // For now, show a placeholder message
-    alert(`LUT export requested: ${lutSize}³ ${lutFormat.toUpperCase()} format\nThis feature needs to be implemented in the backend.`);
-
-    /* Backend implementation needed:
     try {
-      const res = await window.electronAPI.generateLUT({
+      const res = await (window.electronAPI as any).generateLUT({
         adjustments,
         size: parseInt(lutSize),
         format: lutFormat,
@@ -256,7 +250,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       console.error('LUT export error:', e);
       alert('LUT export failed.');
     }
-    */
   };
 
   return (
@@ -316,29 +309,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({
               borderColor: 'divider',
               px: 3,
               pt: 2,
-              '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 }
+              '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 },
             }}
           >
-            <Tab
-              icon={<CompareArrowsIcon />}
-              label="Overview"
-              iconPosition="start"
-            />
-            <Tab
-              icon={<TuneIcon />}
-              label="Adjustments Details"
-              iconPosition="start"
-            />
-            <Tab
-              icon={<DownloadIcon />}
-              label="Export Options"
-              iconPosition="start"
-            />
-            <Tab
-              icon={<PaletteIcon />}
-              label="LUT Export"
-              iconPosition="start"
-            />
+            <Tab icon={<CompareArrowsIcon />} label="Overview" iconPosition="start" />
+            <Tab icon={<TuneIcon />} label="Adjustments Details" iconPosition="start" />
+            <Tab icon={<DownloadIcon />} label="Export Options" iconPosition="start" />
+            <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
           </Tabs>
 
           {/* Image Selection */}
@@ -349,7 +326,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 {successfulResults.map((result, index) => {
-                  const aiName = result?.metadata?.aiAdjustments &&
+                  const aiName =
+                    result?.metadata?.aiAdjustments &&
                     (result.metadata.aiAdjustments as any).preset_name;
                   let name: string;
                   if (typeof aiName === 'string' && aiName.trim().length > 0) {
@@ -383,21 +361,36 @@ const ResultsView: React.FC<ResultsViewProps> = ({
               <Box
                 key={index}
                 sx={{
-                  display: selectedResult === index ? 'block' : 'none'
+                  display: selectedResult === index ? 'block' : 'none',
                 }}
               >
                 {/* Tab Panel 1: Overview */}
                 {activeTab === 0 && (
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                    >
                       <CompareArrowsIcon color="primary" />
                       Overview
                     </Typography>
 
-                    <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: baseImageDataUrl ? '1fr 1fr' : '1fr' } }}>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gap: 3,
+                        gridTemplateColumns: {
+                          xs: '1fr',
+                          md: baseImageDataUrl ? '1fr 1fr' : '1fr',
+                        },
+                      }}
+                    >
                       {/* Basic Information */}
                       <Paper elevation={1} sx={{ p: 3 }}>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
+                        >
                           Processing Information
                         </Typography>
 
@@ -430,33 +423,122 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         )}
 
                         {/* Processing Stats */}
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                        <Box
+                          sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}
+                        >
                           <Box>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>Confidence</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              Confidence
+                            </Typography>
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: 600, color: 'primary.main' }}
+                            >
                               {Math.round((result.metadata?.aiAdjustments?.confidence || 0) * 100)}%
                             </Typography>
                           </Box>
                           <Box>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>Preset Name</Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              Preset Name
+                            </Typography>
                             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                              {result.metadata?.aiAdjustments && (result.metadata.aiAdjustments as any).preset_name || 'Custom'}
+                              {(result.metadata?.aiAdjustments &&
+                                (result.metadata.aiAdjustments as any).preset_name) ||
+                                'Custom'}
                             </Typography>
                           </Box>
                         </Box>
 
                         {/* Style Information */}
-                        {processOptions && (processOptions.artistStyle || processOptions.filmStyle) && (
+                        {processOptions &&
+                          (processOptions.artistStyle || processOptions.filmStyle) && (
+                            <Box sx={{ mb: 3 }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                                Applied Styles
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {processOptions.artistStyle?.name && (
+                                  <Chip
+                                    label={`Artist: ${processOptions.artistStyle.name}`}
+                                    variant="outlined"
+                                  />
+                                )}
+                                {processOptions.filmStyle?.name && (
+                                  <Chip
+                                    label={`Film: ${processOptions.filmStyle.name}`}
+                                    variant="outlined"
+                                  />
+                                )}
+                              </Box>
+                            </Box>
+                          )}
+
+                        {/* Fine-tune Settings */}
+                        {processOptions && (
                           <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                              Applied Styles
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                              Fine-tune Settings
                             </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              {processOptions.artistStyle?.name && (
-                                <Chip label={`Artist: ${processOptions.artistStyle.name}`} variant="outlined" />
+                            <Box
+                              sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                                gap: 1.5,
+                              }}
+                            >
+                              {[
+                                { key: 'warmth', label: 'Warmth', value: processOptions.warmth },
+                                { key: 'tint', label: 'Tint', value: processOptions.tint },
+                                {
+                                  key: 'contrast',
+                                  label: 'Contrast',
+                                  value: processOptions.contrast,
+                                },
+                                {
+                                  key: 'vibrance',
+                                  label: 'Vibrance',
+                                  value: processOptions.vibrance,
+                                },
+                                {
+                                  key: 'moodiness',
+                                  label: 'Moodiness',
+                                  value: processOptions.moodiness,
+                                },
+                                {
+                                  key: 'saturationBias',
+                                  label: 'Saturation Bias',
+                                  value: processOptions.saturationBias,
+                                },
+                              ].map(
+                                setting =>
+                                  setting.value !== undefined && (
+                                    <Box key={setting.key} sx={{ textAlign: 'center' }}>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ color: 'text.secondary', display: 'block' }}
+                                      >
+                                        {setting.label}
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                        {setting.key === 'tint'
+                                          ? setting.value + 50
+                                          : setting.value}
+                                      </Typography>
+                                    </Box>
+                                  )
                               )}
-                              {processOptions.filmStyle?.name && (
-                                <Chip label={`Film: ${processOptions.filmStyle.name}`} variant="outlined" />
+                              {processOptions.filmGrain !== undefined && (
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ color: 'text.secondary', display: 'block' }}
+                                  >
+                                    Film Grain
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {processOptions.filmGrain ? 'On' : 'Off'}
+                                  </Typography>
+                                </Box>
                               )}
                             </Box>
                           </Box>
@@ -466,34 +548,32 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       {/* Recipe Image */}
                       {baseImageDataUrl ? (
                         <Paper elevation={1} sx={{ p: 3 }}>
-                          <Typography variant="h6" sx={{
-                            mb: 2,
-                            fontWeight: 600,
-                            color: 'primary.main',
-                            textAlign: 'center'
-                          }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              mb: 2,
+                              fontWeight: 600,
+                              color: 'primary.main',
+                              textAlign: 'center',
+                            }}
+                          >
                             Recipe Image
                           </Typography>
-                          <Box sx={{
-                            width: '100%',
-                            height: 300,
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            position: 'relative',
-                            backgroundColor: 'grey.100'
-                          }}>
+                          <Box
+                            sx={{
+                              width: '100%',
+                              height: 300,
+                              borderRadius: 2,
+                              overflow: 'hidden',
+                              position: 'relative',
+                              backgroundColor: 'grey.100',
+                            }}
+                          >
                             <Base64Image dataUrl={baseImageDataUrl} alt="Recipe" />
                           </Box>
                         </Paper>
                       ) : (
                         <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
-                          <Box sx={{ fontSize: '48px', mb: 2, opacity: 0.5 }}>🎨</Box>
-                          <Typography variant="h6" sx={{ fontWeight: 600, color: '#666', mb: 1 }}>
-                            No Recipe Image
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#999', mb: 2 }}>
-                            Add a recipe image to identify the style
-                          </Typography>
                           {processId && (
                             <Button
                               variant="contained"
@@ -513,11 +593,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 2: Adjustments */}
                 {activeTab === 1 && result.metadata?.aiAdjustments && (
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                    >
                       <TuneIcon color="primary" />
                       Applied Adjustments
                       <Chip
-                        label={`${Math.round((result.metadata.aiAdjustments.confidence || 0) * 100)}% Confidence`}
+                        label={`${Math.round(
+                          (result.metadata.aiAdjustments.confidence || 0) * 100
+                        )}% Confidence`}
                         size="medium"
                         color="primary"
                         sx={{ ml: 'auto' }}
@@ -528,7 +613,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {(processPrompt || processOptions) && (
                       <Accordion sx={{ mb: 2 }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                          >
                             <SettingsIcon color="action" />
                             Processing Context
                           </Typography>
@@ -553,20 +641,49 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   User Settings
                                 </Typography>
                                 <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
-                                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
-                                    <Typography variant="body1"><strong>Vibe:</strong> {processOptions.vibe || '—'}</Typography>
-                                    <Typography variant="body1"><strong>Warmth:</strong> {processOptions.warmth ?? '—'}</Typography>
-                                    <Typography variant="body1"><strong>Tint:</strong> {processOptions.tint ?? '—'}</Typography>
-                                    <Typography variant="body1"><strong>Contrast:</strong> {processOptions.contrast ?? '—'}</Typography>
-                                    <Typography variant="body1"><strong>Vibrance:</strong> {processOptions.vibrance ?? '—'}</Typography>
-                                    <Typography variant="body1"><strong>Moodiness:</strong> {processOptions.moodiness ?? '—'}</Typography>
-                                    <Typography variant="body1"><strong>Saturation Bias:</strong> {processOptions.saturationBias ?? '—'}</Typography>
-                                    <Typography variant="body1"><strong>Film Grain:</strong> {processOptions.filmGrain ? 'On' : 'Off'}</Typography>
+                                  <Box
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                                      gap: 2,
+                                    }}
+                                  >
+                                    <Typography variant="body1">
+                                      <strong>Vibe:</strong> {processOptions.vibe || '—'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Warmth:</strong> {processOptions.warmth ?? '—'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Tint:</strong> {processOptions.tint ?? '—'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Contrast:</strong> {processOptions.contrast ?? '—'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Vibrance:</strong> {processOptions.vibrance ?? '—'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Moodiness:</strong> {processOptions.moodiness ?? '—'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Saturation Bias:</strong>{' '}
+                                      {processOptions.saturationBias ?? '—'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Film Grain:</strong>{' '}
+                                      {processOptions.filmGrain ? 'On' : 'Off'}
+                                    </Typography>
                                     {processOptions.artistStyle?.name && (
-                                      <Typography variant="body1"><strong>Artist Style:</strong> {processOptions.artistStyle.name}</Typography>
+                                      <Typography variant="body1">
+                                        <strong>Artist Style:</strong>{' '}
+                                        {processOptions.artistStyle.name}
+                                      </Typography>
                                     )}
                                     {processOptions.filmStyle?.name && (
-                                      <Typography variant="body1"><strong>Film Stock:</strong> {processOptions.filmStyle.name}</Typography>
+                                      <Typography variant="body1">
+                                        <strong>Film Stock:</strong> {processOptions.filmStyle.name}
+                                      </Typography>
                                     )}
                                   </Box>
                                 </Paper>
@@ -580,63 +697,155 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {/* Basic Adjustments */}
                     <Accordion defaultExpanded sx={{ mb: 2 }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
                           <PhotoFilterIcon color="action" />
                           Basic Adjustments
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        <Box sx={{ display: 'flex', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 4,
+                            flexDirection: { xs: 'column', md: 'row' },
+                          }}
+                        >
                           <Box sx={{ flex: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
+                            >
                               White Balance
                             </Typography>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Temperature</Typography>
-                                <Chip label={`${Math.round(result.metadata.aiAdjustments.temperature || 0)} K`} variant="outlined" />
+                                <Chip
+                                  label={`${Math.round(
+                                    result.metadata.aiAdjustments.temperature || 0
+                                  )} K`}
+                                  variant="outlined"
+                                />
                               </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Tint</Typography>
-                                <Chip label={Math.round(result.metadata.aiAdjustments.tint || 0)} variant="outlined" />
+                                <Chip
+                                  label={Math.round(result.metadata.aiAdjustments.tint || 0)}
+                                  variant="outlined"
+                                />
                               </Box>
                             </Box>
                           </Box>
                           <Box sx={{ flex: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
+                            >
                               Exposure
                             </Typography>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Exposure</Typography>
-                                <Chip label={(result.metadata.aiAdjustments.exposure || 0).toFixed(2)} variant="outlined" />
+                                <Chip
+                                  label={(result.metadata.aiAdjustments.exposure || 0).toFixed(2)}
+                                  variant="outlined"
+                                />
                               </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Contrast</Typography>
-                                <Chip label={result.metadata.aiAdjustments.contrast ?? 0} variant="outlined" />
+                                <Chip
+                                  label={result.metadata.aiAdjustments.contrast ?? 0}
+                                  variant="outlined"
+                                />
                               </Box>
                             </Box>
                           </Box>
                           <Box sx={{ flex: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
+                            >
                               Tone
                             </Typography>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Highlights</Typography>
-                                <Chip label={result.metadata.aiAdjustments.highlights ?? 0} variant="outlined" />
+                                <Chip
+                                  label={result.metadata.aiAdjustments.highlights ?? 0}
+                                  variant="outlined"
+                                />
                               </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Shadows</Typography>
-                                <Chip label={result.metadata.aiAdjustments.shadows ?? 0} variant="outlined" />
+                                <Chip
+                                  label={result.metadata.aiAdjustments.shadows ?? 0}
+                                  variant="outlined"
+                                />
                               </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Whites</Typography>
-                                <Chip label={result.metadata.aiAdjustments.whites ?? 0} variant="outlined" />
+                                <Chip
+                                  label={result.metadata.aiAdjustments.whites ?? 0}
+                                  variant="outlined"
+                                />
                               </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
                                 <Typography variant="body1">Blacks</Typography>
-                                <Chip label={result.metadata.aiAdjustments.blacks ?? 0} variant="outlined" />
+                                <Chip
+                                  label={result.metadata.aiAdjustments.blacks ?? 0}
+                                  variant="outlined"
+                                />
                               </Box>
                             </Box>
                           </Box>
@@ -652,18 +861,54 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
-                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 3,
+                            flexDirection: { xs: 'column', sm: 'row' },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              flex: 1,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
                             <Typography variant="body1">Clarity</Typography>
-                            <Chip label={result.metadata.aiAdjustments.clarity ?? 0} variant="outlined" />
+                            <Chip
+                              label={result.metadata.aiAdjustments.clarity ?? 0}
+                              variant="outlined"
+                            />
                           </Box>
-                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
                             <Typography variant="body1">Vibrance</Typography>
-                            <Chip label={result.metadata.aiAdjustments.vibrance ?? 0} variant="outlined" />
+                            <Chip
+                              label={result.metadata.aiAdjustments.vibrance ?? 0}
+                              variant="outlined"
+                            />
                           </Box>
-                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
                             <Typography variant="body1">Saturation</Typography>
-                            <Chip label={result.metadata.aiAdjustments.saturation ?? 0} variant="outlined" />
+                            <Chip
+                              label={result.metadata.aiAdjustments.saturation ?? 0}
+                              variant="outlined"
+                            />
                           </Box>
                         </Box>
                       </AccordionDetails>
@@ -677,19 +922,49 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-                          {['Hue', 'Saturation', 'Luminance'].map((adjustmentType) => (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 3,
+                            flexDirection: { xs: 'column', md: 'row' },
+                          }}
+                        >
+                          {['Hue', 'Saturation', 'Luminance'].map(adjustmentType => (
                             <Box key={adjustmentType} sx={{ flex: 1 }}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}>
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
+                              >
                                 {adjustmentType}
                               </Typography>
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                {['red', 'orange', 'yellow', 'green', 'aqua', 'blue', 'purple', 'magenta'].map(color => {
-                                  const key = `${adjustmentType.toLowerCase().slice(0, 3)}_${color}`;
+                                {[
+                                  'red',
+                                  'orange',
+                                  'yellow',
+                                  'green',
+                                  'aqua',
+                                  'blue',
+                                  'purple',
+                                  'magenta',
+                                ].map(color => {
+                                  const key = `${adjustmentType
+                                    .toLowerCase()
+                                    .slice(0, 3)}_${color}`;
                                   const value = (result.metadata!.aiAdjustments as any)[key] ?? 0;
                                   return (
-                                    <Box key={color} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                      <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                                    <Box
+                                      key={color}
+                                      sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ textTransform: 'capitalize' }}
+                                      >
                                         {color}
                                       </Typography>
                                       <Chip size="small" label={value} variant="outlined" />
@@ -727,12 +1002,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 3: Export Options */}
                 {activeTab === 2 && (
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                    >
                       <DownloadIcon color="primary" />
                       Export Options
                     </Typography>
 
-                    <Paper elevation={1} sx={{ p: 4, background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)' }}>
+                    <Paper
+                      elevation={1}
+                      sx={{ p: 4, background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)' }}
+                    >
                       <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                         XMP Sidecar Export
                       </Typography>
@@ -745,22 +1026,72 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               onChange={e => setAllOptions(index, e.target.checked)}
                             />
                           }
-                          label={<Typography variant="body1" sx={{ fontWeight: 600 }}>Select All Adjustment Types</Typography>}
+                          label={
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              Select All Adjustment Types
+                            </Typography>
+                          }
                         />
                       </Box>
 
-                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                          gap: 2,
+                        }}
+                      >
                         {[
-                          { key: 'exposure', label: 'Exposure', description: 'Basic exposure adjustments' },
-                          { key: 'wbBasic', label: 'Basic Adjustments', description: 'White balance, contrast, highlights, shadows' },
-                          { key: 'hsl', label: 'HSL Adjustments', description: 'Hue, saturation, and luminance per color' },
-                          { key: 'colorGrading', label: 'Color Grading', description: 'Shadow, midtone, highlight color wheels' },
-                          { key: 'curves', label: 'Tone Curves', description: 'RGB and luminance curve adjustments' },
-                          { key: 'pointColor', label: 'Point Color', description: 'Targeted color adjustments' },
-                          { key: 'sharpenNoise', label: 'Sharpen & Noise', description: 'Detail enhancement settings' },
-                          { key: 'vignette', label: 'Vignette', description: 'Edge darkening effects' },
-                          { key: 'grain', label: 'Film Grain', description: 'Analog film texture simulation' },
-                          { key: 'masks', label: 'Masks (Local Adjustments)', description: 'Area-specific modifications' },
+                          {
+                            key: 'exposure',
+                            label: 'Exposure',
+                            description: 'Basic exposure adjustments',
+                          },
+                          {
+                            key: 'wbBasic',
+                            label: 'Basic Adjustments',
+                            description: 'White balance, contrast, highlights, shadows',
+                          },
+                          {
+                            key: 'hsl',
+                            label: 'HSL Adjustments',
+                            description: 'Hue, saturation, and luminance per color',
+                          },
+                          {
+                            key: 'colorGrading',
+                            label: 'Color Grading',
+                            description: 'Shadow, midtone, highlight color wheels',
+                          },
+                          {
+                            key: 'curves',
+                            label: 'Tone Curves',
+                            description: 'RGB and luminance curve adjustments',
+                          },
+                          {
+                            key: 'pointColor',
+                            label: 'Point Color',
+                            description: 'Targeted color adjustments',
+                          },
+                          {
+                            key: 'sharpenNoise',
+                            label: 'Sharpen & Noise',
+                            description: 'Detail enhancement settings',
+                          },
+                          {
+                            key: 'vignette',
+                            label: 'Vignette',
+                            description: 'Edge darkening effects',
+                          },
+                          {
+                            key: 'grain',
+                            label: 'Film Grain',
+                            description: 'Analog film texture simulation',
+                          },
+                          {
+                            key: 'masks',
+                            label: 'Masks (Local Adjustments)',
+                            description: 'Area-specific modifications',
+                          },
                         ].map(opt => (
                           <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
                             <FormControlLabel
@@ -812,19 +1143,29 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 4: LUT Export */}
                 {activeTab === 3 && (
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                    >
                       <PaletteIcon color="primary" />
                       LUT Export
                     </Typography>
 
-                    <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gap: 3,
+                        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                      }}
+                    >
                       {/* LUT Export Options */}
                       <Paper elevation={1} sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                           3D LUT Creation
                         </Typography>
                         <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-                          Generate a 3D LUT file that captures the color transformations from this processing session.
+                          Generate a 3D LUT file that captures the color transformations from this
+                          processing session.
                         </Typography>
 
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
@@ -836,7 +1177,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               {[
                                 { value: '17', label: '17³ (Small)' },
                                 { value: '33', label: '33³ (Standard)' },
-                                { value: '65', label: '65³ (High Quality)' }
+                                { value: '65', label: '65³ (High Quality)' },
                               ].map(option => (
                                 <Chip
                                   key={option.value}
@@ -859,7 +1200,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               {[
                                 { value: 'cube', label: '.cube (Adobe)' },
                                 { value: '3dl', label: '.3dl (Autodesk)' },
-                                { value: 'lut', label: '.lut (DaVinci)' }
+                                { value: 'lut', label: '.lut (DaVinci)' },
                               ].map(format => (
                                 <Chip
                                   key={format.value}
@@ -867,7 +1208,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   variant={lutFormat === format.value ? 'filled' : 'outlined'}
                                   color={lutFormat === format.value ? 'primary' : 'default'}
                                   clickable
-                                  onClick={() => setLutFormat(format.value as 'cube' | '3dl' | 'lut')}
+                                  onClick={() =>
+                                    setLutFormat(format.value as 'cube' | '3dl' | 'lut')
+                                  }
                                   sx={{ cursor: 'pointer' }}
                                 />
                               ))}
@@ -898,33 +1241,58 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </Typography>
 
                         <Box sx={{ mb: 3 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}
+                          >
                             What is a 3D LUT?
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                            A 3D Lookup Table captures the exact color transformations applied by the AI, allowing you to recreate this look in other software.
+                            A 3D Lookup Table captures the exact color transformations applied by
+                            the AI, allowing you to recreate this look in other software.
                           </Typography>
                         </Box>
 
                         <Box sx={{ mb: 3 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}
+                          >
                             Compatible Software
                           </Typography>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Adobe Lightroom & Photoshop</Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• DaVinci Resolve</Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Final Cut Pro</Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Luminar & Aurora HDR</Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>• Most video editing software</Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              • Adobe Lightroom & Photoshop
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              • DaVinci Resolve
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              • Final Cut Pro
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              • Luminar & Aurora HDR
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                              • Most video editing software
+                            </Typography>
                           </Box>
                         </Box>
 
-                        <Box sx={{ p: 2, backgroundColor: 'info.light', borderRadius: 1, color: 'info.contrastText' }}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            backgroundColor: 'info.light',
+                            borderRadius: 1,
+                            color: 'info.contrastText',
+                          }}
+                        >
                           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
                             💡 Pro Tip
                           </Typography>
                           <Typography variant="body2">
-                            33³ LUTs offer the best balance of quality and file size for most applications.
+                            33³ LUTs offer the best balance of quality and file size for most
+                            applications.
                           </Typography>
                         </Box>
                       </Paper>
@@ -957,30 +1325,40 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
                   <Box sx={{ fontSize: '28px', lineHeight: 1 }}>❌</Box>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" sx={{ fontSize: '18px', fontWeight: 600, color: '#d32f2f', mb: 0.5 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontSize: '18px', fontWeight: 600, color: '#d32f2f', mb: 0.5 }}
+                    >
                       Processing Failed
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                       Image {results.indexOf(result) + 1} of {results.length}
                     </Typography>
 
-                    <Paper sx={{
-                      p: 2,
-                      mb: 2,
-                      fontFamily: 'monospace',
-                      fontSize: '13px',
-                      color: '#d32f2f',
-                      whiteSpace: 'pre-wrap',
-                      maxHeight: '200px',
-                      overflow: 'auto',
-                      backgroundColor: '#ffffff'
-                    }}>
+                    <Paper
+                      sx={{
+                        p: 2,
+                        mb: 2,
+                        fontFamily: 'monospace',
+                        fontSize: '13px',
+                        color: '#d32f2f',
+                        whiteSpace: 'pre-wrap',
+                        maxHeight: '200px',
+                        overflow: 'auto',
+                        backgroundColor: '#ffffff',
+                      }}
+                    >
                       {result.error || 'Unknown error occurred'}
                     </Paper>
 
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                       {onRestart && (
-                        <Button variant="contained" color="primary" onClick={onRestart} sx={{ textTransform: 'none' }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={onRestart}
+                          sx={{ textTransform: 'none' }}
+                        >
                           Try Again
                         </Button>
                       )}
@@ -997,7 +1375,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       )}
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmNewGeneration} onClose={() => setConfirmNewGeneration(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={confirmNewGeneration}
+        onClose={() => setConfirmNewGeneration(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle sx={{ pb: 1 }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
             Generate New Analysis?
@@ -1005,7 +1388,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            This will create a new AI analysis using the same images but generate fresh results. The current analysis will be preserved as a separate version.
+            This will create a new AI analysis using the same images but generate fresh results. The
+            current analysis will be preserved as a separate version.
           </Typography>
           <Paper sx={{ backgroundColor: '#f8f9fa', p: 2, mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
@@ -1022,7 +1406,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           </Paper>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={() => setConfirmNewGeneration(false)} variant="outlined" sx={{ textTransform: 'none' }}>
+          <Button
+            onClick={() => setConfirmNewGeneration(false)}
+            variant="outlined"
+            sx={{ textTransform: 'none' }}
+          >
             Cancel
           </Button>
           <Button
