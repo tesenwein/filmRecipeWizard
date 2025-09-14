@@ -86,9 +86,9 @@
     "mac": {
       "category": "public.app-category.photography",
       "icon": "build/icons/icon.png",
+      "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "notarize": false,
       "target": [
         {
           "target": "dmg",
