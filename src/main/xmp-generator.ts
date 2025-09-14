@@ -181,17 +181,124 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  // Masks block (skipped unless enabled)
+  // Masks block (skipped unless enabled). Emits Lightroom MaskGroupBasedCorrections.
   const masksBlock = inc.masks && Array.isArray((aiAdjustments as any).masks)
-    ? ((aiAdjustments as any).masks as any[])
-        .map((m, i) => {
-          const typ = m?.type === 'linear' ? 'Linear' : 'Radial';
-          const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
-          const adj = m?.adjustments || {};
-          const tagIfNum = (k: string, v: any) => (typeof v === 'number' ? `<crs:${k}>${Math.round(v)}</crs:${k}>\n` : '');
-          return `      <crs:LocalAdjustmentWhat>Mask</crs:LocalAdjustmentWhat>\n      <crs:LocalName>${name}</crs:LocalName>\n      <crs:Localize${typ}>True</crs:Localize${typ}>\n${tagIfNum('LocalExposure', adj.local_exposure)}${tagIfNum('LocalContrast', adj.local_contrast)}${tagIfNum('LocalHighlights', adj.local_highlights)}${tagIfNum('LocalShadows', adj.local_shadows)}${tagIfNum('LocalWhites', adj.local_whites)}${tagIfNum('LocalBlacks', adj.local_blacks)}${tagIfNum('LocalClarity', adj.local_clarity)}${tagIfNum('LocalDehaze', adj.local_dehaze)}${tagIfNum('LocalTemperature', adj.local_temperature)}${tagIfNum('LocalTint', adj.local_tint)}${tagIfNum('LocalTexture', adj.local_texture)}${tagIfNum('LocalSaturation', adj.local_saturation)}`;
-        })
-        .join('\n')
+    ? (() => {
+        const masks = ((aiAdjustments as any).masks as any[]);
+        if (!masks.length) return '';
+        const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
+        const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
+        const nM1_1 = (v: any) => (typeof v === 'number' ? Math.max(-1, Math.min(1, v)) : undefined);
+        const tagIf = (k: string, val?: string | number) =>
+          val === 0 || val === '0' || (val !== undefined && val !== null)
+            ? `<crs:${k}>${val}</crs:${k}>\n`
+            : '';
+
+        const correctionLis = masks
+          .map((m, i) => {
+            const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
+            const adj = m?.adjustments || {};
+            // Build adjustment tags using 2012 naming where applicable
+            const adjTags = [
+              tagIf('LocalSaturation2012', f3(nM1_1(adj.local_saturation) as any)),
+              tagIf('LocalExposure2012', f3(nM1_1(adj.local_exposure) as any)),
+              tagIf('LocalContrast2012', f3(nM1_1(adj.local_contrast) as any)),
+              tagIf('LocalHighlights2012', f3(nM1_1(adj.local_highlights) as any)),
+              tagIf('LocalShadows2012', f3(nM1_1(adj.local_shadows) as any)),
+              tagIf('LocalWhites2012', f3(nM1_1(adj.local_whites) as any)),
+              tagIf('LocalBlacks2012', f3(nM1_1(adj.local_blacks) as any)),
+              tagIf('LocalClarity2012', f3(nM1_1(adj.local_clarity) as any)),
+              tagIf('LocalDehaze', f3(nM1_1(adj.local_dehaze) as any)),
+              tagIf('LocalTemperature', f3(nM1_1(adj.local_temperature) as any)),
+              tagIf('LocalTint', f3(nM1_1(adj.local_tint) as any)),
+              tagIf('LocalTexture', f3(nM1_1(adj.local_texture) as any)),
+              tagIf('LocalCurveRefineSaturation', 100),
+            ]
+              .filter(Boolean)
+              .join('');
+
+            // Build geometry li for mask
+            let maskLi = '';
+            if (m?.type === 'linear') {
+              const zx = f3(n0_1(m.zeroX));
+              const zy = f3(n0_1(m.zeroY));
+              const fx = f3(n0_1(m.fullX));
+              const fy = f3(n0_1(m.fullY));
+              maskLi = `<rdf:li
+         crs:What="Mask/Gradient"
+         crs:MaskActive="true"
+         crs:MaskName="${name}"
+         crs:MaskBlendMode="0"
+         crs:MaskInverted="${m?.inverted ? 'true' : 'false'}"
+         crs:MaskValue="1"
+         crs:ZeroX="${zx ?? '0.500'}"
+         crs:ZeroY="${zy ?? '0.500'}"
+         crs:FullX="${fx ?? '0.500'}"
+         crs:FullY="${fy ?? '0.800'}"/>`;
+            } else if (m?.type === 'radial') {
+              const top = f3(n0_1(m.top));
+              const left = f3(n0_1(m.left));
+              const bottom = f3(n0_1(m.bottom));
+              const right = f3(n0_1(m.right));
+              const angle = f3(typeof m.angle === 'number' ? m.angle : 0);
+              const midpoint = typeof m.midpoint === 'number' ? Math.round(Math.max(0, Math.min(100, m.midpoint))) : 50;
+              const roundness = typeof m.roundness === 'number' ? Math.round(Math.max(-100, Math.min(100, m.roundness))) : 0;
+              const feather = typeof m.feather === 'number' ? Math.round(Math.max(0, Math.min(100, m.feather))) : 75;
+              maskLi = `<rdf:li
+         crs:What="Mask/CircularGradient"
+         crs:MaskActive="true"
+         crs:MaskName="${name}"
+         crs:MaskBlendMode="0"
+         crs:MaskInverted="${m?.inverted ? 'true' : 'false'}"
+         crs:MaskValue="1"
+         crs:Top="${top ?? '0.200'}"
+         crs:Left="${left ?? '0.200'}"
+         crs:Bottom="${bottom ?? '0.800'}"
+         crs:Right="${right ?? '0.800'}"
+         crs:Angle="${angle ?? '0'}"
+         crs:Midpoint="${midpoint}"
+         crs:Roundness="${roundness}"
+         crs:Feather="${feather}"
+         crs:Flipped="${m?.flipped ? 'true' : 'true'}"
+         crs:Version="2"/>`;
+            } else {
+              // person/subject mask (Lightroom AI). We emit Mask/Image with SubType=1
+              const rx = f3(n0_1(m.referenceX));
+              const ry = f3(n0_1(m.referenceY));
+              maskLi = `<rdf:li
+         crs:What="Mask/Image"
+         crs:MaskActive="true"
+         crs:MaskName="${name}"
+         crs:MaskBlendMode="0"
+         crs:MaskInverted="${m?.inverted ? 'true' : 'false'}"
+         crs:MaskValue="1"
+         crs:MaskVersion="1"
+         crs:MaskSubType="1"
+         crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"/>`;
+            }
+
+            return `     <rdf:li>
+      <rdf:Description
+       crs:What="Correction"
+       crs:CorrectionAmount="1"
+       crs:CorrectionActive="true"
+       crs:CorrectionName="${name}">
+${adjTags}      <crs:CorrectionMasks>
+       <rdf:Seq>
+        ${maskLi}
+       </rdf:Seq>
+      </crs:CorrectionMasks>
+      </rdf:Description>
+     </rdf:li>`;
+          })
+          .join('\n');
+
+        return `   <crs:MaskGroupBasedCorrections>
+    <rdf:Seq>
+${correctionLis}
+    </rdf:Seq>
+   </crs:MaskGroupBasedCorrections>`;
+      })()
     : '';
 
   const xmp = `<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>
