@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches: [master, main, develop]
+    branches: [master, main]
     paths-ignore:
       - '**.md'
       - '.gitignore'
@@ -19,6 +19,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   # Check if we should create a release based on commit message
@@ -97,7 +101,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -159,7 +163,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Download all build artifacts
@@ -168,7 +172,11 @@ jobs:
           path: artifacts
 
       - name: Display artifact structure
-        run: find artifacts -type f -name "*.dmg" -o -name "*.zip" -o -name "*.exe" | sort
+        run: |
+          echo "=== Artifact directory structure ==="
+          find artifacts -type f | sort
+          echo "=== Looking for specific file types ==="
+          find artifacts -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.AppImage" \) | sort
 
       - name: Determine version
         id: version
@@ -252,9 +260,10 @@ jobs:
           body_path: CHANGELOG.md
           prerelease: ${{ needs.check-release.outputs.is_prerelease == 'true' }}
           files: |
-            artifacts/build-mac/release/*.dmg
-            artifacts/build-mac/release/*.zip
-            artifacts/build-win/release/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.zip
+            artifacts/**/*.exe
+            artifacts/**/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

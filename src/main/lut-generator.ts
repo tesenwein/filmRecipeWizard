@@ -130,11 +130,12 @@ function applyColorTransform(r: number, g: number, b: number, adjustments: any):
     const tempNormalized = Math.max(-1, Math.min(1, (adjustments.temperature - 6500) / 3000));
     const tintNormalized = Math.max(-1, Math.min(1, adjustments.tint / 150));
 
-    // Apply temperature correction (simplified)
+    // Apply temperature correction (fixed)
     if (tempNormalized < 0) {
-      // Cooler - reduce red, increase blue
-      newR *= 1 + tempNormalized * 0.2;
-      newB *= 1 - tempNormalized * 0.1;
+      // Cooler - reduce red/yellow, increase blue (but less aggressively)
+      newR *= 1 + tempNormalized * 0.1; // Less reduction in red
+      newG *= 1 + tempNormalized * 0.05; // Slight reduction in green
+      newB *= 1 - tempNormalized * 0.05; // Less increase in blue
     } else {
       // Warmer - increase red/yellow, reduce blue
       newR *= 1 + tempNormalized * 0.1;
