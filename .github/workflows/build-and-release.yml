@@ -105,7 +105,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git config --local user.password "${{ secrets.GITHUB_TOKEN }}"
 
           VERSION_BUMP="${{ needs.check-release.outputs.version_bump }}"
 
@@ -123,13 +122,29 @@ jobs:
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-          # Commit and push the version bump using the token
+          # Create a new branch for the version bump
+          BRANCH_NAME="version-bump-${NEW_VERSION}"
+          git checkout -b $BRANCH_NAME
+
+          # Commit the version bump
           git add package.json package-lock.json
           git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
 
-          # Push using https with token to bypass branch protection
+          # Push the branch
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin $BRANCH_NAME
+
+          # Create a pull request
+          gh pr create \
+            --title "chore: bump version to $NEW_VERSION" \
+            --body "Automated version bump to $NEW_VERSION triggered by commit: ${{ github.event.head_commit.message }}" \
+            --head $BRANCH_NAME \
+            --base master
+
+          # Auto-merge the PR since it's an automated version bump
+          gh pr merge $BRANCH_NAME --auto --squash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Build the application for all platforms
   build:
@@ -235,11 +250,11 @@ jobs:
       - name: Determine version
         id: version
         run: |
-          # Pull latest changes to get the bumped version
-          git pull origin ${{ github.ref_name }}
-
-          # Get the version from package.json (already bumped by bump-version job)
+          # Wait for the version bump PR to be merged if it exists
           if [ "${{ needs.bump-version.outputs.new_version }}" != "" ]; then
+            # Wait a bit for PR to merge, then pull latest
+            sleep 10
+            git pull origin ${{ github.ref_name }}
             NEW_VERSION="${{ needs.bump-version.outputs.new_version }}"
           else
             # For prereleases or when no version bump needed
