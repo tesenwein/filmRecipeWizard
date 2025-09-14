@@ -138,7 +138,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     try {
       if (!processId) return;
       const files = await window.electronAPI.selectFiles({
-        title: 'Select Base Image (Reference Style)',
+        title: 'Select Recipe Image (Style Reference)',
         filters: [
           {
             name: 'Images',
@@ -370,15 +370,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       Before & After Comparison
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-                      <Box sx={{ flex: 1 }}>
+                      <Box sx={{ flex: 1.2 }}>
                         <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
                           <Typography variant="h6" sx={{
                             display: 'block',
                             mb: 2,
                             fontWeight: 600,
-                            color: 'text.secondary'
+                            color: 'primary.main'
                           }}>
-                            Reference Style
+                            Recipe Image
                           </Typography>
                           <Box sx={{
                             width: '100%',
@@ -388,9 +388,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             position: 'relative',
                             backgroundColor: 'grey.100'
                           }}>
-                            <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Reference" />
+                            <Base64Image dataUrl={baseImageDataUrl || undefined} alt="Recipe" />
                             {!baseImageDataUrl && processId && (
-                              <Tooltip title="Add reference image">
+                              <Tooltip title="Add recipe image">
                                 <IconButton
                                   size="medium"
                                   onClick={handleAttachBaseImage}
@@ -412,13 +412,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           </Box>
                         </Paper>
                       </Box>
-                      <Box sx={{ flex: 1 }}>
+                      <Box sx={{ flex: 0.8 }}>
                         <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
                           <Typography variant="h6" sx={{
                             display: 'block',
                             mb: 2,
                             fontWeight: 600,
-                            color: 'primary.main'
+                            color: 'text.secondary'
                           }}>
                             Original Image
                           </Typography>

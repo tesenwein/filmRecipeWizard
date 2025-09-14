@@ -3,7 +3,7 @@ import { Box, Paper } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import TargetImageDisplay from './TargetImageDisplay';
 import StyleDescriptionCard from './StyleDescriptionCard';
-import ReferenceImageCard from './ReferenceImageCard';
+import RecipeImageCard from './RecipeImageCard';
 import FineTuneControls from './FineTuneControls';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import FilmStylesCard from './FilmStylesCard';
@@ -65,7 +65,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   const handleBaseImageSelect = async () => {
     try {
       const result = await window.electronAPI.selectFiles({
-        title: 'Select Base Image (Reference Style)',
+        title: 'Select Recipe Image (Style Reference)',
         filters: [
           {
             name: 'Images',
@@ -201,7 +201,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             onSelect={(s) => onStyleOptionsChange?.({ filmStyle: s })}
           />
 
-          <ReferenceImageCard
+          <RecipeImageCard
             baseImage={baseImage}
             baseDisplay={baseDisplay}
             onSelectImage={handleBaseImageSelect}
