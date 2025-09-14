@@ -80,77 +80,63 @@ jobs:
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
           echo "Should release: $SHOULD_RELEASE (bump: $VERSION_BUMP, prerelease: $IS_PRERELEASE)"
 
-  # Bump version in package.json before building
-  bump-version:
-    name: Bump Version
+  # Prepare version for release (no actual bumping due to protected branch)
+  prepare-version:
+    name: Prepare Version
     runs-on: ubuntu-latest
     needs: check-release
-    if: needs.check-release.outputs.should_release == 'true' && needs.check-release.outputs.is_prerelease != 'true' && needs.check-release.outputs.version_bump != 'none'
+    if: needs.check-release.outputs.should_release == 'true'
     outputs:
-      new_version: ${{ steps.bump.outputs.new_version }}
+      new_version: ${{ steps.version.outputs.new_version }}
+      version_bumped: ${{ steps.version.outputs.version_bumped }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Bump version
-        id: bump
+      - name: Install semver
+        run: npm install semver
+
+      - name: Determine version
+        id: version
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
           VERSION_BUMP="${{ needs.check-release.outputs.version_bump }}"
+          VERSION_BUMPED=false
 
-          # Use npm version to bump
-          if [ "$VERSION_BUMP" = "major" ]; then
-            NEW_VERSION=$(npm version major --no-git-tag-version)
-          elif [ "$VERSION_BUMP" = "minor" ]; then
-            NEW_VERSION=$(npm version minor --no-git-tag-version)
-          elif [ "$VERSION_BUMP" = "patch" ]; then
-            NEW_VERSION=$(npm version patch --no-git-tag-version)
+          if [ "${{ needs.check-release.outputs.is_prerelease }}" = "true" ]; then
+            # Create prerelease version with commit SHA
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            NEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
+          elif [ "$VERSION_BUMP" != "none" ]; then
+            # Calculate what the new version would be (for release naming)
+            if [ "$VERSION_BUMP" = "major" ]; then
+              NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'major')")
+            elif [ "$VERSION_BUMP" = "minor" ]; then
+              NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'minor')")
+            elif [ "$VERSION_BUMP" = "patch" ]; then
+              NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'patch')")
+            fi
+            VERSION_BUMPED=true
+          else
+            NEW_VERSION="$CURRENT_VERSION"
           fi
 
-          # Remove the 'v' prefix that npm adds
-          NEW_VERSION=${NEW_VERSION#v}
+          echo "Current version: $CURRENT_VERSION"
           echo "New version: $NEW_VERSION"
+          echo "Version will be bumped: $VERSION_BUMPED"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-          # Create a new branch for the version bump
-          BRANCH_NAME="version-bump-${NEW_VERSION}"
-          git checkout -b $BRANCH_NAME
-
-          # Commit the version bump
-          git add package.json package-lock.json
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-
-          # Push the branch
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git push origin $BRANCH_NAME
-
-          # Create a pull request
-          gh pr create \
-            --title "chore: bump version to $NEW_VERSION" \
-            --body "Automated version bump to $NEW_VERSION triggered by commit: ${{ github.event.head_commit.message }}" \
-            --head $BRANCH_NAME \
-            --base master
-
-          # Auto-merge the PR since it's an automated version bump
-          gh pr merge $BRANCH_NAME --auto --squash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "version_bumped=$VERSION_BUMPED" >> $GITHUB_OUTPUT
 
   # Build the application for all platforms
   build:
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [check-release, bump-version]
+    needs: [check-release, prepare-version]
     if: always() && needs.check-release.outputs.should_release == 'true'
 
     strategy:
@@ -219,7 +205,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [check-release, bump-version, build]
+    needs: [check-release, prepare-version, build]
     if: always() && needs.check-release.outputs.should_release == 'true' && needs.build.result == 'success'
 
     steps:
@@ -247,30 +233,19 @@ jobs:
           echo "=== Looking for specific file types ==="
           find artifacts -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.AppImage" \) | sort
 
-      - name: Determine version
+      - name: Get version for release
         id: version
         run: |
-          # Wait for the version bump PR to be merged if it exists
-          if [ "${{ needs.bump-version.outputs.new_version }}" != "" ]; then
-            # Wait a bit for PR to merge, then pull latest
-            sleep 10
-            git pull origin ${{ github.ref_name }}
-            NEW_VERSION="${{ needs.bump-version.outputs.new_version }}"
-          else
-            # For prereleases or when no version bump needed
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
+          NEW_VERSION="${{ needs.prepare-version.outputs.new_version }}"
+          VERSION_BUMPED="${{ needs.prepare-version.outputs.version_bumped }}"
 
-            if [ "${{ needs.check-release.outputs.is_prerelease }}" = "true" ]; then
-              # Create prerelease version with commit SHA
-              SHORT_SHA=$(git rev-parse --short HEAD)
-              NEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
-            else
-              NEW_VERSION="$CURRENT_VERSION"
-            fi
-          fi
-
-          echo "New version: $NEW_VERSION"
+          echo "Using version: $NEW_VERSION"
+          echo "Version was bumped: $VERSION_BUMPED"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+          if [ "$VERSION_BUMPED" = "true" ]; then
+            echo "⚠️  Note: Version should be manually updated in package.json to $NEW_VERSION after this release"
+          fi
 
       - name: Generate changelog
         id: changelog
