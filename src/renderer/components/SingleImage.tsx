@@ -36,7 +36,7 @@ const SingleImage: React.FC<SingleImageProps> = ({
   placeholderLabel = 'No image',
   placeholderIcon,
   backgroundBlur = 8,
-  backgroundOpacity = 0.22,
+  backgroundOpacity = 0.35,
   isGenerating = false,
 }) => {
   const src = toImgSrc(source || undefined);
