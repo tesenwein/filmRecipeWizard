@@ -996,7 +996,7 @@ export class OpenAIColorAnalyzer {
             type: 'function',
             function: {
               name: 'add_background_mask',
-              description: 'Add a Background mask with a reference point and optional local adjustments.',
+              description: 'Add a Background mask with a reference point and optional local adjustments. Include subCategoryId (typically 22 for general background).',
               parameters: {
                 type: 'object',
                 properties: {
@@ -1004,7 +1004,7 @@ export class OpenAIColorAnalyzer {
                   inverted: { type: 'boolean' },
                   referenceX: { type: 'number', minimum: 0, maximum: 1 },
                   referenceY: { type: 'number', minimum: 0, maximum: 1 },
-                  subCategoryId: { type: 'number' },
+                  subCategoryId: { type: 'number', default: 22, description: 'Background category ID (22 for general background, 24 for objects, etc.)' },
                   adjustments: {
                     type: 'object',
                     properties: {

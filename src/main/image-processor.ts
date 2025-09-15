@@ -727,7 +727,8 @@ export class ImageProcessor {
             } ${fmt(m?.referenceY) || '0.500000'}" crs:ErrorReason="0"/>`;
           } else if (m?.type === 'background') {
             // Background mask - MaskSubType="0" with SubCategoryID
-            const subCategoryId = num(m?.subCategoryId) ?? 22; // Default to category 22 like in example
+            const subCategoryId = (typeof m?.subCategoryId === 'number' && Number.isFinite(m.subCategoryId)) ? m.subCategoryId : 22;
+            console.log(`[XMP] Background mask subCategoryId: ${subCategoryId} (original: ${m?.subCategoryId})`);
             maskGeom = `<rdf:li crs:What="Mask/Image" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${
               m?.inverted ? 'true' : 'false'
             }" crs:MaskValue="1" crs:MaskVersion="1" crs:MaskSubType="0" crs:MaskSubCategoryID="${subCategoryId}" crs:ReferencePoint="${
