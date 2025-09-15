@@ -1,6 +1,6 @@
 # Foto Recipe Wizard
 
-[![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Releases](https://img.shields.io/github/v/release/tesenwein/fotoRecipeWizard?include_prereleases&label=releases)](https://github.com/tesenwein/fotoRecipeWizard/releases)
 [![TypeScript](https://img.shields.io/badge/typescript-%3E%3D5.9.2-blue.svg)](package.json)
