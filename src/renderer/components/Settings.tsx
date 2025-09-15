@@ -4,11 +4,6 @@ import {
   Box,
   Button,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   IconButton,
   InputAdornment,
   Paper,
@@ -207,7 +202,7 @@ const Settings: React.FC = () => {
         window.dispatchEvent(new Event('close-settings'));
       }, 1000);
       await resetApp();
-    } catch {
+    } catch (error) {
       console.error('Reset setup error:', error);
       setStatus({ type: 'error', msg: 'Failed to reset setup' });
     }
