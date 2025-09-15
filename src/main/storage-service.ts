@@ -113,12 +113,12 @@ export class StorageService {
       const needsMigration = raw.some((p: any) => p.status === undefined);
       if (!needsMigration) return;
 
-      console.log('[STORAGE] Migrating existing processes to add status field');
-
       // Update processes without status field
       const migrated = raw.map((p: any) => ({
         ...p,
-        status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
+        status:
+          p.status ||
+          (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
       }));
 
       // Save the migrated data
@@ -178,7 +178,9 @@ export class StorageService {
               : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
               ? p.baseImagesData[0]
               : undefined,
-          status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
+          status:
+            p.status ||
+            (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
         }));
 
         // Save migrated backup to main file

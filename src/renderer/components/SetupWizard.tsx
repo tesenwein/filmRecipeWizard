@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
+import { useAppStore } from '../store/appStore';
 
 interface SetupWizardProps {
   open: boolean;
@@ -17,19 +18,22 @@ interface SetupWizardProps {
 }
 
 const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
+  const { saveSettings } = useAppStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleApiKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setApiKey(event.target.value);
+  };
 
   const handleApiKeySubmit = async () => {
     if (!apiKey.trim()) return;
 
     setIsLoading(true);
     try {
-      const result = await window.electronAPI.updateSettings({ openaiKey: apiKey.trim() });
-      if (result.success) {
-        setCurrentStep(3);
-      }
+      await saveSettings({ openaiKey: apiKey.trim() });
+      setCurrentStep(3);
     } catch (error) {
       console.error('Failed to save API key:', error);
     } finally {
@@ -40,7 +44,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
   const handleComplete = async () => {
     setIsLoading(true);
     try {
-      await window.electronAPI.updateSettings({ setupCompleted: true });
+      await saveSettings({ setupCompleted: true });
       onComplete();
     } catch (error) {
       console.error('Failed to complete setup:', error);
@@ -53,16 +57,49 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
 
   return (
     <Dialog
+      key={open ? 'wizard-open' : 'wizard-closed'}
       open={open}
       maxWidth="sm"
       fullWidth
-      disableEscapeKeyDown
-      PersistentBackdropProps={{ style: { backgroundColor: 'rgba(0,0,0,0.8)' } }}
+      disablePortal={false}
+      disableEnforceFocus
+      disableAutoFocus
+      disableRestoreFocus
+      slotProps={{
+        backdrop: {
+          style: { backgroundColor: 'rgba(0,0,0,0.4)' },
+          sx: { WebkitAppRegion: 'no-drag' }
+        },
+        paper: {
+          sx: {
+            WebkitAppRegion: 'no-drag',
+            backgroundColor: '#ffffff',
+            borderRadius: 3,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+            border: 'none'
+          }
+        }
+      }}
     >
-      <DialogContent sx={{ p: 0 }}>
-        <Card elevation={0} sx={{ minHeight: 500 }}>
-          <LinearProgress variant="determinate" value={progress} sx={{ height: 3 }} />
-          <CardContent sx={{ p: 4, textAlign: 'center' }}>
+      <DialogContent sx={{ p: 0, WebkitAppRegion: 'no-drag' }}>
+        <Card elevation={0} sx={{
+          minHeight: 500,
+          backgroundColor: '#ffffff',
+          border: 'none',
+          borderRadius: 3
+        }}>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{
+              height: 4,
+              backgroundColor: 'rgba(91, 102, 112, 0.1)',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: '#5b6670'
+              }
+            }}
+          />
+          <CardContent sx={{ p: 5, textAlign: 'center' }}>
             {currentStep === 1 && (
               <div>
                 <img src={IconSvg} alt="Foto Recipe Wizard" style={{ width: 64, height: 64, marginBottom: 24 }} />
@@ -100,16 +137,23 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
                   <li>Natural language style descriptions</li>
                   <li>Contextual recipe generation</li>
                 </ul>
-                <TextField
-                  fullWidth
-                  label="OpenAI API Key"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  sx={{ mb: 3 }}
-                  helperText="Your API key is stored securely on your local machine"
-                />
+                <div style={{ WebkitAppRegion: 'no-drag', marginBottom: 24 }}>
+                  <TextField
+                    fullWidth
+                    label="OpenAI API Key"
+                    type="password"
+                    value={apiKey}
+                    onChange={handleApiKeyChange}
+                    placeholder="sk-..."
+                    sx={{ WebkitAppRegion: 'no-drag' }}
+                    helperText="Your API key is stored securely on your local machine"
+                    InputProps={{
+                      style: { WebkitAppRegion: 'no-drag' },
+                      onPointerDown: (e) => e.stopPropagation(),
+                      onClick: (e) => e.stopPropagation()
+                    }}
+                  />
+                </div>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"
@@ -144,8 +188,12 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <Button
                     variant="outlined"
-                    onClick={() => {
-                      window.electronAPI.importAllRecipes?.();
+                    onClick={async () => {
+                      try {
+                        await window.electronAPI.importRecipe();
+                      } catch (error) {
+                        console.error('Failed to import recipes:', error);
+                      }
                     }}
                     sx={{ minWidth: 160 }}
                   >

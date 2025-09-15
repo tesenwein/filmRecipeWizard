@@ -1,9 +1,14 @@
-import { DeleteOutline, Save as SaveIcon, Visibility, VisibilityOff } from '@mui/icons-material';
+import { DeleteOutline, RestartAlt, Save as SaveIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import {
   Alert,
   Box,
   Button,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   InputAdornment,
   Paper,
@@ -12,12 +17,70 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { useAppStore } from '../store/appStore';
+
+interface ConfirmDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  content: string;
+  warningText?: string;
+  confirmButtonText: string;
+  confirmColor?: 'warning' | 'error' | 'primary';
+}
+
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  content,
+  warningText,
+  confirmButtonText,
+  confirmColor = 'warning'
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: { sx: { WebkitAppRegion: 'no-drag' } },
+        backdrop: { sx: { WebkitAppRegion: 'no-drag' } },
+      }}
+    >
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          {content}
+        </DialogContentText>
+        {warningText && (
+          <DialogContentText sx={{ mt: 2, fontWeight: 600, color: 'warning.main' }}>
+            {warningText}
+          </DialogContentText>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="inherit">
+          Cancel
+        </Button>
+        <Button onClick={onConfirm} color={confirmColor} variant="contained">
+          {confirmButtonText}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 const Settings: React.FC = () => {
+  const { resetApp } = useAppStore();
   const [openaiKey, setOpenaiKey] = useState('');
   const [masked, setMasked] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -69,6 +132,18 @@ const Settings: React.FC = () => {
       }
     } catch {
       setStatus({ type: 'error', msg: 'Failed to clear key' });
+    }
+  };
+
+  const handleResetSetup = async () => {
+    setResetDialogOpen(false);
+    setStatus(null);
+    try {
+      setStatus({ type: 'success', msg: 'Setup reset and all recipes deleted - refreshing app...' });
+      await resetApp();
+    } catch (error) {
+      console.error('Reset setup error:', error);
+      setStatus({ type: 'error', msg: 'Failed to reset setup' });
     }
   };
 
@@ -148,6 +223,35 @@ const Settings: React.FC = () => {
         Your key is stored locally on this device in app data and used for AI color analysis. You
         can remove it anytime.
       </Typography>
+
+      <Paper elevation={1} sx={{ p: 2, borderRadius: 2, mt: 3 }}>
+        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+          Reset Application
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Reset the application to its initial state. This will clear all recipes and show the setup wizard again.
+        </Typography>
+        <Button
+          variant="outlined"
+          color="warning"
+          onClick={() => setResetDialogOpen(true)}
+          startIcon={<RestartAlt />}
+          sx={{ fontWeight: 600 }}
+        >
+          Reset Setup & Clear All Recipes
+        </Button>
+      </Paper>
+
+      <ConfirmDialog
+        open={resetDialogOpen}
+        onClose={() => setResetDialogOpen(false)}
+        onConfirm={handleResetSetup}
+        title="Reset Application?"
+        content="This action will permanently delete all your recipes and reset the application to its initial state. The setup wizard will appear when you restart the application."
+        warningText="This action cannot be undone."
+        confirmButtonText="Reset Application"
+        confirmColor="warning"
+      />
     </Container>
   );
 };

@@ -12,13 +12,18 @@ import {
   StyleOptions,
 } from '../../shared/types';
 import { AlertProvider } from '../context/AlertContext';
+import { useAppStore } from '../store/appStore';
 import ColorMatchingStudio from './ColorMatchingStudio';
 import HistoryView from './HistoryView';
 import ProcessingView from './ProcessingView';
 import ResultsView from './ResultsView';
 import Settings from './Settings';
+import SetupWizard from './SetupWizard';
 
 const App: React.FC = () => {
+  // Zustand store
+  const { setupWizardOpen, setSetupWizardOpen, setSetupCompleted, loadSettings } = useAppStore();
+
   // Simple hash-based router with query support
   const parseHash = () => {
     const raw = (typeof window !== 'undefined' ? window.location.hash : '') || '#/home';
@@ -55,24 +60,10 @@ const App: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [styleOptions, setStyleOptions] = useState<StyleOptions>({});
 
-  // Check if API key is configured on startup
+  // Load settings on startup
   useEffect(() => {
-    const checkApiKey = async () => {
-      try {
-        const response = await window.electronAPI.getSettings();
-        if (
-          response.success &&
-          (!response.settings?.openaiKey || response.settings?.openaiKey === '')
-        ) {
-          setSettingsOpen(true);
-        }
-      } catch (error) {
-        console.error('[APP] Error checking settings:', error);
-        setSettingsOpen(true); // Open settings if there's an error
-      }
-    };
-    checkApiKey();
-  }, []);
+    loadSettings();
+  }, [loadSettings]);
 
   const handleImagesSelected = (bases: string[], targets: string[]) => {
     setBaseImages(bases.slice(0, 3));
@@ -286,6 +277,18 @@ const App: React.FC = () => {
     window.location.hash = to.startsWith('#') ? to : `#${to}`;
   };
 
+  const handleSetupComplete = () => {
+    // Close the wizard via store
+    setSetupWizardOpen(false);
+    // Mark setup as completed in store to avoid any re-open race conditions
+    setSetupCompleted(true);
+
+    // Navigate to create page
+    setTimeout(() => {
+      window.location.hash = '#/create';
+    }, 100);
+  };
+
   const Header = (
     <header style={{ position: 'sticky', top: 8, zIndex: 50, marginBottom: '16px' }}>
       <div className="drag-region" />
@@ -491,6 +494,8 @@ const App: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <SetupWizard open={setupWizardOpen} onComplete={handleSetupComplete} />
       </div>
     </AlertProvider>
   );

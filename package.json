@@ -67,7 +67,8 @@
     "openai": "^5.20.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "sharp": "^0.34.3"
+    "sharp": "^0.34.3",
+    "zustand": "^5.0.8"
   },
   "build": {
     "appId": "com.theodoresenwein.fotorecipewizard",
