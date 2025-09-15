@@ -1,11 +1,19 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  MenuItemConstructorOptions,
+  shell,
+} from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { ImageProcessor } from './image-processor';
-import { generateXMPContent } from './xmp-generator';
-import { StorageService } from './storage-service';
-import { SettingsService, AppSettings } from './settings-service';
 import { ProcessHistory } from '../shared/types';
+import { ImageProcessor } from './image-processor';
+import { AppSettings, SettingsService } from './settings-service';
+import { StorageService } from './storage-service';
+import { generateXMPContent } from './xmp-generator';
 
 class FotoRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
@@ -56,7 +64,7 @@ class FotoRecipeWizardApp {
     });
 
     const isDev = process.env.NODE_ENV === 'development';
-    
+
     if (isDev) {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
       this.mainWindow.webContents.openDevTools();
@@ -137,14 +145,20 @@ class FotoRecipeWizardApp {
     Menu.setApplicationMenu(menu);
   }
 
-
   private setupIPC(): void {
     // Handle image processing requests
     ipcMain.handle('process-image', async (_event, data) => {
-      console.log('[IPC] process-image called with:', { baseImagePath: data?.baseImagePath, targetImagePath: data?.targetImagePath, options: { ...data, baseImagePath: '...', targetImagePath: '...' } });
+      console.log('[IPC] process-image called with:', {
+        baseImagePath: data?.baseImagePath,
+        targetImagePath: data?.targetImagePath,
+        options: { ...data, baseImagePath: '...', targetImagePath: '...' },
+      });
       try {
         const result = await this.imageProcessor.processImage(data);
-        console.log('[IPC] process-image completed:', { success: result.success, outputPath: result.outputPath });
+        console.log('[IPC] process-image completed:', {
+          success: result.success,
+          outputPath: result.outputPath,
+        });
         return result;
       } catch (error) {
         console.error('[IPC] Error processing image:', error);
@@ -167,10 +181,17 @@ class FotoRecipeWizardApp {
 
     // Handle style matching requests
     ipcMain.handle('match-style', async (_event, data) => {
-      console.log('[IPC] match-style called with:', { baseImagePath: data?.baseImagePath, targetImagePath: data?.targetImagePath, options: { ...data, baseImagePath: '...', targetImagePath: '...' } });
+      console.log('[IPC] match-style called with:', {
+        baseImagePath: data?.baseImagePath,
+        targetImagePath: data?.targetImagePath,
+        options: { ...data, baseImagePath: '...', targetImagePath: '...' },
+      });
       try {
         const result = await this.imageProcessor.matchStyle(data);
-        console.log('[IPC] match-style completed:', { success: result.success, outputPath: result.outputPath });
+        console.log('[IPC] match-style completed:', {
+          success: result.success,
+          outputPath: result.outputPath,
+        });
         return result;
       } catch (error) {
         console.error('[IPC] Error matching style:', error);
@@ -183,7 +204,10 @@ class FotoRecipeWizardApp {
       console.log('[IPC] generate-preset called with data');
       try {
         const result = await this.imageProcessor.generateLightroomPreset(data);
-        console.log('[IPC] generate-preset completed:', { success: result.success, outputPath: result.outputPath });
+        console.log('[IPC] generate-preset completed:', {
+          success: result.success,
+          outputPath: result.outputPath,
+        });
         return result;
       } catch (error) {
         console.error('[IPC] Error generating preset:', error);
@@ -209,9 +233,17 @@ class FotoRecipeWizardApp {
             .replace(/\s{2,}/g, ' ')
             .trim();
         // Get AI-generated name directly from adjustments and add -Profile suffix
-        const rawName = (data?.adjustments?.preset_name as string | undefined) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const clean = sanitizeName(rawName) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const baseName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const rawName =
+          (data?.adjustments?.preset_name as string | undefined) ||
+          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean =
+          sanitizeName(rawName) ||
+          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const baseName = clean
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
         const safeName = `${baseName}-Profile`;
 
         // Show save dialog
@@ -220,8 +252,8 @@ class FotoRecipeWizardApp {
           defaultPath: `${safeName}.xmp`,
           filters: [
             { name: 'XMP Profiles', extensions: ['xmp'] },
-            { name: 'All Files', extensions: ['*'] }
-          ]
+            { name: 'All Files', extensions: ['*'] },
+          ],
         };
 
         const saveResult = this.mainWindow
@@ -252,7 +284,7 @@ class FotoRecipeWizardApp {
       try {
         // Generate XMP content
         const xmpContent = generateXMPContent(data.adjustments, data.include);
-        
+
         // Show save dialog
         const { dialog } = require('electron');
         // Derive a friendly filename from AI if present
@@ -261,19 +293,27 @@ class FotoRecipeWizardApp {
             .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
             .replace(/\s{2,}/g, ' ')
             .trim();
-        const rawName = (data?.adjustments?.preset_name as string | undefined) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const clean = sanitizeName(rawName) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const baseName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const rawName =
+          (data?.adjustments?.preset_name as string | undefined) ||
+          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean =
+          sanitizeName(rawName) ||
+          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const baseName = clean
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
         const safeName = `${baseName}-Preset`;
         const result = await dialog.showSaveDialog({
           title: 'Save XMP Preset',
           defaultPath: `${safeName}.xmp`,
           filters: [
             { name: 'XMP Presets', extensions: ['xmp'] },
-            { name: 'All Files', extensions: ['*'] }
-          ]
+            { name: 'All Files', extensions: ['*'] },
+          ],
         });
-        
+
         if (!result.canceled && result.filePath) {
           // Write the file
           const fs = require('fs').promises;
@@ -298,7 +338,11 @@ class FotoRecipeWizardApp {
       });
       try {
         // Generate LUT content
-        const lutContent = this.imageProcessor.generateLUTContent(data.adjustments, data.size || 33, data.format || 'cube');
+        const lutContent = this.imageProcessor.generateLUTContent(
+          data.adjustments,
+          data.size || 33,
+          data.format || 'cube'
+        );
 
         // Show save dialog
         const { dialog } = require('electron');
@@ -308,17 +352,25 @@ class FotoRecipeWizardApp {
             .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
             .replace(/\s{2,}/g, ' ')
             .trim();
-        const rawName = (data?.adjustments?.preset_name as string | undefined) || `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const clean = sanitizeName(rawName) || `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const safeName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const rawName =
+          (data?.adjustments?.preset_name as string | undefined) ||
+          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean =
+          sanitizeName(rawName) ||
+          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const safeName = clean
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
         const ext = data.format === '3dl' ? '3dl' : data.format === 'lut' ? 'lut' : 'cube';
         const result = await dialog.showSaveDialog({
           title: `Save ${data.size}³ ${ext.toUpperCase()} LUT`,
           defaultPath: `${safeName}_${data.size}.${ext}`,
           filters: [
             { name: `${ext.toUpperCase()} Files`, extensions: [ext] },
-            { name: 'All Files', extensions: ['*'] }
-          ]
+            { name: 'All Files', extensions: ['*'] },
+          ],
         });
 
         if (!result.canceled && result.filePath) {
@@ -337,31 +389,46 @@ class FotoRecipeWizardApp {
     });
 
     // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
-    ipcMain.handle('generate-preview', async (_event, args: { path?: string; dataUrl?: string }) => {
-      try {
-        const previewPath = await this.imageProcessor.generatePreview(args);
-        return { success: true, previewPath };
-      } catch (error) {
-        console.error('[IPC] Error generating preview:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    ipcMain.handle(
+      'generate-preview',
+      async (_event, args: { path?: string; dataUrl?: string }) => {
+        try {
+          const previewPath = await this.imageProcessor.generatePreview(args);
+          return { success: true, previewPath };
+        } catch (error) {
+          console.error('[IPC] Error generating preview:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
+        }
       }
-    });
+    );
 
     // Generate adjusted preview with AI changes applied
-    ipcMain.handle('generate-adjusted-preview', async (_event, args: { path: string; adjustments: any }) => {
-      console.log('[IPC] generate-adjusted-preview called');
-      try {
-        const previewPath = await this.imageProcessor.generateAdjustedPreview(args);
-        return { success: true, previewPath };
-      } catch (error) {
-        console.error('[IPC] Error generating adjusted preview:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    ipcMain.handle(
+      'generate-adjusted-preview',
+      async (_event, args: { path: string; adjustments: any }) => {
+        console.log('[IPC] generate-adjusted-preview called');
+        try {
+          const previewPath = await this.imageProcessor.generateAdjustedPreview(args);
+          return { success: true, previewPath };
+        } catch (error) {
+          console.error('[IPC] Error generating adjusted preview:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
+        }
       }
-    });
+    );
 
     // Handle AI color match analysis
     ipcMain.handle('analyze-color-match', async (_event, data) => {
-      console.log('[IPC] analyze-color-match called with:', { baseImagePath: data?.baseImagePath, targetImagePath: data?.targetImagePath });
+      console.log('[IPC] analyze-color-match called with:', {
+        baseImagePath: data?.baseImagePath,
+        targetImagePath: data?.targetImagePath,
+      });
       try {
         const result = await this.imageProcessor.analyzeColorMatch(data);
         console.log('[IPC] analyze-color-match completed:', { success: result.success });
@@ -373,139 +440,184 @@ class FotoRecipeWizardApp {
     });
 
     // Handle processing with stored base64 data from recipe
-    ipcMain.handle('process-with-stored-images', async (
-      _event,
-      data: { processId: string; targetIndex?: number; baseImageData?: string | string[]; targetImageData?: string[]; prompt?: string }
-    ) => {
-      console.log('[IPC] process-with-stored-images called with:', {
-        processId: data.processId,
-        targetIndex: data.targetIndex,
-      });
-
-      try {
-        // Prefer inline base64 if provided by caller, otherwise load from storage
-        const stored = await this.storageService.getProcess(data.processId);
-        if (!stored) throw new Error('Process not found');
-
-        const baseImageData = ((): string | string[] | undefined => {
-          if (Array.isArray(data.baseImageData)) return data.baseImageData.slice(0, 3);
-          if (typeof data.baseImageData === 'string') return data.baseImageData;
-          const fromStoredArray = (stored as any).baseImagesData as string[] | undefined;
-          if (Array.isArray(fromStoredArray) && fromStoredArray.length) return fromStoredArray.slice(0, 3);
-          if (typeof stored.baseImageData === 'string') return stored.baseImageData;
-          return undefined;
-        })();
-        const basePrompt = data.prompt ?? stored.prompt;
-        // Build an additional hint from userOptions if present
-        const options = (stored as any)?.userOptions || {};
-        const optionsHintParts: string[] = [];
-        if (typeof options.vibe === 'string' && options.vibe.trim().length > 0) {
-          optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
+    ipcMain.handle(
+      'process-with-stored-images',
+      async (
+        _event,
+        data: {
+          processId: string;
+          targetIndex?: number;
+          baseImageData?: string | string[];
+          targetImageData?: string[];
+          prompt?: string;
         }
-        const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
-        if (options.warmth !== undefined) {
-          const w = Math.max(0, Math.min(100, Number(options.warmth)));
-          const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
-          optionsHintParts.push(`White Balance Warmth Bias: ${warmthBias} (negative=cool, positive=warm)`);
-        }
-        if (options.tint !== undefined) {
-          const t = Math.max(-50, Math.min(50, Number(options.tint)));
-          optionsHintParts.push(`Tint Bias: ${t} (negative=green, positive=magenta)`);
-        }
-        if (options.contrast !== undefined) optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);
-        if (options.vibrance !== undefined) optionsHintParts.push(`Vibrance: ${pct(options.vibrance)}`);
-        if (options.moodiness !== undefined) optionsHintParts.push(`Moodiness: ${pct(options.moodiness)}`);
-        if (options.saturationBias !== undefined)
-          optionsHintParts.push(`Saturation Bias: ${pct(options.saturationBias)}`);
-        if (options.filmGrain !== undefined) optionsHintParts.push(`Film Grain: ${options.filmGrain ? 'On' : 'Off'}`);
-        if (options.artistStyle && typeof options.artistStyle.name === 'string') {
-          const name = String(options.artistStyle.name).trim();
-          const category = String(options.artistStyle.category || '').trim();
-          const blurb = String(options.artistStyle.blurb || '').trim();
-          optionsHintParts.push(
-            `Artist Style: ${name}${category ? ` (${category})` : ''}` + (blurb ? `\nNotes: ${blurb}` : '')
-          );
-        }
-        if (options.filmStyle && typeof options.filmStyle.name === 'string') {
-          const name = String(options.filmStyle.name).trim();
-          const category = String(options.filmStyle.category || '').trim();
-          const blurb = String(options.filmStyle.blurb || '').trim();
-          optionsHintParts.push(
-            `Film Stock: ${name}${category ? ` (${category})` : ''}` + (blurb ? `\nTraits: ${blurb}` : '')
-          );
-        }
-        const optionsHint = optionsHintParts.length > 0
-          ? `\nPreferences:\n- ${optionsHintParts.join('\n- ')}`
-          : '';
-        // Compose prompt from user text and preferences; fall back to a neutral default
-        const prompt = ((basePrompt || '') + optionsHint).trim() || 'Apply natural, balanced color grading with clean contrast and faithful skin tones.';
-
-        // Determine which target image to use
-        const targetIndex = data.targetIndex || 0;
-        const providedTargets = data.targetImageData || stored.targetImageData || [];
-        const targetImageData = providedTargets[targetIndex];
-
-        if (!targetImageData) {
-          console.error('[IPC] Missing targetImageData', {
-            inlineProvidedCount: Array.isArray(data.targetImageData) ? data.targetImageData.length : 0,
-            storedCount: Array.isArray(stored.targetImageData) ? stored.targetImageData.length : 0,
-            targetIndex,
-          });
-          throw new Error(`No target image data found at index ${targetIndex}`);
-        }
-
-        // Emit initial progress
-        try { this.mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...'); } catch { /* Ignore IPC send errors */ }
-
-        // No strict validation: prompt/reference optional; defaults applied in analyzer
-
-        // Create temporary files for processing
-        const baseImageTempPath = undefined as unknown as string; // not required when passing base64 directly
-        const targetImageTempPath = await this.storageService.base64ToTempFile(targetImageData, 'target.jpg');
-
-        // Process using the image processor
-        const result = await this.imageProcessor.matchStyle({
-          baseImagePath: baseImageTempPath,
-          targetImagePath: targetImageTempPath,
-          baseImageBase64: baseImageData,
-          targetImageBase64: targetImageData,
-          aiAdjustments: undefined,
-          prompt,
+      ) => {
+        console.log('[IPC] process-with-stored-images called with:', {
+          processId: data.processId,
+          targetIndex: data.targetIndex,
         });
 
-        try { this.mainWindow?.webContents.send('processing-progress', 100, 'Completed'); } catch { /* Ignore IPC send errors */ }
-
-        // Persist result
         try {
-          await this.storageService.updateProcess(data.processId, {
-            results: [{
-              inputPath: '',
-              outputPath: result.outputPath,
-              success: !!result.success,
-              error: result.error,
-              metadata: result.metadata,
-            }]
-          } as any);
-        } catch (err) {
-          console.error('[IPC] process-with-stored-images: failed to persist results', err);
+          // Prefer inline base64 if provided by caller, otherwise load from storage
+          const stored = await this.storageService.getProcess(data.processId);
+          if (!stored) throw new Error('Process not found');
+
+          // Only use base image data provided for this run; do not pull stored references
+          const baseImageData = ((): string | string[] | undefined => {
+            if (Array.isArray(data.baseImageData)) return data.baseImageData.slice(0, 3);
+            if (typeof data.baseImageData === 'string') return data.baseImageData;
+            return undefined;
+          })();
+          const basePrompt = data.prompt ?? stored.prompt;
+          // Build an additional hint from userOptions if present
+          const options = (stored as any)?.userOptions || {};
+          const optionsHintParts: string[] = [];
+          if (typeof options.vibe === 'string' && options.vibe.trim().length > 0) {
+            optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
+          }
+          const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
+          if (options.warmth !== undefined) {
+            const w = Math.max(0, Math.min(100, Number(options.warmth)));
+            const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
+            optionsHintParts.push(
+              `White Balance Warmth Bias: ${warmthBias} (negative=cool, positive=warm)`
+            );
+          }
+          if (options.tint !== undefined) {
+            const t = Math.max(-50, Math.min(50, Number(options.tint)));
+            optionsHintParts.push(`Tint Bias: ${t} (negative=green, positive=magenta)`);
+          }
+          if (options.contrast !== undefined)
+            optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);
+          if (options.vibrance !== undefined)
+            optionsHintParts.push(`Vibrance: ${pct(options.vibrance)}`);
+          if (options.moodiness !== undefined)
+            optionsHintParts.push(`Moodiness: ${pct(options.moodiness)}`);
+          if (options.saturationBias !== undefined)
+            optionsHintParts.push(`Saturation Bias: ${pct(options.saturationBias)}`);
+          if (options.filmGrain !== undefined)
+            optionsHintParts.push(`Film Grain: ${options.filmGrain ? 'On' : 'Off'}`);
+          if (options.artistStyle && typeof options.artistStyle.name === 'string') {
+            const name = String(options.artistStyle.name).trim();
+            const category = String(options.artistStyle.category || '').trim();
+            const blurb = String(options.artistStyle.blurb || '').trim();
+            optionsHintParts.push(
+              `Artist Style: ${name}${category ? ` (${category})` : ''}` +
+                (blurb ? `\nNotes: ${blurb}` : '')
+            );
+          }
+          if (options.filmStyle && typeof options.filmStyle.name === 'string') {
+            const name = String(options.filmStyle.name).trim();
+            const category = String(options.filmStyle.category || '').trim();
+            const blurb = String(options.filmStyle.blurb || '').trim();
+            optionsHintParts.push(
+              `Film Stock: ${name}${category ? ` (${category})` : ''}` +
+                (blurb ? `\nTraits: ${blurb}` : '')
+            );
+          }
+          const optionsHint =
+            optionsHintParts.length > 0 ? `\nPreferences:\n- ${optionsHintParts.join('\n- ')}` : '';
+          // Compose prompt from user text and preferences; fall back to a neutral default
+          const prompt =
+            ((basePrompt || '') + optionsHint).trim() ||
+            'Apply natural, balanced color grading with clean contrast and faithful skin tones.';
+
+          // Determine which target image to use (for processing, not storage)
+          const targetIndex = data.targetIndex || 0;
+          const providedTargets = data.targetImageData || [];
+          const targetImageData = providedTargets[targetIndex];
+
+          if (!targetImageData) {
+            console.error('[IPC] Missing targetImageData', {
+              inlineProvidedCount: Array.isArray(data.targetImageData)
+                ? data.targetImageData.length
+                : 0,
+              targetIndex,
+            });
+            throw new Error(`No target image data found at index ${targetIndex}`);
+          }
+
+          // Emit initial progress
+          try {
+            this.mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...');
+          } catch {
+            /* Ignore IPC send errors */
+          }
+
+          // No strict validation: prompt/reference optional; defaults applied in analyzer
+
+          // Create temporary files for processing
+          const baseImageTempPath = undefined as unknown as string; // not required when passing base64 directly
+          const targetImageTempPath = await this.storageService.base64ToTempFile(
+            targetImageData,
+            'target.jpg'
+          );
+
+          // Process using the image processor
+          const result = await this.imageProcessor.matchStyle({
+            baseImagePath: baseImageTempPath,
+            targetImagePath: targetImageTempPath,
+            baseImageBase64: baseImageData,
+            targetImageBase64: targetImageData,
+            aiAdjustments: undefined,
+            prompt,
+          });
+
+          try {
+            this.mainWindow?.webContents.send('processing-progress', 100, 'Completed');
+          } catch {
+            /* Ignore IPC send errors */
+          }
+
+          // Persist result
+          try {
+            const firstBase = Array.isArray(baseImageData) ? baseImageData[0] : baseImageData;
+            await this.storageService.updateProcess(data.processId, {
+              results: [
+                {
+                  inputPath: '',
+                  outputPath: result.outputPath,
+                  success: !!result.success,
+                  error: result.error,
+                  metadata: result.metadata,
+                },
+              ],
+              ...(firstBase ? { recipeImageData: firstBase } : {}),
+            } as any);
+          } catch (err) {
+            console.error('[IPC] process-with-stored-images: failed to persist results', err);
+          }
+
+          // Emit completion event in same shape as legacy API
+          try {
+            this.mainWindow?.webContents.send('processing-complete', [result]);
+          } catch {
+            /* Ignore IPC send errors */
+          }
+
+          console.log('[IPC] process-with-stored-images completed:', { success: result.success });
+          return result;
+        } catch (error) {
+          console.error('[IPC] Error processing with stored images:', error);
+          // Emit a final failure status so the UI shows immediate feedback
+          const errMsg = error instanceof Error ? error.message : 'Unknown error';
+          try {
+            this.mainWindow?.webContents.send('processing-progress', 100, `Failed: ${errMsg}`);
+          } catch {
+            /* Ignore IPC send errors */
+          }
+          // Emit completion with failure result
+          try {
+            this.mainWindow?.webContents.send('processing-complete', [
+              { success: false, error: errMsg },
+            ]);
+          } catch {
+            /* Ignore IPC send errors */
+          }
+          throw error;
         }
-
-        // Emit completion event in same shape as legacy API
-        try { this.mainWindow?.webContents.send('processing-complete', [result]); } catch { /* Ignore IPC send errors */ }
-
-        console.log('[IPC] process-with-stored-images completed:', { success: result.success });
-        return result;
-
-      } catch (error) {
-        console.error('[IPC] Error processing with stored images:', error);
-        // Emit a final failure status so the UI shows immediate feedback
-        const errMsg = error instanceof Error ? error.message : 'Unknown error';
-        try { this.mainWindow?.webContents.send('processing-progress', 100, `Failed: ${errMsg}`); } catch { /* Ignore IPC send errors */ }
-        // Emit completion with failure result
-        try { this.mainWindow?.webContents.send('processing-complete', [{ success: false, error: errMsg }]); } catch { /* Ignore IPC send errors */ }
-        throw error;
       }
-    });
+    );
 
     // New React frontend IPC handlers
     ipcMain.handle('select-files', async (_event, options) => {
@@ -515,7 +627,7 @@ class FotoRecipeWizardApp {
         const result = await dialog.showOpenDialog(this.mainWindow, {
           title: options.title,
           filters: options.filters,
-          properties: options.properties as any
+          properties: options.properties as any,
         });
 
         if (result.canceled) return [];
@@ -548,17 +660,19 @@ class FotoRecipeWizardApp {
       if (!this.mainWindow) return [];
 
       try {
-        const targetPath = Array.isArray(data.targetImagePaths) && data.targetImagePaths.length > 0
-          ? data.targetImagePaths[0]
-          : undefined;
+        const targetPath =
+          Array.isArray(data.targetImagePaths) && data.targetImagePaths.length > 0
+            ? data.targetImagePaths[0]
+            : undefined;
         if (!targetPath) throw new Error('No target image provided');
-        const prompt = (typeof data?.hint === 'string' && data.hint.trim().length > 0)
-          ? data.hint.trim()
-          : (typeof data?.prompt === 'string' && data.prompt.trim().length > 0)
+        const prompt =
+          typeof data?.hint === 'string' && data.hint.trim().length > 0
+            ? data.hint.trim()
+            : typeof data?.prompt === 'string' && data.prompt.trim().length > 0
             ? data.prompt.trim()
             : undefined;
 
-        this.mainWindow.webContents.send('processing-progress', 5, 'Starting analysis...');
+        this.mainWindow.webContents.send('processing-progress', 5, 'Analyzing...');
 
         let result: any;
         try {
@@ -589,13 +703,15 @@ class FotoRecipeWizardApp {
 
         try {
           if (data?.processId) {
-            const persistedResults = [{
-              inputPath: targetPath,
-              outputPath: result.outputPath,
-              success: !!result.success,
-              error: result.error,
-              metadata: result.metadata,
-            }];
+            const persistedResults = [
+              {
+                inputPath: targetPath,
+                outputPath: result.outputPath,
+                success: !!result.success,
+                error: result.error,
+                metadata: result.metadata,
+              },
+            ];
             // Derive preset/recipe name from AI adjustments if provided
             let name: string | undefined;
             try {
@@ -603,10 +719,18 @@ class FotoRecipeWizardApp {
             } catch {
               // Ignore preset name extraction errors
             }
-            await this.storageService.updateProcess(data.processId, { results: persistedResults as any, ...(name ? { name } : {}) });
-            console.log('[IPC] process-images: results persisted to process', { id: data.processId, count: 1 });
+            await this.storageService.updateProcess(data.processId, {
+              results: persistedResults as any,
+              ...(name ? { name } : {}),
+            });
+            console.log('[IPC] process-images: results persisted to process', {
+              id: data.processId,
+              count: 1,
+            });
           } else {
-            console.warn('[IPC] process-images: no processId provided; results not persisted automatically');
+            console.warn(
+              '[IPC] process-images: no processId provided; results not persisted automatically'
+            );
           }
         } catch (err) {
           console.error('[IPC] process-images: failed to persist results', err);
@@ -632,87 +756,97 @@ class FotoRecipeWizardApp {
       }
     });
 
-    ipcMain.handle('save-process', async (_event, processData: Omit<ProcessHistory, 'id' | 'timestamp'>) => {
-      try {
-        const processId = this.storageService.generateProcessId();
-
-        // Convert images to base64 data
-        let baseImageData: string | undefined;
-        let baseImagesData: string[] = [];
-        let targetImageData: string[] = [];
-
+    ipcMain.handle(
+      'save-process',
+      async (_event, processData: Omit<ProcessHistory, 'id' | 'timestamp'> & any) => {
         try {
-          // Convert base/reference images to base64 (supports multiple)
-          const refPaths: string[] = Array.isArray((processData as any).baseImages)
-            ? ((processData as any).baseImages as string[]).slice(0, 3)
-            : (processData.baseImage ? [processData.baseImage] : []);
-          for (let i = 0; i < refPaths.length; i++) {
-            const p = refPaths[i];
-            if (!p) continue;
-            const b64 = await this.storageService.convertImageToBase64(p);
-            if (i === 0) baseImageData = b64; // keep legacy field for backward-compat
-            baseImagesData.push(b64);
-          }
-          if (!refPaths.length) {
-            console.warn('[IPC] save-process called without baseImages/baseImage path');
-          }
+          const processId = this.storageService.generateProcessId();
 
-          // Convert target images to base64
-          for (let i = 0; i < (processData.targetImages?.length || 0); i++) {
-            const targetImage = processData.targetImages![i];
-            if (targetImage) {
-              const base64Data = await this.storageService.convertImageToBase64(targetImage);
-              targetImageData[i] = base64Data;
-              console.log(`[IPC] Converted target image ${i} to base64`, {
-                sizeKB: Math.round(base64Data.length / 1024),
-              });
+          // If a reference image (base) was provided, convert the first one to base64 (no fallback)
+          let recipeImageData: string | undefined;
+          const baseImages: string[] | undefined = Array.isArray((processData as any).baseImages)
+            ? (processData as any).baseImages
+            : undefined;
+          const firstBase = baseImages && baseImages.length > 0 ? baseImages[0] : undefined;
+          if (firstBase) {
+            try {
+              recipeImageData = await this.storageService.convertImageToBase64(firstBase);
+            } catch {
+              console.warn('[IPC] save-process: convertImageToBase64 failed for recipe image');
             }
           }
-        } catch (conversionError) {
-          console.error('[IPC] Error converting images to base64:', conversionError);
-          throw new Error(`Failed to convert images: ${conversionError instanceof Error ? conversionError.message : 'Unknown error'}`);
+
+          // Prepare target images as base64 for immediate processing only (do not persist)
+          let targetImageDataEphemeral: string[] = [];
+          const targetImages: string[] | undefined = Array.isArray((processData as any).targetImages)
+            ? (processData as any).targetImages
+            : undefined;
+          if (targetImages && targetImages.length > 0) {
+            for (const t of targetImages.slice(0, 3)) {
+              try {
+                const b64 = await this.storageService.convertImageToBase64(t);
+                targetImageDataEphemeral.push(b64);
+                continue;
+              } catch {
+                // Fallback only for targets: generate a JPEG preview and base64 it
+              }
+              try {
+                const previewPath = await this.imageProcessor.generatePreview({
+                  path: t,
+                  processId,
+                  subdir: 'target',
+                } as any);
+                const buf = await fs.readFile(previewPath);
+                targetImageDataEphemeral.push(buf.toString('base64'));
+              } catch {
+                console.warn('[IPC] save-process: failed to prepare target image');
+              }
+            }
+          }
+
+          const process: ProcessHistory = {
+            id: processId,
+            timestamp: new Date().toISOString(),
+            name: (processData as any)?.name,
+            prompt: (processData as any)?.prompt,
+            userOptions: (processData as any)?.userOptions,
+            results: Array.isArray(processData.results) ? processData.results : [],
+            recipeImageData,
+          } as ProcessHistory;
+
+          await this.storageService.addProcess(process);
+          console.log('[IPC] save-process completed:', {
+            id: process.id,
+            hasRecipeImage: !!recipeImageData,
+            targetCount: targetImageDataEphemeral.length,
+          });
+          return { success: true, process, targetImageData: targetImageDataEphemeral };
+        } catch (error) {
+          console.error('[IPC] Error saving process:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
         }
+      }
+    );
 
-        const process: ProcessHistory = {
-          id: processId,
-          timestamp: new Date().toISOString(),
-          name: (processData as any)?.name,
-          prompt: (processData as any)?.prompt,
-          userOptions: (processData as any)?.userOptions,
-          results: Array.isArray(processData.results) ? processData.results : [],
-          baseImageData,
-          baseImagesData: baseImagesData.length ? baseImagesData : undefined,
-          targetImageData,
-        } as ProcessHistory;
-
-        // Validate that required images were converted (base image optional when prompt is used)
-        if (!Array.isArray(process.targetImageData) || process.targetImageData.length === 0) {
-          throw new Error('Target image conversion failed. No target images converted.');
+    ipcMain.handle(
+      'update-process',
+      async (_event, processId: string, updates: Partial<ProcessHistory>) => {
+        try {
+          await this.storageService.updateProcess(processId, updates);
+          console.log('[IPC] update-process completed:', { id: processId });
+          return { success: true };
+        } catch (error) {
+          console.error('[IPC] Error updating process:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
         }
-
-        await this.storageService.addProcess(process);
-        console.log('[IPC] save-process completed:', {
-          id: process.id,
-          baseSet: !!process.baseImageData,
-          targetCount: process.targetImageData?.length || 0,
-        });
-        return { success: true, process };
-      } catch (error) {
-        console.error('[IPC] Error saving process:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
-    });
-
-    ipcMain.handle('update-process', async (_event, processId: string, updates: Partial<ProcessHistory>) => {
-      try {
-        await this.storageService.updateProcess(processId, updates);
-        console.log('[IPC] update-process completed:', { id: processId });
-        return { success: true };
-      } catch (error) {
-        console.error('[IPC] Error updating process:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
-    });
+    );
 
     ipcMain.handle('delete-process', async (_event, processId: string) => {
       try {
@@ -749,19 +883,14 @@ class FotoRecipeWizardApp {
           targetImageUrls: [],
         };
 
-        if (Array.isArray((process as any).baseImagesData) && (process as any).baseImagesData.length) {
-          result.baseImageUrls = (process as any).baseImagesData
-            .slice(0, 3)
-            .map((b64: string) => this.storageService.getImageDataUrl(b64));
-        } else if (process.baseImageData) {
-          result.baseImageUrls = [this.storageService.getImageDataUrl(process.baseImageData)];
+        if ((process as any).recipeImageData) {
+          result.baseImageUrls = [
+            this.storageService.getImageDataUrl((process as any).recipeImageData as string),
+          ];
         }
 
-        if (process.targetImageData) {
-          result.targetImageUrls = process.targetImageData.map(data =>
-            this.storageService.getImageDataUrl(data)
-          );
-        }
+        // Do not persist target images anymore; no target previews returned
+        result.targetImageUrls = [];
 
         console.log('[IPC] get-image-data-urls completed:', {
           processId,
@@ -785,14 +914,18 @@ class FotoRecipeWizardApp {
         } catch (convErr) {
           // Fallback: generate a JPEG preview then base64 it
           try {
-            const previewPath = await this.imageProcessor.generatePreview({ path: filePath, processId, subdir: 'base' } as any);
+            const previewPath = await this.imageProcessor.generatePreview({
+              path: filePath,
+              processId,
+              subdir: 'base',
+            } as any);
             const buf = await fs.readFile(previewPath);
             baseImageData = buf.toString('base64');
           } catch {
             throw convErr instanceof Error ? convErr : new Error('Failed to convert image');
           }
         }
-        await this.storageService.updateProcess(processId, { baseImageData } as any);
+        await this.storageService.updateProcess(processId, { recipeImageData: baseImageData } as any);
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error setting base image:', error);
@@ -806,11 +939,7 @@ class FotoRecipeWizardApp {
         if (!processId || !Array.isArray(filePaths)) throw new Error('Invalid arguments');
         const process = await this.storageService.getProcess(processId);
         if (!process) throw new Error('Process not found');
-        const existing: string[] = Array.isArray((process as any).baseImagesData)
-          ? (process as any).baseImagesData
-          : process.baseImageData
-          ? [process.baseImageData]
-          : [];
+        const existing: string[] = [];
         const converted: string[] = [];
         for (const fp of filePaths.slice(0, 3)) {
           try {
@@ -821,7 +950,7 @@ class FotoRecipeWizardApp {
           }
         }
         const merged = [...existing, ...converted].slice(0, 3);
-        await this.storageService.updateProcess(processId, { baseImagesData: merged } as any);
+        await this.storageService.updateProcess(processId, { recipeImageData: merged[0] } as any);
         return { success: true, count: merged.length };
       } catch (error) {
         console.error('[IPC] Error adding base images:', error);
@@ -835,16 +964,12 @@ class FotoRecipeWizardApp {
         if (!processId || typeof index !== 'number') throw new Error('Invalid arguments');
         const process = await this.storageService.getProcess(processId);
         if (!process) throw new Error('Process not found');
-        const existing: string[] = Array.isArray((process as any).baseImagesData)
-          ? (process as any).baseImagesData
-          : process.baseImageData
-          ? [process.baseImageData]
+        const existing: string[] = (process as any).recipeImageData
+          ? [(process as any).recipeImageData as string]
           : [];
         if (index < 0 || index >= existing.length) throw new Error('Index out of range');
         const next = existing.filter((_, i) => i !== index);
-        const updates: any = { baseImagesData: next.length ? next : undefined };
-        // Keep legacy baseImageData aligned to first reference when present
-        updates.baseImageData = next[0] || undefined;
+        const updates: any = { recipeImageData: next[0] || undefined };
         await this.storageService.updateProcess(processId, updates);
         return { success: true };
       } catch (error) {
@@ -858,7 +983,10 @@ class FotoRecipeWizardApp {
       try {
         const settings = await this.settingsService.loadSettings();
         // Do not log sensitive data
-        return { success: true, settings: { ...settings, openaiKey: settings.openaiKey ? '***' : undefined } };
+        return {
+          success: true,
+          settings: { ...settings, openaiKey: settings.openaiKey ? '***' : undefined },
+        };
       } catch (error) {
         console.error('[IPC] Error loading settings:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -872,7 +1000,10 @@ class FotoRecipeWizardApp {
           // Update processor with new key (re-init AI analyzer lazily)
           await this.imageProcessor.setOpenAIKey(partial.openaiKey);
         }
-        return { success: true, settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined } };
+        return {
+          success: true,
+          settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined },
+        };
       } catch (error) {
         console.error('[IPC] Error saving settings:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -887,9 +1018,15 @@ class FotoRecipeWizardApp {
         if (!process) throw new Error('Recipe not found');
 
         // Suggest a friendly default filename
-        const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
+        const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as
+          | string
+          | undefined;
         const rawName = (process.name || aiName || `Recipe-${process.id || 'export'}`).toString();
-        const safeName = rawName.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const safeName = rawName
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
 
         const saveRes = await dialog.showSaveDialog({
           title: 'Export Recipe (ZIP)',
@@ -915,21 +1052,12 @@ class FotoRecipeWizardApp {
         };
         zip.addFile('recipe.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 
-        // Also export images as files for convenience
-        if (process.baseImageData) {
-          const buf = Buffer.from(process.baseImageData, 'base64');
-          zip.addFile('images/base.jpg', buf);
+        // Also export recipe image if available
+        if ((process as any).recipeImageData) {
+          const buf = Buffer.from((process as any).recipeImageData, 'base64');
+          zip.addFile('images/recipe.jpg', buf);
         }
-        if (Array.isArray(process.targetImageData)) {
-          process.targetImageData.forEach((b64, idx) => {
-            try {
-              const buf = Buffer.from(b64, 'base64');
-              zip.addFile(`images/target-${idx + 1}.jpg`, buf);
-            } catch {
-              // Ignore individual failures
-            }
-          });
-        }
+        // Note: target and base images are no longer stored in ProcessHistory
 
         // Optionally include XMP presets for each successful result
         try {
@@ -956,7 +1084,10 @@ class FotoRecipeWizardApp {
               .replace(/\s+/g, ' ')
               .trim()
               .replace(/\s/g, '-');
-            zip.addFile(`presets/${safePreset || `Preset-${idx + 1}`}.xmp`, Buffer.from(xmp, 'utf8'));
+            zip.addFile(
+              `presets/${safePreset || `Preset-${idx + 1}`}.xmp`,
+              Buffer.from(xmp, 'utf8')
+            );
           });
         } catch (e) {
           console.warn('[IPC] export-recipe: failed to add XMP presets:', e);
@@ -981,7 +1112,7 @@ class FotoRecipeWizardApp {
             { name: 'ZIP Files', extensions: ['zip'] },
             { name: 'All Files', extensions: ['*'] },
           ],
-          properties: ['openFile']
+          properties: ['openFile'],
         });
         if (openRes.canceled || openRes.filePaths.length === 0) {
           return { success: false, error: 'Import canceled' };
@@ -1008,8 +1139,7 @@ class FotoRecipeWizardApp {
           prompt: process.prompt,
           userOptions: process.userOptions,
           results: process.results,
-          baseImageData: process.baseImageData,
-          targetImageData: process.targetImageData,
+          // Note: baseImageData and targetImageData are no longer stored
         } as any;
 
         await this.storageService.addProcess(imported);
