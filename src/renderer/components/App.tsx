@@ -311,7 +311,7 @@ const App: React.FC = () => {
   };
 
   const Header = (
-    <header style={{ position: 'sticky', top: 8, zIndex: 10, marginBottom: '16px' }}>
+    <header style={{ position: 'sticky', top: 8, zIndex: 50, marginBottom: '16px' }}>
       <div className="drag-region" />
       <div
         style={{
@@ -396,6 +396,8 @@ const App: React.FC = () => {
     <div className={`container ${currentStep}`}>
       {/* Global drag strip at very top so window can always be moved (even over modals) */}
       <div className="global-drag-strip" />
+      {/* Scroll fade-out effect overlay */}
+      <div className="scroll-fade-overlay" />
       {Header}
       {route === '/home' && (
         <div className="fade-in">

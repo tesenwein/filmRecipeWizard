@@ -69,6 +69,18 @@ body {
   /* transparent, no visual impact */
 }
 
+/* Scroll fade-out effect at the top of the page */
+.scroll-fade-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 80px;
+  background: linear-gradient(to bottom, #FAFBFF 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 5;
+}
+
 .button {
   background: linear-gradient(135deg, #5b6670 0%, #3d4853 100%);
   color: white;
