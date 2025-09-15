@@ -1079,160 +1079,61 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       Lightroom Export
                     </Typography>
 
-                    <Paper
-                      elevation={1}
-                      sx={{ p: 4, background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)' }}
+                    <Box
+                      sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}
                     >
-                      {/* Profile Export */}
-                      <Box sx={{ mb: 4 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                          Profiles
+                      <Paper elevation={1} sx={{ p: 4 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                          Lightroom Preset (.xmp)
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                          Export an existing Lightroom/Camera Raw Profile (.xmp) into the app’s profiles folder.
+                          Export a Lightroom preset XMP with your selected adjustments.
+                        </Typography>
+                        <Box sx={{ mb: 2 }}>
+                          <FormControlLabel
+                            control={<Checkbox checked={isAllSelected(index)} onChange={e => setAllOptions(index, e.target.checked)} />}
+                            label={<Typography variant="body1" sx={{ fontWeight: 600 }}>Select All Adjustment Types</Typography>}
+                          />
+                        </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          {[{ key: 'exposure', label: 'Exposure', description: 'Basic exposure adjustments' }, { key: 'wbBasic', label: 'Basic Adjustments', description: 'White balance, contrast, highlights, shadows' }, { key: 'hsl', label: 'HSL Adjustments', description: 'Hue, saturation, and luminance per color' }, { key: 'colorGrading', label: 'Color Grading', description: 'Shadow, midtone, highlight color wheels' }, { key: 'curves', label: 'Tone Curves', description: 'RGB and luminance curve adjustments' }, { key: 'pointColor', label: 'Point Color', description: 'Targeted color adjustments' }, { key: 'sharpenNoise', label: 'Sharpen & Noise', description: 'Detail enhancement settings' }, { key: 'vignette', label: 'Vignette', description: 'Edge darkening effects' }, { key: 'grain', label: 'Film Grain', description: 'Analog film texture simulation' }, { key: 'masks', label: 'Masks (Local Adjustments)', description: 'Area-specific modifications' }].map(opt => (
+                            <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
+                              <FormControlLabel
+                                control={<Checkbox checked={getOptions(index)[opt.key as keyof ReturnType<typeof getOptions>] as any} onChange={() => toggleOption(index, opt.key as any)} />}
+                                label={<Box><Typography variant="body1" sx={{ fontWeight: 600 }}>{opt.label}</Typography><Typography variant="body2" sx={{ color: 'text.secondary' }}>{opt.description}</Typography></Box>}
+                              />
+                            </Paper>
+                          ))}
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                          <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => handleExportXMP(index, result)} sx={{ textTransform: 'none', fontWeight: 700 }}>
+                            Export Preset (.xmp)
+                          </Button>
+                        </Box>
+                      </Paper>
+
+                      <Paper elevation={1} sx={{ p: 4 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                          Lightroom Profile (.xmp)
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          Copy an existing Profile/Look XMP into the app’s profiles folder.
                         </Typography>
                         {profileExportStatus && (
                           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-                            <Typography
-                              variant="body2"
-                              color={profileExportStatus.ok ? 'success.main' : 'error.main'}
-                              sx={{ fontWeight: 600 }}
-                            >
+                            <Typography variant="body2" color={profileExportStatus.ok ? 'success.main' : 'error.main'} sx={{ fontWeight: 600 }}>
                               {profileExportStatus.msg}
                             </Typography>
                           </Paper>
                         )}
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button variant="outlined" onClick={handleExportProfile}>
-                            Export Profile (.xmp)
-                          </Button>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                          <Button variant="outlined" onClick={handleExportProfile}>Export Profile (.xmp)</Button>
                           {profileExportStatus?.ok && profileExportStatus.path && (
-                            <Button variant="text" onClick={handleOpenExportedProfile}>
-                              Show in Finder
-                            </Button>
+                            <Button variant="text" onClick={handleOpenExportedProfile}>Show in Finder</Button>
                           )}
                         </Box>
-                      </Box>
-
-                      <Box sx={{ mb: 3 }}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={isAllSelected(index)}
-                              onChange={e => setAllOptions(index, e.target.checked)}
-                            />
-                          }
-                          label={
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Select All Adjustment Types
-                            </Typography>
-                          }
-                        />
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                          gap: 2,
-                        }}
-                      >
-                        {[
-                          {
-                            key: 'exposure',
-                            label: 'Exposure',
-                            description: 'Basic exposure adjustments',
-                          },
-                          {
-                            key: 'wbBasic',
-                            label: 'Basic Adjustments',
-                            description: 'White balance, contrast, highlights, shadows',
-                          },
-                          {
-                            key: 'hsl',
-                            label: 'HSL Adjustments',
-                            description: 'Hue, saturation, and luminance per color',
-                          },
-                          {
-                            key: 'colorGrading',
-                            label: 'Color Grading',
-                            description: 'Shadow, midtone, highlight color wheels',
-                          },
-                          {
-                            key: 'curves',
-                            label: 'Tone Curves',
-                            description: 'RGB and luminance curve adjustments',
-                          },
-                          {
-                            key: 'pointColor',
-                            label: 'Point Color',
-                            description: 'Targeted color adjustments',
-                          },
-                          {
-                            key: 'sharpenNoise',
-                            label: 'Sharpen & Noise',
-                            description: 'Detail enhancement settings',
-                          },
-                          {
-                            key: 'vignette',
-                            label: 'Vignette',
-                            description: 'Edge darkening effects',
-                          },
-                          {
-                            key: 'grain',
-                            label: 'Film Grain',
-                            description: 'Analog film texture simulation',
-                          },
-                          {
-                            key: 'masks',
-                            label: 'Masks (Local Adjustments)',
-                            description: 'Area-specific modifications',
-                          },
-                        ].map(opt => (
-                          <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={
-                                    getOptions(index)[
-                                      opt.key as keyof ReturnType<typeof getOptions>
-                                    ] as any
-                                  }
-                                  onChange={() => toggleOption(index, opt.key as any)}
-                                />
-                              }
-                              label={
-                                <Box>
-                                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                    {opt.label}
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                    {opt.description}
-                                  </Typography>
-                                </Box>
-                              }
-                            />
-                          </Paper>
-                        ))}
-                      </Box>
-
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-                        <Button
-                          variant="contained"
-                          size="large"
-                          startIcon={<DownloadIcon />}
-                          onClick={() => handleExportXMP(index, result)}
-                          sx={{
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            px: 4,
-                            py: 1.5,
-                          }}
-                        >
-                          Export XMP Sidecar
-                        </Button>
-                      </Box>
-                    </Paper>
+                      </Paper>
+                    </Box>
                   </Box>
                 )}
 

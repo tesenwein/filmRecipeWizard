@@ -1,4 +1,4 @@
-import { DeleteOutline, Save as SaveIcon, Visibility, VisibilityOff, Upload, FolderOpen } from '@mui/icons-material';
+import { DeleteOutline, Save as SaveIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -18,7 +18,6 @@ const Settings: React.FC = () => {
   const [masked, setMasked] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-  const [profileExport, setProfileExport] = useState<{ ok: boolean; msg: string; path?: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -73,32 +72,6 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleExportProfile = async () => {
-    setProfileExport(null);
-    try {
-      const files = await window.electronAPI.selectFiles({
-        title: 'Select Lightroom Profile (.xmp)',
-        filters: [{ name: 'XMP Profiles', extensions: ['xmp'] }],
-        properties: ['openFile'],
-      });
-      if (!files || files.length === 0) return;
-      const source = files[0];
-      const res = await window.electronAPI.exportProfile({ sourceXmpPath: source });
-      if (res?.success) {
-        setProfileExport({ ok: true, msg: 'Profile exported', path: res.outputPath });
-      } else {
-        setProfileExport({ ok: false, msg: res?.error || 'Profile export failed' });
-      }
-    } catch (e) {
-      setProfileExport({ ok: false, msg: e instanceof Error ? e.message : 'Profile export failed' });
-    }
-  };
-
-  const handleOpenExport = async () => {
-    if (profileExport?.path) {
-      await window.electronAPI.openPath(profileExport.path);
-    }
-  };
 
   return (
     <Container maxWidth="sm" sx={{ py: 2 }} className="no-drag">
@@ -175,32 +148,6 @@ const Settings: React.FC = () => {
         Your key is stored locally on this device in app data and used for AI color analysis. You
         can remove it anytime.
       </Typography>
-
-      <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mt: 3 }}>
-        Profiles
-      </Typography>
-      <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
-        <Stack spacing={1.5}>
-          <Typography variant="body2" color="text.secondary">
-            Export an existing Lightroom/Camera Raw Profile (.xmp) into the app’s profiles folder for easy access.
-          </Typography>
-          {profileExport && (
-            <Alert severity={profileExport.ok ? 'success' : 'error'} variant="outlined">
-              {profileExport.msg}
-            </Alert>
-          )}
-          <Stack direction="row" spacing={1}>
-            <Button variant="contained" startIcon={<Upload />} onClick={handleExportProfile}>
-              Export Profile (.xmp)
-            </Button>
-            {profileExport?.ok && profileExport.path && (
-              <Button variant="outlined" startIcon={<FolderOpen />} onClick={handleOpenExport}>
-                Show in Finder
-              </Button>
-            )}
-          </Stack>
-        </Stack>
-      </Paper>
     </Container>
   );
 };
