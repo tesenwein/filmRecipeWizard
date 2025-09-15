@@ -1802,7 +1802,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   href="#"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    window.open(`https://instagram.com/${author.instagram!.replace(/^@/, '')}`, '_blank');
+                                    let url: string;
+                                    if (author.instagram!.startsWith('http')) {
+                                      url = author.instagram!;
+                                    } else {
+                                      const instagramHandle = author.instagram!.replace(/^@/, '');
+                                      url = `https://www.instagram.com/${instagramHandle}`;
+                                    }
+                                    window.open(url, '_blank');
                                   }}
                                   sx={{
                                     color: 'text.primary',

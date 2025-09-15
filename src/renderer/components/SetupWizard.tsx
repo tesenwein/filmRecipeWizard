@@ -129,13 +129,13 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       if (/instagram\.com$/i.test(u.hostname)) {
         const parts = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
         const h = parts[0] || '';
-        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://instagram.com/${h}` };
+        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
       }
     } catch {}
     // Require @ prefix for handle style
     if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');
-    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle: `@${handle}`, url: `https://instagram.com/${handle}` };
+    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle: `@${handle}`, url: `https://www.instagram.com/${handle}` };
     return { ok: false };
   };
 
