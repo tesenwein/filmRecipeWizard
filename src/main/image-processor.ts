@@ -1,7 +1,5 @@
-import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import sharp from 'sharp';
 import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
 import { exportLightroomProfile } from './profile-exporter';
