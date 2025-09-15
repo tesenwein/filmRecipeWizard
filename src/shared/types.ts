@@ -45,6 +45,8 @@ export interface ProcessHistory {
   recipeImageData?: string; // base64 encoded image
   // User-selected style options (sliders/toggles)
   userOptions?: StyleOptions;
+  // Processing status to track if generation is still in progress
+  status?: 'generating' | 'completed' | 'failed';
 }
 
 export interface ProcessingState {

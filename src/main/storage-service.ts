@@ -104,9 +104,38 @@ export class StorageService {
     return null;
   }
 
+  private async migrateStatusField(): Promise<void> {
+    try {
+      const data = await fs.readFile(this.storageFile, 'utf8');
+      const raw: any[] = JSON.parse(data);
+
+      // Check if migration is needed
+      const needsMigration = raw.some((p: any) => p.status === undefined);
+      if (!needsMigration) return;
+
+      console.log('[STORAGE] Migrating existing processes to add status field');
+
+      // Update processes without status field
+      const migrated = raw.map((p: any) => ({
+        ...p,
+        status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
+      }));
+
+      // Save the migrated data
+      await this.saveHistory(migrated);
+    } catch {
+      // If file doesn't exist or is corrupt, no migration needed
+      console.log('[STORAGE] No migration needed - file not found or invalid');
+    }
+  }
+
   async loadHistory(): Promise<ProcessHistory[]> {
     try {
       await this.initialize();
+
+      // Run migration first
+      await this.migrateStatusField();
+
       const data = await fs.readFile(this.storageFile, 'utf8');
       const raw: any[] = JSON.parse(data);
       const history: ProcessHistory[] = (raw || []).map((p: any) => ({
@@ -125,6 +154,7 @@ export class StorageService {
             : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
             ? p.baseImagesData[0]
             : undefined,
+        status: p.status,
       }));
       return history;
     } catch {
@@ -132,7 +162,8 @@ export class StorageService {
       console.warn('[STORAGE] Failed to load history; attempting backup restore');
       const fromBackup = await this.loadFromBackups();
       if (fromBackup) {
-        return (fromBackup as any[]).map((p: any) => ({
+        // Migrate backup data and save to main file
+        const migratedBackup = (fromBackup as any[]).map((p: any) => ({
           id: p.id,
           timestamp: p.timestamp,
           name: p.name,
@@ -147,7 +178,12 @@ export class StorageService {
               : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
               ? p.baseImagesData[0]
               : undefined,
+          status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
         }));
+
+        // Save migrated backup to main file
+        await this.saveHistory(migratedBackup);
+        return migratedBackup;
       }
       return [];
     }

@@ -1,3 +1,4 @@
+import { CircularProgress } from '@mui/material';
 import React from 'react';
 import NoImagePlaceholder from './NoImagePlaceholder';
 
@@ -21,6 +22,8 @@ interface SingleImageProps {
   // Background enhancements using the same image
   backgroundBlur?: number; // px
   backgroundOpacity?: number; // 0..1
+  // Generating state overlay
+  isGenerating?: boolean;
 }
 
 const SingleImage: React.FC<SingleImageProps> = ({
@@ -34,14 +37,57 @@ const SingleImage: React.FC<SingleImageProps> = ({
   placeholderIcon,
   backgroundBlur = 8,
   backgroundOpacity = 0.22,
+  isGenerating = false,
 }) => {
   const src = toImgSrc(source || undefined);
   if (!src) {
-    return showPlaceholder ? (
+    const baseDiv = showPlaceholder ? (
       <NoImagePlaceholder label={placeholderLabel} icon={placeholderIcon} style={{ width: '100%', height: '100%', ...style }} />
     ) : (
       <div className={className} style={{ width: '100%', height: '100%', ...style }} />
     );
+
+    // If generating, wrap in container with overlay
+    if (isGenerating) {
+      return (
+        <div
+          className={className}
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            ...style,
+          }}
+        >
+          {baseDiv}
+          {/* Generating overlay for placeholder */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2,
+              pointerEvents: 'none',
+            }}
+          >
+            <CircularProgress
+              size={48}
+              sx={{
+                color: 'white',
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return baseDiv;
   }
 
   return (
@@ -99,6 +145,31 @@ const SingleImage: React.FC<SingleImageProps> = ({
           zIndex: 1,
         }}
       />
+      {/* Generating overlay */}
+      {isGenerating && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+        >
+          <CircularProgress
+            size={48}
+            sx={{
+              color: 'white',
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

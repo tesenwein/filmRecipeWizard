@@ -34,6 +34,18 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
     loadHistory();
   }, []);
 
+  // Poll for updates on generating processes
+  useEffect(() => {
+    const hasGeneratingProcesses = history.some(p => p.status === 'generating');
+    if (!hasGeneratingProcesses) return;
+
+    const interval = setInterval(() => {
+      loadHistory();
+    }, 3000); // Check every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [history]);
+
   const loadHistory = async () => {
     try {
       const result = await window.electronAPI.loadHistory();
@@ -140,7 +152,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                 alert(`Export failed: ${res.error}`);
               }
             }}
-            disabled={history.length === 0}
+            disabled={history.length === 0 || history.some(p => p.status === 'generating')}
           >
             Export All
           </Button>
@@ -197,7 +209,15 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                 </IconButton>
                 <CardActionArea
                   onClick={() => {
-                    onOpenRecipe(process);
+                    if (process.status !== 'generating') {
+                      onOpenRecipe(process);
+                    }
+                  }}
+                  sx={{
+                    ...(process.status === 'generating' && {
+                      pointerEvents: 'none',
+                      opacity: 0.7,
+                    }),
                   }}
                 >
                   <div style={{ height: 240, borderRadius: 2, overflow: 'hidden' }}>
@@ -205,6 +225,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                       source={basePreviews[index] || undefined}
                       alt={`Recipe ${index + 1}`}
                       fit="contain"
+                      isGenerating={process.status === 'generating'}
                     />
                   </div>
                   <CardContent>
@@ -235,12 +256,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                   <Button
                     variant="outlined"
                     fullWidth
+                    disabled={process.status === 'generating'}
                     onClick={e => {
                       e.stopPropagation();
                       onOpenRecipe(process);
                     }}
                   >
-                    Open
+                    {process.status === 'generating' ? 'Generating...' : 'Open'}
                   </Button>
                 </CardContent>
               </Card>

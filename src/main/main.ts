@@ -354,6 +354,7 @@ class FotoRecipeWizardApp {
                   metadata: result.metadata,
                 },
               ],
+              status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
             } as any);
           } catch (err) {
@@ -485,6 +486,7 @@ class FotoRecipeWizardApp {
             }
             await this.storageService.updateProcess(data.processId, {
               results: persistedResults as any,
+              status: persistedResults.some(r => r.success) ? 'completed' : 'failed',
               ...(name ? { name } : {}),
             });
           }
@@ -569,6 +571,7 @@ class FotoRecipeWizardApp {
             userOptions: (processData as any)?.userOptions,
             results: Array.isArray(processData.results) ? processData.results : [],
             recipeImageData,
+            status: 'generating',
           } as ProcessHistory;
 
           await this.storageService.addProcess(process);
