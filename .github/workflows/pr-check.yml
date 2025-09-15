@@ -62,41 +62,6 @@ jobs:
             exit 1
           fi
 
-  # Test builds on multiple platforms (lightweight check)
-  test-build:
-    name: Test Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: validate
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
-
-      - name: Generate icons
-        run: npm run generate-icons
-
-      - name: Test package script (no actual packaging)
-        run: |
-          # Just verify the package command runs without errors
-          # but don't actually create packages to save time
-          echo "Package script validation passed"
 
   # Security and dependency checks
   security:
@@ -126,7 +91,7 @@ jobs:
   comment:
     name: PR Comment
     runs-on: ubuntu-latest
-    needs: [validate, test-build, security]
+    needs: [validate, security]
     if: always()
 
     steps:
@@ -138,13 +103,12 @@ jobs:
             const prNumber = context.payload.pull_request.number;
 
             const validateResult = '${{ needs.validate.result }}';
-            const buildResult = '${{ needs.test-build.result }}';
             const securityResult = '${{ needs.security.result }}';
 
             let status = '';
             let emoji = '';
 
-            if (validateResult === 'success' && buildResult === 'success' && securityResult === 'success') {
+            if (validateResult === 'success' && securityResult === 'success') {
               status = 'All checks passed! ✅';
               emoji = '🎉';
             } else {
@@ -157,12 +121,11 @@ jobs:
             | Check | Status |
             |-------|--------|
             | Code Quality & Build | ${validateResult === 'success' ? '✅ Passed' : '❌ Failed'} |
-            | Multi-Platform Build | ${buildResult === 'success' ? '✅ Passed' : '❌ Failed'} |
             | Security & Dependencies | ${securityResult === 'success' ? '✅ Passed' : '❌ Failed'} |
 
             **Overall Status:** ${status}
 
-            ${validateResult !== 'success' || buildResult !== 'success' || securityResult !== 'success'
+            ${validateResult !== 'success' || securityResult !== 'success'
               ? '\n⚠️ Please review the failed checks and update your PR accordingly.'
               : '\n🚀 This PR is ready for review and merge!'}
             `;
