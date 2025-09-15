@@ -292,6 +292,12 @@ export class ImageProcessor {
   }
 
   generateCameraProfileXMP(profileName: string, adjustments: any): string {
+    // Check if this is a black and white conversion
+    const isBW = !!adjustments.monochrome ||
+                 adjustments.treatment === 'black_and_white' ||
+                 (typeof adjustments.camera_profile === 'string' && /monochrome/i.test(adjustments.camera_profile || '')) ||
+                 (typeof adjustments.saturation === 'number' && adjustments.saturation <= -100);
+
     // Extract color adjustments
     const exposure = adjustments.exposure || 0;
     const contrast = adjustments.contrast || 0;
@@ -300,7 +306,7 @@ export class ImageProcessor {
     const whites = adjustments.whites || 0;
     const blacks = adjustments.blacks || 0;
     const vibrance = adjustments.vibrance || 0;
-    const saturation = adjustments.saturation || 0;
+    const saturation = isBW ? -100 : (adjustments.saturation || 0);
 
     // Color grading
     const shadowsHue = adjustments.shadows_hue || 0;
@@ -337,12 +343,21 @@ export class ImageProcessor {
         crs:Blacks2012="${Math.round(blacks)}"
         crs:Vibrance="${Math.round(vibrance)}"
         crs:Saturation="${Math.round(saturation)}"
-        crs:ConvertToGrayscale="false"
+        crs:ConvertToGrayscale="${isBW ? 'true' : 'false'}"
+        ${isBW ? 'crs:Treatment="Black &amp; White"' : 'crs:Treatment="Color"'}
         crs:SplitToningShadowHue="${Math.round(shadowsHue)}"
         crs:SplitToningShadowSaturation="${Math.round(shadowsSat)}"
         crs:SplitToningHighlightHue="${Math.round(highlightsHue)}"
         crs:SplitToningHighlightSaturation="${Math.round(highlightsSat)}"
         crs:SplitToningBalance="${Math.round(midtonesSat)}"
+        ${isBW && adjustments.bw_red !== undefined ? `crs:GrayMixerRed="${Math.round(adjustments.bw_red)}"` : ''}
+        ${isBW && adjustments.bw_orange !== undefined ? `crs:GrayMixerOrange="${Math.round(adjustments.bw_orange)}"` : ''}
+        ${isBW && adjustments.bw_yellow !== undefined ? `crs:GrayMixerYellow="${Math.round(adjustments.bw_yellow)}"` : ''}
+        ${isBW && adjustments.bw_green !== undefined ? `crs:GrayMixerGreen="${Math.round(adjustments.bw_green)}"` : ''}
+        ${isBW && adjustments.bw_aqua !== undefined ? `crs:GrayMixerAqua="${Math.round(adjustments.bw_aqua)}"` : ''}
+        ${isBW && adjustments.bw_blue !== undefined ? `crs:GrayMixerBlue="${Math.round(adjustments.bw_blue)}"` : ''}
+        ${isBW && adjustments.bw_purple !== undefined ? `crs:GrayMixerPurple="${Math.round(adjustments.bw_purple)}"` : ''}
+        ${isBW && adjustments.bw_magenta !== undefined ? `crs:GrayMixerMagenta="${Math.round(adjustments.bw_magenta)}"` : ''}
         crs:HasSettings="true">
       <crs:Name>
         <rdf:Alt>

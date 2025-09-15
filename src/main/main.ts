@@ -207,10 +207,11 @@ class FotoRecipeWizardApp {
             .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
             .replace(/\s{2,}/g, ' ')
             .trim();
-        // Get AI-generated name directly from adjustments (same as preset export)
+        // Get AI-generated name directly from adjustments and add -Profile suffix
         const rawName = (data?.adjustments?.preset_name as string | undefined) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
         const clean = sanitizeName(rawName) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const safeName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const baseName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const safeName = `${baseName}-Profile`;
 
         // Show save dialog
         const dialogOptions = {
@@ -261,7 +262,8 @@ class FotoRecipeWizardApp {
             .trim();
         const rawName = (data?.adjustments?.preset_name as string | undefined) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
         const clean = sanitizeName(rawName) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const safeName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const baseName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const safeName = `${baseName}-Preset`;
         const result = await dialog.showSaveDialog({
           title: 'Save XMP Preset',
           defaultPath: `${safeName}.xmp`,
