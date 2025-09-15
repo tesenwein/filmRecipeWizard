@@ -718,7 +718,29 @@ export class ImageProcessor {
           const name = (m?.name && String(m.name).trim()) || `Mask ${i + 1}`;
           const cAttrs = corrAttrs(m?.adjustments || {});
           let maskGeom = '';
-          if (m?.type === 'radial') {
+          if (m?.type === 'subject') {
+            // Subject/People mask - MaskSubType="1"
+            maskGeom = `<rdf:li crs:What="Mask/Image" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${
+              m?.inverted ? 'true' : 'false'
+            }" crs:MaskValue="1" crs:MaskVersion="1" crs:MaskSubType="1" crs:ReferencePoint="${
+              fmt(m?.referenceX) || '0.500000'
+            } ${fmt(m?.referenceY) || '0.500000'}" crs:ErrorReason="0"/>`;
+          } else if (m?.type === 'background') {
+            // Background mask - MaskSubType="0" with SubCategoryID
+            const subCategoryId = num(m?.subCategoryId) ?? 22; // Default to category 22 like in example
+            maskGeom = `<rdf:li crs:What="Mask/Image" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${
+              m?.inverted ? 'true' : 'false'
+            }" crs:MaskValue="1" crs:MaskVersion="1" crs:MaskSubType="0" crs:MaskSubCategoryID="${subCategoryId}" crs:ReferencePoint="${
+              fmt(m?.referenceX) || '0.500000'
+            } ${fmt(m?.referenceY) || '0.500000'}" crs:ErrorReason="0"/>`;
+          } else if (m?.type === 'sky') {
+            // Sky mask - similar to background but different category
+            maskGeom = `<rdf:li crs:What="Mask/Image" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${
+              m?.inverted ? 'true' : 'false'
+            }" crs:MaskValue="1" crs:MaskVersion="1" crs:MaskSubType="0" crs:MaskSubCategoryID="2" crs:ReferencePoint="${
+              fmt(m?.referenceX) || '0.500000'
+            } ${fmt(m?.referenceY) || '0.500000'}" crs:ErrorReason="0"/>`;
+          } else if (m?.type === 'radial') {
             maskGeom = `<rdf:li crs:What="Mask/CircularGradient" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${
               m?.inverted ? 'true' : 'false'
             }" crs:MaskValue="1" crs:Top="${fmt(m?.top) || '0.15'}" crs:Left="${

@@ -15,7 +15,7 @@ export function buildUserContentForAnalysis(
     content.push({
       type: 'text' as const,
       text:
-        'MANDATORY 3D POP REQUIREMENT: You MUST create exactly 2 masks: (1) Subject mask named "Subject Pop" and (2) Background mask named "Background Falloff". This is REQUIRED regardless of image content. Use subtle Local* adjustments for depth. Never skip creating these masks.',
+        'MANDATORY 3D POP REQUIREMENT: You MUST create exactly 2 masks: (1) Subject mask named "Subject Pop" with reference point on the main subject/person, and (2) Background mask named "Background Falloff" with reference point in the background area. Use different reference coordinates for each mask. This is REQUIRED regardless of image content.',
     });
   }
 
