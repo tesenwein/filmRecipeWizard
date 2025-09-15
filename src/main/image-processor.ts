@@ -54,7 +54,10 @@ export class ImageProcessor {
         data.prompt, // hint/prompt
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones }
+        {
+          preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
+          lightroomProfile: data.styleOptions?.lightroomProfile
+        }
       );
 
 
@@ -100,7 +103,10 @@ export class ImageProcessor {
         data.prompt,
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones }
+        {
+          preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
+          lightroomProfile: data.styleOptions?.lightroomProfile
+        }
       );
 
       return {

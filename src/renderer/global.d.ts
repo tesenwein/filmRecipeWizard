@@ -50,6 +50,7 @@ declare global {
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;
       onProcessingComplete?: (callback: (results: any[]) => void) => void;
+      onProcessUpdated?: (callback: (payload: { processId: string; updates: any }) => void) => void;
 
       // Preview generation
       generatePreview: (args: { path?: string; dataUrl?: string }) => Promise<any>;

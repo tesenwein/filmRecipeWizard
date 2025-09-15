@@ -167,11 +167,13 @@ const Settings: React.FC = () => {
       const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
       if (/instagram\.com$/i.test(u.hostname)) {
         const h = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
-        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: h, url: `https://instagram.com/${h}` };
+        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://instagram.com/${h}` };
       }
     } catch {}
+    // Require @ prefix for handle style
+    if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');
-    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle, url: `https://instagram.com/${handle}` };
+    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle: `@${handle}`, url: `https://instagram.com/${handle}` };
     return { ok: false };
   };
 
@@ -308,28 +310,14 @@ const Settings: React.FC = () => {
               sx={{ mt: 0.5 }}
             />
           </Box>
-          {status && (
-            <Alert severity={status.type} variant="outlined">
-              {status.msg}
-            </Alert>
-          )}
           <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSave}
-              disabled={isValidating}
-              startIcon={<SaveIcon />}
-            >
-              {isValidating ? 'Verifying...' : 'Save'}
-            </Button>
             <Button
               variant="outlined"
               color="error"
               onClick={handleClear}
               startIcon={<DeleteOutline />}
             >
-              Clear
+              Clear API Key
             </Button>
           </Stack>
           {!setupCompleted && (
@@ -385,7 +373,7 @@ const Settings: React.FC = () => {
           <TextField
             fullWidth
             label="Instagram"
-            placeholder="@yourhandle or instagram.com/yourhandle"
+            placeholder="@yourhandle (required) or instagram.com/yourhandle"
             value={instagram}
             onChange={e => { setInstagram(e.target.value); const ok = normalizeInstagram(e.target.value).ok; setInstagramError(ok ? '' : 'Enter a valid handle or Instagram URL'); }}
             error={!!instagramError}
@@ -397,9 +385,35 @@ const Settings: React.FC = () => {
         </Stack>
       </Paper>
 
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-        Your key is stored locally on this device in app data and used for AI color analysis. You
-        can remove it anytime.
+      {/* Save Settings Section */}
+      <Box sx={{ mt: 3, mb: 3 }}>
+        {status && (
+          <Alert severity={status.type} variant="outlined" sx={{ mb: 2 }}>
+            {status.msg}
+          </Alert>
+        )}
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSave}
+            disabled={isValidating}
+            startIcon={<SaveIcon />}
+            size="large"
+            sx={{
+              fontWeight: 600,
+              px: 4,
+              py: 1.5,
+              borderRadius: 2
+            }}
+          >
+            {isValidating ? 'Verifying & Saving...' : 'Save All Settings'}
+          </Button>
+        </Box>
+      </Box>
+
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+        Your API key and profile details are stored locally on this device and used for AI color analysis.
       </Typography>
 
       <Paper elevation={1} sx={{ p: 2, borderRadius: 2, mt: 3 }}>

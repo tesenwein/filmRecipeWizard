@@ -21,6 +21,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useState, useMemo } from 'react';
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -58,6 +59,60 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
            new Date(recipe.timestamp).toLocaleString();
   };
 
+  // Build a searchable haystack of all relevant fields (excluding image blobs)
+  const buildSearchHaystack = (recipe: Recipe) => {
+    const parts: string[] = [];
+
+    // Basic fields
+    parts.push(recipe.id);
+    parts.push(getRecipeName(recipe));
+    if (recipe.prompt) parts.push(recipe.prompt);
+    try { parts.push(new Date(recipe.timestamp).toLocaleString()); } catch {}
+
+    // Author
+    const author = (recipe as any).author as any;
+    if (author) {
+      if (author.firstName) parts.push(author.firstName);
+      if (author.lastName) parts.push(author.lastName);
+      if (author.email) parts.push(author.email);
+      if (author.website) parts.push(author.website);
+      if (author.instagram) parts.push(author.instagram);
+    }
+
+    // User options
+    const uo = recipe.userOptions as any;
+    if (uo) {
+      const numKeys = ['warmth','tint','contrast','vibrance','moodiness','saturationBias'] as const;
+      for (const k of numKeys) if (uo[k] !== undefined) parts.push(String(uo[k]));
+      if (uo.vibe) parts.push(uo.vibe);
+      if (uo.lightroomProfile) parts.push(uo.lightroomProfile);
+      if (uo.filmGrain !== undefined) parts.push(uo.filmGrain ? 'film grain' : 'no film grain');
+      if (uo.preserveSkinTones !== undefined) parts.push(uo.preserveSkinTones ? 'preserve skin tones' : 'no skin tone preserve');
+      if (uo.artistStyle) parts.push(uo.artistStyle.name, uo.artistStyle.category, uo.artistStyle.blurb, uo.artistStyle.key);
+      if (uo.filmStyle) parts.push(uo.filmStyle.name, uo.filmStyle.category, uo.filmStyle.blurb, uo.filmStyle.key);
+    }
+
+    // Results metadata
+    if (Array.isArray(recipe.results)) {
+      for (const r of recipe.results) {
+        if (!r) continue;
+        if (r.error) parts.push(r.error);
+        if (r.metadata) {
+          const m: any = r.metadata;
+          if (m.presetName) parts.push(m.presetName);
+          if (m.groupFolder) parts.push(m.groupFolder);
+          if (m.reasoning) parts.push(m.reasoning);
+          if (m.aiAdjustments) parts.push(JSON.stringify(m.aiAdjustments));
+        }
+      }
+    }
+
+    return parts
+      .filter(v => typeof v === 'string' && v.trim().length > 0)
+      .join(' ')
+      .toLowerCase();
+  };
+
   // Memoize filtered and sorted recipes to prevent endless recalculations
   const { sortedRecipes, basePreviews } = useMemo(() => {
     console.log('[GALLERY] useMemo recalculating with:', recipes.length, 'recipes, searchQuery:', searchQuery, 'sortBy:', sortBy);
@@ -65,12 +120,9 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     // Filter recipes based on search query
     const filteredRecipes = recipes.filter(recipe => {
       if (!searchQuery.trim()) return true;
-
       const searchTerm = searchQuery.toLowerCase();
-      const recipeName = getRecipeName(recipe).toLowerCase();
-      const prompt = (recipe.prompt || '').toLowerCase();
-
-      return recipeName.includes(searchTerm) || prompt.includes(searchTerm);
+      const haystack = buildSearchHaystack(recipe);
+      return haystack.includes(searchTerm);
     });
 
     console.log('[GALLERY] filtered to:', filteredRecipes.length, 'recipes');
@@ -309,8 +361,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                       isGenerating={generatingRecipes.has(recipe.id)}
                     />
                   </div>
-                  <CardContent>
-                    <Typography variant="subtitle1" fontWeight={700} noWrap>
+                  <CardContent sx={{ pb: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ mb: 1 }}>
                       {(() => {
                         const aiName = (recipe as any)?.results?.[0]?.metadata?.aiAdjustments
                           ?.preset_name as string | undefined;
@@ -328,9 +380,29 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                         }
                       })()}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatDate(recipe.timestamp)}
-                    </Typography>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDate(recipe.timestamp)}
+                      </Typography>
+                      {(recipe as any)?.author && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            fontWeight: 400,
+                          }}
+                        >
+                          <PersonOutlineOutlinedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                          {[(recipe as any).author.firstName, (recipe as any).author.lastName]
+                            .filter(Boolean)
+                            .join(' ')}
+                        </Typography>
+                      )}
+                    </div>
                   </CardContent>
                 </CardActionArea>
                 <CardContent sx={{ pt: 0 }}>

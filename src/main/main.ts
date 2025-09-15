@@ -281,6 +281,12 @@ class FotoRecipeWizardApp {
             optionsHintParts.push(`Saturation Bias: ${pct(options.saturationBias)}`);
           if (options.filmGrain !== undefined)
             optionsHintParts.push(`Film Grain: ${options.filmGrain ? 'On' : 'Off'}`);
+          if (options.lightroomProfile !== undefined) {
+            const profileName = options.lightroomProfile === 'adobe-color' ? 'Adobe Color' :
+                               options.lightroomProfile === 'adobe-monochrome' ? 'Adobe Monochrome' :
+                               options.lightroomProfile === 'flat' ? 'Flat Profile' : options.lightroomProfile;
+            optionsHintParts.push(`Lightroom Base Profile: ${profileName}`);
+          }
           if (options.artistStyle && typeof options.artistStyle.name === 'string') {
             const name = String(options.artistStyle.name).trim();
             const category = String(options.artistStyle.category || '').trim();
@@ -370,6 +376,24 @@ class FotoRecipeWizardApp {
               status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
             } as any);
+            try {
+              this.mainWindow?.webContents.send('process-updated', {
+                processId: data.processId,
+                updates: {
+                  results: [
+                    {
+                      inputPath: '',
+                      outputPath: result.outputPath,
+                      success: !!result.success,
+                      error: result.error,
+                      metadata: result.metadata,
+                    },
+                  ],
+                  status: result.success ? 'completed' : 'failed',
+                  ...(firstBase ? { recipeImageData: firstBase } : {}),
+                },
+              });
+            } catch {}
           } catch (err) {
             console.error('[IPC] process-with-stored-images: failed to persist results', err);
           }
@@ -502,6 +526,16 @@ class FotoRecipeWizardApp {
               status: persistedResults.some(r => r.success) ? 'completed' : 'failed',
               ...(name ? { name } : {}),
             });
+            try {
+              this.mainWindow?.webContents.send('process-updated', {
+                processId: data.processId,
+                updates: {
+                  results: persistedResults,
+                  status: persistedResults.some(r => r.success) ? 'completed' : 'failed',
+                  ...(name ? { name } : {}),
+                },
+              });
+            } catch {}
           }
         } catch (err) {
           console.error('[IPC] process-images: failed to persist results', err);
@@ -627,6 +661,10 @@ class FotoRecipeWizardApp {
       async (_event, processId: string, updates: Partial<ProcessHistory>) => {
         try {
           await this.storageService.updateProcess(processId, updates);
+          // Notify renderer that a process has been updated (useful for background updates)
+          try {
+            this.mainWindow?.webContents.send('process-updated', { processId, updates });
+          } catch {}
           return { success: true };
         } catch (error) {
           console.error('[IPC] Error updating process:', error);
@@ -859,18 +897,10 @@ class FotoRecipeWizardApp {
         const zip = new AdmZip();
 
         // Write manifest with embedded base64 images and results
-        // Ensure author metadata is present
-        let toExport = process as any;
-        try {
-          const settings = await this.settingsService.loadSettings();
-          if (!toExport.author && settings.userProfile) {
-            toExport = { ...toExport, author: settings.userProfile };
-          }
-        } catch {}
         const manifest = {
           schema: 'foto-recipe-wizard@1',
           exportedAt: new Date().toISOString(),
-          process: toExport,
+          process: process,
         };
         zip.addFile('recipe.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 
@@ -928,11 +958,6 @@ class FotoRecipeWizardApp {
     ipcMain.handle('export-all-recipes', async (): Promise<ExportResult> => {
       try {
         const recipes = await this.storageService.loadRecipes();
-        let authorFromSettings: any;
-        try {
-          const settings = await this.settingsService.loadSettings();
-          authorFromSettings = settings.userProfile;
-        } catch {}
         if (!recipes || recipes.length === 0) {
           throw new Error('No recipes to export');
         }
@@ -958,7 +983,7 @@ class FotoRecipeWizardApp {
           schema: 'foto-recipe-wizard-bulk@1',
           exportedAt: new Date().toISOString(),
           count: recipes.length,
-          processes: recipes.map(r => (!r.author && authorFromSettings ? { ...r, author: authorFromSettings } : r)),
+          processes: recipes,
         };
         zip.addFile('all-recipes.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 

@@ -39,6 +39,9 @@ const electronAPI = {
   onProcessingComplete: (callback: (results: any[]) => void) => {
     ipcRenderer.on('processing-complete', (_event, results) => callback(results));
   },
+  onProcessUpdated: (callback: (payload: { processId: string; updates: any }) => void) => {
+    ipcRenderer.on('process-updated', (_event, payload) => callback(payload));
+  },
 
   // Preview generation
   generatePreview: (args: { path?: string; dataUrl?: string }) =>

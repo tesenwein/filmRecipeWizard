@@ -3,6 +3,7 @@ import {
   Recipe,
   ProcessingResult,
   StyleOptions,
+  LightroomProfile,
 } from '../../shared/types';
 import { AlertProvider } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -17,7 +18,8 @@ const App: React.FC = () => {
     processingState,
     setProcessingState,
     addRecipe,
-    updateRecipeInStorage
+    updateRecipeInStorage,
+    setGeneratingStatus,
   } = useAppStore();
 
   // Simple hash-based router with query support
@@ -40,6 +42,7 @@ const App: React.FC = () => {
     'gallery'
   );
   const currentProcessIdRef = useRef<string | null>(null);
+  const startingRef = useRef<boolean>(false);
   useEffect(() => {
     currentProcessIdRef.current = currentProcessId;
   }, [currentProcessId]);
@@ -51,7 +54,9 @@ const App: React.FC = () => {
     status: string;
     progress: number;
   }>({ status: 'Loading...', progress: 0 });
-  const [styleOptions, setStyleOptions] = useState<StyleOptions>({});
+  const [styleOptions, setStyleOptions] = useState<StyleOptions>({
+    lightroomProfile: LightroomProfile.ADOBE_COLOR // Default to Adobe Color as specified
+  });
 
   // Force start at splash, then redirect based on setup completion (run only once)
   useEffect(() => {
@@ -121,8 +126,9 @@ const App: React.FC = () => {
   };
 
   const handleStartProcessing = async () => {
-    // Allow processing as long as there are target images; base/prompt optional
-    if (targetImages.length === 0) return;
+    // Prevent concurrent runs and require at least one target image
+    if (startingRef.current || processingState.isProcessing || targetImages.length === 0) return;
+    startingRef.current = true;
 
     // Save process to storage (converts to base64 and persists only base64 + results)
     let newProcessId: string | null = null;
@@ -144,6 +150,10 @@ const App: React.FC = () => {
         currentProcessIdRef.current = newProcessId;
         // Update the store with the newly created process without re-saving
         addRecipe(result.process);
+        // Mark as generating in gallery
+        if (newProcessId) {
+          try { setGeneratingStatus(newProcessId, true); } catch {}
+        }
         // Use the single recipe image (first reference) for processing only
         returnedBase64.base = result?.process?.recipeImageData
           ? [result.process.recipeImageData]
@@ -154,9 +164,13 @@ const App: React.FC = () => {
           : [];
       } else {
         console.warn('[APP] Failed to save process', result.error);
+        startingRef.current = false;
+        return;
       }
     } catch (error) {
       console.error('Failed to save process:', error);
+      startingRef.current = false;
+      return;
     }
 
     setCurrentStep('processing');
@@ -188,6 +202,7 @@ const App: React.FC = () => {
   };
 
   const handleProcessingComplete = async (processingResults: any[]) => {
+    startingRef.current = false;
     // Convert the results to include inputPath for proper storage
     const inputs = targetImagesRef.current || [];
     const results: ProcessingResult[] = processingResults.map((result, index) => ({
@@ -209,9 +224,11 @@ const App: React.FC = () => {
     const pid = currentProcessIdRef.current;
     if (pid) {
       try {
+        const anySuccess = results.some(r => r.success);
         await updateRecipeInStorage(pid, {
           results,
-        });
+          status: anySuccess ? 'completed' : 'failed',
+        } as any);
       } catch (error) {
         console.error('Failed to update process:', error);
       }
@@ -233,6 +250,7 @@ const App: React.FC = () => {
       progress: 0,
       status: '',
     });
+    // Do not mutate recipe status on reset; completion handler will update store
   };
 
   const handleNewProcess = () => {
@@ -282,11 +300,35 @@ const App: React.FC = () => {
       };
       window.electronAPI.onProcessingComplete?.(onComplete);
 
+      // Listen for background process updates (e.g., status flip to completed)
+      const onProcessUpdated = async (payload: { processId: string; updates: any }) => {
+        try {
+          if (!payload?.processId) return;
+          // Fetch the latest process to ensure canonical data
+          const res = await window.electronAPI.getProcess(payload.processId);
+          if (res?.success && res.process) {
+            const full = res.process as Recipe;
+            try {
+              const { updateRecipe, setGeneratingStatus } = useAppStore.getState();
+              updateRecipe(full.id, full as any);
+              // If status changed away from generating, clear flag
+              if ((full as any).status && (full as any).status !== 'generating') {
+                setGeneratingStatus(full.id, false);
+              }
+            } catch {}
+          }
+        } catch {
+          // Swallow background update errors silently
+        }
+      };
+      window.electronAPI.onProcessUpdated?.(onProcessUpdated);
+
       // Cleanup to avoid duplicate listeners (dev StrictMode mounts twice)
       return () => {
         try {
           window.electronAPI.removeAllListeners?.('processing-progress');
           window.electronAPI.removeAllListeners?.('processing-complete');
+          window.electronAPI.removeAllListeners?.('process-updated');
         } catch {
           // no-op
         }

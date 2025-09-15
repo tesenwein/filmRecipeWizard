@@ -93,12 +93,24 @@ export const useAppStore = create<AppState>()(
 
       // Recipe actions
       setRecipes: (recipes) =>
-        set({ recipes }, false, 'setRecipes'),
+        set(() => {
+          const generating = new Set<string>();
+          recipes.forEach(r => {
+            if (r.status === 'generating' && r.id) generating.add(r.id);
+          });
+          return { recipes, generatingRecipes: generating };
+        }, false, 'setRecipes'),
 
       addRecipe: (recipe) =>
-        set((state) => ({
-          recipes: [...state.recipes, recipe]
-        }), false, 'addRecipe'),
+        set((state) => {
+          const next: any = { recipes: [...state.recipes, recipe] };
+          if (recipe?.status === 'generating' && recipe?.id) {
+            const gen = new Set(state.generatingRecipes);
+            gen.add(recipe.id);
+            next.generatingRecipes = gen;
+          }
+          return next;
+        }, false, 'addRecipe'),
 
       updateRecipe: (id, updates) =>
         set((state) => ({
@@ -208,10 +220,14 @@ export const useAppStore = create<AppState>()(
 
           if (result.success) {
             const recipes = (result.recipes as Recipe[]) || [];
+            const generating = new Set<string>();
+            recipes.forEach(r => {
+              if (r.status === 'generating' && r.id) generating.add(r.id);
+            });
             set({
               recipes,
               recipesLoading: false,
-              generatingRecipes: new Set()
+              generatingRecipes: generating
             }, false, 'loadRecipes/success');
             console.log('[STORE] Loaded', recipes.length, 'recipes');
           } else {
@@ -251,6 +267,10 @@ export const useAppStore = create<AppState>()(
         try {
           await window.electronAPI.updateProcess(processId, updates);
           get().updateRecipe(processId, updates);
+          // If status flips to completed/failed, ensure generating flag is cleared
+          if (updates && (updates as any).status && (updates as any).status !== 'generating') {
+            get().setGeneratingStatus(processId, false);
+          }
         } catch (error) {
           console.error('[STORE] Error updating recipe:', error);
           throw error;
