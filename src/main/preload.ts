@@ -58,6 +58,7 @@ const electronAPI = {
   // Settings operations
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
+  updateSettings: (settings: any) => ipcRenderer.invoke('update-settings', settings),
 
   // Utility functions
   removeAllListeners: (channel: string) => {

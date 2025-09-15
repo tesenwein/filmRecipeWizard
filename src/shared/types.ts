@@ -64,6 +64,7 @@ export interface ProfileExportResult {
 
 export interface AppSettings {
   openaiKey?: string;
+  setupCompleted?: boolean;
 }
 
 export interface ExportResult {

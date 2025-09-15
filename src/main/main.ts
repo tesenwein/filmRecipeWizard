@@ -760,6 +760,23 @@ class FotoRecipeWizardApp {
       }
     });
 
+    ipcMain.handle('update-settings', async (_event, partial: Partial<AppSettings>) => {
+      try {
+        const saved = await this.settingsService.saveSettings(partial);
+        if (partial.openaiKey !== undefined) {
+          // Update processor with new key (re-init AI analyzer lazily)
+          await this.imageProcessor.setOpenAIKey(partial.openaiKey);
+        }
+        return {
+          success: true,
+          settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined },
+        };
+      } catch (error) {
+        console.error('[IPC] Error updating settings:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Export a recipe (process) to a ZIP file
     ipcMain.handle('export-recipe', async (_event, processId: string): Promise<ExportResult> => {
       try {
