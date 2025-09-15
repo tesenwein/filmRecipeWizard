@@ -128,7 +128,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
         if (paths.length > 0) {
           onDropFiles(paths);
         }
-      } catch {
+      } catch (error) {
         console.error('[ImagePicker] Error processing dropped files:', error);
       }
     },

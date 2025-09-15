@@ -213,7 +213,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         } else {
           setProcessPrompt(prompt);
         }
-      } catch {
+      } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
         setBaseImageUrls([]);
         setProcessPrompt(prompt);

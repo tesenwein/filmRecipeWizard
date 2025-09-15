@@ -171,7 +171,7 @@ const App: React.FC = () => {
         startingRef.current = false;
         return;
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to save process:', error);
       startingRef.current = false;
       return;
@@ -233,7 +233,7 @@ const App: React.FC = () => {
           results,
           status: anySuccess ? 'completed' : 'failed',
         } as any);
-      } catch {
+      } catch (error) {
         console.error('Failed to update process:', error);
       }
     }

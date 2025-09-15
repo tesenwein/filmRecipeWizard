@@ -98,7 +98,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       // If key is valid, save it and advance to profile step
       await saveSettings({ openaiKey: apiKey.trim() });
       setCurrentStep(3);
-    } catch {
+    } catch (error) {
       console.error('Failed to save API key:', error);
       setKeyError('Failed to save API key. Please try again.');
     } finally {
@@ -151,11 +151,11 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       try {
         setSetupCompleted(true);
         setSetupWizardOpen(false);
-      } catch {
+      } catch (error) {
         console.warn('Failed to update setup state:', error);
       }
       onComplete();
-    } catch {
+    } catch (error) {
       console.error('Failed to complete setup:', error);
     } finally {
       setIsLoading(false);
@@ -395,7 +395,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     onClick={async () => {
                       try {
                         await importRecipes();
-                      } catch {
+                      } catch (error) {
                         console.error('Failed to import recipes:', error);
                       }
                     }}

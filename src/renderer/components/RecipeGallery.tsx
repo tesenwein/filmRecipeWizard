@@ -183,7 +183,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       await deleteRecipe(selectedRecipeId);
       setSelectedRecipeId(null);
       // Intentionally no success toast on delete
-    } catch {
+    } catch (error) {
       console.error('Failed to delete recipe:', error);
       showError('Failed to delete recipe');
     }
