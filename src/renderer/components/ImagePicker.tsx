@@ -1,0 +1,250 @@
+import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
+import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { Box, Button, Chip, IconButton, Paper, Tooltip } from '@mui/material';
+import React, { useCallback, useMemo, useState } from 'react';
+import ImageGrid from './ImageGrid';
+import SingleImage from './SingleImage';
+
+type Kind = 'target' | 'reference';
+
+interface ImagePickerProps {
+  kind: Kind;
+  title?: string;
+  description?: string;
+  images: string[];
+  previews: string[];
+  maxFiles?: number;
+  onSelectFiles: () => void;
+  onRemoveImage?: (index: number) => void;
+  onDropFiles?: (paths: string[]) => void;
+  required?: boolean;
+}
+
+const allowedExt = ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw', 'webp', 'gif'];
+
+function isValidImagePath(path?: string) {
+  if (!path) return false;
+  const ext = path.split('.').pop()?.toLowerCase();
+  return !!ext && allowedExt.includes(ext);
+}
+
+const ImagePicker: React.FC<ImagePickerProps> = ({
+  kind,
+  title,
+  description,
+  images,
+  previews,
+  maxFiles = 3,
+  onSelectFiles,
+  onRemoveImage,
+  onDropFiles,
+  required = false,
+}) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const defaults = useMemo(() => {
+    if (kind === 'target') {
+      return {
+        title: 'Target Image',
+        description: 'The photo you want to transform',
+        chip: 'Required' as const,
+        icon: <PhotoCameraOutlinedIcon sx={{ color: 'primary.main', fontSize: 24 }} />,
+        emptyCta: 'Select Target Images',
+        changeCta: 'Change Images',
+        countLabel: (n: number) => `${n} image${n !== 1 ? 's' : ''} selected`,
+      };
+    }
+    return {
+      title: 'Reference Style',
+      description: 'Upload up to 3 reference images',
+      chip: 'Optional' as const,
+      icon: <PaletteOutlinedIcon sx={{ color: 'primary.main', fontSize: 20 }} />,
+      emptyCta: 'Select Reference Images',
+      changeCta: 'Change Images',
+      countLabel: (n: number) => `${n} reference${n !== 1 ? 's' : ''}`,
+    };
+  }, [kind]);
+
+  const headerTitle = title || defaults.title;
+  const headerDescription = description || defaults.description;
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
+
+      if (!onDropFiles) return;
+      const files = Array.from(e.dataTransfer.files || []);
+      const paths = files
+        .map((f: any) => f?.path || '')
+        .filter((p) => !!p && isValidImagePath(p));
+      if (paths.length === 0) return;
+
+      // De-duplicate and cap to maxFiles when parent merges
+      onDropFiles(paths);
+    },
+    [onDropFiles]
+  );
+
+  const hasImages = Array.isArray(images) && images.length > 0;
+  const display = (previews.length ? previews : images).slice(0, maxFiles);
+
+  return (
+    <Paper className="card slide-in" elevation={0} sx={{ p: 2.5, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {defaults.icon}
+          <Box>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#2c3338', margin: 0 }}>{headerTitle}</h3>
+            <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>{headerDescription}</p>
+          </Box>
+        </Box>
+        <Chip label={required ? 'Required' : defaults.chip} size="small" color={required ? 'primary' : 'default'} variant="outlined" />
+      </Box>
+
+      {/* Main area: supports drag & drop */}
+      {hasImages ? (
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Box
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            sx={{
+              width: '100%',
+              flex: 1,
+              minHeight: kind === 'target' ? 350 : 260,
+              borderRadius: 2,
+              overflow: 'hidden',
+              border: isDragOver ? '2px dashed rgba(63,81,181,0.4)' : 'none',
+              position: 'relative',
+              boxShadow: 'none',
+              outline: isDragOver ? '2px dashed rgba(63,81,181,0.4)' : 'none',
+              WebkitAppRegion: 'no-drag',
+            }}
+          >
+            <SingleImage source={display[0]} alt={kind === 'target' ? 'Target' : 'Reference'} fit="cover" />
+            {onRemoveImage && (
+              <Tooltip title={kind === 'target' ? 'Remove this image' : 'Remove this reference'}>
+                <IconButton
+                  size="small"
+                  onClick={() => onRemoveImage(0)}
+                  sx={{
+                    position: 'absolute',
+                    top: 10,
+                    left: 10,
+                    zIndex: 2,
+                    background: 'rgba(255,255,255,0.6)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    color: '#111',
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+                    '&:hover': { background: 'rgba(255,255,255,0.75)' },
+                  }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Chip
+              label={defaults.countLabel(images.length)}
+              size="medium"
+              sx={{ position: 'absolute', top: 12, right: 12, background: 'primary.main', color: 'white', fontSize: 12, fontWeight: 600 }}
+            />
+          </Box>
+          {images.length > 1 && (
+            <Box sx={{ mt: 2 }}>
+              <ImageGrid
+                sources={display.slice(1)}
+                columns={4}
+                tileHeight={80}
+                onRemove={onRemoveImage ? (i) => onRemoveImage(i + 1) : undefined}
+              />
+            </Box>
+          )}
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <p style={{ fontSize: 13, color: '#2c3338', fontWeight: 500, marginBottom: 12 }}>
+              {images[0].split('/').pop()}
+            </p>
+            <Button
+              variant="outlined"
+              onClick={onSelectFiles}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                color: 'primary.main',
+                borderColor: 'primary.main',
+                '&:hover': { backgroundColor: 'rgba(91, 102, 112, 0.06)' },
+              }}
+            >
+              {defaults.changeCta}
+            </Button>
+          </Box>
+        </Box>
+      ) : (
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Box
+            onClick={onSelectFiles}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            sx={{
+              flex: 1,
+              minHeight: kind === 'target' ? 350 : 220,
+              border: isDragOver ? '2px dashed rgba(63,81,181,0.6)' : 'none',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: isDragOver ? 'rgba(63,81,181,0.06)' : '#f8f9fa',
+              transition: 'all 0.2s',
+              cursor: 'pointer',
+              '&:hover': { borderColor: 'primary.main', background: 'rgba(91,102,112,0.03)' },
+              WebkitAppRegion: 'no-drag',
+            }}
+          >
+            <Box sx={{ textAlign: 'center' }}>
+              {kind === 'target' ? (
+                <PhotoCameraOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />
+              ) : (
+                <PaletteOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />
+              )}
+              <h4 style={{ fontSize: 18, color: '#868e96', marginBottom: 8 }}>Drop images here or click to browse</h4>
+              <p style={{ fontSize: 13, color: '#868e96' }}>JPEG, PNG, TIFF, DNG. Up to {maxFiles} files.</p>
+            </Box>
+          </Box>
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={onSelectFiles}
+              size="large"
+              sx={{ textTransform: 'none', fontWeight: 700, py: 1.5, px: 4, borderRadius: 2, fontSize: 16 }}
+            >
+              {defaults.emptyCta}
+            </Button>
+          </Box>
+        </Box>
+      )}
+    </Paper>
+  );
+};
+
+export default ImagePicker;
+

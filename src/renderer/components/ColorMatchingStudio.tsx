@@ -1,9 +1,8 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { Box, Paper, Typography, FormControlLabel, Switch, Stack } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import TargetImageDisplay from './TargetImageDisplay';
+import ImagePicker from './ImagePicker';
 import StyleDescriptionCard from './StyleDescriptionCard';
-import RecipeImageCard from './RecipeImageCard';
 import FineTuneControls from './FineTuneControls';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import FilmStylesCard from './FilmStylesCard';
@@ -224,12 +223,20 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
       {/* Main Content Grid */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.2fr 0.8fr' }, gap: 2.5, minHeight: 500 }}>
-        {/* Left Column - Large Target Image */}
-        <TargetImageDisplay
-          targetImages={targetImages}
-          targetPreviews={targetPreviews}
-          onSelectImages={handleTargetImagesSelect}
+        {/* Left Column - Target Image */}
+        <ImagePicker
+          kind="target"
+          images={targetImages}
+          previews={targetPreviews}
+          onSelectFiles={handleTargetImagesSelect}
           onRemoveImage={handleRemoveTarget}
+          onDropFiles={(paths) => {
+            if (!paths || paths.length === 0) return;
+            const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
+            onImagesSelected(baseImages, next);
+          }}
+          required
+          maxFiles={3}
         />
 
         {/* Right Column - All Options */}
@@ -285,11 +292,18 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             onSelect={(s) => onStyleOptionsChange?.({ filmStyle: s })}
           />
 
-          <RecipeImageCard
-            baseImages={baseImages}
-            basePreviews={basePreviews}
-            onSelectImages={handleBaseImageSelect}
+          <ImagePicker
+            kind="reference"
+            images={baseImages}
+            previews={basePreviews}
+            onSelectFiles={handleBaseImageSelect}
             onRemoveImage={handleRemoveBase}
+            onDropFiles={(paths) => {
+              if (!paths || paths.length === 0) return;
+              const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
+              onImagesSelected(next, targetImages);
+            }}
+            maxFiles={3}
           />
 
           <FineTuneControls
