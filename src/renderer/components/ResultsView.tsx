@@ -131,7 +131,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             useAppStore.getState().updateRecipe(processId, {
               recipeImageData: (proc.process as any).recipeImageData,
             } as any);
-          } catch {}
+          } catch {
+            // Ignore store update errors
+          }
         }
       }
     } catch (e) {
@@ -160,7 +162,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           useAppStore.getState().updateRecipe(processId, {
             recipeImageData: (proc.process as any).recipeImageData,
           } as any);
-        } catch {}
+        } catch {
+          // Ignore store update errors
+        }
       }
     } catch (e) {
       console.error('Failed to remove recipe image:', e);
@@ -209,7 +213,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         } else {
           setProcessPrompt(prompt);
         }
-      } catch (error) {
+      } catch {
         console.error('[RESULTS] Error loading base64 images:', error);
         setBaseImageUrls([]);
         setProcessPrompt(prompt);

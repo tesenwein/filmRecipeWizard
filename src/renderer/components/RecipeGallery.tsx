@@ -69,7 +69,11 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     parts.push(recipe.id);
     parts.push(getRecipeName(recipe));
     if (recipe.prompt) parts.push(recipe.prompt);
-    try { parts.push(new Date(recipe.timestamp).toLocaleString()); } catch {}
+    try {
+      parts.push(new Date(recipe.timestamp).toLocaleString());
+    } catch {
+      // Ignore date parsing errors
+    }
 
     // Author
     const author = (recipe as any).author as any;
@@ -179,7 +183,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       await deleteRecipe(selectedRecipeId);
       setSelectedRecipeId(null);
       // Intentionally no success toast on delete
-    } catch (error) {
+    } catch {
       console.error('Failed to delete recipe:', error);
       showError('Failed to delete recipe');
     }

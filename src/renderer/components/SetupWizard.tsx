@@ -36,7 +36,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
           setWebsite(u.website || '');
           setInstagram(u.instagram || '');
         }
-      } catch {}
+      } catch {
+        // Ignore settings load errors
+      }
     })();
   }, []);
 
@@ -96,7 +98,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       // If key is valid, save it and advance to profile step
       await saveSettings({ openaiKey: apiKey.trim() });
       setCurrentStep(3);
-    } catch (error) {
+    } catch {
       console.error('Failed to save API key:', error);
       setKeyError('Failed to save API key. Please try again.');
     } finally {
@@ -131,7 +133,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         const h = parts[0] || '';
         if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
       }
-    } catch {}
+    } catch {
+      // Ignore URL parsing errors
+    }
     // Require @ prefix for handle style
     if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');
@@ -147,11 +151,11 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       try {
         setSetupCompleted(true);
         setSetupWizardOpen(false);
-      } catch (error) {
+      } catch {
         console.warn('Failed to update setup state:', error);
       }
       onComplete();
-    } catch (error) {
+    } catch {
       console.error('Failed to complete setup:', error);
     } finally {
       setIsLoading(false);
@@ -391,7 +395,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     onClick={async () => {
                       try {
                         await importRecipes();
-                      } catch (error) {
+                      } catch {
                         console.error('Failed to import recipes:', error);
                       }
                     }}

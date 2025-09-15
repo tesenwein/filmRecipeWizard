@@ -78,7 +78,9 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    try { if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; } catch {}
+    try { if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; } catch {
+      // Ignore dataTransfer errors in some browsers
+    }
     setIsDragOver(true);
   }, []);
 
@@ -126,7 +128,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
         if (paths.length > 0) {
           onDropFiles(paths);
         }
-      } catch (error) {
+      } catch {
         console.error('[ImagePicker] Error processing dropped files:', error);
       }
     },

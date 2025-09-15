@@ -127,7 +127,9 @@ class FotoRecipeWizardApp {
             click: () => {
               try {
                 shell.openExternal('https://www.theoesenwein.ch');
-              } catch {}
+              } catch {
+                // Ignore shell open errors
+              }
             },
           },
         ],
@@ -203,7 +205,7 @@ class FotoRecipeWizardApp {
         } else {
           return { success: false, error: 'Save canceled' };
         }
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error downloading XMP:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -216,7 +218,7 @@ class FotoRecipeWizardApp {
         try {
           const previewPath = await this.imageProcessor.generatePreview(args);
           return { success: true, previewPath };
-        } catch (error) {
+        } catch {
           console.error('[IPC] Error generating preview:', error);
           return {
             success: false,
@@ -393,7 +395,9 @@ class FotoRecipeWizardApp {
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
                 },
               });
-            } catch {}
+            } catch {
+              // Ignore IPC send errors
+            }
           } catch (err) {
             console.error('[IPC] process-with-stored-images: failed to persist results', err);
           }
@@ -406,7 +410,7 @@ class FotoRecipeWizardApp {
           }
 
           return result;
-        } catch (error) {
+        } catch {
           console.error('[IPC] Error processing with stored images:', error);
           // Emit a final failure status so the UI shows immediate feedback
           const errMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -441,7 +445,7 @@ class FotoRecipeWizardApp {
 
         if (result.canceled) return [];
         return result.filePaths;
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error selecting files:', error);
         throw error;
       }
@@ -451,7 +455,7 @@ class FotoRecipeWizardApp {
       try {
         shell.showItemInFolder(path);
         return { success: true };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error opening path:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -474,7 +478,7 @@ class FotoRecipeWizardApp {
         }
 
         return paths;
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error processing dropped files:', error);
         throw error;
       }
@@ -512,7 +516,7 @@ class FotoRecipeWizardApp {
             ...data.options,
           });
           this.mainWindow.webContents.send('processing-progress', 100, 'Completed');
-        } catch (error) {
+        } catch {
           console.error('[IPC] Error processing image:', error);
           const errMsg = error instanceof Error ? error.message : 'Unknown error';
           // Emit a final failure status so the UI shows immediate feedback
@@ -558,7 +562,9 @@ class FotoRecipeWizardApp {
                   ...(name ? { name } : {}),
                 },
               });
-            } catch {}
+            } catch {
+              // Ignore IPC send errors
+            }
           }
         } catch (err) {
           console.error('[IPC] process-images: failed to persist results', err);
@@ -566,7 +572,7 @@ class FotoRecipeWizardApp {
 
         this.mainWindow.webContents.send('processing-complete', results);
         return results;
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error in processing:', error);
         throw error;
       }
@@ -589,10 +595,14 @@ class FotoRecipeWizardApp {
           return r;
         });
         if (mutated) {
-          try { await this.storageService.saveRecipes(withAuthors); } catch {}
+          try {
+            await this.storageService.saveRecipes(withAuthors);
+          } catch {
+            // Ignore save errors
+          }
         }
         return { success: true, recipes: withAuthors };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error loading recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -653,7 +663,9 @@ class FotoRecipeWizardApp {
           try {
             const settings = await this.settingsService.loadSettings();
             authorProfile = settings.userProfile;
-          } catch {}
+          } catch {
+            // Ignore settings load errors
+          }
 
           const process: ProcessHistory = {
             id: processId,
@@ -669,7 +681,7 @@ class FotoRecipeWizardApp {
 
           await this.storageService.addProcess(process);
           return { success: true, process, targetImageData: targetImageDataEphemeral };
-        } catch (error) {
+        } catch {
           console.error('[IPC] Error saving process:', error);
           return {
             success: false,
@@ -687,9 +699,11 @@ class FotoRecipeWizardApp {
           // Notify renderer that a process has been updated (useful for background updates)
           try {
             this.mainWindow?.webContents.send('process-updated', { processId, updates });
-          } catch {}
+          } catch {
+            // Ignore IPC send errors
+          }
           return { success: true };
-        } catch (error) {
+        } catch {
           console.error('[IPC] Error updating process:', error);
           return {
             success: false,
@@ -703,7 +717,7 @@ class FotoRecipeWizardApp {
       try {
         await this.storageService.deleteProcess(processId);
         return { success: true };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error deleting process:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -714,7 +728,7 @@ class FotoRecipeWizardApp {
       try {
         const process = await this.storageService.getProcess(processId);
         return { success: true, process };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error getting process:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -743,7 +757,7 @@ class FotoRecipeWizardApp {
         result.targetImageUrls = [];
 
         return { success: true, ...result };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error getting image data URLs:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -774,7 +788,7 @@ class FotoRecipeWizardApp {
           recipeImageData: baseImageData,
         } as any);
         return { success: true };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error setting base image:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -799,7 +813,7 @@ class FotoRecipeWizardApp {
         const merged = [...existing, ...converted].slice(0, 3);
         await this.storageService.updateProcess(processId, { recipeImageData: merged[0] } as any);
         return { success: true, count: merged.length };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error adding base images:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -819,7 +833,7 @@ class FotoRecipeWizardApp {
         const updates: any = { recipeImageData: next[0] || undefined };
         await this.storageService.updateProcess(processId, updates);
         return { success: true };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error removing base image:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -834,7 +848,7 @@ class FotoRecipeWizardApp {
           success: true,
           settings: { ...settings, openaiKey: settings.openaiKey ? '***' : undefined },
         };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error loading settings:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -851,7 +865,7 @@ class FotoRecipeWizardApp {
           success: true,
           settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined },
         };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error saving settings:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -868,7 +882,7 @@ class FotoRecipeWizardApp {
           success: true,
           settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined },
         };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error updating settings:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -879,7 +893,7 @@ class FotoRecipeWizardApp {
       try {
         await this.storageService.clearRecipes();
         return { success: true };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error clearing recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -971,7 +985,7 @@ class FotoRecipeWizardApp {
         // Write out the zip
         zip.writeZip(saveRes.filePath);
         return { success: true, filePath: saveRes.filePath };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error exporting recipe:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -1059,7 +1073,7 @@ class FotoRecipeWizardApp {
         // Write out the zip
         zip.writeZip(saveRes.filePath);
         return { success: true, filePath: saveRes.filePath, count: recipes.length };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error exporting all recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -1148,7 +1162,7 @@ class FotoRecipeWizardApp {
           await this.storageService.addProcess(imported);
           return { success: true, count: 1 };
         }
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error importing recipe:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -1276,7 +1290,7 @@ class FotoRecipeWizardApp {
         } else {
           return { success: false, error: 'Save canceled' };
         }
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error generating LUT:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
@@ -1287,7 +1301,7 @@ class FotoRecipeWizardApp {
       try {
         await shell.openExternal(url);
         return { success: true };
-      } catch (error) {
+      } catch {
         console.error('[IPC] Error opening external URL:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }

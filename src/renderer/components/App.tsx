@@ -152,7 +152,11 @@ const App: React.FC = () => {
         addRecipe(result.process);
         // Mark as generating in gallery
         if (newProcessId) {
-          try { setGeneratingStatus(newProcessId, true); } catch {}
+          try {
+            setGeneratingStatus(newProcessId, true);
+          } catch {
+            // Ignore status update errors
+          }
         }
         // Use the single recipe image (first reference) for processing only
         returnedBase64.base = result?.process?.recipeImageData
@@ -167,7 +171,7 @@ const App: React.FC = () => {
         startingRef.current = false;
         return;
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to save process:', error);
       startingRef.current = false;
       return;
@@ -229,7 +233,7 @@ const App: React.FC = () => {
           results,
           status: anySuccess ? 'completed' : 'failed',
         } as any);
-      } catch (error) {
+      } catch {
         console.error('Failed to update process:', error);
       }
     }
@@ -315,7 +319,9 @@ const App: React.FC = () => {
               if ((full as any).status && (full as any).status !== 'generating') {
                 setGeneratingStatus(full.id, false);
               }
-            } catch {}
+            } catch {
+              // Ignore cleanup errors
+            }
           }
         } catch {
           // Swallow background update errors silently
@@ -356,7 +362,9 @@ const App: React.FC = () => {
         if (e.type === 'dragover' && e.dataTransfer) {
           e.dataTransfer.dropEffect = 'copy';
         }
-      } catch {}
+      } catch {
+        // Ignore dataTransfer errors
+      }
     };
     window.addEventListener('dragover', preventDefault);
     window.addEventListener('drop', preventDefault);

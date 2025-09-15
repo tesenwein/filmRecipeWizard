@@ -111,7 +111,9 @@ const Settings: React.FC = () => {
         const h = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
         if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
       }
-    } catch {}
+    } catch {
+      // Ignore URL parsing errors
+    }
     // Require @ prefix for handle style
     if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');
@@ -200,7 +202,7 @@ const Settings: React.FC = () => {
         window.dispatchEvent(new Event('close-settings'));
       }, 1000);
       await resetApp();
-    } catch (error) {
+    } catch {
       console.error('Reset setup error:', error);
       setStatus({ type: 'error', msg: 'Failed to reset setup' });
     }
