@@ -949,15 +949,32 @@ class FotoRecipeWizardApp {
       try {
         // Apply strength multiplier to adjustments if provided
         let adjustments = data.adjustments;
+        console.log('[IPC] Original adjustments:', adjustments);
+        console.log('[IPC] Strength parameter:', data.strength);
+
         if (data.strength !== undefined && data.strength !== 1.0) {
           // Create a copy of adjustments with strength applied
           adjustments = { ...data.adjustments };
+          console.log('[IPC] Applying strength:', data.strength);
 
           // Apply strength to numeric adjustment values
           const numericFields = [
             'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks',
-            'vibrance', 'saturation', 'clarity', 'temperature', 'tint'
+            'vibrance', 'saturation', 'clarity', 'temperature', 'tint',
+            // HSL hue/sat/lum (Lightroom scale -100..100)
+            'hue_red','hue_orange','hue_yellow','hue_green','hue_aqua','hue_blue','hue_purple','hue_magenta',
+            'sat_red','sat_orange','sat_yellow','sat_green','sat_aqua','sat_blue','sat_purple','sat_magenta',
+            'lum_red','lum_orange','lum_yellow','lum_green','lum_aqua','lum_blue','lum_purple','lum_magenta',
+            // Color grading saturations and luminances (0..100 or -100..100)
+            'color_grade_shadow_sat','color_grade_shadow_lum',
+            'color_grade_midtone_sat','color_grade_midtone_lum',
+            'color_grade_highlight_sat','color_grade_highlight_lum',
+            'color_grade_global_sat','color_grade_global_lum',
+            // Balance is an amount (-100..100) we scale toward 0
+            'color_grade_balance'
           ];
+
+          // Hues in color grading are angles (0..360) and should NOT be scaled; leave as-is
 
           for (const field of numericFields) {
             if (typeof adjustments[field] === 'number') {
@@ -966,12 +983,18 @@ class FotoRecipeWizardApp {
                 const neutral = 6500;
                 const deviation = adjustments[field] - neutral;
                 adjustments[field] = neutral + (deviation * data.strength);
+              } else if (field.startsWith('hue_')) {
+                // HSL hue shifts: scale toward 0
+                adjustments[field] = adjustments[field] * data.strength;
               } else {
                 // Other fields: apply strength directly
                 adjustments[field] = adjustments[field] * data.strength;
               }
             }
           }
+          console.log('[IPC] Adjustments after strength applied:', adjustments);
+        } else {
+          console.log('[IPC] No strength adjustment applied');
         }
 
         // Generate LUT content
