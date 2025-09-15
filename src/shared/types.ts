@@ -22,6 +22,7 @@ export interface StyleOptions {
   moodiness?: number; // overall curve mood
   saturationBias?: number;
   filmGrain?: boolean;
+  emphasize3DPop?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
   // Optional artist and film selections
   artistStyle?: { key: string; name: string; category: string; blurb: string };

@@ -287,6 +287,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   <div>Moodiness: {processOptions.moodiness ?? '—'}</div>
                   <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
                   <div>Film Grain: {processOptions.filmGrain ? 'On' : 'Off'}</div>
+                  <div>3D Pop: {processOptions.emphasize3DPop ? 'On' : 'Off'}</div>
                 </Box>
               </>
             )}

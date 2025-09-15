@@ -8,29 +8,8 @@ import FineTuneControls from './FineTuneControls';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import FilmStylesCard from './FilmStylesCard';
 import ProcessButton from './ProcessButton';
+import { StyleOptions } from '../../shared/types';
 
-interface StyleOptions {
-  warmth?: number;
-  tint?: number;
-  contrast?: number;
-  vibrance?: number;
-  moodiness?: number;
-  saturationBias?: number;
-  filmGrain?: boolean;
-  vibe?: string;
-  artistStyle?: {
-    key: string;
-    name: string;
-    category: string;
-    blurb: string;
-  };
-  filmStyle?: {
-    key: string;
-    name: string;
-    category: string;
-    blurb: string;
-  };
-}
 
 interface ColorMatchingStudioProps {
   onImagesSelected: (baseImages: string[], targetImages: string[]) => void;
@@ -208,6 +187,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
   const handleToggle3DPop = async (checked: boolean) => {
     setEmphasize3DPop(checked);
+    onStyleOptionsChange?.({ emphasize3DPop: checked });
     try {
       await window.electronAPI.saveSettings({ emphasize3DPop: checked });
     } catch {

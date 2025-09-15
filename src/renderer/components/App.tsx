@@ -5,7 +5,7 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
-import { ProcessHistory, ProcessingResult, ProcessingState } from '../../shared/types';
+import { ProcessHistory, ProcessingResult, ProcessingState, StyleOptions } from '../../shared/types';
 import ColorMatchingStudio from './ColorMatchingStudio';
 import HistoryView from './HistoryView';
 import ProcessingView from './ProcessingView';
@@ -47,17 +47,7 @@ const App: React.FC = () => {
     targetImagesRef.current = targetImages;
   }, [targetImages]);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [styleOptions, setStyleOptions] = useState<{
-    warmth?: number;
-    tint?: number;
-    contrast?: number;
-    vibrance?: number;
-    moodiness?: number;
-    saturationBias?: number;
-    filmGrain?: boolean;
-    vibe?: string;
-    artistStyle?: { key: string; name: string; category: string; blurb: string };
-  }>({});
+  const [styleOptions, setStyleOptions] = useState<StyleOptions>({});
 
   // Check if API key is configured on startup
   useEffect(() => {
