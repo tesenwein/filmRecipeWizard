@@ -190,6 +190,22 @@ class FotoRecipeWizardApp {
       }
     });
 
+    // Handle Lightroom profile export (copy Look/Profile XMP)
+    ipcMain.handle('export-profile', async (_event, data: { sourceXmpPath: string; outputDir?: string }) => {
+      console.log('[IPC] export-profile called with:', data?.sourceXmpPath);
+      try {
+        const result = await this.imageProcessor.generateLightroomProfile({
+          sourceXmpPath: data.sourceXmpPath,
+          outputDir: data.outputDir,
+        });
+        console.log('[IPC] export-profile completed:', { success: result.success, outputPath: result.outputPath });
+        return result;
+      } catch (error) {
+        console.error('[IPC] Error exporting profile:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
       console.log('[IPC] download-xmp called with data', {
