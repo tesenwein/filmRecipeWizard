@@ -111,7 +111,7 @@ export class StorageService {
         targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
       }));
       return history;
-    } catch (e) {
+    } catch {
       // File doesn't exist or is invalid, try backups
       console.warn('[STORAGE] Failed to load history; attempting backup restore');
       const fromBackup = await this.loadFromBackups();

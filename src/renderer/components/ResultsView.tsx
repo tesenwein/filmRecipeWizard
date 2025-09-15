@@ -244,32 +244,29 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
-  const handleExportProfile = async () => {
+  const handleExportProfile = async (index: number, result: any) => {
     setProfileExportStatus(null);
     try {
-      const files = await window.electronAPI.selectFiles({
-        title: 'Select Lightroom Profile (.xmp)',
-        filters: [{ name: 'XMP Profiles', extensions: ['xmp'] }],
-        properties: ['openFile'],
+      // Extract adjustments same way as preset export
+      const adjustments = result.metadata?.aiAdjustments;
+      if (!adjustments) return;
+
+      // Generate and export camera profile from current adjustments
+      const res = await (window.electronAPI as any).exportProfile({
+        adjustments,
+        recipeIndex: index
       });
-      if (!files || files.length === 0) return;
-      const source = files[0];
-      const res = await (window.electronAPI as any).exportProfile({ sourceXmpPath: source });
+
       if (res?.success) {
-        setProfileExportStatus({ ok: true, msg: 'Profile exported', path: res.outputPath });
+        setProfileExportStatus({ ok: true, msg: '', path: res.outputPath });
       } else {
-        setProfileExportStatus({ ok: false, msg: res?.error || 'Profile export failed' });
+        setProfileExportStatus({ ok: false, msg: res?.error || 'Export failed' });
       }
     } catch (e) {
-      setProfileExportStatus({ ok: false, msg: e instanceof Error ? e.message : 'Profile export failed' });
+      setProfileExportStatus({ ok: false, msg: e instanceof Error ? e.message : 'Export failed' });
     }
   };
 
-  const handleOpenExportedProfile = async () => {
-    if (profileExportStatus?.path) {
-      await window.electronAPI.openPath(profileExportStatus.path);
-    }
-  };
 
   return (
     <Box sx={{ maxWidth: '100%', margin: '0 auto' }}>
@@ -1080,7 +1077,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     </Typography>
 
                     <Box
-                      sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}
+                      sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
                     >
                       <Paper elevation={1} sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
@@ -1114,10 +1111,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                       <Paper elevation={1} sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                          Lightroom Profile (.xmp)
+                          Camera Profile (.xmp)
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                          Copy an existing Profile/Look XMP into the app’s profiles folder.
+                          Create a new Camera Profile from your recipe adjustments for use in Lightroom.
                         </Typography>
                         {profileExportStatus && (
                           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
@@ -1127,10 +1124,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           </Paper>
                         )}
                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                          <Button variant="outlined" onClick={handleExportProfile}>Export Profile (.xmp)</Button>
-                          {profileExportStatus?.ok && profileExportStatus.path && (
-                            <Button variant="text" onClick={handleOpenExportedProfile}>Show in Finder</Button>
-                          )}
+                          <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => handleExportProfile(index, result)} sx={{ textTransform: 'none', fontWeight: 700 }}>
+                            Create Camera Profile (.xmp)
+                          </Button>
                         </Box>
                       </Paper>
                     </Box>
