@@ -16,7 +16,7 @@ import { SettingsService } from './settings-service';
 import { StorageService } from './storage-service';
 import { generateXMPContent } from './xmp-generator';
 
-class FotoRecipeWizardApp {
+class FilmRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
   private imageProcessor: ImageProcessor;
   private storageService: StorageService;
@@ -921,7 +921,7 @@ class FotoRecipeWizardApp {
           title: 'Export Recipe (ZIP)',
           defaultPath: `${safeName || 'Recipe'}.frw.zip`,
           filters: [
-            { name: 'Foto Recipe Wizard Zip', extensions: ['zip'] },
+            { name: 'Film Recipe Wizard Zip', extensions: ['zip'] },
             { name: 'All Files', extensions: ['*'] },
           ],
         });
@@ -935,7 +935,7 @@ class FotoRecipeWizardApp {
 
         // Write manifest with embedded base64 images and results
         const manifest = {
-          schema: 'foto-recipe-wizard@1',
+          schema: 'film-recipe-wizard@1',
           exportedAt: new Date().toISOString(),
           process: process,
         };
@@ -1003,7 +1003,7 @@ class FotoRecipeWizardApp {
           title: 'Export All Recipes (ZIP)',
           defaultPath: `All-Recipes-${new Date().toISOString().split('T')[0]}.frw.zip`,
           filters: [
-            { name: 'Foto Recipe Wizard Zip', extensions: ['zip'] },
+            { name: 'Film Recipe Wizard Zip', extensions: ['zip'] },
             { name: 'All Files', extensions: ['*'] },
           ],
         });
@@ -1017,7 +1017,7 @@ class FotoRecipeWizardApp {
 
         // Write manifest with all processes
         const manifest = {
-          schema: 'foto-recipe-wizard-bulk@1',
+          schema: 'film-recipe-wizard-bulk@1',
           exportedAt: new Date().toISOString(),
           count: recipes.length,
           processes: recipes,
@@ -1105,7 +1105,7 @@ class FotoRecipeWizardApp {
           const json = bulkEntry.getData().toString('utf8');
           const parsed = JSON.parse(json);
 
-          if (parsed.schema !== 'foto-recipe-wizard-bulk@1' || !Array.isArray(parsed.processes)) {
+          if (parsed.schema !== 'film-recipe-wizard-bulk@1' || !Array.isArray(parsed.processes)) {
             throw new Error('Invalid bulk recipe manifest');
           }
 
@@ -1310,4 +1310,4 @@ class FotoRecipeWizardApp {
 }
 
 // Create and start the application
-new FotoRecipeWizardApp();
+new FilmRecipeWizardApp();

@@ -1,4 +1,4 @@
-# Foto Recipe Wizard - Todo List
+# Film Recipe Wizard - Todo List
 
 ## Phase 1: Recipe Setup ✅
 

@@ -1,15 +1,15 @@
-# Foto Recipe Wizard
+# Film Recipe Wizard
 
 [![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Releases](https://img.shields.io/github/v/release/tesenwein/fotoRecipeWizard?include_prereleases&label=releases)](https://github.com/tesenwein/fotoRecipeWizard/releases)
+[![Releases](https://img.shields.io/github/v/release/tesenwein/filmRecipeWizard?include_prereleases&label=releases)](https://github.com/tesenwein/filmRecipeWizard/releases)
 [![TypeScript](https://img.shields.io/badge/typescript-%3E%3D5.9.2-blue.svg)](package.json)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 [![Lint Status](https://img.shields.io/badge/lint-passing-brightgreen.svg)](#)
 
 > **AI-Powered Color Recipe Creation for Professional Photography**
 
-Transform your photo editing workflow with intelligent AI-driven color recipe creation. Foto Recipe Wizard helps photographers achieve consistent, professional color grading by analyzing reference photos and generating industry-standard Lightroom presets and 3D LUTs.
+Transform your photo editing workflow with intelligent AI-driven color recipe creation. Film Recipe Wizard helps photographers achieve consistent, professional color grading by analyzing reference photos and generating industry-standard Lightroom presets and 3D LUTs.
 
 ## 📸 Screenshots
 
@@ -22,7 +22,7 @@ Transform your photo editing workflow with intelligent AI-driven color recipe cr
 
 **Simply download and install the app:**
 
-1. **Download** the latest version from [GitHub Releases](https://github.com/tesenwein/fotoRecipeWizard/releases/latest)
+1. **Download** the latest version from [GitHub Releases](https://github.com/tesenwein/filmRecipeWizard/releases/latest)
    - **macOS**: Download the `.dmg` file (Universal - works on Intel and Apple Silicon Macs)
    - **Windows**: Download the `.exe` installer (x64)
 
@@ -57,7 +57,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🤝 Help Welcome
 
-We welcome contributions, bug reports, and feature requests! Please see our [Contributing Guide](CONTRIBUTING.md) or [open an issue](https://github.com/tesenwein/fotoRecipeWizard/issues).
+We welcome contributions, bug reports, and feature requests! Please see our [Contributing Guide](CONTRIBUTING.md) or [open an issue](https://github.com/tesenwein/filmRecipeWizard/issues).
 
 ---
 

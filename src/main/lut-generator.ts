@@ -80,7 +80,7 @@ export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: numb
 }
 
 function generateCubeLUT(adjustments: any, size: number): string {
-  let lut = `# Created by Foto Recipe Wizard
+  let lut = `# Created by Film Recipe Wizard
 # LUT size: ${size}
 # Description: AI-generated color grading
 
@@ -134,7 +134,7 @@ Mesh ${size} ${size} ${size}
 }
 
 function generateDaVinciLUT(adjustments: any, size: number): string {
-  let lut = `# Created by Foto Recipe Wizard
+  let lut = `# Created by Film Recipe Wizard
 # DaVinci Resolve LUT
 # Size: ${size}x${size}x${size}
 

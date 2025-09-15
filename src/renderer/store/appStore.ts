@@ -450,7 +450,7 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: 'foto-recipe-wizard-store',
+      name: 'film-recipe-wizard-store',
     }
   )
 );

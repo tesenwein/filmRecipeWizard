@@ -16,7 +16,7 @@ export async function generatePreviewFile(args: {
     outDir = args.subdir ? path.join(baseDir, args.subdir) : baseDir;
   } else {
     const os = await import('os');
-    outDir = path.join(os.tmpdir(), 'foto-recipe-wizard-previews');
+    outDir = path.join(os.tmpdir(), 'film-recipe-wizard-previews');
   }
   await fs.mkdir(outDir, { recursive: true });
 

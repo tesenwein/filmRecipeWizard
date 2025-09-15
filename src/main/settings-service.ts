@@ -8,7 +8,7 @@ export class SettingsService {
 
   constructor() {
     const userDataPath = app.getPath('userData');
-    this.settingsFile = path.join(userDataPath, 'fotoRecipeWizard-settings.json');
+    this.settingsFile = path.join(userDataPath, 'filmRecipeWizard-settings.json');
   }
 
   async loadSettings(): Promise<AppSettings> {
