@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, 
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
+import { generateXMPContent } from './xmp-generator';
 import { StorageService } from './storage-service';
 import { SettingsService, AppSettings } from './settings-service';
 import { ProcessHistory } from '../shared/types';
@@ -250,7 +251,7 @@ class FotoRecipeWizardApp {
       });
       try {
         // Generate XMP content
-        const xmpContent = this.imageProcessor.generateXMPContent(data.adjustments, data.include);
+        const xmpContent = generateXMPContent(data.adjustments, data.include);
         
         // Show save dialog
         const { dialog } = require('electron');
@@ -878,7 +879,7 @@ class FotoRecipeWizardApp {
               exposure: false,
               masks: false,
             } as any;
-            const xmp = this.imageProcessor.generateXMPContent(adj as any, include);
+            const xmp = generateXMPContent(adj as any, include);
             const name = (adj as any)?.preset_name as string | undefined;
             const safePreset = (name || `Preset-${idx + 1}`)
               .replace(/[^A-Za-z0-9 _-]+/g, '')

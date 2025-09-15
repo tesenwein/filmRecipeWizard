@@ -7,6 +7,8 @@ import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
 import { exportLightroomProfile } from './profile-exporter';
 import { SettingsService } from './settings-service';
 import { generateXMPContent as generateXMPContentImpl } from './xmp-generator';
+import { generateCameraProfileXMP } from './camera-profile-generator';
+import { generatePreviewFile } from './preview-generator';
 
 export interface StyleMatchOptions {
   baseImagePath?: string;
@@ -149,48 +151,8 @@ export class ImageProcessor {
     processId?: string;
     subdir?: string;
   }): Promise<string> {
-    // Choose a persistent per-recipe directory when processId is provided
-    let outDir: string;
-    if (args.processId) {
-      const userData = app.getPath('userData');
-      const baseDir = path.join(userData, 'recipes', args.processId, 'previews');
-      outDir = args.subdir ? path.join(baseDir, args.subdir) : baseDir;
-    } else {
-      // Fall back to temp previews dir for ad-hoc previews (upload flow)
-      const os = await import('os');
-      outDir = path.join(os.tmpdir(), 'foto-recipe-wizard-previews');
-    }
-    await fs.mkdir(outDir, { recursive: true });
-
-    // Derive a stable-ish filename component from source when available
-    const srcName = (() => {
-      const p = args.path || '';
-      const name = p ? path.basename(p) : 'preview';
-      return name.replace(/\s+/g, '-').replace(/[^A-Za-z0-9._-]/g, '') || 'preview';
-    })();
-    const outPath = path.join(
-      outDir,
-      `${Date.now()}-${Math.floor(Math.random() * 1e6)}-${srcName}.jpg`
-    );
-
     try {
-      let img = sharp();
-      if (args.path) {
-        img = sharp(args.path);
-      } else if (args.dataUrl) {
-        const base64 = args.dataUrl.split(',')[1] || '';
-        const buf = Buffer.from(base64, 'base64');
-        img = sharp(buf);
-      } else {
-        throw new Error('No input provided for preview');
-      }
-
-      await img
-        .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 92 })
-        .toFile(outPath);
-
-      return outPath;
+      return await generatePreviewFile(args);
     } catch (error) {
       console.error('[PROCESSOR] Failed to generate preview:', error);
       throw error;
@@ -292,7 +254,7 @@ export class ImageProcessor {
 
       // Generate a simple camera profile XMP
       // Camera profiles use lookup tables and tone curves for color grading
-      const xmpContent = this.generateCameraProfileXMP(profileName, adjustments);
+      const xmpContent = generateCameraProfileXMP(profileName, adjustments);
 
       return {
         success: true,
@@ -304,7 +266,8 @@ export class ImageProcessor {
     }
   }
 
-  generateCameraProfileXMP(profileName: string, adjustments: any): string {
+  /* moved to camera-profile-generator.ts */
+  /* generateCameraProfileXMP(profileName: string, adjustments: any): string {
     // Check if this is a black and white conversion
     const isBW = !!adjustments.monochrome ||
                  adjustments.treatment === 'black_and_white' ||
@@ -395,9 +358,10 @@ export class ImageProcessor {
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
-  }
+  } */
 
-  generateUUID(): string {
+  /* moved to camera-profile-generator.ts */
+  /* generateUUID(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
       .replace(/[xy]/g, function (c) {
         const r = (Math.random() * 16) | 0;
@@ -405,7 +369,7 @@ export class ImageProcessor {
         return v.toString(16);
       })
       .toUpperCase();
-  }
+  } */
 
   generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
     // Generate XMP content for Lightroom based on AI adjustments
