@@ -4,11 +4,6 @@ import {
   Box,
   Button,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   IconButton,
   InputAdornment,
   Paper,
@@ -18,61 +13,8 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../store/appStore';
+import ConfirmDialog from './ConfirmDialog';
 
-interface ConfirmDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  content: string;
-  warningText?: string;
-  confirmButtonText: string;
-  confirmColor?: 'warning' | 'error' | 'primary';
-}
-
-const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
-  open,
-  onClose,
-  onConfirm,
-  title,
-  content,
-  warningText,
-  confirmButtonText,
-  confirmColor = 'warning'
-}) => {
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      slotProps={{
-        paper: { sx: { WebkitAppRegion: 'no-drag' } },
-        backdrop: { sx: { WebkitAppRegion: 'no-drag' } },
-      }}
-    >
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          {content}
-        </DialogContentText>
-        {warningText && (
-          <DialogContentText sx={{ mt: 2, fontWeight: 600, color: 'warning.main' }}>
-            {warningText}
-          </DialogContentText>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="inherit">
-          Cancel
-        </Button>
-        <Button onClick={onConfirm} color={confirmColor} variant="contained">
-          {confirmButtonText}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
 
 const Settings: React.FC = () => {
   const { resetApp } = useAppStore();
@@ -442,7 +384,7 @@ const Settings: React.FC = () => {
         content="This action will permanently delete all your recipes and reset the application to its initial state. The setup wizard will appear when you restart the application."
         warningText="This action cannot be undone."
         confirmButtonText="Reset Application"
-        confirmColor="warning"
+        confirmColor="error"
       />
     </Container>
   );

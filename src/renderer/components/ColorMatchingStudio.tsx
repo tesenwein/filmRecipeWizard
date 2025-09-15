@@ -11,6 +11,7 @@ import LightroomProfileCard from './LightroomProfileCard';
 import ProcessButton from './ProcessButton';
 import { useAppStore } from '../store/appStore';
 import { StyleOptions } from '../../shared/types';
+import ConfirmDialog from './ConfirmDialog';
 
 
 interface ColorMatchingStudioProps {
@@ -37,6 +38,9 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
   const [preserveSkinTones, setPreserveSkinTones] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState<'base' | 'target'>('base');
+  const [deleteIndex, setDeleteIndex] = useState<number>(0);
 
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
@@ -123,12 +127,31 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
   // Remove handlers
   const handleRemoveBase = (index: number) => {
-    const next = baseImages.filter((_, i) => i !== index);
-    onImagesSelected(next, targetImages);
+    console.log('handleRemoveBase called with index:', index);
+    setDeleteType('base');
+    setDeleteIndex(index);
+    setDeleteDialogOpen(true);
   };
   const handleRemoveTarget = (index: number) => {
-    const next = targetImages.filter((_, i) => i !== index);
-    onImagesSelected(baseImages, next);
+    console.log('handleRemoveTarget called with index:', index);
+    setDeleteType('target');
+    setDeleteIndex(index);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteType === 'base') {
+      const next = baseImages.filter((_, i) => i !== deleteIndex);
+      onImagesSelected(next, targetImages);
+    } else {
+      const next = targetImages.filter((_, i) => i !== deleteIndex);
+      onImagesSelected(baseImages, next);
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   };
 
   // Generate previews for target images
@@ -278,6 +301,16 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
       {/* Process Button */}
       <ProcessButton canProcess={canProcess} onStartProcessing={onStartProcessing} />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Remove Image"
+        content={`Are you sure you want to remove this ${deleteType === 'base' ? 'recipe reference' : 'target'} image?`}
+        confirmButtonText="Remove"
+        confirmColor="error"
+      />
     </Box>
   );
 };

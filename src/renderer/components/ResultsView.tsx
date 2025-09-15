@@ -25,6 +25,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import ConfirmDialog from './ConfirmDialog';
 import { ProcessingResult, UserProfile, getLightroomProfileDisplayName } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -163,6 +164,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       }
     } catch (e) {
       console.error('Failed to remove recipe image:', e);
+    }
+  };
+
+  // Confirm dialog for removing the recipe image
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const openRemoveDialog = () => setRemoveDialogOpen(true);
+  const closeRemoveDialog = () => setRemoveDialogOpen(false);
+  const confirmRemoveRecipeImage = async () => {
+    try {
+      await handleRemoveRecipeImage();
+    } finally {
+      setRemoveDialogOpen(false);
     }
   };
 
@@ -769,7 +782,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               <IconButton
                                 aria-label="Remove recipe image"
                                 title="Remove recipe image"
-                                onClick={handleRemoveRecipeImage}
+                                onClick={openRemoveDialog}
                                 size="small"
                                 sx={{
                                   position: 'absolute',
@@ -832,6 +845,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             )}
                           </Box>
                         </Paper>
+                        <ConfirmDialog
+                          open={removeDialogOpen}
+                          onClose={closeRemoveDialog}
+                          onConfirm={confirmRemoveRecipeImage}
+                          title="Remove Recipe Image"
+                          content="Are you sure you want to remove the recipe reference image?"
+                          confirmButtonText="Remove"
+                          confirmColor="error"
+                        />
                       </Box>
                     </Box>
                   </Box>

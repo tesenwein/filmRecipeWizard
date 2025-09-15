@@ -162,8 +162,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   };
 
   const handleMenuClose = () => {
+    // Only close the menu; keep selectedRecipeId for confirm dialogs
     setAnchorEl(null);
-    setSelectedRecipeId(null);
   };
 
   const handleDeleteRecipe = () => {
@@ -178,7 +178,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     try {
       await deleteRecipe(selectedRecipeId);
       setSelectedRecipeId(null);
-      showSuccess('Recipe deleted successfully');
+      // Intentionally no success toast on delete
     } catch (error) {
       console.error('Failed to delete recipe:', error);
       showError('Failed to delete recipe');
