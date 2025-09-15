@@ -433,8 +433,11 @@ export class ImageProcessor {
     const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
 
     // Sanitize all inputs
-    const temp = round(clamp(aiAdjustments.temperature as any, 2000, 50000));
-    const tint = round(clamp(aiAdjustments.tint as any, -150, 150));
+    // Default WB to D65 and zero tint if omitted to avoid unintended warm casts
+    const withDefault = (v: any, d: number) =>
+      typeof v === 'number' && Number.isFinite(v) ? (v as number) : d;
+    const temp = round(clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000));
+    const tint = round(clamp(withDefault(aiAdjustments.tint, 0), -150, 150));
     const exposure = clamp(aiAdjustments.exposure as any, -5, 5);
     const contrast = round(clamp(aiAdjustments.contrast as any, -100, 100));
     const highlights = round(clamp(aiAdjustments.highlights as any, -100, 100));
