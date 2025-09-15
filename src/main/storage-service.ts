@@ -6,14 +6,97 @@ import { ProcessHistory } from '../shared/types';
 
 export class StorageService {
   private storageFile: string;
+  private backupDir: string;
+  private initialized = false;
 
   constructor() {
     const userDataPath = app.getPath('userData');
     this.storageFile = path.join(userDataPath, 'fotoRecipeWizard-history.json');
+    this.backupDir = path.join(userDataPath, 'history-backups');
+  }
+
+  private async initialize(): Promise<void> {
+    if (this.initialized) return;
+    try {
+      // Ensure backup directory exists
+      await fs.mkdir(this.backupDir, { recursive: true });
+      // Clean up any stale temp history file from a previous interrupted save
+      try {
+        const tmp = `${this.storageFile}.tmp`;
+        await fs.rm(tmp, { force: true });
+      } catch {}
+    } finally {
+      this.initialized = true;
+    }
+  }
+
+  private async backupHistoryFile(): Promise<void> {
+    try {
+      // Create a timestamped backup of the current history file, if it exists
+      try {
+        await fs.stat(this.storageFile);
+      } catch {
+        return; // Nothing to back up
+      }
+
+      const ts = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = path.join(this.backupDir, `history-${ts}.json`);
+      const contents = await fs.readFile(this.storageFile);
+      await fs.writeFile(backupPath, contents);
+      
+      // Prune old backups, keep the most recent N
+      const maxBackups = 20;
+      try {
+        const entries = await fs.readdir(this.backupDir);
+        const files = entries
+          .filter(f => f.startsWith('history-') && f.endsWith('.json'))
+          .map(f => ({
+            name: f,
+            time: (() => {
+              const m = f.match(/history-(.*)\.json$/);
+              return m ? m[1] : f;
+            })(),
+          }))
+          .sort((a, b) => (a.time < b.time ? 1 : -1));
+        for (let i = maxBackups; i < files.length; i++) {
+          try { await fs.rm(path.join(this.backupDir, files[i].name)); } catch {}
+        }
+      } catch {}
+    } catch (e) {
+      console.warn('[STORAGE] Failed to create history backup:', e);
+    }
+  }
+
+  private async loadFromBackups(): Promise<ProcessHistory[] | null> {
+    try {
+      const entries = await fs.readdir(this.backupDir);
+      const backups = entries
+        .filter(f => f.startsWith('history-') && f.endsWith('.json'))
+        .sort()
+        .reverse();
+      for (const f of backups) {
+        try {
+          const data = await fs.readFile(path.join(this.backupDir, f), 'utf8');
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) {
+            console.warn('[STORAGE] Restored history from backup:', f);
+            // Restore backup to primary file for future use
+            await fs.writeFile(this.storageFile, JSON.stringify(parsed, null, 2), 'utf8');
+            return parsed as ProcessHistory[];
+          }
+        } catch {
+          // Try next backup
+        }
+      }
+    } catch {
+      // No backups yet
+    }
+    return null;
   }
 
   async loadHistory(): Promise<ProcessHistory[]> {
     try {
+      await this.initialize();
       const data = await fs.readFile(this.storageFile, 'utf8');
       const raw: any[] = JSON.parse(data);
       const history: ProcessHistory[] = (raw || []).map((p: any) => ({
@@ -28,17 +111,36 @@ export class StorageService {
         targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
       }));
       return history;
-    } catch {
-      // File doesn't exist or is invalid, return empty array
-      console.log('[STORAGE] No existing history file, starting fresh');
+    } catch (e) {
+      // File doesn't exist or is invalid, try backups
+      console.warn('[STORAGE] Failed to load history; attempting backup restore');
+      const fromBackup = await this.loadFromBackups();
+      if (fromBackup) {
+        return (fromBackup as any[]).map((p: any) => ({
+          id: p.id,
+          timestamp: p.timestamp,
+          name: p.name,
+          prompt: p.prompt,
+          userOptions: p.userOptions,
+          results: Array.isArray(p.results) ? p.results : [],
+          baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,
+          targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
+        }));
+      }
+      console.log('[STORAGE] No existing history or valid backup, starting fresh');
       return [];
     }
   }
 
   async saveHistory(history: ProcessHistory[]): Promise<void> {
     try {
+      await this.initialize();
+      await this.backupHistoryFile();
       const data = JSON.stringify(history, null, 2);
-      await fs.writeFile(this.storageFile, data, 'utf8');
+      // Atomic write: write to temp then rename
+      const tmp = `${this.storageFile}.tmp`;
+      await fs.writeFile(tmp, data, 'utf8');
+      await fs.rename(tmp, this.storageFile);
       console.log('[STORAGE] History saved successfully');
     } catch (error) {
       console.error('[STORAGE] Failed to save history:', error);
@@ -49,13 +151,13 @@ export class StorageService {
   async addProcess(process: ProcessHistory): Promise<void> {
     const history = await this.loadHistory();
     history.unshift(process); // Add to beginning for most recent first
-    
-    // Keep only last 50 processes to prevent file from growing too large
-    const maxHistory = 50;
+
+    // Keep only last N processes to prevent file from growing too large
+    const maxHistory = 200;
     if (history.length > maxHistory) {
       history.splice(maxHistory);
     }
-    
+
     await this.saveHistory(history);
   }
 
