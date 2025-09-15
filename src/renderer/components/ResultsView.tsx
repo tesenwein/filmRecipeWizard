@@ -1,5 +1,6 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -12,14 +13,18 @@ import {
   Button,
   Checkbox,
   Chip,
+  Divider,
   FormControlLabel,
+  IconButton,
   Paper,
+  Slider,
   Tab,
   Tabs,
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
+import { useAlert } from '../context/AlertContext';
 import SingleImage from './SingleImage';
 
 interface ResultsViewProps {
@@ -41,8 +46,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   processId,
   prompt,
 }) => {
+  const { showError } = useAlert();
   // Base64 image data URLs for display
-  const [baseImageDataUrl, setBaseImageDataUrl] = useState<string | null>(null);
+  const [baseImageUrls, setBaseImageUrls] = useState<string[]>([]);
+  const [activeBase, setActiveBase] = useState(0);
   const [exportOptions, setExportOptions] = useState<
     Record<
       number,
@@ -56,6 +63,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         vignette: boolean;
         pointColor?: boolean;
         grain?: boolean;
+        // Export strength multiplier (0.0–2.0). 0.5 = 50%.
+        strength?: number;
       }
     >
   >({});
@@ -72,60 +81,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // LUT export state
   const [lutSize, setLutSize] = useState<'17' | '33' | '65'>('33');
   const [lutFormat, setLutFormat] = useState<'cube' | '3dl' | 'lut'>('cube');
-  const [profileExportStatus, setProfileExportStatus] = useState<{ ok: boolean; msg: string; path?: string } | null>(null);
+  const [lutStrength, setLutStrength] = useState(100);
+  const [profileExportStatus, setProfileExportStatus] = useState<{
+    ok: boolean;
+    msg: string;
+    path?: string;
+  } | null>(null);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
-  useEffect(() => {
-    console.log('[RESULTS] Render with results', {
-      count: results.length,
-      success: successfulResults.length,
-      failed: failedResults.length,
-      processId,
-    });
-  }, [results, successfulResults.length, failedResults.length, processId]);
-
-  // Load base64 image data when processId is provided
-  useEffect(() => {
-    const loadBase64Images = async () => {
-      if (!processId) {
-        // Clear base64 data when no processId
-        setBaseImageDataUrl(null);
-        setProcessPrompt(prompt);
-        return;
-      }
-
-      try {
-        const [imgResponse, processResponse] = await Promise.all([
-          window.electronAPI.getImageDataUrls(processId),
-          window.electronAPI.getProcess(processId),
-        ]);
-        if (imgResponse.success) {
-          setBaseImageDataUrl(imgResponse.baseImageUrl || null);
-          console.log('[RESULTS] Loaded base64 images for process', processId);
-        } else {
-          throw new Error(imgResponse.error || 'Failed to load image data URLs');
-        }
-        if (processResponse.success && processResponse.process) {
-          setProcessPrompt(processResponse.process.prompt);
-          setProcessOptions(processResponse.process.userOptions);
-        } else {
-          setProcessPrompt(prompt);
-        }
-      } catch (error) {
-        console.error('[RESULTS] Error loading base64 images:', error);
-        setBaseImageDataUrl(null);
-        setProcessPrompt(prompt);
-        setProcessOptions(undefined);
-      }
-    };
-
-    loadBase64Images();
-  }, [processId, prompt]);
-
-  const handleAttachBaseImage = async () => {
+  const handleAddRecipeImage = async () => {
     try {
       if (!processId) return;
       const files = await window.electronAPI.selectFiles({
@@ -138,21 +105,82 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         ],
         properties: ['openFile'],
       });
-      if (files && files[0]) {
-        const res = await window.electronAPI.setBaseImage(processId, files[0]);
-        if (res.success) {
-          const data = await window.electronAPI.getImageDataUrls(processId);
-          if (data.success) {
-            setBaseImageDataUrl(data.baseImageUrl || null);
-          }
-        } else {
-          alert(res.error || 'Failed to set base image');
+      if (files && files.length) {
+        const res = await window.electronAPI.addBaseImages(processId, files.slice(0, 1));
+        if (!res?.success) {
+          showError(res?.error || 'Failed to add recipe image');
+          return;
+        }
+
+        // Reload the image data after adding
+        const data = await window.electronAPI.getImageDataUrls(processId);
+        if (data.success) {
+          setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
+          setActiveBase(0);
         }
       }
     } catch (e) {
-      console.error('Failed to attach base image:', e);
+      console.error('Failed to add recipe image:', e);
     }
   };
+
+  const handleRemoveRecipeImage = async () => {
+    try {
+      if (!processId) return;
+      const res = await window.electronAPI.removeBaseImage(processId, 0);
+      if (!res?.success) {
+        showError(res?.error || 'Failed to remove recipe image');
+        return;
+      }
+      const data = await window.electronAPI.getImageDataUrls(processId);
+      if (data.success) {
+        setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
+        setActiveBase(0);
+      }
+    } catch (e) {
+      console.error('Failed to remove recipe image:', e);
+    }
+  };
+
+  // Load base64 image data when processId is provided
+  useEffect(() => {
+    const loadBase64Images = async () => {
+      if (!processId) {
+        // Clear base64 data when no processId
+        setBaseImageUrls([]);
+        setProcessPrompt(prompt);
+        return;
+      }
+
+      try {
+        const [imgResponse, processResponse] = await Promise.all([
+          window.electronAPI.getImageDataUrls(processId),
+          window.electronAPI.getProcess(processId),
+        ]);
+        if (imgResponse.success) {
+          setBaseImageUrls(
+            Array.isArray(imgResponse.baseImageUrls) ? imgResponse.baseImageUrls : []
+          );
+          setActiveBase(0);
+        } else {
+          throw new Error(imgResponse.error || 'Failed to load image data URLs');
+        }
+        if (processResponse.success && processResponse.process) {
+          setProcessPrompt(processResponse.process.prompt);
+          setProcessOptions(processResponse.process.userOptions);
+        } else {
+          setProcessPrompt(prompt);
+        }
+      } catch (error) {
+        console.error('[RESULTS] Error loading base64 images:', error);
+        setBaseImageUrls([]);
+        setProcessPrompt(prompt);
+        setProcessOptions(undefined);
+      }
+    };
+
+    loadBase64Images();
+  }, [processId, prompt]);
 
   const defaultOptions = {
     wbBasic: true,
@@ -167,7 +195,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     // Film Grain optional export (default ON)
     grain: true,
     // Masks (local adjustments) optional export (default OFF)
-    masks: false,
+    masks: true,
+    // Start export strength at 50%
+    strength: 0.5,
   } as const;
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
@@ -217,11 +247,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         include: getOptions(index),
       });
       if (!res.success) {
-        alert(`Export failed: ${res.error}`);
+        showError(`Export failed: ${res.error}`);
       }
     } catch (e) {
       console.error('Export error:', e);
-      alert('Export failed.');
+      showError('Export failed.');
     }
   };
 
@@ -234,13 +264,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         adjustments,
         size: parseInt(lutSize),
         format: lutFormat,
+        strength: lutStrength / 100, // Convert percentage to 0-1 range
       });
       if (!res.success) {
-        alert(`LUT export failed: ${res.error}`);
+        showError(`LUT export failed: ${res.error}`);
       }
     } catch (e) {
       console.error('LUT export error:', e);
-      alert('LUT export failed.');
+      showError('LUT export failed.');
     }
   };
 
@@ -254,7 +285,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       // Generate and export camera profile from current adjustments
       const res = await (window.electronAPI as any).exportProfile({
         adjustments,
-        recipeIndex: index
+        recipeIndex: index,
       });
 
       if (res?.success) {
@@ -267,10 +298,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
-
   return (
     <Box sx={{ maxWidth: '100%', margin: '0 auto' }}>
-
       {/* No Results Message */}
       {results.length === 0 && (
         <Paper className="card" sx={{ textAlign: 'center', py: 8 }}>
@@ -290,6 +319,41 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       {/* Main Content with Tabs */}
       {successfulResults.length > 0 && (
         <Paper className="card" sx={{ p: 0, overflow: 'hidden' }}>
+          {/* Recipe Name Header */}
+          <Box sx={{ px: 3, pt: 3, pb: 1 }}>
+            {(() => {
+              const currentResult = successfulResults[selectedResult];
+              const aiName =
+                currentResult?.metadata?.aiAdjustments &&
+                (currentResult.metadata.aiAdjustments as any).preset_name;
+              let name: string;
+              if (typeof aiName === 'string' && aiName.trim().length > 0) {
+                const extras: string[] = [];
+                const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
+                const film = (processOptions as any)?.filmStyle?.name as string | undefined;
+                if (artist && artist.trim().length > 0) extras.push(artist.trim());
+                if (film && film.trim().length > 0) extras.push(film.trim());
+                name = extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
+              } else {
+                name = `Recipe ${selectedResult + 1}`;
+              }
+              return (
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    color: 'primary.main',
+                    textAlign: 'left',
+                    mb: 1,
+                    fontSize: { xs: '1.5rem', sm: '2rem' },
+                  }}
+                >
+                  {name}
+                </Typography>
+              );
+            })()}
+          </Box>
+
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -297,7 +361,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
               borderBottom: 1,
               borderColor: 'divider',
               px: 3,
-              pt: 2,
+              pt: 1,
               '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 },
             }}
           >
@@ -367,28 +431,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     <Box
                       sx={{
                         display: 'grid',
-                        gap: 3,
+                        gap: 2,
                         gridTemplateColumns: {
                           xs: '1fr',
-                          md: baseImageDataUrl ? '1fr 1fr' : '1fr',
+                          md: '2fr 1fr',
                         },
                       }}
                     >
-                      {/* Basic Information */}
+                      {/* Left Column: Basic Information */}
                       <Paper elevation={1} sx={{ p: 3 }}>
-                        <Typography
-                          variant="h6"
-                          sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
-                        >
-                          Processing Information
-                        </Typography>
-
                         {/* AI Analysis */}
                         {result.metadata?.aiAdjustments?.reasoning && (
                           <Box sx={{ mb: 3 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                              AI Analysis
-                            </Typography>
                             <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
                               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                                 {result.metadata.aiAdjustments.reasoning}
@@ -410,33 +464,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Paper>
                           </Box>
                         )}
-
-                        {/* Processing Stats */}
-                        <Box
-                          sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}
-                        >
-                          <Box>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              Confidence
-                            </Typography>
-                            <Typography
-                              variant="h6"
-                              sx={{ fontWeight: 600, color: 'primary.main' }}
-                            >
-                              {Math.round((result.metadata?.aiAdjustments?.confidence || 0) * 100)}%
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              Preset Name
-                            </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                              {(result.metadata?.aiAdjustments &&
-                                (result.metadata.aiAdjustments as any).preset_name) ||
-                                'Custom'}
-                            </Typography>
-                          </Box>
-                        </Box>
 
                         {/* Style Information */}
                         {processOptions &&
@@ -464,169 +491,217 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                         {/* Fine-tune Settings */}
                         {processOptions &&
-                         (processOptions.warmth !== undefined ||
-                          processOptions.tint !== undefined ||
-                          processOptions.contrast !== undefined ||
-                          processOptions.vibrance !== undefined ||
-                          processOptions.moodiness !== undefined ||
-                          processOptions.saturationBias !== undefined ||
-                          processOptions.filmGrain !== undefined) && (
-                          <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                              Fine-tune Settings
-                            </Typography>
-                            <Box
-                              sx={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                                gap: 2,
-                              }}
-                            >
-                              {[
-                                {
-                                  key: 'warmth',
-                                  label: 'Warmth',
-                                  value: processOptions.warmth,
-                                  icon: '🌡️',
-                                },
-                                {
-                                  key: 'tint',
-                                  label: 'Tint',
-                                  value: processOptions.tint,
-                                  icon: '🎨',
-                                },
-                                {
-                                  key: 'contrast',
-                                  label: 'Contrast',
-                                  value: processOptions.contrast,
-                                  icon: '⚡',
-                                },
-                                {
-                                  key: 'vibrance',
-                                  label: 'Vibrance',
-                                  value: processOptions.vibrance,
-                                  icon: '🌈',
-                                },
-                                {
-                                  key: 'moodiness',
-                                  label: 'Moodiness',
-                                  value: processOptions.moodiness,
-                                  icon: '🎭',
-                                },
-                                {
-                                  key: 'saturationBias',
-                                  label: 'Saturation Bias',
-                                  value: processOptions.saturationBias,
-                                  icon: '🎪',
-                                },
-                              ].map(
-                                setting =>
-                                  setting.value !== undefined && (
-                                    <Paper
-                                      key={setting.key}
-                                      variant="outlined"
-                                      sx={{
-                                        p: 2,
-                                        textAlign: 'center',
-                                        backgroundColor: 'grey.50',
-                                        border: '1px solid',
-                                        borderColor: 'grey.200',
-                                      }}
-                                    >
-                                      <Box
+                          (processOptions.warmth !== undefined ||
+                            processOptions.tint !== undefined ||
+                            processOptions.contrast !== undefined ||
+                            processOptions.vibrance !== undefined ||
+                            processOptions.moodiness !== undefined ||
+                            processOptions.saturationBias !== undefined) && (
+                            <Box>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                                Fine-tune Settings
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                  gap: 2,
+                                }}
+                              >
+                                {[
+                                  {
+                                    key: 'warmth',
+                                    label: 'Warmth',
+                                    value: processOptions.warmth,
+                                    icon: '🌡️',
+                                  },
+                                  {
+                                    key: 'tint',
+                                    label: 'Tint',
+                                    value: processOptions.tint,
+                                    icon: '🎨',
+                                  },
+                                  {
+                                    key: 'contrast',
+                                    label: 'Contrast',
+                                    value: processOptions.contrast,
+                                    icon: '⚡',
+                                  },
+                                  {
+                                    key: 'vibrance',
+                                    label: 'Vibrance',
+                                    value: processOptions.vibrance,
+                                    icon: '🌈',
+                                  },
+                                  {
+                                    key: 'moodiness',
+                                    label: 'Moodiness',
+                                    value: processOptions.moodiness,
+                                    icon: '🎭',
+                                  },
+                                  {
+                                    key: 'saturationBias',
+                                    label: 'Saturation Bias',
+                                    value: processOptions.saturationBias,
+                                    icon: '🎪',
+                                  },
+                                ].map(
+                                  setting =>
+                                    setting.value !== undefined && (
+                                      <Paper
+                                        key={setting.key}
+                                        variant="outlined"
                                         sx={{
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          gap: 0.5,
-                                          mb: 1,
+                                          p: 2,
+                                          textAlign: 'center',
+                                          backgroundColor: 'grey.50',
+                                          border: '1px solid',
+                                          borderColor: 'grey.200',
                                         }}
                                       >
-                                        <Typography variant="body2" sx={{ fontSize: '16px' }}>
-                                          {setting.icon}
-                                        </Typography>
-                                        <Typography
-                                          variant="body2"
-                                          sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 0.5,
+                                            mb: 1,
+                                          }}
                                         >
-                                          {setting.label}
+                                          <Typography variant="body2" sx={{ fontSize: '16px' }}>
+                                            {setting.icon}
+                                          </Typography>
+                                          <Typography
+                                            variant="body2"
+                                            sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                          >
+                                            {setting.label}
+                                          </Typography>
+                                        </Box>
+                                        <Typography
+                                          variant="h6"
+                                          sx={{
+                                            fontWeight: 700,
+                                            color: 'primary.main',
+                                            fontSize: '18px',
+                                          }}
+                                        >
+                                          {setting.key === 'tint'
+                                            ? setting.value + 50
+                                            : setting.key === 'warmth'
+                                            ? (setting.value ?? 50) - 50
+                                            : setting.value}
                                         </Typography>
-                                      </Box>
-                                      <Typography
-                                        variant="h6"
-                                        sx={{
-                                          fontWeight: 700,
-                                          color: 'primary.main',
-                                          fontSize: '18px',
-                                        }}
-                                      >
-                                        {setting.key === 'tint'
-                                          ? (setting.value + 50)
-                                          : setting.key === 'warmth'
-                                          ? ((setting.value ?? 50) - 50)
-                                          : setting.value}
-                                      </Typography>
-                                    </Paper>
-                                  )
-                              )}
-                              {processOptions.filmGrain !== undefined && (
-                                <Paper
-                                  variant="outlined"
-                                  sx={{
-                                    p: 2,
-                                    textAlign: 'center',
-                                    backgroundColor: 'grey.50',
-                                    border: '1px solid',
-                                    borderColor: 'grey.200',
-                                  }}
-                                >
-                                  <Box
+                                      </Paper>
+                                    )
+                                )}
+                              </Box>
+                            </Box>
+                          )}
+
+                        {/* Options */}
+                        {processOptions &&
+                          (processOptions.filmGrain !== undefined ||
+                            processOptions.preserveSkinTones !== undefined) && (
+                            <Box>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                                Options
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                  gap: 2,
+                                }}
+                              >
+                                {processOptions.filmGrain !== undefined && (
+                                  <Paper
+                                    variant="outlined"
                                     sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: 0.5,
-                                      mb: 1,
+                                      p: 2,
+                                      textAlign: 'center',
+                                      backgroundColor: 'grey.50',
+                                      border: '1px solid',
+                                      borderColor: 'grey.200',
                                     }}
                                   >
-                                    <Typography variant="body2" sx={{ fontSize: '16px' }}>
-                                      🎞️
-                                    </Typography>
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 0.5,
+                                        mb: 1,
+                                      }}
                                     >
-                                      Film Grain
-                                    </Typography>
-                                  </Box>
-                                  <Chip
-                                    label={processOptions.filmGrain ? 'On' : 'Off'}
-                                    color={processOptions.filmGrain ? 'success' : 'default'}
-                                    variant="filled"
-                                    size="small"
-                                    sx={{ fontWeight: 600 }}
-                                  />
-                                </Paper>
-                              )}
+                                      <Typography variant="body2" sx={{ fontSize: '16px' }}>
+                                        🎞️
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                      >
+                                        Film Grain
+                                      </Typography>
+                                    </Box>
+                                    <Chip
+                                      label={processOptions.filmGrain ? 'On' : 'Off'}
+                                      color={processOptions.filmGrain ? 'success' : 'default'}
+                                      variant="filled"
+                                      size="small"
+                                      sx={{ fontWeight: 600 }}
+                                    />
+                                  </Paper>
+                                )}
+                                {processOptions.preserveSkinTones !== undefined && (
+                                  <Paper
+                                    variant="outlined"
+                                    sx={{
+                                      p: 2,
+                                      textAlign: 'center',
+                                      backgroundColor: 'grey.50',
+                                      border: '1px solid',
+                                      borderColor: 'grey.200',
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 0.5,
+                                        mb: 1,
+                                      }}
+                                    >
+                                      <Typography variant="body2" sx={{ fontSize: '16px' }}>
+                                        👤
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                      >
+                                        Preserve Skin Tones
+                                      </Typography>
+                                    </Box>
+                                    <Chip
+                                      label={processOptions.preserveSkinTones ? 'On' : 'Off'}
+                                      color={
+                                        processOptions.preserveSkinTones ? 'success' : 'default'
+                                      }
+                                      variant="filled"
+                                      size="small"
+                                      sx={{ fontWeight: 600 }}
+                                    />
+                                  </Paper>
+                                )}
+                              </Box>
                             </Box>
-                          </Box>
-                        )}
+                          )}
                       </Paper>
 
-                      {/* Recipe Image */}
-                      {baseImageDataUrl ? (
+                      {/* Right Column: Recipe Image */}
+                      <Box>
                         <Paper elevation={1} sx={{ p: 3 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              mb: 2,
-                              fontWeight: 600,
-                              color: 'primary.main',
-                              textAlign: 'center',
-                            }}
-                          >
-                            Recipe Image
-                          </Typography>
                           <Box
                             sx={{
                               width: '100%',
@@ -635,25 +710,93 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               overflow: 'hidden',
                               position: 'relative',
                               backgroundColor: 'grey.100',
+                              cursor: baseImageUrls.length === 0 ? 'pointer' : 'default',
                             }}
+                            onClick={baseImageUrls.length === 0 ? handleAddRecipeImage : undefined}
                           >
-                            <SingleImage source={baseImageDataUrl} alt="Recipe" fit="contain" />
+                            <SingleImage
+                              source={baseImageUrls[activeBase]}
+                              alt={`Recipe Image ${activeBase + 1}`}
+                              fit="contain"
+                              placeholderLabel={
+                                baseImageUrls.length === 0 ? 'Click to add' : 'No image'
+                              }
+                              placeholderIcon={
+                                baseImageUrls.length === 0 ? (
+                                  <AddPhotoAlternateOutlinedIcon
+                                    style={{ fontSize: 28, color: '#7c8aa0', opacity: 0.9 }}
+                                  />
+                                ) : undefined
+                              }
+                            />
+                            {baseImageUrls.length > 0 && (
+                              <IconButton
+                                aria-label="Remove recipe image"
+                                title="Remove recipe image"
+                                onClick={handleRemoveRecipeImage}
+                                size="small"
+                                sx={{
+                                  position: 'absolute',
+                                  top: 8,
+                                  right: 8,
+                                  zIndex: 2,
+                                  bgcolor: 'rgba(255,255,255,0.7)',
+                                  backdropFilter: 'blur(8px)',
+                                  WebkitBackdropFilter: 'blur(8px)',
+                                  border: '1px solid rgba(0,0,0,0.06)',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                  color: 'error.main',
+                                  '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.9)',
+                                  },
+                                }}
+                              >
+                                <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {baseImageUrls.length > 1 && (
+                              <>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() =>
+                                    setActiveBase(
+                                      (activeBase - 1 + baseImageUrls.length) % baseImageUrls.length
+                                    )
+                                  }
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 'calc(50% - 16px)',
+                                    left: 8,
+                                    minWidth: 0,
+                                    p: 0.5,
+                                    opacity: 0.8,
+                                  }}
+                                >
+                                  ‹
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() =>
+                                    setActiveBase((activeBase + 1) % baseImageUrls.length)
+                                  }
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 'calc(50% - 16px)',
+                                    right: 8,
+                                    minWidth: 0,
+                                    p: 0.5,
+                                    opacity: 0.8,
+                                  }}
+                                >
+                                  ›
+                                </Button>
+                              </>
+                            )}
                           </Box>
                         </Paper>
-                      ) : (
-                        <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
-                          {processId && (
-                            <Button
-                              variant="contained"
-                              size="small"
-                              onClick={handleAttachBaseImage}
-                              startIcon={<AddPhotoAlternateOutlinedIcon />}
-                            >
-                              Add Recipe Image
-                            </Button>
-                          )}
-                        </Paper>
-                      )}
+                      </Box>
                     </Box>
                   </Box>
                 )}
@@ -681,10 +824,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {(processPrompt || processOptions) && (
                       <Accordion sx={{ mb: 2 }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography
-                            variant="h6"
-                            sx={{ fontWeight: 600 }}
-                          >
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
                             Processing Context
                           </Typography>
                         </AccordionSummary>
@@ -741,6 +881,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                       <strong>Film Grain:</strong>{' '}
                                       {processOptions.filmGrain ? 'On' : 'Off'}
                                     </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Preserve Skin Tones:</strong>{' '}
+                                      {processOptions.preserveSkinTones ? 'On' : 'Off'}
+                                    </Typography>
                                     {processOptions.artistStyle?.name && (
                                       <Typography variant="body1">
                                         <strong>Artist Style:</strong>{' '}
@@ -764,10 +908,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {/* Basic Adjustments */}
                     <Accordion defaultExpanded sx={{ mb: 2 }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 600 }}
-                        >
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
                           Basic Adjustments
                         </Typography>
                       </AccordionSummary>
@@ -1050,7 +1191,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                              AI Analysis Notes
+                              Analysis Notes
                             </Typography>
                           </AccordionSummary>
                           <AccordionDetails>
@@ -1076,9 +1217,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       Lightroom Export
                     </Typography>
 
-                    <Box
-                      sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-                    >
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                       <Paper elevation={1} sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                           Lightroom Preset (.xmp)
@@ -1086,45 +1225,247 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                           Export a Lightroom preset XMP with your selected adjustments.
                         </Typography>
+                        {/* Quick summary of selected options */}
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                            Selected Options
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {(() => {
+                              const opts = getOptions(index) as any;
+                              const labels: Record<string, string> = {
+                                wbBasic: 'Basic',
+                                exposure: 'Exposure',
+                                hsl: 'HSL',
+                                colorGrading: 'Color Grading',
+                                curves: 'Tone Curves',
+                                pointColor: 'Point Color',
+                                sharpenNoise: 'Sharpen/Noise',
+                                vignette: 'Vignette',
+                                grain: 'Grain',
+                                masks: 'Masks',
+                              };
+                              const chips = Object.keys(labels)
+                                .filter(k => !!opts[k])
+                                .map(k => (
+                                  <Chip
+                                    key={k}
+                                    size="small"
+                                    label={labels[k]}
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                ));
+                              // Strength always shown
+                              chips.push(
+                                <Chip
+                                  key="strength"
+                                  size="small"
+                                  label={`Strength ${Math.round((opts.strength ?? 0.5) * 100)}%`}
+                                  variant="outlined"
+                                />
+                              );
+                              return chips;
+                            })()}
+                          </Box>
+                        </Box>
                         <Box sx={{ mb: 2 }}>
                           <FormControlLabel
-                            control={<Checkbox checked={isAllSelected(index)} onChange={e => setAllOptions(index, e.target.checked)} />}
-                            label={<Typography variant="body1" sx={{ fontWeight: 600 }}>Select All Adjustment Types</Typography>}
+                            control={
+                              <Checkbox
+                                checked={isAllSelected(index)}
+                                onChange={e => setAllOptions(index, e.target.checked)}
+                              />
+                            }
+                            label={
+                              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                Select All Adjustment Types
+                              </Typography>
+                            }
                           />
                         </Box>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                          {[{ key: 'exposure', label: 'Exposure', description: 'Basic exposure adjustments' }, { key: 'wbBasic', label: 'Basic Adjustments', description: 'White balance, contrast, highlights, shadows' }, { key: 'hsl', label: 'HSL Adjustments', description: 'Hue, saturation, and luminance per color' }, { key: 'colorGrading', label: 'Color Grading', description: 'Shadow, midtone, highlight color wheels' }, { key: 'curves', label: 'Tone Curves', description: 'RGB and luminance curve adjustments' }, { key: 'pointColor', label: 'Point Color', description: 'Targeted color adjustments' }, { key: 'sharpenNoise', label: 'Sharpen & Noise', description: 'Detail enhancement settings' }, { key: 'vignette', label: 'Vignette', description: 'Edge darkening effects' }, { key: 'grain', label: 'Film Grain', description: 'Analog film texture simulation' }, { key: 'masks', label: 'Masks (Local Adjustments)', description: 'Area-specific modifications' }].map(opt => (
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                            gap: 2,
+                          }}
+                        >
+                          {[
+                            {
+                              key: 'exposure',
+                              label: 'Exposure',
+                              description: 'Basic exposure adjustments',
+                            },
+                            {
+                              key: 'wbBasic',
+                              label: 'Basic Adjustments',
+                              description: 'White balance, contrast, highlights, shadows',
+                            },
+                            {
+                              key: 'hsl',
+                              label: 'HSL Adjustments',
+                              description: 'Hue, saturation, and luminance per color',
+                            },
+                            {
+                              key: 'colorGrading',
+                              label: 'Color Grading',
+                              description: 'Shadow, midtone, highlight color wheels',
+                            },
+                            {
+                              key: 'curves',
+                              label: 'Tone Curves',
+                              description: 'RGB and luminance curve adjustments',
+                            },
+                            {
+                              key: 'pointColor',
+                              label: 'Point Color',
+                              description: 'Targeted color adjustments',
+                            },
+                            {
+                              key: 'sharpenNoise',
+                              label: 'Sharpen & Noise',
+                              description: 'Detail enhancement settings',
+                            },
+                            {
+                              key: 'vignette',
+                              label: 'Vignette',
+                              description: 'Edge darkening effects',
+                            },
+                            {
+                              key: 'grain',
+                              label: 'Film Grain',
+                              description: 'Analog film texture simulation',
+                            },
+                            {
+                              key: 'masks',
+                              label: 'Masks (Local Adjustments)',
+                              description: 'Area-specific modifications',
+                            },
+                          ].map(opt => (
                             <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
                               <FormControlLabel
-                                control={<Checkbox checked={getOptions(index)[opt.key as keyof ReturnType<typeof getOptions>] as any} onChange={() => toggleOption(index, opt.key as any)} />}
-                                label={<Box><Typography variant="body1" sx={{ fontWeight: 600 }}>{opt.label}</Typography><Typography variant="body2" sx={{ color: 'text.secondary' }}>{opt.description}</Typography></Box>}
+                                control={
+                                  <Checkbox
+                                    checked={
+                                      getOptions(index)[
+                                        opt.key as keyof ReturnType<typeof getOptions>
+                                      ] as any
+                                    }
+                                    onChange={() => toggleOption(index, opt.key as any)}
+                                  />
+                                }
+                                label={
+                                  <Box>
+                                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                      {opt.label}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                      {opt.description}
+                                    </Typography>
+                                  </Box>
+                                }
                               />
                             </Paper>
                           ))}
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                          <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => handleExportXMP(index, result)} sx={{ textTransform: 'none', fontWeight: 700 }}>
-                            Export Preset (.xmp)
-                          </Button>
+                        {/* Export Strength and Button - 50/50 Layout */}
+                        <Box sx={{ display: 'flex', gap: 3, mt: 3, alignItems: 'stretch' }}>
+                          <Paper
+                            variant="outlined"
+                            sx={{ p: 3, flex: 1, backgroundColor: 'grey.50' }}
+                          >
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                              Export Strength
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Slider
+                                value={Math.round((getOptions(index).strength ?? 0.5) * 100)}
+                                onChange={(_e, val) => {
+                                  const pct = Array.isArray(val) ? val[0] : (val as number);
+                                  setExportOptions(prev => ({
+                                    ...prev,
+                                    [index]: {
+                                      ...(prev[index] || defaultOptions),
+                                      strength: Math.max(0, Math.min(200, pct)) / 100,
+                                    },
+                                  }));
+                                }}
+                                min={0}
+                                max={200}
+                                step={5}
+                                valueLabelDisplay="auto"
+                                valueLabelFormat={v => `${v}%`}
+                                sx={{ flex: 1 }}
+                              />
+                              <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
+                                {Math.round((getOptions(index).strength ?? 0.5) * 100)}%
+                              </Typography>
+                            </Box>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              Tip: 100% applies the full AI adjustments. 50% is softer.
+                            </Typography>
+                          </Paper>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
+                            }}
+                          >
+                            <Button
+                              variant="contained"
+                              startIcon={<DownloadIcon />}
+                              onClick={() => handleExportXMP(index, result)}
+                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                              size="large"
+                            >
+                              Export Preset (.xmp)
+                            </Button>
+                          </Box>
                         </Box>
                       </Paper>
+
+                      {/* Divider between Preset and Camera Profile */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', my: 4 }}>
+                        <Divider sx={{ flex: 1 }} />
+                        <Typography
+                          variant="body2"
+                          sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}
+                        >
+                          OR
+                        </Typography>
+                        <Divider sx={{ flex: 1 }} />
+                      </Box>
 
                       <Paper elevation={1} sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                           Camera Profile (.xmp)
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                          Create a new Camera Profile from your recipe adjustments for use in Lightroom.
+                          Create a new Camera Profile from your recipe adjustments for use in
+                          Lightroom.
                         </Typography>
                         {profileExportStatus && (
                           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-                            <Typography variant="body2" color={profileExportStatus.ok ? 'success.main' : 'error.main'} sx={{ fontWeight: 600 }}>
+                            <Typography
+                              variant="body2"
+                              color={profileExportStatus.ok ? 'success.main' : 'error.main'}
+                              sx={{ fontWeight: 600 }}
+                            >
                               {profileExportStatus.msg}
                             </Typography>
                           </Paper>
                         )}
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                          <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => handleExportProfile(index, result)} sx={{ textTransform: 'none', fontWeight: 700 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => handleExportProfile(index, result)}
+                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                            size="large"
+                          >
                             Create Camera Profile (.xmp)
                           </Button>
                         </Box>
@@ -1209,6 +1550,34 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               ))}
                             </Box>
                           </Box>
+
+                          <Paper variant="outlined" sx={{ p: 2, backgroundColor: 'grey.50' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                              Export Strength
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Slider
+                                value={lutStrength}
+                                onChange={(_e, val) => {
+                                  const pct = Array.isArray(val) ? val[0] : (val as number);
+                                  setLutStrength(Math.max(0, Math.min(200, pct)));
+                                }}
+                                min={0}
+                                max={200}
+                                step={5}
+                                valueLabelDisplay="auto"
+                                valueLabelFormat={v => `${v}%`}
+                                sx={{ flex: 1, maxWidth: 300 }}
+                              />
+                              <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
+                                {lutStrength}%
+                              </Typography>
+                            </Box>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              Tip: 100% applies the full AI adjustments. Lower values create more
+                              subtle effects.
+                            </Typography>
+                          </Paper>
                         </Box>
 
                         <Button
@@ -1366,7 +1735,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           </Box>
         </Paper>
       )}
-
     </Box>
   );
 };

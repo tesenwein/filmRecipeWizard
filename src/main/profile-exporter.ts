@@ -1,12 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-
-export interface ProfileExportResult {
-  success: boolean;
-  outputPath?: string;
-  error?: string;
-  metadata?: { profileName?: string };
-}
+import { ProfileExportResult } from '../shared/types';
 
 /**
  * Exports a Lightroom/Camera Raw Profile (.xmp) by copying an existing profile XMP

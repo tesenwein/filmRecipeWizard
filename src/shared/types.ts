@@ -1,7 +1,7 @@
 import { AIColorAdjustments } from '../services/openai-color-analyzer';
 
 export interface ProcessingResult {
-  inputPath: string;
+  inputPath?: string;
   outputPath?: string;
   success: boolean;
   error?: string;
@@ -10,6 +10,11 @@ export interface ProcessingResult {
     processingTime?: number;
     reasoning?: string;
     confidence?: number;
+    presetName?: string;
+    groupFolder?: string;
+    usedSettings?: {
+      preserveSkinTones?: boolean;
+    };
   };
 }
 
@@ -22,6 +27,7 @@ export interface StyleOptions {
   moodiness?: number; // overall curve mood
   saturationBias?: number;
   filmGrain?: boolean;
+  preserveSkinTones?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
   // Optional artist and film selections
   artistStyle?: { key: string; name: string; category: string; blurb: string };
@@ -34,18 +40,41 @@ export interface ProcessHistory {
   name?: string;
   // Optional freeform text prompt used instead of a reference image
   prompt?: string;
-  baseImage?: string;
-  targetImages?: string[];
   results: ProcessingResult[];
-  // Base64 image data for offline storage
-  baseImageData?: string; // base64 encoded image
-  targetImageData?: string[]; // base64 encoded images
+  // Recipe image (single) to show in detail view; do not persist full reference/target sets
+  recipeImageData?: string; // base64 encoded image
   // User-selected style options (sliders/toggles)
   userOptions?: StyleOptions;
+  // Processing status to track if generation is still in progress
+  status?: 'generating' | 'completed' | 'failed';
 }
 
 export interface ProcessingState {
   isProcessing: boolean;
   progress: number;
   status: string;
+}
+
+export interface ProfileExportResult {
+  success: boolean;
+  outputPath?: string;
+  error?: string;
+  metadata?: { profileName?: string };
+}
+
+export interface AppSettings {
+  openaiKey?: string;
+}
+
+export interface ExportResult {
+  success: boolean;
+  filePath?: string;
+  count?: number;
+  error?: string;
+}
+
+export interface ImportResult {
+  success: boolean;
+  count?: number;
+  error?: string;
 }

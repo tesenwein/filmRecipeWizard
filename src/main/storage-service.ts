@@ -1,6 +1,6 @@
+import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { app } from 'electron';
 import sharp from 'sharp';
 import { ProcessHistory } from '../shared/types';
 
@@ -18,13 +18,17 @@ export class StorageService {
   private async initialize(): Promise<void> {
     if (this.initialized) return;
     try {
-      // Ensure backup directory exists
+      // Ensure both the main storage directory and backup directory exist
+      const storageDir = path.dirname(this.storageFile);
+      await fs.mkdir(storageDir, { recursive: true });
       await fs.mkdir(this.backupDir, { recursive: true });
       // Clean up any stale temp history file from a previous interrupted save
       try {
         const tmp = `${this.storageFile}.tmp`;
         await fs.rm(tmp, { force: true });
-      } catch {}
+      } catch {
+        // Ignore errors when removing temp file
+      }
     } finally {
       this.initialized = true;
     }
@@ -43,7 +47,7 @@ export class StorageService {
       const backupPath = path.join(this.backupDir, `history-${ts}.json`);
       const contents = await fs.readFile(this.storageFile);
       await fs.writeFile(backupPath, contents);
-      
+
       // Prune old backups, keep the most recent N
       const maxBackups = 20;
       try {
@@ -59,9 +63,15 @@ export class StorageService {
           }))
           .sort((a, b) => (a.time < b.time ? 1 : -1));
         for (let i = maxBackups; i < files.length; i++) {
-          try { await fs.rm(path.join(this.backupDir, files[i].name)); } catch {}
+          try {
+            await fs.rm(path.join(this.backupDir, files[i].name));
+          } catch {
+            // Ignore errors when removing old backups
+          }
         }
-      } catch {}
+      } catch {
+        // Ignore errors when accessing backup directory
+      }
     } catch (e) {
       console.warn('[STORAGE] Failed to create history backup:', e);
     }
@@ -94,9 +104,38 @@ export class StorageService {
     return null;
   }
 
+  private async migrateStatusField(): Promise<void> {
+    try {
+      const data = await fs.readFile(this.storageFile, 'utf8');
+      const raw: any[] = JSON.parse(data);
+
+      // Check if migration is needed
+      const needsMigration = raw.some((p: any) => p.status === undefined);
+      if (!needsMigration) return;
+
+      console.log('[STORAGE] Migrating existing processes to add status field');
+
+      // Update processes without status field
+      const migrated = raw.map((p: any) => ({
+        ...p,
+        status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
+      }));
+
+      // Save the migrated data
+      await this.saveHistory(migrated);
+    } catch {
+      // If file doesn't exist or is corrupt, no migration needed
+      console.log('[STORAGE] No migration needed - file not found or invalid');
+    }
+  }
+
   async loadHistory(): Promise<ProcessHistory[]> {
     try {
       await this.initialize();
+
+      // Run migration first
+      await this.migrateStatusField();
+
       const data = await fs.readFile(this.storageFile, 'utf8');
       const raw: any[] = JSON.parse(data);
       const history: ProcessHistory[] = (raw || []).map((p: any) => ({
@@ -106,9 +145,16 @@ export class StorageService {
         prompt: p.prompt,
         userOptions: p.userOptions,
         results: Array.isArray(p.results) ? p.results : [],
-        // Preserve stored base64 image data if present
-        baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,
-        targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
+        // Persisted recipe image (single) — maintain backward compatibility
+        recipeImageData:
+          typeof p.recipeImageData === 'string'
+            ? p.recipeImageData
+            : typeof p.baseImageData === 'string'
+            ? p.baseImageData
+            : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
+            ? p.baseImagesData[0]
+            : undefined,
+        status: p.status,
       }));
       return history;
     } catch {
@@ -116,18 +162,29 @@ export class StorageService {
       console.warn('[STORAGE] Failed to load history; attempting backup restore');
       const fromBackup = await this.loadFromBackups();
       if (fromBackup) {
-        return (fromBackup as any[]).map((p: any) => ({
+        // Migrate backup data and save to main file
+        const migratedBackup = (fromBackup as any[]).map((p: any) => ({
           id: p.id,
           timestamp: p.timestamp,
           name: p.name,
           prompt: p.prompt,
           userOptions: p.userOptions,
           results: Array.isArray(p.results) ? p.results : [],
-          baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,
-          targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
+          recipeImageData:
+            typeof p.recipeImageData === 'string'
+              ? p.recipeImageData
+              : typeof p.baseImageData === 'string'
+              ? p.baseImageData
+              : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
+              ? p.baseImagesData[0]
+              : undefined,
+          status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
         }));
+
+        // Save migrated backup to main file
+        await this.saveHistory(migratedBackup);
+        return migratedBackup;
       }
-      console.log('[STORAGE] No existing history or valid backup, starting fresh');
       return [];
     }
   }
@@ -141,7 +198,6 @@ export class StorageService {
       const tmp = `${this.storageFile}.tmp`;
       await fs.writeFile(tmp, data, 'utf8');
       await fs.rename(tmp, this.storageFile);
-      console.log('[STORAGE] History saved successfully');
     } catch (error) {
       console.error('[STORAGE] Failed to save history:', error);
       throw error;
@@ -164,7 +220,7 @@ export class StorageService {
   async updateProcess(processId: string, updates: Partial<ProcessHistory>): Promise<void> {
     const history = await this.loadHistory();
     const index = history.findIndex(p => p.id === processId);
-    
+
     if (index >= 0) {
       history[index] = { ...history[index], ...updates };
       await this.saveHistory(history);
@@ -188,27 +244,41 @@ export class StorageService {
   }
 
   generateProcessId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  }
+
+  async clearHistory(): Promise<void> {
+    await this.initialize();
+    await this.backupHistoryFile();
+
+    // Write empty history
+    const emptyHistory: ProcessHistory[] = [];
+    const temp = `${this.storageFile}.tmp`;
+
+    await fs.writeFile(temp, JSON.stringify(emptyHistory, null, 2));
+    await fs.rename(temp, this.storageFile);
+
+    await this.cleanupTempFiles();
   }
 
   // Convert an image file to base64 JPEG data
   async convertImageToBase64(imagePath: string): Promise<string> {
     try {
-      console.log(`[STORAGE] Converting image to base64: ${path.basename(imagePath)}`);
-
-      // Convert any supported image format to JPEG and resize for storage efficiency
+      // Convert any supported image format to JPEG and resize for storage efficiency (1024px max long side)
       const jpegBuffer = await sharp(imagePath)
-        .resize(2048, 2048, { fit: 'inside', withoutEnlargement: true })
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: 90 })
         .toBuffer();
 
       const base64Data = jpegBuffer.toString('base64');
-      console.log(`[STORAGE] Converted image to base64 (${Math.round(base64Data.length / 1024)}KB)`);
-
       return base64Data;
     } catch (error) {
       console.error(`[STORAGE] Failed to convert image to base64: ${imagePath}`, error);
-      throw new Error(`Failed to convert image to base64: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to convert image to base64: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   }
 
@@ -222,7 +292,6 @@ export class StorageService {
     const buffer = Buffer.from(base64Data, 'base64');
 
     await fs.writeFile(tempPath, buffer);
-    console.log(`[STORAGE] Created temp file from base64: ${tempPath}`);
 
     return tempPath;
   }
@@ -238,7 +307,6 @@ export class StorageService {
       const os = await import('os');
       const tmpDir = path.join(os.tmpdir(), 'foto-recipe-wizard-base64');
       await fs.rm(tmpDir, { recursive: true, force: true });
-      console.log(`[STORAGE] Cleaned up temp files: ${tmpDir}`);
     } catch {
       // Directory might not exist, which is fine
       console.log(`[STORAGE] Temp directory already cleaned or doesn't exist`);

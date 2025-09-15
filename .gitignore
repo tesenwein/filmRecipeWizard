@@ -144,3 +144,4 @@ presets/*.xmp
 
 presets/*.xmp.claude/
 .claude/
+examples

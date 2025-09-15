@@ -1,11 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { app } from 'electron';
-
-export interface AppSettings {
-  openaiKey?: string;
-  // Future settings can be added here
-}
+import { AppSettings } from '../shared/types';
 
 export class SettingsService {
   private settingsFile: string;
@@ -32,4 +28,3 @@ export class SettingsService {
     return merged;
   }
 }
-

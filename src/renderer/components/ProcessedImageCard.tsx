@@ -69,7 +69,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
         borderRadius: 2,
         p: 2.5,
         animationDelay: `${index * 0.1}s`,
-        
       }}
     >
       {/* Image Previews: Base vs Result */}
@@ -155,7 +154,11 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
             }}
           >
             {targetImageDataUrl ? (
-              <SingleImage source={targetImageDataUrl} alt={`Processed image ${index + 1}`} fit="contain" />
+              <SingleImage
+                source={targetImageDataUrl}
+                alt={`Processed image ${index + 1}`}
+                fit="contain"
+              />
             ) : (
               <Box
                 sx={{
@@ -219,7 +222,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                 variant="body2"
                 sx={{ fontSize: 14, fontWeight: 600, color: 'primary.main' }}
               >
-                AI Analysis
+                Analysis
               </Typography>
               <Box
                 sx={{
@@ -284,6 +287,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   <div>Moodiness: {processOptions.moodiness ?? '—'}</div>
                   <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
                   <div>Film Grain: {processOptions.filmGrain ? 'On' : 'Off'}</div>
+                  <div>Preserve Skin Tones: {processOptions.preserveSkinTones ? 'On' : 'Off'}</div>
                 </Box>
               </>
             )}

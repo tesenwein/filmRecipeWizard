@@ -1,3 +1,5 @@
+import { ExportResult, ImportResult } from '../shared/types';
+
 export {}
 
 declare global {
@@ -19,6 +21,7 @@ declare global {
       }) => Promise<string[]>;
       
       openPath: (path: string) => Promise<{ success: boolean; error?: string }>;
+      openExternal: (url: string) => Promise<{ success: boolean; error?: string }>;
 
       // Image processing
       processImages: (data: {
@@ -28,7 +31,7 @@ declare global {
         options: any;
         processId?: string;
       }) => Promise<any[]>;
-      processWithStoredImages: (data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[]; prompt?: string }) => Promise<any>;
+      processWithStoredImages: (data: { processId: string; targetIndex?: number; baseImageData?: string | string[]; targetImageData?: string[]; prompt?: string; styleOptions?: any }) => Promise<any>;
       
       processImage: (data: any) => Promise<any>;
       analyzeColors: (imagePath: string) => Promise<any>;
@@ -40,8 +43,9 @@ declare global {
       exportProfile: (data: { sourceXmpPath: string; outputDir?: string }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
 
       // Recipe import/export
-      exportRecipe: (processId: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
-      importRecipe: () => Promise<{ success: boolean; count?: number; error?: string }>;
+      exportRecipe: (processId: string) => Promise<ExportResult>;
+      exportAllRecipes: () => Promise<ExportResult>;
+      importRecipe: () => Promise<ImportResult>;
       
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;
@@ -57,8 +61,10 @@ declare global {
       updateProcess: (processId: string, updates: any) => Promise<{ success: boolean; error?: string }>;
       deleteProcess: (processId: string) => Promise<{ success: boolean; error?: string }>;
       getProcess: (processId: string) => Promise<{ success: boolean; process?: any; error?: string }>;
-      getImageDataUrls: (processId: string) => Promise<{ success: boolean; baseImageUrl?: string; targetImageUrls?: string[]; error?: string }>;
+      getImageDataUrls: (processId: string) => Promise<{ success: boolean; baseImageUrls: string[]; targetImageUrls: string[]; error?: string }>;
       setBaseImage: (processId: string, filePath: string) => Promise<{ success: boolean; error?: string }>;
+      addBaseImages: (processId: string, filePaths: string[]) => Promise<{ success: boolean; count?: number; error?: string }>;
+      removeBaseImage: (processId: string, index: number) => Promise<{ success: boolean; error?: string }>;
 
       // Settings operations
       getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;

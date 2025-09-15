@@ -6,29 +6,11 @@ import {
   AccordionSummary,
   Box,
   Chip,
-  FormControlLabel,
   Paper,
   Slider,
-  Switch,
 } from '@mui/material';
 import React from 'react';
-
-interface StyleOptions {
-  warmth?: number;
-  tint?: number;
-  contrast?: number;
-  vibrance?: number;
-  moodiness?: number;
-  saturationBias?: number;
-  filmGrain?: boolean;
-  vibe?: string;
-  artistStyle?: {
-    key: string;
-    name: string;
-    category: string;
-    blurb: string;
-  };
-}
+import { StyleOptions } from '../../shared/types';
 
 interface FineTuneControlsProps {
   styleOptions?: StyleOptions;
@@ -83,15 +65,16 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
                 onChange={(_, v) => onStyleOptionsChange?.({ warmth: v as number })}
                 min={0}
                 max={100}
-                marks={[
-                  { value: 0, label: 'Cool' },
-                  { value: 50, label: 'Neutral' },
-                  { value: 100, label: 'Warm' },
-                ]}
+                marks={[{ value: 0 }, { value: 50 }, { value: 100 }]}
                 valueLabelDisplay="auto"
                 valueLabelFormat={v => `${(v as number) - 50}`}
                 color="primary"
               />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, px: 0.5 }}>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>Cool</span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>Neutral</span>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>Warm</span>
+              </Box>
             </Box>
 
             <Box>
@@ -219,17 +202,7 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
               />
             </Box>
 
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={!!styleOptions?.filmGrain}
-                  onChange={(_, c) => onStyleOptionsChange?.({ filmGrain: c })}
-                  size="small"
-                />
-              }
-              label="🎞️ Film Grain"
-              sx={{ mt: 0.5 }}
-            />
+            {/* Film grain switch moved to main options in ColorMatchingStudio */}
           </Box>
         </AccordionDetails>
       </Accordion>

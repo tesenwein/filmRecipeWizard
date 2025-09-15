@@ -19,20 +19,27 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
   const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
 
+  // Apply a global strength scaling to reduce effect intensity.
+  // Default to 0.5 based on feedback that presets were ~2x too strong.
+  const strength = typeof include?.strength === 'number' && Number.isFinite(include.strength)
+    ? Math.max(0, Math.min(2, include.strength))
+    : 0.5;
+  const scale = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined);
+
   // Sanitize all inputs
   // Use D65 (6500K) as a neutral default to avoid unintended warm/yellow bias
   const withDefault = (v: any, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
   const temp = round(clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000));
   const tint = round(clamp(withDefault(aiAdjustments.tint, 0), -150, 150));
-  const exposure = clamp(aiAdjustments.exposure as any, -5, 5);
-  const contrast = round(clamp(aiAdjustments.contrast as any, -100, 100));
-  const highlights = round(clamp(aiAdjustments.highlights as any, -100, 100));
-  const shadows = round(clamp(aiAdjustments.shadows as any, -100, 100));
-  const whites = round(clamp(aiAdjustments.whites as any, -100, 100));
-  const blacks = round(clamp(aiAdjustments.blacks as any, -100, 100));
-  const clarity = round(clamp(aiAdjustments.clarity as any, -100, 100));
-  const vibrance = round(clamp(aiAdjustments.vibrance as any, -100, 100));
-  const saturation = round(clamp(aiAdjustments.saturation as any, -100, 100));
+  const exposure = clamp(scale(aiAdjustments.exposure as any), -5, 5);
+  const contrast = round(clamp(scale(aiAdjustments.contrast as any), -100, 100));
+  const highlights = round(clamp(scale(aiAdjustments.highlights as any), -100, 100));
+  const shadows = round(clamp(scale(aiAdjustments.shadows as any), -100, 100));
+  const whites = round(clamp(scale(aiAdjustments.whites as any), -100, 100));
+  const blacks = round(clamp(scale(aiAdjustments.blacks as any), -100, 100));
+  const clarity = round(clamp(scale(aiAdjustments.clarity as any), -100, 100));
+  const vibrance = round(clamp(scale(aiAdjustments.vibrance as any), -100, 100));
+  const saturation = round(clamp(scale(aiAdjustments.saturation as any), -100, 100));
 
   const sanitizeName = (n: string) =>
     n
@@ -59,7 +66,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     // sharpenNoise and vignette currently not emitted in XMP (placeholders)
   } as const;
 
-  console.log('[XMP] include flags:', inc);
 
   // Build conditional blocks
   const wbBasicBlock = inc.wbBasic
@@ -78,15 +84,14 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   const shouldIncludeExposure = inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
-  console.log('[XMP] exposure:', { value: exposure, include: shouldIncludeExposure });
   const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(exposure)) : '';
 
   const parametricCurvesBlock = inc.curves
     ? [
-        tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows, -100, 100))),
-        tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks, -100, 100))),
-        tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights, -100, 100))),
-        tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights, -100, 100))),
+        tag('ParametricShadows', round(clamp(scale((aiAdjustments as any).parametric_shadows), -100, 100))),
+        tag('ParametricDarks', round(clamp(scale((aiAdjustments as any).parametric_darks), -100, 100))),
+        tag('ParametricLights', round(clamp(scale((aiAdjustments as any).parametric_lights), -100, 100))),
+        tag('ParametricHighlights', round(clamp(scale((aiAdjustments as any).parametric_highlights), -100, 100))),
         tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))),
         tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))),
         tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))),
@@ -120,22 +125,22 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue),
         tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple),
         tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta),
-        tag('SaturationAdjustmentRed', (aiAdjustments as any).sat_red),
-        tag('SaturationAdjustmentOrange', (aiAdjustments as any).sat_orange),
-        tag('SaturationAdjustmentYellow', (aiAdjustments as any).sat_yellow),
-        tag('SaturationAdjustmentGreen', (aiAdjustments as any).sat_green),
-        tag('SaturationAdjustmentAqua', (aiAdjustments as any).sat_aqua),
-        tag('SaturationAdjustmentBlue', (aiAdjustments as any).sat_blue),
-        tag('SaturationAdjustmentPurple', (aiAdjustments as any).sat_purple),
-        tag('SaturationAdjustmentMagenta', (aiAdjustments as any).sat_magenta),
-        tag('LuminanceAdjustmentRed', (aiAdjustments as any).lum_red),
-        tag('LuminanceAdjustmentOrange', (aiAdjustments as any).lum_orange),
-        tag('LuminanceAdjustmentYellow', (aiAdjustments as any).lum_yellow),
-        tag('LuminanceAdjustmentGreen', (aiAdjustments as any).lum_green),
-        tag('LuminanceAdjustmentAqua', (aiAdjustments as any).lum_aqua),
-        tag('LuminanceAdjustmentBlue', (aiAdjustments as any).lum_blue),
-        tag('LuminanceAdjustmentPurple', (aiAdjustments as any).lum_purple),
-        tag('LuminanceAdjustmentMagenta', (aiAdjustments as any).lum_magenta),
+        tag('SaturationAdjustmentRed', round(clamp(scale((aiAdjustments as any).sat_red), -100, 100))),
+        tag('SaturationAdjustmentOrange', round(clamp(scale((aiAdjustments as any).sat_orange), -100, 100))),
+        tag('SaturationAdjustmentYellow', round(clamp(scale((aiAdjustments as any).sat_yellow), -100, 100))),
+        tag('SaturationAdjustmentGreen', round(clamp(scale((aiAdjustments as any).sat_green), -100, 100))),
+        tag('SaturationAdjustmentAqua', round(clamp(scale((aiAdjustments as any).sat_aqua), -100, 100))),
+        tag('SaturationAdjustmentBlue', round(clamp(scale((aiAdjustments as any).sat_blue), -100, 100))),
+        tag('SaturationAdjustmentPurple', round(clamp(scale((aiAdjustments as any).sat_purple), -100, 100))),
+        tag('SaturationAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).sat_magenta), -100, 100))),
+        tag('LuminanceAdjustmentRed', round(clamp(scale((aiAdjustments as any).lum_red), -100, 100))),
+        tag('LuminanceAdjustmentOrange', round(clamp(scale((aiAdjustments as any).lum_orange), -100, 100))),
+        tag('LuminanceAdjustmentYellow', round(clamp(scale((aiAdjustments as any).lum_yellow), -100, 100))),
+        tag('LuminanceAdjustmentGreen', round(clamp(scale((aiAdjustments as any).lum_green), -100, 100))),
+        tag('LuminanceAdjustmentAqua', round(clamp(scale((aiAdjustments as any).lum_aqua), -100, 100))),
+        tag('LuminanceAdjustmentBlue', round(clamp(scale((aiAdjustments as any).lum_blue), -100, 100))),
+        tag('LuminanceAdjustmentPurple', round(clamp(scale((aiAdjustments as any).lum_purple), -100, 100))),
+        tag('LuminanceAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).lum_magenta), -100, 100))),
       ].join('')
     : '';
 
@@ -143,19 +148,19 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const colorGradingBlock = inc.colorGrading
     ? [
         tag('ColorGradeMidtoneHue', round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))),
-        tag('ColorGradeMidtoneSat', round(clamp((aiAdjustments as any).color_grade_midtone_sat, 0, 100))),
-        tag('ColorGradeMidtoneLum', round(clamp((aiAdjustments as any).color_grade_midtone_lum, -100, 100))),
+        tag('ColorGradeMidtoneSat', round(clamp(scale((aiAdjustments as any).color_grade_midtone_sat), 0, 100))),
+        tag('ColorGradeMidtoneLum', round(clamp(scale((aiAdjustments as any).color_grade_midtone_lum), -100, 100))),
         tag('ColorGradeShadowHue', round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))),
-        tag('ColorGradeShadowSat', round(clamp((aiAdjustments as any).color_grade_shadow_sat, 0, 100))),
-        tag('ColorGradeShadowLum', round(clamp((aiAdjustments as any).color_grade_shadow_lum, -100, 100))),
+        tag('ColorGradeShadowSat', round(clamp(scale((aiAdjustments as any).color_grade_shadow_sat), 0, 100))),
+        tag('ColorGradeShadowLum', round(clamp(scale((aiAdjustments as any).color_grade_shadow_lum), -100, 100))),
         tag('ColorGradeHighlightHue', round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))),
-        tag('ColorGradeHighlightSat', round(clamp((aiAdjustments as any).color_grade_highlight_sat, 0, 100))),
-        tag('ColorGradeHighlightLum', round(clamp((aiAdjustments as any).color_grade_highlight_lum, -100, 100))),
+        tag('ColorGradeHighlightSat', round(clamp(scale((aiAdjustments as any).color_grade_highlight_sat), 0, 100))),
+        tag('ColorGradeHighlightLum', round(clamp(scale((aiAdjustments as any).color_grade_highlight_lum), -100, 100))),
         tag('ColorGradeGlobalHue', round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))),
-        tag('ColorGradeGlobalSat', round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100))),
-        tag('ColorGradeGlobalLum', round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100))),
-        tag('ColorGradeBlending', round(clamp((aiAdjustments as any).color_grade_blending, 0, 100))),
-        tag('ColorGradeBalance', round(clamp((aiAdjustments as any).color_grade_balance, -100, 100))),
+        tag('ColorGradeGlobalSat', round(clamp(scale((aiAdjustments as any).color_grade_global_sat), 0, 100))),
+        tag('ColorGradeGlobalLum', round(clamp(scale((aiAdjustments as any).color_grade_global_lum), -100, 100))),
+        tag('ColorGradeBlending', round(clamp(scale((aiAdjustments as any).color_grade_blending), 0, 100))),
+        tag('ColorGradeBalance', round(clamp(scale((aiAdjustments as any).color_grade_balance), -100, 100))),
       ].join('')
     : '';
 
@@ -181,45 +186,47 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  // Masks block (skipped unless enabled). Emits Lightroom MaskGroupBasedCorrections.
-  const masksBlock = inc.masks && Array.isArray((aiAdjustments as any).masks)
+  // Masks block (skipped unless disabled). Emits Lightroom MaskGroupBasedCorrections.
+  const masksBlock = inc.masks
     ? (() => {
-        const masks = ((aiAdjustments as any).masks as any[]);
+        const masks = Array.isArray((aiAdjustments as any).masks) ? ((aiAdjustments as any).masks as any[]) : [];
         if (!masks.length) return '';
         const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
         const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
-        const nM1_1 = (v: any) => (typeof v === 'number' ? Math.max(-1, Math.min(1, v)) : undefined);
-        const tagIf = (k: string, val?: string | number) =>
+        const nM1_1_scaled = (v: any) => (typeof v === 'number' ? Math.max(-1, Math.min(1, v * strength)) : undefined);
+        // Removed unused tagIf function - using attrIf for all attributes
+        const attrIf = (k: string, val?: string | number) =>
           val === 0 || val === '0' || (val !== undefined && val !== null)
-            ? `<crs:${k}>${val}</crs:${k}>\n`
+            ? ` crs:${k}="${val}"`
             : '';
 
         const correctionLis = masks
           .map((m, i) => {
             const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
             const adj = m?.adjustments || {};
-            // Build adjustment tags using 2012 naming where applicable
-            const adjTags = [
-              tagIf('LocalSaturation2012', f3(nM1_1(adj.local_saturation) as any)),
-              tagIf('LocalExposure2012', f3(nM1_1(adj.local_exposure) as any)),
-              tagIf('LocalContrast2012', f3(nM1_1(adj.local_contrast) as any)),
-              tagIf('LocalHighlights2012', f3(nM1_1(adj.local_highlights) as any)),
-              tagIf('LocalShadows2012', f3(nM1_1(adj.local_shadows) as any)),
-              tagIf('LocalWhites2012', f3(nM1_1(adj.local_whites) as any)),
-              tagIf('LocalBlacks2012', f3(nM1_1(adj.local_blacks) as any)),
-              tagIf('LocalClarity2012', f3(nM1_1(adj.local_clarity) as any)),
-              tagIf('LocalDehaze', f3(nM1_1(adj.local_dehaze) as any)),
-              tagIf('LocalTemperature', f3(nM1_1(adj.local_temperature) as any)),
-              tagIf('LocalTint', f3(nM1_1(adj.local_tint) as any)),
-              tagIf('LocalTexture', f3(nM1_1(adj.local_texture) as any)),
-              tagIf('LocalCurveRefineSaturation', 100),
+            // Build adjustment attributes using 2012 naming where applicable
+            const adjAttrs = [
+              attrIf('LocalSaturation2012', f3(nM1_1_scaled(adj.local_saturation) as any)),
+              attrIf('LocalExposure2012', f3(nM1_1_scaled(adj.local_exposure) as any)),
+              attrIf('LocalContrast2012', f3(nM1_1_scaled(adj.local_contrast) as any)),
+              attrIf('LocalHighlights2012', f3(nM1_1_scaled(adj.local_highlights) as any)),
+              attrIf('LocalShadows2012', f3(nM1_1_scaled(adj.local_shadows) as any)),
+              attrIf('LocalWhites2012', f3(nM1_1_scaled(adj.local_whites) as any)),
+              attrIf('LocalBlacks2012', f3(nM1_1_scaled(adj.local_blacks) as any)),
+              attrIf('LocalClarity2012', f3(nM1_1_scaled(adj.local_clarity) as any)),
+              attrIf('LocalDehaze', f3(nM1_1_scaled(adj.local_dehaze) as any)),
+              attrIf('LocalTemperature', f3(nM1_1_scaled(adj.local_temperature) as any)),
+              attrIf('LocalTint', f3(nM1_1_scaled(adj.local_tint) as any)),
+              attrIf('LocalTexture', f3(nM1_1_scaled(adj.local_texture) as any)),
+              attrIf('LocalCurveRefineSaturation', 100),
             ]
               .filter(Boolean)
               .join('');
 
             // Build geometry li for mask
             let maskLi = '';
-            if (m?.type === 'linear') {
+            const mType: any = m?.type;
+            if (mType === 'linear') {
               const zx = f3(n0_1(m.zeroX));
               const zy = f3(n0_1(m.zeroY));
               const fx = f3(n0_1(m.fullX));
@@ -235,7 +242,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:ZeroY="${zy ?? '0.500'}"
          crs:FullX="${fx ?? '0.500'}"
          crs:FullY="${fy ?? '0.800'}"/>`;
-            } else if (m?.type === 'radial') {
+            } else if (mType === 'radial') {
               const top = f3(n0_1(m.top));
               const left = f3(n0_1(m.left));
               const bottom = f3(n0_1(m.bottom));
@@ -261,11 +268,11 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:Feather="${feather}"
          crs:Flipped="${m?.flipped ? 'true' : 'true'}"
          crs:Version="2"/>`;
-            } else if (m?.type === 'person' || m?.type === 'background' || m?.type === 'sky') {
+            } else if (mType === 'person' || mType === 'subject' || mType === 'background' || mType === 'sky') {
               // AI scene masks: Subject/People (1), Background (0), Sky (2)
               const rx = f3(n0_1(m.referenceX));
               const ry = f3(n0_1(m.referenceY));
-              const subType = m?.type === 'background' ? '0' : m?.type === 'sky' ? '2' : '1';
+              const subType = mType === 'background' ? '0' : mType === 'sky' ? '2' : '1';
               const subCat = typeof (m as any)?.subCategoryId === 'number' ? String((m as any).subCategoryId) : undefined;
               maskLi = `<rdf:li
          crs:What="Mask/Image"
@@ -350,8 +357,8 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
        crs:What="Correction"
        crs:CorrectionAmount="1"
        crs:CorrectionActive="true"
-       crs:CorrectionName="${name}">
-${adjTags}      <crs:CorrectionMasks>
+       crs:CorrectionName="${name}"${adjAttrs}>
+      <crs:CorrectionMasks>
        <rdf:Seq>
         ${maskLi}
        </rdf:Seq>
@@ -374,9 +381,9 @@ ${correctionLis}
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description
       xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
-      crs:Version="14.0"
-      crs:ProcessVersion="14.0"
-      crs:CameraProfile="${profileName}"
+      crs:Version="17.5"
+      crs:ProcessVersion="15.4"
+      crs:ProfileName="${profileName}"
       crs:Look=""
       crs:HasSettings="True"
       crs:PresetType="Normal"
@@ -384,7 +391,20 @@ ${correctionLis}
       crs:ClusterGroup="${groupName}"
       crs:PresetSubtype="Normal"
       crs:SupportsAmount="True"
+      crs:SupportsAmount2="True"
+      crs:SupportsColor="True"
+      crs:SupportsMonochrome="True"
       crs:Name="${presetName}">
+      <crs:Name>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${presetName}</rdf:li>
+        </rdf:Alt>
+      </crs:Name>
+      <crs:Group>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">Foto Recipe Wizard</rdf:li>
+        </rdf:Alt>
+      </crs:Group>
       ${treatmentTag}
 ${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}
       <!-- Masks (optional) -->

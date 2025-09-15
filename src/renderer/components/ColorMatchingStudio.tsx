@@ -1,5 +1,5 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Typography, FormControlLabel, Switch, Stack } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import TargetImageDisplay from './TargetImageDisplay';
 import StyleDescriptionCard from './StyleDescriptionCard';
@@ -8,34 +8,13 @@ import FineTuneControls from './FineTuneControls';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import FilmStylesCard from './FilmStylesCard';
 import ProcessButton from './ProcessButton';
+import { StyleOptions } from '../../shared/types';
 
-interface StyleOptions {
-  warmth?: number;
-  tint?: number;
-  contrast?: number;
-  vibrance?: number;
-  moodiness?: number;
-  saturationBias?: number;
-  filmGrain?: boolean;
-  vibe?: string;
-  artistStyle?: {
-    key: string;
-    name: string;
-    category: string;
-    blurb: string;
-  };
-  filmStyle?: {
-    key: string;
-    name: string;
-    category: string;
-    blurb: string;
-  };
-}
 
 interface ColorMatchingStudioProps {
-  onImagesSelected: (baseImage: string, targetImages: string[]) => void;
+  onImagesSelected: (baseImages: string[], targetImages: string[]) => void;
   onStartProcessing: () => void;
-  baseImage: string | null;
+  baseImages: string[];
   targetImages: string[];
   prompt: string;
   onPromptChange: (value: string) => void;
@@ -46,7 +25,7 @@ interface ColorMatchingStudioProps {
 const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   onImagesSelected,
   onStartProcessing,
-  baseImage,
+  baseImages,
   targetImages,
   prompt,
   onPromptChange,
@@ -54,7 +33,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   onStyleOptionsChange,
 }) => {
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
-  const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
+  const [basePreviews, setBasePreviews] = useState<string[]>([]);
+  const [preserveSkinTones, setPreserveSkinTones] = useState<boolean>(false);
 
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
@@ -72,11 +52,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'],
           },
         ],
-        properties: ['openFile'],
+        properties: ['openFile', 'multiSelections'],
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(result[0], targetImages);
+        onImagesSelected(result.slice(0, 3), targetImages);
       }
     } catch (error) {
       console.error('Error selecting base image:', error);
@@ -97,7 +77,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(baseImage || '', result);
+        onImagesSelected(baseImages, result.slice(0, 3));
       }
     } catch (error) {
       console.error('Error selecting target images:', error);
@@ -111,22 +91,42 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     onStyleOptionsChange?.({ vibe });
   };
 
-  // Convert base image for display if unsupported
+  // Convert base images for display if unsupported
   useEffect(() => {
     const run = async () => {
-      if (baseImage && !isSafeForImg(baseImage)) {
-        try {
-          const res = await window.electronAPI.generatePreview({ path: baseImage });
-          setBaseDisplay(res?.success ? res.previewPath : baseImage);
-        } catch {
-          setBaseDisplay(baseImage);
-        }
-      } else {
-        setBaseDisplay(baseImage);
+      if (!Array.isArray(baseImages) || baseImages.length === 0) {
+        setBasePreviews([]);
+        return;
+      }
+      try {
+        const previews = await Promise.all(
+          baseImages.slice(0, 3).map(async p => {
+            if (isSafeForImg(p)) return p;
+            try {
+              const res = await window.electronAPI.generatePreview({ path: p });
+              return res?.success ? res.previewPath : p;
+            } catch {
+              return p;
+            }
+          })
+        );
+        setBasePreviews(previews);
+      } catch {
+        setBasePreviews(baseImages.slice(0, 3));
       }
     };
     run();
-  }, [baseImage]);
+  }, [baseImages]);
+
+  // Remove handlers
+  const handleRemoveBase = (index: number) => {
+    const next = baseImages.filter((_, i) => i !== index);
+    onImagesSelected(next, targetImages);
+  };
+  const handleRemoveTarget = (index: number) => {
+    const next = targetImages.filter((_, i) => i !== index);
+    onImagesSelected(baseImages, next);
+  };
 
   // Generate previews for target images
   useEffect(() => {
@@ -158,6 +158,29 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     generateTargetPreviews();
   }, [targetImages]);
 
+  // Load current global setting for Preserve Skin Tones
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await window.electronAPI.getSettings();
+        if (res?.success && res.settings) {
+          // preserveSkinTones is a per-generation option, not a persistent setting
+          setPreserveSkinTones(false);
+        }
+      } catch {
+        // Ignore errors when loading settings
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const handleTogglePreserveSkin = async (checked: boolean) => {
+    setPreserveSkinTones(checked);
+    onStyleOptionsChange?.({ preserveSkinTones: checked });
+    // preserveSkinTones is a per-generation option, not a persistent setting
+  };
+
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, p: 1 }}>
       {/* Header */}
@@ -180,10 +203,40 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           targetImages={targetImages}
           targetPreviews={targetPreviews}
           onSelectImages={handleTargetImagesSelect}
+          onRemoveImage={handleRemoveTarget}
         />
 
         {/* Right Column - All Options */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Quick Options */}
+          <Paper className="card slide-in" elevation={0} sx={{ p: 2.5 }}>
+            <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
+              Options
+            </Typography>
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={!!styleOptions?.filmGrain}
+                    onChange={(_, c) => onStyleOptionsChange?.({ filmGrain: c })}
+                  />
+                }
+                label="Film Grain"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={preserveSkinTones}
+                    onChange={(_, c) => handleTogglePreserveSkin(c)}
+                  />
+                }
+                label="Preserve Skin Tones"
+              />
+            </Stack>
+          </Paper>
+
           <StyleDescriptionCard
             prompt={prompt}
             onPromptChange={onPromptChange}
@@ -202,9 +255,10 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           />
 
           <RecipeImageCard
-            baseImage={baseImage}
-            baseDisplay={baseDisplay}
-            onSelectImage={handleBaseImageSelect}
+            baseImages={baseImages}
+            basePreviews={basePreviews}
+            onSelectImages={handleBaseImageSelect}
+            onRemoveImage={handleRemoveBase}
           />
 
           <FineTuneControls
