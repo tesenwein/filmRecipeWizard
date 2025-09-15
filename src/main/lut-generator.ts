@@ -1,8 +1,6 @@
 import { AIColorAdjustments } from '../services/openai-color-analyzer';
 
 export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: number = 33, format: string = 'cube'): string {
-  console.log('[LUT] Generating LUT content:', { size, format, hasAdjustments: !!aiAdjustments });
-  console.log('[LUT] Input adjustments:', aiAdjustments);
 
   // Sanitize and clamp adjustment values with sensible defaults
   const isNum = (v: any): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -67,7 +65,6 @@ export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: numb
     lum_magenta: clamp(withDefault(aiAdjustments.lum_magenta, 0), -100, 100) / 100,
   } as const;
 
-  console.log('[LUT] Normalized adjustments:', adjustments);
 
   // Debug: Check if we have meaningful color adjustments
   const hasColorGrading = adjustments.shadowSat > 0.01 || adjustments.midtoneSat > 0.01 || adjustments.highlightSat > 0.01;
@@ -75,7 +72,6 @@ export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: numb
                            Math.abs(adjustments.hue_yellow) > 1 || Math.abs(adjustments.hue_green) > 1 ||
                            Math.abs(adjustments.hue_aqua) > 1 || Math.abs(adjustments.hue_blue) > 1 ||
                            Math.abs(adjustments.hue_purple) > 1 || Math.abs(adjustments.hue_magenta) > 1;
-  console.log('[LUT] Color adjustments status:', { hasColorGrading, hasHSLAdjustments });
 
   // Generate LUT based on format
   if (format === 'cube') {

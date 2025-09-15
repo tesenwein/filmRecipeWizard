@@ -41,7 +41,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
         const items = (result.history as any[]) || [];
         setHistory(items);
         const previews = items.map((p: any) =>
-          p?.recipeImageData && typeof p.recipeImageData === 'string' && p.recipeImageData.length > 0
+          p?.recipeImageData &&
+          typeof p.recipeImageData === 'string' &&
+          p.recipeImageData.length > 0
             ? `data:image/jpeg;base64,${p.recipeImageData}`
             : ''
         );
@@ -123,7 +125,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
               }
             }}
           >
-            Import Zip
+            Import Recipe
           </Button>
           <Button variant="contained" onClick={onNewProcess}>
             New Recipe

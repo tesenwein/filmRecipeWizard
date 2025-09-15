@@ -18,7 +18,6 @@ export class OpenAIColorAnalyzer {
         apiKey: key,
       });
       this.initialized = true;
-      console.log('[AI] OpenAI Color Analyzer initialized');
     } else {
       console.warn('[AI] OpenAI API key not provided');
     }
@@ -38,7 +37,6 @@ export class OpenAIColorAnalyzer {
       );
     }
 
-    console.log('[AI] Starting AI-powered color analysis');
 
     // Use provided base64 data first; otherwise, convert from file path if available
     const baseImageB64 = baseImageBase64
@@ -50,7 +48,6 @@ export class OpenAIColorAnalyzer {
 
     let completion;
     try {
-      console.log(`[AI] Calling OpenAI API with model: ${this.model}`);
 
       // Build content via helper (use auto-recognition masks for humans)
       const userContent: any[] = buildUserContentForAnalysis(
@@ -62,20 +59,6 @@ export class OpenAIColorAnalyzer {
         }
       );
 
-      // Debug: Log the complete prompt content being sent
-      console.log('[AI] === PROMPT DEBUG START ===');
-      console.log('[AI] Model:', this.model);
-      console.log('[AI] User content parts:', userContent.length);
-      userContent.forEach((content, index) => {
-        if (content.type === 'text') {
-          console.log(`[AI] Text part ${index + 1}:`, content.text);
-        } else if (content.type === 'image_url') {
-          console.log(
-            `[AI] Image part ${index + 1}: Base64 image (${content.image_url.url.length} chars)`
-          );
-        }
-      });
-      console.log('[AI] === PROMPT DEBUG END ===');
 
       const toolChoice = 'auto';
 
@@ -1178,12 +1161,6 @@ export class OpenAIColorAnalyzer {
     }
 
     // Debug: Log the complete response details
-    console.log('[AI] === RESPONSE DEBUG START ===');
-    console.log('[AI] Model used:', completion.model);
-    console.log('[AI] Usage:', completion.usage);
-    console.log('[AI] Finish reason:', completion.choices[0]?.finish_reason);
-    console.log('[AI] Response message:', JSON.stringify(completion.choices[0]?.message, null, 2));
-    console.log('[AI] === RESPONSE DEBUG END ===');
 
     // Parse tool calls response (support multiple calls to compose result)
     const message = completion.choices[0]?.message;
@@ -1196,7 +1173,6 @@ export class OpenAIColorAnalyzer {
         const adjustments = JSON.parse(
           (singleFull as any).function.arguments
         ) as AIColorAdjustments;
-        console.log('[AI] AI color analysis completed (single call)');
         return adjustments;
       }
 
@@ -1235,14 +1211,9 @@ export class OpenAIColorAnalyzer {
         }
       }
       if (masks.length) {
-        console.log(
-          `[AI] Generated ${masks.length} mask(s):`,
-          masks.map(m => `${m.name} (${m.type})`).join(', ')
-        );
         aggregated.masks = masks;
       }
       if (Object.keys(aggregated).length > 0) {
-        console.log('[AI] AI color analysis composed from multi-call tools');
         return aggregated as AIColorAdjustments;
       }
       console.warn('[AI] Tool calls found but no usable data composed');
@@ -1263,7 +1234,6 @@ export class OpenAIColorAnalyzer {
     if (jsonMatch) {
       try {
         const adjustments = JSON.parse(jsonMatch[0]) as AIColorAdjustments;
-        console.log('[AI] Parsed adjustments from text fallback');
         return adjustments;
       } catch {
         console.warn('[AI] Failed to parse JSON from text fallback');
@@ -1275,7 +1245,6 @@ export class OpenAIColorAnalyzer {
   }
 
   private async convertToBase64Jpeg(imagePath: string): Promise<string> {
-    console.log('[AI] Converting image to base64 JPEG:', path.basename(imagePath));
 
     try {
       // Convert any supported image format to JPEG and resize for API efficiency (1024px max long side)

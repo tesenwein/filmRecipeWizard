@@ -154,10 +154,6 @@ class FotoRecipeWizardApp {
 
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
-      console.log('[IPC] download-xmp called with data', {
-        include: data?.include,
-        hasAdjustments: !!data?.adjustments,
-      });
       try {
         // Generate XMP content
         const xmpContent = generateXMPContent(data.adjustments, data.include);
@@ -195,7 +191,6 @@ class FotoRecipeWizardApp {
           // Write the file
           const fs = require('fs').promises;
           await fs.writeFile(result.filePath, xmpContent, 'utf8');
-          console.log('[IPC] download-xmp completed:', { filePath: result.filePath });
           return { success: true, filePath: result.filePath };
         } else {
           return { success: false, error: 'Save canceled' };
@@ -240,10 +235,6 @@ class FotoRecipeWizardApp {
           styleOptions?: any;
         }
       ) => {
-        console.log('[IPC] process-with-stored-images called with:', {
-          processId: data.processId,
-          targetIndex: data.targetIndex,
-        });
 
         try {
           // Prefer inline base64 if provided by caller, otherwise load from storage
@@ -385,7 +376,6 @@ class FotoRecipeWizardApp {
             /* Ignore IPC send errors */
           }
 
-          console.log('[IPC] process-with-stored-images completed:', { success: result.success });
           return result;
         } catch (error) {
           console.error('[IPC] Error processing with stored images:', error);
@@ -440,12 +430,6 @@ class FotoRecipeWizardApp {
 
     // Handle processing for a single target (one reference + one target)
     ipcMain.handle('process-images', async (_event, data) => {
-      console.log('[IPC] process-images (single) called with:', {
-        baseImagePath: data?.baseImagePath,
-        targetImageCount: data?.targetImagePaths?.length,
-        hint: data?.hint,
-        processId: data?.processId,
-      });
 
       if (!this.mainWindow) return [];
 
@@ -513,14 +497,6 @@ class FotoRecipeWizardApp {
               results: persistedResults as any,
               ...(name ? { name } : {}),
             });
-            console.log('[IPC] process-images: results persisted to process', {
-              id: data.processId,
-              count: 1,
-            });
-          } else {
-            console.warn(
-              '[IPC] process-images: no processId provided; results not persisted automatically'
-            );
           }
         } catch (err) {
           console.error('[IPC] process-images: failed to persist results', err);
@@ -538,7 +514,6 @@ class FotoRecipeWizardApp {
     ipcMain.handle('load-history', async () => {
       try {
         const history = await this.storageService.loadHistory();
-        console.log('[IPC] load-history completed:', { count: history.length });
         return { success: true, history };
       } catch (error) {
         console.error('[IPC] Error loading history:', error);
@@ -605,11 +580,6 @@ class FotoRecipeWizardApp {
           } as ProcessHistory;
 
           await this.storageService.addProcess(process);
-          console.log('[IPC] save-process completed:', {
-            id: process.id,
-            hasRecipeImage: !!recipeImageData,
-            targetCount: targetImageDataEphemeral.length,
-          });
           return { success: true, process, targetImageData: targetImageDataEphemeral };
         } catch (error) {
           console.error('[IPC] Error saving process:', error);
@@ -626,7 +596,6 @@ class FotoRecipeWizardApp {
       async (_event, processId: string, updates: Partial<ProcessHistory>) => {
         try {
           await this.storageService.updateProcess(processId, updates);
-          console.log('[IPC] update-process completed:', { id: processId });
           return { success: true };
         } catch (error) {
           console.error('[IPC] Error updating process:', error);
@@ -641,7 +610,6 @@ class FotoRecipeWizardApp {
     ipcMain.handle('delete-process', async (_event, processId: string) => {
       try {
         await this.storageService.deleteProcess(processId);
-        console.log('[IPC] delete-process completed:', { id: processId });
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error deleting process:', error);
@@ -682,11 +650,6 @@ class FotoRecipeWizardApp {
         // Do not persist target images anymore; no target previews returned
         result.targetImageUrls = [];
 
-        console.log('[IPC] get-image-data-urls completed:', {
-          processId,
-          baseCount: result.baseImageUrls.length,
-          targetImageCount: result.targetImageUrls.length,
-        });
         return { success: true, ...result };
       } catch (error) {
         console.error('[IPC] Error getting image data URLs:', error);
@@ -885,7 +848,6 @@ class FotoRecipeWizardApp {
 
         // Write out the zip
         zip.writeZip(saveRes.filePath);
-        console.log('[IPC] export-recipe completed:', { filePath: saveRes.filePath });
         return { success: true, filePath: saveRes.filePath };
       } catch (error) {
         console.error('[IPC] Error exporting recipe:', error);
@@ -933,7 +895,6 @@ class FotoRecipeWizardApp {
         } as any;
 
         await this.storageService.addProcess(imported);
-        console.log('[IPC] import-recipe completed:', { id: newId });
         return { success: true, count: 1 };
       } catch (error) {
         console.error('[IPC] Error importing recipe:', error);
@@ -943,17 +904,9 @@ class FotoRecipeWizardApp {
 
     // Handle LUT generation and download
     ipcMain.handle('generate-lut', async (_event, data) => {
-      console.log('[IPC] generate-lut called with data', {
-        size: data?.size,
-        format: data?.format,
-        strength: data?.strength,
-        hasAdjustments: !!data?.adjustments,
-      });
       try {
         // Apply strength multiplier to adjustments if provided
         let adjustments = data.adjustments;
-        console.log('[IPC] Original adjustments:', adjustments);
-        console.log('[IPC] Strength parameter:', data.strength);
 
         if (data.strength !== undefined && data.strength !== 1.0) {
           // Create a copy of adjustments with strength applied

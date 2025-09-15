@@ -66,7 +66,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     // sharpenNoise and vignette currently not emitted in XMP (placeholders)
   } as const;
 
-  console.log('[XMP] include flags:', inc);
 
   // Build conditional blocks
   const wbBasicBlock = inc.wbBasic
@@ -85,7 +84,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   const shouldIncludeExposure = inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
-  console.log('[XMP] exposure:', { value: exposure, include: shouldIncludeExposure });
   const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(exposure)) : '';
 
   const parametricCurvesBlock = inc.curves

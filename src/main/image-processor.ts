@@ -29,7 +29,6 @@ export class ImageProcessor {
   private settingsService = new SettingsService();
 
   constructor() {
-    console.log('[PROCESSOR] ImageProcessor initialized with AI-only processing');
   }
 
   private async ensureAIAnalyzer(): Promise<OpenAIColorAnalyzer> {
@@ -41,7 +40,6 @@ export class ImageProcessor {
   }
 
   async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
-    console.log('[PROCESSOR] Starting AI-powered style matching');
     const analyzer = await this.ensureAIAnalyzer();
     if (!analyzer.isAvailable()) {
       throw new Error(
@@ -50,7 +48,6 @@ export class ImageProcessor {
     }
 
     try {
-      console.log('[PROCESSOR] Analyzing images with AI');
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
@@ -60,7 +57,6 @@ export class ImageProcessor {
         { preserveSkinTones: !!data.styleOptions?.preserveSkinTones }
       );
 
-      console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
 
       // No longer generating processed images - just return analysis
       return {
@@ -89,7 +85,6 @@ export class ImageProcessor {
     prompt?: string;
     styleOptions?: StyleOptions;
   }): Promise<ProcessingResult> {
-    console.log('[PROCESSOR] Starting AI color match analysis');
 
     const analyzer = await this.ensureAIAnalyzer();
     if (!analyzer.isAvailable()) {
@@ -147,7 +142,6 @@ export class ImageProcessor {
 
   // Legacy method for compatibility
   async analyzeColors(_imagePath: string): Promise<any> {
-    console.log('[PROCESSOR] analyzeColors called - this is a legacy method');
     return { histogram: {}, averageColor: {}, dominantColors: [] };
   }
 
@@ -161,7 +155,6 @@ export class ImageProcessor {
 
   // Set OpenAI API key
   async setOpenAIKey(key: string): Promise<void> {
-    console.log('[PROCESSOR] Setting OpenAI API key');
     await this.settingsService.saveSettings({ openaiKey: key });
     // Reset analyzer to use new key
     this.aiAnalyzer = null;
@@ -169,7 +162,6 @@ export class ImageProcessor {
 
   async generateLightroomPreset(data: any): Promise<ProcessingResult> {
     try {
-      console.log('[PROCESSOR] Generating Lightroom preset with adjustments:', data.adjustments);
 
       // Create presets directory
       const presetsDir = path.join(process.cwd(), 'presets');
@@ -182,7 +174,6 @@ export class ImageProcessor {
       const xmpContent = generateXMPContentImpl(data.adjustments, data.include);
       await fs.writeFile(presetPath, xmpContent, 'utf8');
 
-      console.log('[PROCESSOR] Lightroom preset saved to:', presetPath);
 
       return {
         success: true,
@@ -207,7 +198,6 @@ export class ImageProcessor {
     outputDir?: string;
   }): Promise<ProcessingResult> {
     try {
-      console.log('[PROCESSOR] Exporting Lightroom profile from:', data.sourceXmpPath);
       const result = await exportLightroomProfile(data.sourceXmpPath, data.outputDir);
       if (!result.success) {
         return { success: false, error: result.error || 'Profile export failed' };
@@ -227,7 +217,6 @@ export class ImageProcessor {
     data: any
   ): Promise<{ success: boolean; xmpContent?: string; error?: string }> {
     try {
-      console.log('[PROCESSOR] Generating camera profile from adjustments');
 
       const adjustments = data?.adjustments || {};
       // Get AI-generated name directly from adjustments (same as preset export)
