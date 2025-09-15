@@ -18,7 +18,7 @@ interface SetupWizardProps {
 }
 
 const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
-  const { saveSettings } = useAppStore();
+  const { saveSettings, setSetupCompleted, setSetupWizardOpen, importRecipes } = useAppStore() as any;
   const [currentStep, setCurrentStep] = useState(1);
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +45,13 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
     setIsLoading(true);
     try {
       await saveSettings({ setupCompleted: true });
+      // Defensively mark done and close to avoid any flicker
+      try {
+        setSetupCompleted(true);
+        setSetupWizardOpen(false);
+      } catch (error) {
+        console.warn('Failed to update setup state:', error);
+      }
       onComplete();
     } catch (error) {
       console.error('Failed to complete setup:', error);
@@ -190,7 +197,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
                     variant="outlined"
                     onClick={async () => {
                       try {
-                        await window.electronAPI.importRecipe();
+                        await importRecipes();
                       } catch (error) {
                         console.error('Failed to import recipes:', error);
                       }

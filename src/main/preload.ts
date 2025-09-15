@@ -54,6 +54,7 @@ const electronAPI = {
   setBaseImage: (processId: string, filePath: string) => ipcRenderer.invoke('set-base-image', processId, filePath),
   addBaseImages: (processId: string, filePaths: string[]) => ipcRenderer.invoke('add-base-images', processId, filePaths),
   removeBaseImage: (processId: string, index: number) => ipcRenderer.invoke('remove-base-image', processId, index),
+  clearHistory: () => ipcRenderer.invoke('clear-history'),
 
   // Settings operations
   getSettings: () => ipcRenderer.invoke('get-settings'),

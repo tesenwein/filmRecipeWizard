@@ -57,6 +57,7 @@ declare global {
 
       // Storage operations
       loadHistory: () => Promise<{ success: boolean; history?: any[]; error?: string }>;
+      clearHistory: () => Promise<void>;
       saveProcess: (processData: any) => Promise<{ success: boolean; process?: any; error?: string }>;
       updateProcess: (processId: string, updates: any) => Promise<{ success: boolean; error?: string }>;
       deleteProcess: (processId: string) => Promise<{ success: boolean; error?: string }>;

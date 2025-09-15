@@ -8,7 +8,6 @@ import IconSvg from '../../../assets/icons/icon.svg';
 import {
   ProcessHistory,
   ProcessingResult,
-  ProcessingState,
   StyleOptions,
 } from '../../shared/types';
 import { AlertProvider } from '../context/AlertContext';
@@ -22,7 +21,18 @@ import SetupWizard from './SetupWizard';
 
 const App: React.FC = () => {
   // Zustand store
-  const { setupWizardOpen, setSetupWizardOpen, setSetupCompleted, loadSettings } = useAppStore();
+  const {
+    setupWizardOpen,
+    setSetupWizardOpen,
+    setSetupCompleted,
+    loadSettings,
+    currentProcessId,
+    setCurrentProcessId,
+    processingState,
+    setProcessingState,
+    saveRecipe,
+    updateRecipeInStorage
+  } = useAppStore();
 
   // Simple hash-based router with query support
   const parseHash = () => {
@@ -38,17 +48,11 @@ const App: React.FC = () => {
 
   const [baseImages, setBaseImages] = useState<string[]>([]);
   const [targetImages, setTargetImages] = useState<string[]>([]);
-  const [processingState, setProcessingState] = useState<ProcessingState>({
-    isProcessing: false,
-    progress: 0,
-    status: '',
-  });
   const [prompt, setPrompt] = useState<string>('');
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [currentStep, setCurrentStep] = useState<'history' | 'upload' | 'processing' | 'results'>(
     'history'
   );
-  const [currentProcessId, setCurrentProcessId] = useState<string | null>(null);
   const currentProcessIdRef = useRef<string | null>(null);
   useEffect(() => {
     currentProcessIdRef.current = currentProcessId;
@@ -64,6 +68,15 @@ const App: React.FC = () => {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  // Listen for close settings event
+  useEffect(() => {
+    const handleCloseSettings = () => {
+      setSettingsOpen(false);
+    };
+    window.addEventListener('close-settings', handleCloseSettings);
+    return () => window.removeEventListener('close-settings', handleCloseSettings);
+  }, []);
 
   const handleImagesSelected = (bases: string[], targets: string[]) => {
     setBaseImages(bases.slice(0, 3));
@@ -87,11 +100,14 @@ const App: React.FC = () => {
         userOptions: styleOptions,
       } as any;
 
+      // Call electronAPI directly to get the base64 data for processing
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
         newProcessId = result.process.id;
         setCurrentProcessId(newProcessId);
         currentProcessIdRef.current = newProcessId;
+        // Update the store separately
+        await saveRecipe(processData);
         // Use the single recipe image (first reference) for processing only
         returnedBase64.base = result?.process?.recipeImageData
           ? [result.process.recipeImageData]
@@ -128,11 +144,11 @@ const App: React.FC = () => {
   };
 
   const handleProcessingUpdate = (progress: number, status: string) => {
-    setProcessingState(prev => ({
-      ...prev,
+    setProcessingState({
+      isProcessing: processingState.isProcessing,
       progress,
       status,
-    }));
+    });
   };
 
   const handleProcessingComplete = async (processingResults: any[]) => {
@@ -147,18 +163,17 @@ const App: React.FC = () => {
     }));
 
     setResults(results);
-    setProcessingState(prev => ({
-      ...prev,
+    setProcessingState({
       isProcessing: false,
       progress: 100,
       status: 'Processing complete!',
-    }));
+    });
 
     // Update process in storage
     const pid = currentProcessIdRef.current;
     if (pid) {
       try {
-        await window.electronAPI.updateProcess(pid, {
+        await updateRecipeInStorage(pid, {
           results,
         });
       } catch (error) {
@@ -495,7 +510,9 @@ const App: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <SetupWizard open={setupWizardOpen} onComplete={handleSetupComplete} />
+      {setupWizardOpen && (
+        <SetupWizard open={true} onComplete={handleSetupComplete} />
+      )}
       </div>
     </AlertProvider>
   );

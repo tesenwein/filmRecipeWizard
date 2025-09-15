@@ -17,6 +17,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { ProcessHistory } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
+import { useAppStore } from '../store/appStore';
 import SingleImage from './SingleImage';
 
 interface HistoryViewProps {
@@ -25,50 +26,32 @@ interface HistoryViewProps {
 }
 
 const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess }) => {
-  const [history, setHistory] = useState<ProcessHistory[]>([]);
-  const [basePreviews, setBasePreviews] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    recipes,
+    recipesLoading,
+    generatingRecipes,
+    loadRecipes,
+    deleteRecipe,
+    importRecipes,
+    exportRecipe,
+    exportAllRecipes
+  } = useAppStore();
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null);
   const { showSuccess, showError } = useAlert();
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    loadRecipes();
+  }, [loadRecipes]);
 
-  // Poll for updates on generating processes
-  useEffect(() => {
-    const hasGeneratingProcesses = history.some(p => p.status === 'generating');
-    if (!hasGeneratingProcesses) return;
-
-    const interval = setInterval(() => {
-      loadHistory();
-    }, 3000); // Check every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [history]);
-
-  const loadHistory = async () => {
-    try {
-      const result = await window.electronAPI.loadHistory();
-      if (result.success) {
-        const items = (result.history as any[]) || [];
-        setHistory(items);
-        const previews = items.map((p: any) =>
-          p?.recipeImageData &&
-          typeof p.recipeImageData === 'string' &&
-          p.recipeImageData.length > 0
-            ? `data:image/jpeg;base64,${p.recipeImageData}`
-            : ''
-        );
-        setBasePreviews(previews);
-      }
-    } catch (error) {
-      console.error('Failed to load history:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const basePreviews = recipes.map((p: ProcessHistory) =>
+    p?.recipeImageData &&
+    typeof p.recipeImageData === 'string' &&
+    p.recipeImageData.length > 0
+      ? `data:image/jpeg;base64,${p.recipeImageData}`
+      : ''
+  );
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, processId: string) => {
     event.stopPropagation();
@@ -86,10 +69,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
     handleMenuClose();
     if (confirm('Are you sure you want to delete this process?')) {
       try {
-        await window.electronAPI.deleteProcess(selectedProcessId);
-        await loadHistory(); // Reload history
+        await deleteRecipe(selectedProcessId);
       } catch (error) {
         console.error('Failed to delete process:', error);
+        showError('Failed to delete recipe');
       }
     }
   };
@@ -97,9 +80,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
   const handleExportProcess = async () => {
     if (!selectedProcessId) return;
     handleMenuClose();
-    const res = await window.electronAPI.exportRecipe(selectedProcessId);
-    if (!res.success && res.error && res.error !== 'Export canceled') {
-      showError(`Export failed: ${res.error}`);
+    try {
+      const res = await exportRecipe(selectedProcessId);
+      if (!res.success && res.error && res.error !== 'Export canceled') {
+        showError(`Export failed: ${res.error}`);
+      }
+    } catch {
+      showError('Export failed');
     }
   };
 
@@ -107,7 +94,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
     return new Date(timestamp).toLocaleString();
   };
 
-  if (loading) {
+  if (recipesLoading) {
     return (
       <div className="container" style={{ textAlign: 'center', padding: '60px' }}>
         <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚡</div>
@@ -131,14 +118,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
           <Button
             variant="outlined"
             onClick={async () => {
-              const res = await window.electronAPI.importRecipe();
-              if (res.success) {
-                await loadHistory();
-                if (res.count && res.count > 1) {
+              try {
+                const res = await importRecipes();
+                if (res.success && res.count && res.count > 1) {
                   showSuccess(`Successfully imported ${res.count} recipes`);
                 }
-              } else if (res.error && res.error !== 'Import canceled') {
-                showError(`Import failed: ${res.error}`);
+              } catch {
+                showError('Import failed');
               }
             }}
           >
@@ -147,14 +133,16 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
           <Button
             variant="outlined"
             onClick={async () => {
-              const res = await window.electronAPI.exportAllRecipes();
-              if (res.success && res.count) {
-                showSuccess(`Successfully exported ${res.count} recipes`);
-              } else if (!res.success && res.error && res.error !== 'Export canceled') {
-                showError(`Export failed: ${res.error}`);
+              try {
+                const res = await exportAllRecipes();
+                if (res.success && res.count) {
+                  showSuccess(`Successfully exported ${res.count} recipes`);
+                }
+              } catch {
+                showError('Export failed');
               }
             }}
-            disabled={history.length === 0 || history.some(p => p.status === 'generating')}
+            disabled={recipes.length === 0 || generatingRecipes.size > 0}
           >
             Export All
           </Button>
@@ -164,7 +152,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
         </Grid>
       </Grid>
 
-      {history.length === 0 ? (
+      {recipes.length === 0 ? (
         <Card sx={{ p: 6, textAlign: 'center' }}>
           <Typography variant="h3" sx={{ opacity: 0.5, mb: 2 }}>
             📥
@@ -181,7 +169,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
         </Card>
       ) : (
         <Grid container spacing={2}>
-          {history.map((process, index) => (
+          {recipes.map((process, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={process.id}>
               <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
                 {/* Menu button (top-right) */}
@@ -211,12 +199,12 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                 </IconButton>
                 <CardActionArea
                   onClick={() => {
-                    if (process.status !== 'generating') {
+                    if (!generatingRecipes.has(process.id)) {
                       onOpenRecipe(process);
                     }
                   }}
                   sx={{
-                    ...(process.status === 'generating' && {
+                    ...(generatingRecipes.has(process.id) && {
                       pointerEvents: 'none',
                       opacity: 0.7,
                     }),
@@ -227,7 +215,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                       source={basePreviews[index] || undefined}
                       alt={`Recipe ${index + 1}`}
                       fit="contain"
-                      isGenerating={process.status === 'generating'}
+                      isGenerating={generatingRecipes.has(process.id)}
                     />
                   </div>
                   <CardContent>
@@ -258,13 +246,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                   <Button
                     variant="outlined"
                     fullWidth
-                    disabled={process.status === 'generating'}
+                    disabled={generatingRecipes.has(process.id)}
                     onClick={e => {
                       e.stopPropagation();
                       onOpenRecipe(process);
                     }}
                   >
-                    {process.status === 'generating' ? 'Generating...' : 'Open'}
+                    {generatingRecipes.has(process.id) ? 'Generating...' : 'Open'}
                   </Button>
                 </CardContent>
               </Card>

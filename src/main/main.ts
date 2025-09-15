@@ -777,6 +777,17 @@ class FotoRecipeWizardApp {
       }
     });
 
+    // Fast clear of all history
+    ipcMain.handle('clear-history', async () => {
+      try {
+        await this.storageService.clearHistory();
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error clearing history:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Export a recipe (process) to a ZIP file
     ipcMain.handle('export-recipe', async (_event, processId: string): Promise<ExportResult> => {
       try {

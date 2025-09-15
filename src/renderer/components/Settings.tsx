@@ -140,6 +140,10 @@ const Settings: React.FC = () => {
     setStatus(null);
     try {
       setStatus({ type: 'success', msg: 'Setup reset and all recipes deleted - refreshing app...' });
+      // Close settings after a brief delay, before the app refreshes
+      setTimeout(() => {
+        window.dispatchEvent(new Event('close-settings'));
+      }, 1000);
       await resetApp();
     } catch (error) {
       console.error('Reset setup error:', error);
