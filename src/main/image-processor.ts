@@ -687,6 +687,7 @@ export class ImageProcessor {
       if (!inc.masks) return '';
       const masks = (aiAdjustments as any)?.masks as any[] | undefined;
       if (!Array.isArray(masks) || masks.length === 0) return '';
+      console.log(`[XMP] Exporting ${masks.length} mask(s) to XMP:`, masks.map(m => m.name).join(', '));
       const num = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
       const fmt = (v: any) =>
         typeof v === 'number' && Number.isFinite(v)

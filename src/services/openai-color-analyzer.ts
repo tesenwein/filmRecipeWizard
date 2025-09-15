@@ -53,6 +53,9 @@ export class OpenAIColorAnalyzer {
       console.log(`[AI] Calling OpenAI API with model: ${this.model}`);
 
       // Build content via helper (use auto-recognition masks for humans)
+      if (options?.emphasize3DPop) {
+        console.log('[AI] Emphasize 3D Pop enabled - expecting Subject and Background masks');
+      }
       const userContent: any[] = buildUserContentForAnalysis(baseImageB64 as any, targetImageB64, hint, {
         preserveSkinTones: options?.preserveSkinTones,
         emphasize3DPop: options?.emphasize3DPop,
@@ -72,6 +75,8 @@ export class OpenAIColorAnalyzer {
         }
       });
       console.log('[AI] === PROMPT DEBUG END ===');
+
+      const toolChoice = options?.emphasize3DPop ? 'required' : 'auto';
 
       completion = await this.openai.chat.completions.create({
         model: this.model,
@@ -890,7 +895,23 @@ export class OpenAIColorAnalyzer {
                   zeroY: { type: 'number', minimum: 0, maximum: 1 },
                   fullX: { type: 'number', minimum: 0, maximum: 1 },
                   fullY: { type: 'number', minimum: 0, maximum: 1 },
-                  adjustments: { $ref: '#/tools/0/function/parameters/properties/adjustments' }
+                  adjustments: {
+                    type: 'object',
+                    properties: {
+                      local_exposure: { type: 'number', minimum: -1, maximum: 1 },
+                      local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                      local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                      local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                      local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                      local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                      local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                      local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                      local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                      local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                      local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
+                    }
+                  }
                 },
                 required: ['zeroX','zeroY','fullX','fullY']
               }
@@ -915,7 +936,23 @@ export class OpenAIColorAnalyzer {
                   midpoint: { type: 'number', minimum: 0, maximum: 100 },
                   roundness: { type: 'number', minimum: -100, maximum: 100 },
                   feather: { type: 'number', minimum: 0, maximum: 100 },
-                  adjustments: { $ref: '#/tools/0/function/parameters/properties/adjustments' }
+                  adjustments: {
+                    type: 'object',
+                    properties: {
+                      local_exposure: { type: 'number', minimum: -1, maximum: 1 },
+                      local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                      local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                      local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                      local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                      local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                      local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                      local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                      local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                      local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                      local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
+                    }
+                  }
                 },
                 required: ['top','left','bottom','right']
               }
@@ -933,7 +970,23 @@ export class OpenAIColorAnalyzer {
                   inverted: { type: 'boolean' },
                   referenceX: { type: 'number', minimum: 0, maximum: 1 },
                   referenceY: { type: 'number', minimum: 0, maximum: 1 },
-                  adjustments: { $ref: '#/tools/0/function/parameters/properties/adjustments' }
+                  adjustments: {
+                    type: 'object',
+                    properties: {
+                      local_exposure: { type: 'number', minimum: -1, maximum: 1 },
+                      local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                      local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                      local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                      local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                      local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                      local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                      local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                      local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                      local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                      local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
+                    }
+                  }
                 },
                 required: ['referenceX','referenceY']
               }
@@ -952,7 +1005,23 @@ export class OpenAIColorAnalyzer {
                   referenceX: { type: 'number', minimum: 0, maximum: 1 },
                   referenceY: { type: 'number', minimum: 0, maximum: 1 },
                   subCategoryId: { type: 'number' },
-                  adjustments: { $ref: '#/tools/0/function/parameters/properties/adjustments' }
+                  adjustments: {
+                    type: 'object',
+                    properties: {
+                      local_exposure: { type: 'number', minimum: -1, maximum: 1 },
+                      local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                      local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                      local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                      local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                      local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                      local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                      local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                      local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                      local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                      local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
+                    }
+                  }
                 },
                 required: ['referenceX','referenceY']
               }
@@ -970,7 +1039,23 @@ export class OpenAIColorAnalyzer {
                   inverted: { type: 'boolean' },
                   referenceX: { type: 'number', minimum: 0, maximum: 1 },
                   referenceY: { type: 'number', minimum: 0, maximum: 1 },
-                  adjustments: { $ref: '#/tools/0/function/parameters/properties/adjustments' }
+                  adjustments: {
+                    type: 'object',
+                    properties: {
+                      local_exposure: { type: 'number', minimum: -1, maximum: 1 },
+                      local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                      local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                      local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                      local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                      local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                      local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                      local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                      local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                      local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                      local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
+                    }
+                  }
                 },
                 required: ['referenceX','referenceY']
               }
@@ -988,7 +1073,23 @@ export class OpenAIColorAnalyzer {
                   invert: { type: 'boolean' },
                   colorAmount: { type: 'number', minimum: 0, maximum: 1 },
                   pointModels: { type: 'array', items: { type: 'array', items: { type: 'number' } } },
-                  adjustments: { $ref: '#/tools/0/function/parameters/properties/adjustments' }
+                  adjustments: {
+                    type: 'object',
+                    properties: {
+                      local_exposure: { type: 'number', minimum: -1, maximum: 1 },
+                      local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                      local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                      local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                      local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                      local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                      local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                      local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                      local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                      local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                      local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
+                    }
+                  }
                 },
                 required: ['colorAmount']
               }
@@ -1006,7 +1107,23 @@ export class OpenAIColorAnalyzer {
                   invert: { type: 'boolean' },
                   lumRange: { type: 'array', items: { type: 'number' }, minItems: 4, maxItems: 4 },
                   luminanceDepthSampleInfo: { type: 'array', items: { type: 'number' }, minItems: 3, maxItems: 3 },
-                  adjustments: { $ref: '#/tools/0/function/parameters/properties/adjustments' }
+                  adjustments: {
+                    type: 'object',
+                    properties: {
+                      local_exposure: { type: 'number', minimum: -1, maximum: 1 },
+                      local_contrast: { type: 'number', minimum: -1, maximum: 1 },
+                      local_highlights: { type: 'number', minimum: -1, maximum: 1 },
+                      local_shadows: { type: 'number', minimum: -1, maximum: 1 },
+                      local_whites: { type: 'number', minimum: -1, maximum: 1 },
+                      local_blacks: { type: 'number', minimum: -1, maximum: 1 },
+                      local_clarity: { type: 'number', minimum: -1, maximum: 1 },
+                      local_dehaze: { type: 'number', minimum: -1, maximum: 1 },
+                      local_temperature: { type: 'number', minimum: -1, maximum: 1 },
+                      local_tint: { type: 'number', minimum: -1, maximum: 1 },
+                      local_texture: { type: 'number', minimum: -1, maximum: 1 },
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
+                    }
+                  }
                 },
                 required: ['lumRange']
               }
@@ -1014,7 +1131,7 @@ export class OpenAIColorAnalyzer {
           },
         ],
         // Encourage/require tool use: when 3D Pop is emphasized, require tool calls (no plain text)
-        tool_choice: options?.emphasize3DPop ? 'required' : 'auto',
+        tool_choice: toolChoice,
       });
     } catch (error) {
       console.error('[AI] OpenAI API call failed:', error);
@@ -1078,7 +1195,12 @@ export class OpenAIColorAnalyzer {
           console.warn('[AI] Failed to parse tool_call args for', name);
         }
       }
-      if (masks.length) aggregated.masks = masks;
+      if (masks.length) {
+        console.log(`[AI] Generated ${masks.length} mask(s):`, masks.map(m => `${m.name} (${m.type})`).join(', '));
+        aggregated.masks = masks;
+      } else if (options?.emphasize3DPop) {
+        console.log('[AI] No masks generated despite 3D Pop being enabled');
+      }
       if (Object.keys(aggregated).length > 0) {
         console.log('[AI] AI color analysis composed from multi-call tools');
         return aggregated as AIColorAdjustments;
