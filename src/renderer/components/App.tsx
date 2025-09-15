@@ -347,6 +347,25 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
+  // Enable file drag-and-drop across the app without navigating away
+  useEffect(() => {
+    const preventDefault = (e: DragEvent) => {
+      e.preventDefault();
+      // Improve UX: indicate copy action when dragging files
+      try {
+        if (e.type === 'dragover' && e.dataTransfer) {
+          e.dataTransfer.dropEffect = 'copy';
+        }
+      } catch {}
+    };
+    window.addEventListener('dragover', preventDefault);
+    window.addEventListener('drop', preventDefault);
+    return () => {
+      window.removeEventListener('dragover', preventDefault);
+      window.removeEventListener('drop', preventDefault);
+    };
+  }, []);
+
   // When navigating to create, default to upload step if nothing selected
   useEffect(() => {
     if (route === '/create' && !processingState.isProcessing && currentStep === 'gallery') {
