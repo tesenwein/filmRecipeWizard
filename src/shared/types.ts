@@ -63,3 +63,16 @@ export interface ProfileExportResult {
 export interface AppSettings {
   openaiKey?: string;
 }
+
+export interface ExportResult {
+  success: boolean;
+  filePath?: string;
+  count?: number;
+  error?: string;
+}
+
+export interface ImportResult {
+  success: boolean;
+  count?: number;
+  error?: string;
+}

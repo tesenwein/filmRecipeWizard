@@ -209,6 +209,20 @@ export class StorageService {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
 
+  async clearHistory(): Promise<void> {
+    await this.initialize();
+    await this.backupHistoryFile();
+
+    // Write empty history
+    const emptyHistory: ProcessHistory[] = [];
+    const temp = `${this.storageFile}.tmp`;
+
+    await fs.writeFile(temp, JSON.stringify(emptyHistory, null, 2));
+    await fs.rename(temp, this.storageFile);
+
+    await this.cleanupTempFiles();
+  }
+
   // Convert an image file to base64 JPEG data
   async convertImageToBase64(imagePath: string): Promise<string> {
     try {

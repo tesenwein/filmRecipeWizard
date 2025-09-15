@@ -29,6 +29,7 @@ const electronAPI = {
   exportProfile: (data: { sourceXmpPath: string; outputDir?: string }) => ipcRenderer.invoke('export-profile', data),
   // Recipe import/export
   exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
+  exportAllRecipes: () => ipcRenderer.invoke('export-all-recipes'),
   importRecipe: () => ipcRenderer.invoke('import-recipe'),
 
   // Progress monitoring

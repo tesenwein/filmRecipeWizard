@@ -1,3 +1,5 @@
+import { ExportResult, ImportResult } from '../shared/types';
+
 export {}
 
 declare global {
@@ -41,8 +43,9 @@ declare global {
       exportProfile: (data: { sourceXmpPath: string; outputDir?: string }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
 
       // Recipe import/export
-      exportRecipe: (processId: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
-      importRecipe: () => Promise<{ success: boolean; count?: number; error?: string }>;
+      exportRecipe: (processId: string) => Promise<ExportResult>;
+      exportAllRecipes: () => Promise<ExportResult>;
+      importRecipe: () => Promise<ImportResult>;
       
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;

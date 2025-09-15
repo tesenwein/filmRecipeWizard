@@ -120,12 +120,29 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
               const res = await window.electronAPI.importRecipe();
               if (res.success) {
                 await loadHistory();
+                if (res.count && res.count > 1) {
+                  alert(`Successfully imported ${res.count} recipes`);
+                }
               } else if (res.error && res.error !== 'Import canceled') {
                 alert(`Import failed: ${res.error}`);
               }
             }}
           >
             Import Recipe
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={async () => {
+              const res = await window.electronAPI.exportAllRecipes();
+              if (res.success && res.count) {
+                alert(`Successfully exported ${res.count} recipes`);
+              } else if (!res.success && res.error && res.error !== 'Export canceled') {
+                alert(`Export failed: ${res.error}`);
+              }
+            }}
+            disabled={history.length === 0}
+          >
+            Export All
           </Button>
           <Button variant="contained" onClick={onNewProcess}>
             New Recipe

@@ -9,7 +9,7 @@ import {
 } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { AppSettings, ProcessHistory } from '../shared/types';
+import { AppSettings, ProcessHistory, ExportResult, ImportResult } from '../shared/types';
 import { ImageProcessor } from './image-processor';
 import { generateLUTContent } from './lut-generator';
 import { SettingsService } from './settings-service';
@@ -758,7 +758,7 @@ class FotoRecipeWizardApp {
     });
 
     // Export a recipe (process) to a ZIP file
-    ipcMain.handle('export-recipe', async (_event, processId: string) => {
+    ipcMain.handle('export-recipe', async (_event, processId: string): Promise<ExportResult> => {
       try {
         if (!processId) throw new Error('No processId provided');
         const process = await this.storageService.getProcess(processId);
@@ -849,11 +849,99 @@ class FotoRecipeWizardApp {
       }
     });
 
-    // Import a recipe ZIP and add to history
-    ipcMain.handle('import-recipe', async () => {
+    // Export all recipes to a ZIP file
+    ipcMain.handle('export-all-recipes', async (): Promise<ExportResult> => {
+      try {
+        const history = await this.storageService.loadHistory();
+        if (!history || history.length === 0) {
+          throw new Error('No recipes to export');
+        }
+
+        const saveRes = await dialog.showSaveDialog({
+          title: 'Export All Recipes (ZIP)',
+          defaultPath: `All-Recipes-${new Date().toISOString().split('T')[0]}.frw.zip`,
+          filters: [
+            { name: 'Foto Recipe Wizard Zip', extensions: ['zip'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+        if (saveRes.canceled || !saveRes.filePath) {
+          return { success: false, error: 'Export canceled' };
+        }
+
+        // Build ZIP contents
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip();
+
+        // Write manifest with all processes
+        const manifest = {
+          schema: 'foto-recipe-wizard-bulk@1',
+          exportedAt: new Date().toISOString(),
+          count: history.length,
+          processes: history,
+        };
+        zip.addFile('all-recipes.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
+
+        // Export recipe images and XMP presets for each process
+        for (let i = 0; i < history.length; i++) {
+          const process = history[i];
+          const processDir = `recipe-${i + 1}-${process.id}`;
+
+          // Add recipe image if available
+          if ((process as any).recipeImageData) {
+            const buf = Buffer.from((process as any).recipeImageData, 'base64');
+            zip.addFile(`${processDir}/recipe.jpg`, buf);
+          }
+
+          // Add XMP presets for each result
+          try {
+            const results = Array.isArray(process.results) ? process.results : [];
+            results.forEach((r, idx) => {
+              const adj = r?.metadata?.aiAdjustments;
+              if (!adj) return;
+              const include = {
+                wbBasic: true,
+                hsl: true,
+                colorGrading: true,
+                curves: true,
+                sharpenNoise: true,
+                vignette: true,
+                pointColor: true,
+                grain: true,
+                exposure: false,
+                masks: false,
+              } as any;
+              const xmp = generateXMPContent(adj as any, include);
+              const name = (adj as any)?.preset_name as string | undefined;
+              const safePreset = (name || `Preset-${idx + 1}`)
+                .replace(/[^A-Za-z0-9 _-]+/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .replace(/\s/g, '-');
+              zip.addFile(
+                `${processDir}/presets/${safePreset || `Preset-${idx + 1}`}.xmp`,
+                Buffer.from(xmp, 'utf8')
+              );
+            });
+          } catch (e) {
+            console.warn(`[IPC] export-all-recipes: failed to add XMP presets for process ${process.id}:`, e);
+          }
+        }
+
+        // Write out the zip
+        zip.writeZip(saveRes.filePath);
+        return { success: true, filePath: saveRes.filePath, count: history.length };
+      } catch (error) {
+        console.error('[IPC] Error exporting all recipes:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Import recipe(s) from ZIP and replace existing history
+    ipcMain.handle('import-recipe', async (): Promise<ImportResult> => {
       try {
         const openRes = await dialog.showOpenDialog({
-          title: 'Import Recipe (ZIP)',
+          title: 'Import Recipe(s) (ZIP)',
           filters: [
             { name: 'ZIP Files', extensions: ['zip'] },
             { name: 'All Files', extensions: ['*'] },
@@ -867,29 +955,69 @@ class FotoRecipeWizardApp {
         const filePath = openRes.filePaths[0];
         const AdmZip = require('adm-zip');
         const zip = new AdmZip(filePath);
-        const entry = zip.getEntry('recipe.json');
-        if (!entry) throw new Error('Invalid recipe file: recipe.json not found');
-        const json = entry.getData().toString('utf8');
-        const parsed = JSON.parse(json);
-        const process = parsed?.process;
-        if (!process || !Array.isArray(process.results)) {
-          throw new Error('Invalid recipe manifest');
+
+        // Check for bulk export (all-recipes.json)
+        const bulkEntry = zip.getEntry('all-recipes.json');
+        if (bulkEntry) {
+          // Handle bulk import
+          const json = bulkEntry.getData().toString('utf8');
+          const parsed = JSON.parse(json);
+
+          if (parsed.schema !== 'foto-recipe-wizard-bulk@1' || !Array.isArray(parsed.processes)) {
+            throw new Error('Invalid bulk recipe manifest');
+          }
+
+          // Clear existing history and import all recipes
+          await this.storageService.clearHistory();
+
+          let importedCount = 0;
+          for (const process of parsed.processes) {
+            if (process && Array.isArray(process.results)) {
+              // Normalize and assign a new id/timestamp to avoid collisions
+              const newId = this.storageService.generateProcessId();
+              const imported = {
+                id: newId,
+                timestamp: new Date().toISOString(),
+                name: process.name,
+                prompt: process.prompt,
+                userOptions: process.userOptions,
+                results: process.results,
+                recipeImageData: (process as any).recipeImageData,
+              } as any;
+
+              await this.storageService.addProcess(imported);
+              importedCount++;
+            }
+          }
+
+          return { success: true, count: importedCount };
+        } else {
+          // Handle single recipe import
+          const entry = zip.getEntry('recipe.json');
+          if (!entry) throw new Error('Invalid recipe file: neither recipe.json nor all-recipes.json found');
+
+          const json = entry.getData().toString('utf8');
+          const parsed = JSON.parse(json);
+          const process = parsed?.process;
+          if (!process || !Array.isArray(process.results)) {
+            throw new Error('Invalid recipe manifest');
+          }
+
+          // Normalize and assign a new id/timestamp to avoid collisions
+          const newId = this.storageService.generateProcessId();
+          const imported = {
+            id: newId,
+            timestamp: new Date().toISOString(),
+            name: process.name,
+            prompt: process.prompt,
+            userOptions: process.userOptions,
+            results: process.results,
+            recipeImageData: (process as any).recipeImageData,
+          } as any;
+
+          await this.storageService.addProcess(imported);
+          return { success: true, count: 1 };
         }
-
-        // Normalize and assign a new id/timestamp to avoid collisions
-        const newId = this.storageService.generateProcessId();
-        const imported = {
-          id: newId,
-          timestamp: new Date().toISOString(),
-          name: process.name,
-          prompt: process.prompt,
-          userOptions: process.userOptions,
-          results: process.results,
-          // Note: baseImageData and targetImageData are no longer stored
-        } as any;
-
-        await this.storageService.addProcess(imported);
-        return { success: true, count: 1 };
       } catch (error) {
         console.error('[IPC] Error importing recipe:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
