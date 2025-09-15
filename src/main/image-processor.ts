@@ -31,6 +31,9 @@ export interface ProcessingResult {
     reasoning?: string;
     presetName?: string;
     groupFolder?: string;
+    usedSettings?: {
+      preserveSkinTones?: boolean;
+    };
   };
   error?: string;
 }
@@ -62,12 +65,14 @@ export class ImageProcessor {
 
     try {
       console.log('[PROCESSOR] Analyzing images with AI');
+      const settings = await this.settingsService.loadSettings();
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
         data.prompt, // hint/prompt
         data.baseImageBase64,
-        data.targetImageBase64
+        data.targetImageBase64,
+        { preserveSkinTones: !!settings.preserveSkinTones }
       );
 
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
@@ -81,6 +86,9 @@ export class ImageProcessor {
           adjustments: aiAdjustments,
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning,
+          usedSettings: {
+            preserveSkinTones: !!settings.preserveSkinTones,
+          },
         },
       };
     } catch (error) {
@@ -106,12 +114,14 @@ export class ImageProcessor {
     }
 
     try {
+      const settings = await this.settingsService.loadSettings();
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
         data.prompt,
         data.baseImageBase64,
-        data.targetImageBase64
+        data.targetImageBase64,
+        { preserveSkinTones: !!settings.preserveSkinTones }
       );
 
       return {
@@ -122,6 +132,9 @@ export class ImageProcessor {
           adjustments: aiAdjustments,
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning,
+          usedSettings: {
+            preserveSkinTones: !!settings.preserveSkinTones,
+          },
         },
       };
     } catch (error) {

@@ -4,14 +4,19 @@
 export function buildUserContentForAnalysis(
   baseImageB64: string | undefined,
   targetImageB64: string,
-  hint?: string
+  hint?: string,
+  opts?: { preserveSkinTones?: boolean }
 ): any[] {
   const content: any[] = [];
   if (hint) {
     content.push({ type: 'text' as const, text: `Hint: ${hint}` });
   }
 
-  const sharedInstructions = `You are a professional photo editor and colorist.\n\nPlease provide detailed Lightroom/Camera Raw adjustments to achieve the target look, including white balance, tone, HSL, curves, and modern color grading as needed.\n\nLocal masks guidance:\n- Prefer automatic masks when applicable: use Subject/People, Background, and Sky masks.\n- Do NOT use linear or radial masks to isolate faces or human subjects — use Subject/People instead.\n- Geometric (linear/radial) masks are allowed for global scene shaping (vignettes, gradients) where appropriate.\n- Keep mask values conservative. Use normalized geometry (0..1).\n- Propose up to 3 local masks.\n\nAlso include a short preset_name:\n- 2–4 words, Title Case, descriptive of the look\n- Avoid words like “AI”, file names, or dates; only letters, numbers, spaces, hyphens.`;
+  const sharedInstructions = `You are a professional photo editor and colorist.\n\nPlease provide detailed Lightroom/Camera Raw adjustments to achieve the target look, including white balance, tone, HSL, curves, and modern color grading as needed.\n\nColor accuracy guidance:\n- Aim for faithful color reproduction and avoid unwanted color casts.\n- Keep hue relationships accurate; do not shift reference colors unnecessarily.\n- Match white balance closely unless a deliberate stylistic change is requested.\n\nLocal masks guidance:\n- Prefer automatic masks when applicable: use Subject/People, Background, and Sky masks.\n- Do NOT use linear or radial masks to isolate faces or human subjects — use Subject/People instead.\n- Geometric (linear/radial) masks are allowed for global scene shaping (vignettes, gradients) where appropriate.\n- Keep mask values conservative. Use normalized geometry (0..1).\n- Propose up to 3 local masks.` +
+    (opts?.preserveSkinTones
+      ? `\n- For portraits, preserve natural skin tones using People/Subject masks; avoid over-saturation or hue shifts on skin.`
+      : '') +
+    `\n\nAlso include a short preset_name:\n- 2–4 words, Title Case, descriptive of the look\n- Avoid words like “AI”, file names, or dates; only letters, numbers, spaces, hyphens.`;
 
   if (baseImageB64) {
     content.push(
@@ -46,4 +51,3 @@ export function buildUserContentForAnalysis(
 
   return content;
 }
-

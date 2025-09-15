@@ -61,10 +61,10 @@ declare global {
       setBaseImage: (processId: string, filePath: string) => Promise<{ success: boolean; error?: string }>;
 
       // Settings operations
-      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
+      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string; preserveSkinTones?: boolean }; error?: string }>;
       saveSettings: (
-        settings: { openaiKey?: string }
-      ) => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
+        settings: { openaiKey?: string; preserveSkinTones?: boolean }
+      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; preserveSkinTones?: boolean }; error?: string }>;
 
       // Utility functions
       removeAllListeners: (channel: string) => void;

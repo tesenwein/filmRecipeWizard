@@ -29,7 +29,8 @@ export class OpenAIColorAnalyzer {
     targetImagePath: string,
     hint?: string,
     baseImageBase64?: string,
-    targetImageBase64?: string
+    targetImageBase64?: string,
+    options?: { preserveSkinTones?: boolean }
   ): Promise<AIColorAdjustments> {
     if (!this.initialized || !this.openai) {
       throw new Error(
@@ -52,7 +53,9 @@ export class OpenAIColorAnalyzer {
       console.log(`[AI] Calling OpenAI API with model: ${this.model}`);
 
       // Build content via helper (use auto-recognition masks for humans)
-      const userContent: any[] = buildUserContentForAnalysis(baseImageB64, targetImageB64, hint);
+      const userContent: any[] = buildUserContentForAnalysis(baseImageB64, targetImageB64, hint, {
+        preserveSkinTones: options?.preserveSkinTones,
+      });
 
       // Debug: Log the complete prompt content being sent
       console.log('[AI] === PROMPT DEBUG START ===');

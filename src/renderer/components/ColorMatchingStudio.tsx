@@ -1,5 +1,5 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Typography, FormControlLabel, Switch, Stack } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import TargetImageDisplay from './TargetImageDisplay';
 import StyleDescriptionCard from './StyleDescriptionCard';
@@ -55,6 +55,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 }) => {
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
+  const [preserveSkinTones, setPreserveSkinTones] = useState<boolean>(false);
 
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
@@ -158,6 +159,28 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     generateTargetPreviews();
   }, [targetImages]);
 
+  // Load current global setting for Preserve Skin Tones
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await window.electronAPI.getSettings();
+        if (res?.success && res.settings) {
+          setPreserveSkinTones(!!res.settings.preserveSkinTones);
+        }
+      } catch {}
+    };
+    loadSettings();
+  }, []);
+
+  const handleTogglePreserveSkin = async (checked: boolean) => {
+    setPreserveSkinTones(checked);
+    try {
+      await window.electronAPI.saveSettings({ preserveSkinTones: checked });
+    } catch (e) {
+      // silently ignore errors in UI; setting persists via Settings page too
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, p: 1 }}>
       {/* Header */}
@@ -184,6 +207,35 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
         {/* Right Column - All Options */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Quick Options */}
+          <Paper className="card slide-in" elevation={0} sx={{ p: 2.5 }}>
+            <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
+              Options
+            </Typography>
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={!!styleOptions?.filmGrain}
+                    onChange={(_, c) => onStyleOptionsChange?.({ filmGrain: c })}
+                  />
+                }
+                label="Film Grain"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={preserveSkinTones}
+                    onChange={(_, c) => handleTogglePreserveSkin(c)}
+                  />
+                }
+                label="Preserve Skin Tones"
+              />
+            </Stack>
+          </Paper>
+
           <StyleDescriptionCard
             prompt={prompt}
             onPromptChange={onPromptChange}

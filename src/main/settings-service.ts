@@ -5,6 +5,7 @@ import { app } from 'electron';
 export interface AppSettings {
   openaiKey?: string;
   // Future settings can be added here
+  preserveSkinTones?: boolean;
 }
 
 export class SettingsService {
@@ -32,4 +33,3 @@ export class SettingsService {
     return merged;
   }
 }
-
