@@ -14,7 +14,6 @@ export interface ProcessingResult {
     groupFolder?: string;
     usedSettings?: {
       preserveSkinTones?: boolean;
-      emphasize3DPop?: boolean;
     };
   };
 }
@@ -29,7 +28,6 @@ export interface StyleOptions {
   saturationBias?: number;
   filmGrain?: boolean;
   preserveSkinTones?: boolean;
-  emphasize3DPop?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
   // Optional artist and film selections
   artistStyle?: { key: string; name: string; category: string; blurb: string };

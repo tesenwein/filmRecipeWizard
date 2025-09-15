@@ -5,18 +5,11 @@ export function buildUserContentForAnalysis(
   baseImageB64: string | string[] | undefined,
   targetImageB64: string,
   hint?: string,
-  opts?: { preserveSkinTones?: boolean; emphasize3DPop?: boolean }
+  opts?: { preserveSkinTones?: boolean }
 ): any[] {
   const content: any[] = [];
   if (hint) {
     content.push({ type: 'text' as const, text: `Hint: ${hint}` });
-  }
-  if (opts?.emphasize3DPop) {
-    content.push({
-      type: 'text' as const,
-      text:
-        '3D POP (optional, keep subtle): If it clearly improves gentle depth separation, consider up to 2 masks — (1) Subject mask named "Subject Pop" with a reference point on the main subject/person, and (2) Background mask named "Background Falloff" with a reference point in a background area. Use distinct reference coordinates. Keep local adjustments subtle (e.g., local_exposure within -0.25 to +0.25; local_clarity and local_dehaze within -0.2 to +0.2). Avoid halos, harsh transitions, or cartoonish contrast. Skip masks entirely if unnecessary.',
-    });
   }
 
   const sharedInstructions = `You are a professional photo editor. Create Lightroom/Camera Raw adjustments to achieve the target look.
@@ -25,7 +18,11 @@ Call functions to:
 1. Report global adjustments with confidence and reasoning
 2. Create masks when needed (max 3 masks)` +
     (opts?.preserveSkinTones ? `\n3. Preserve natural skin tones in Subject masks` : '') +
-    `\n\nInclude a short preset_name (2-4 words, Title Case).`;
+    `
+3. For portraits, ensure a match in skin tone and backdrop
+4. For landscapes, ensure sky/foliage mood and lighting alignment
+
+Include a short preset_name (2-4 words, Title Case).`;
 
   if (baseImageB64) {
     const bases = Array.isArray(baseImageB64) ? baseImageB64 : [baseImageB64];

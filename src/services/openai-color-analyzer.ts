@@ -30,7 +30,7 @@ export class OpenAIColorAnalyzer {
     hint?: string,
     baseImageBase64?: string | string[],
     targetImageBase64?: string,
-    options?: { preserveSkinTones?: boolean; emphasize3DPop?: boolean }
+    options?: { preserveSkinTones?: boolean }
   ): Promise<AIColorAdjustments> {
     if (!this.initialized || !this.openai) {
       throw new Error(
@@ -53,18 +53,12 @@ export class OpenAIColorAnalyzer {
       console.log(`[AI] Calling OpenAI API with model: ${this.model}`);
 
       // Build content via helper (use auto-recognition masks for humans)
-      if (options?.emphasize3DPop) {
-        console.log(
-          '[AI] Emphasize 3D Pop enabled - allow subtle Subject/Background separation if beneficial'
-        );
-      }
       const userContent: any[] = buildUserContentForAnalysis(
         baseImageB64 as any,
         targetImageB64,
         hint,
         {
           preserveSkinTones: options?.preserveSkinTones,
-          emphasize3DPop: options?.emphasize3DPop,
         }
       );
 

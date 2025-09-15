@@ -35,7 +35,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
   const [preserveSkinTones, setPreserveSkinTones] = useState<boolean>(false);
-  const [emphasize3DPop, setEmphasize3DPop] = useState<boolean>(false);
 
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
@@ -165,9 +164,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       try {
         const res = await window.electronAPI.getSettings();
         if (res?.success && res.settings) {
-          // Both preserveSkinTones and emphasize3DPop are per-generation options, not persistent settings
+          // preserveSkinTones is a per-generation option, not a persistent setting
           setPreserveSkinTones(false);
-          setEmphasize3DPop(false);
         }
       } catch {
         // Ignore errors when loading settings
@@ -182,11 +180,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     // preserveSkinTones is a per-generation option, not a persistent setting
   };
 
-  const handleToggle3DPop = async (checked: boolean) => {
-    setEmphasize3DPop(checked);
-    onStyleOptionsChange?.({ emphasize3DPop: checked });
-    // emphasize3DPop is a per-generation option, not a persistent setting
-  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, p: 1 }}>
@@ -240,16 +233,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
                   />
                 }
                 label="Preserve Skin Tones"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    size="small"
-                    checked={emphasize3DPop}
-                    onChange={(_, c) => handleToggle3DPop(c)}
-                  />
-                }
-                label="Emphasize 3D Pop"
               />
             </Stack>
           </Paper>

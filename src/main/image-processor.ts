@@ -57,7 +57,7 @@ export class ImageProcessor {
         data.prompt, // hint/prompt
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones, emphasize3DPop: !!data.styleOptions?.emphasize3DPop }
+        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones }
       );
 
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
@@ -72,7 +72,6 @@ export class ImageProcessor {
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
             preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-            emphasize3DPop: !!data.styleOptions?.emphasize3DPop,
           },
         },
       };
@@ -106,7 +105,7 @@ export class ImageProcessor {
         data.prompt,
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones, emphasize3DPop: !!data.styleOptions?.emphasize3DPop }
+        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones }
       );
 
       return {
@@ -118,7 +117,6 @@ export class ImageProcessor {
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
             preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-            emphasize3DPop: !!data.styleOptions?.emphasize3DPop,
           },
         },
       };

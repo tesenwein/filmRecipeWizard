@@ -612,7 +612,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         {/* Options */}
                         {processOptions &&
                           (processOptions.filmGrain !== undefined ||
-                            processOptions.emphasize3DPop !== undefined ||
                             processOptions.preserveSkinTones !== undefined) && (
                             <Box>
                               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
@@ -658,45 +657,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     <Chip
                                       label={processOptions.filmGrain ? 'On' : 'Off'}
                                       color={processOptions.filmGrain ? 'success' : 'default'}
-                                      variant="filled"
-                                      size="small"
-                                      sx={{ fontWeight: 600 }}
-                                    />
-                                  </Paper>
-                                )}
-                                {processOptions.emphasize3DPop !== undefined && (
-                                  <Paper
-                                    variant="outlined"
-                                    sx={{
-                                      p: 2,
-                                      textAlign: 'center',
-                                      backgroundColor: 'grey.50',
-                                      border: '1px solid',
-                                      borderColor: 'grey.200',
-                                    }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 0.5,
-                                        mb: 1,
-                                      }}
-                                    >
-                                      <Typography variant="body2" sx={{ fontSize: '16px' }}>
-                                        🔮
-                                      </Typography>
-                                      <Typography
-                                        variant="body2"
-                                        sx={{ color: 'text.secondary', fontWeight: 600 }}
-                                      >
-                                        3D Pop
-                                      </Typography>
-                                    </Box>
-                                    <Chip
-                                      label={processOptions.emphasize3DPop ? 'On' : 'Off'}
-                                      color={processOptions.emphasize3DPop ? 'success' : 'default'}
                                       variant="filled"
                                       size="small"
                                       sx={{ fontWeight: 600 }}
@@ -928,9 +888,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     <Typography variant="body1">
                                       <strong>Film Grain:</strong>{' '}
                                       {processOptions.filmGrain ? 'On' : 'Off'}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <strong>3D Pop:</strong> {processOptions.emphasize3DPop ? 'On' : 'Off'}
                                     </Typography>
                                     <Typography variant="body1">
                                       <strong>Preserve Skin Tones:</strong>{' '}
