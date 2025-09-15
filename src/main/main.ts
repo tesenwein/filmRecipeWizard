@@ -14,6 +14,7 @@ import { ImageProcessor } from './image-processor';
 import { AppSettings, SettingsService } from './settings-service';
 import { StorageService } from './storage-service';
 import { generateXMPContent } from './xmp-generator';
+import { generateLUTContent } from './lut-generator';
 
 class FotoRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
@@ -933,6 +934,90 @@ class FotoRecipeWizardApp {
         return { success: true, count: 1 };
       } catch (error) {
         console.error('[IPC] Error importing recipe:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Handle LUT generation and download
+    ipcMain.handle('generate-lut', async (_event, data) => {
+      console.log('[IPC] generate-lut called with data', {
+        size: data?.size,
+        format: data?.format,
+        strength: data?.strength,
+        hasAdjustments: !!data?.adjustments,
+      });
+      try {
+        // Apply strength multiplier to adjustments if provided
+        let adjustments = data.adjustments;
+        if (data.strength !== undefined && data.strength !== 1.0) {
+          // Create a copy of adjustments with strength applied
+          adjustments = { ...data.adjustments };
+
+          // Apply strength to numeric adjustment values
+          const numericFields = [
+            'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks',
+            'vibrance', 'saturation', 'clarity', 'temperature', 'tint'
+          ];
+
+          for (const field of numericFields) {
+            if (typeof adjustments[field] === 'number') {
+              if (field === 'temperature') {
+                // Temperature: apply strength to deviation from 6500K
+                const neutral = 6500;
+                const deviation = adjustments[field] - neutral;
+                adjustments[field] = neutral + (deviation * data.strength);
+              } else {
+                // Other fields: apply strength directly
+                adjustments[field] = adjustments[field] * data.strength;
+              }
+            }
+          }
+        }
+
+        // Generate LUT content
+        const lutContent = generateLUTContent(adjustments, data.size, data.format);
+
+        // Show save dialog
+        const sanitizeName = (n: string) =>
+          n
+            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        const rawName =
+          (data?.adjustments?.preset_name as string | undefined) ||
+          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean =
+          sanitizeName(rawName) ||
+          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const baseName = clean
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
+        const strengthSuffix = data.strength !== undefined && data.strength !== 1.0
+          ? `-${Math.round(data.strength * 100)}pct`
+          : '';
+        const safeName = `${baseName}-LUT-${data.size}${strengthSuffix}`;
+
+        const result = await dialog.showSaveDialog({
+          title: 'Save LUT File',
+          defaultPath: `${safeName}.${data.format}`,
+          filters: [
+            { name: 'LUT Files', extensions: [data.format] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+
+        if (!result.canceled && result.filePath) {
+          // Write the file
+          await fs.writeFile(result.filePath, lutContent, 'utf8');
+          console.log('[IPC] generate-lut completed:', { filePath: result.filePath });
+          return { success: true, filePath: result.filePath };
+        } else {
+          return { success: false, error: 'Save canceled' };
+        }
+      } catch (error) {
+        console.error('[IPC] Error generating LUT:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });

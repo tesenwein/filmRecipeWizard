@@ -13,6 +13,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  Divider,
   FormControlLabel,
   IconButton,
   Paper,
@@ -78,6 +79,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // LUT export state
   const [lutSize, setLutSize] = useState<'17' | '33' | '65'>('33');
   const [lutFormat, setLutFormat] = useState<'cube' | '3dl' | 'lut'>('cube');
+  const [lutStrength, setLutStrength] = useState(100);
   const [profileExportStatus, setProfileExportStatus] = useState<{
     ok: boolean;
     msg: string;
@@ -272,6 +274,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         adjustments,
         size: parseInt(lutSize),
         format: lutFormat,
+        strength: lutStrength / 100, // Convert percentage to 0-1 range
       });
       if (!res.success) {
         alert(`LUT export failed: ${res.error}`);
@@ -1213,39 +1216,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             })()}
                           </Box>
                         </Box>
-                        {/* Export Strength Slider */}
-                        <Box sx={{ mb: 2 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                            Export Strength
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Slider
-                              value={Math.round((getOptions(index).strength ?? 0.5) * 100)}
-                              onChange={(_e, val) => {
-                                const pct = Array.isArray(val) ? val[0] : (val as number);
-                                setExportOptions(prev => ({
-                                  ...prev,
-                                  [index]: {
-                                    ...(prev[index] || defaultOptions),
-                                    strength: Math.max(0, Math.min(200, pct)) / 100,
-                                  },
-                                }));
-                              }}
-                              min={0}
-                              max={200}
-                              step={5}
-                              valueLabelDisplay="auto"
-                              valueLabelFormat={v => `${v}%`}
-                              sx={{ flex: 1, maxWidth: 420 }}
-                            />
-                            <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
-                              {Math.round((getOptions(index).strength ?? 0.5) * 100)}%
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            Tip: 100% applies the full AI adjustments. 50% is softer.
-                          </Typography>
-                        </Box>
                         <Box sx={{ mb: 2 }}>
                           <FormControlLabel
                             control={
@@ -1346,17 +1316,62 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Paper>
                           ))}
                         </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                          <Button
-                            variant="contained"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => handleExportXMP(index, result)}
-                            sx={{ textTransform: 'none', fontWeight: 700 }}
-                          >
-                            Export Preset (.xmp)
-                          </Button>
+                        {/* Export Strength and Button - 50/50 Layout */}
+                        <Box sx={{ display: 'flex', gap: 3, mt: 3, alignItems: 'stretch' }}>
+                          <Paper variant="outlined" sx={{ p: 3, flex: 1, backgroundColor: 'grey.50' }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                              Export Strength
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Slider
+                                value={Math.round((getOptions(index).strength ?? 0.5) * 100)}
+                                onChange={(_e, val) => {
+                                  const pct = Array.isArray(val) ? val[0] : (val as number);
+                                  setExportOptions(prev => ({
+                                    ...prev,
+                                    [index]: {
+                                      ...(prev[index] || defaultOptions),
+                                      strength: Math.max(0, Math.min(200, pct)) / 100,
+                                    },
+                                  }));
+                                }}
+                                min={0}
+                                max={200}
+                                step={5}
+                                valueLabelDisplay="auto"
+                                valueLabelFormat={v => `${v}%`}
+                                sx={{ flex: 1 }}
+                              />
+                              <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
+                                {Math.round((getOptions(index).strength ?? 0.5) * 100)}%
+                              </Typography>
+                            </Box>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              Tip: 100% applies the full AI adjustments. 50% is softer.
+                            </Typography>
+                          </Paper>
+                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                            <Button
+                              variant="contained"
+                              startIcon={<DownloadIcon />}
+                              onClick={() => handleExportXMP(index, result)}
+                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                              size="large"
+                            >
+                              Export Preset (.xmp)
+                            </Button>
+                          </Box>
                         </Box>
                       </Paper>
+
+                      {/* Divider between Preset and Camera Profile */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', my: 4 }}>
+                        <Divider sx={{ flex: 1 }} />
+                        <Typography variant="body2" sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}>
+                          OR
+                        </Typography>
+                        <Divider sx={{ flex: 1 }} />
+                      </Box>
 
                       <Paper elevation={1} sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
@@ -1377,12 +1392,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Typography>
                           </Paper>
                         )}
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                           <Button
                             variant="contained"
                             startIcon={<DownloadIcon />}
                             onClick={() => handleExportProfile(index, result)}
-                            sx={{ textTransform: 'none', fontWeight: 700 }}
+                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                            size="large"
                           >
                             Create Camera Profile (.xmp)
                           </Button>
@@ -1468,6 +1484,33 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               ))}
                             </Box>
                           </Box>
+
+                          <Paper variant="outlined" sx={{ p: 2, backgroundColor: 'grey.50' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                              Export Strength
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Slider
+                                value={lutStrength}
+                                onChange={(_e, val) => {
+                                  const pct = Array.isArray(val) ? val[0] : (val as number);
+                                  setLutStrength(Math.max(0, Math.min(200, pct)));
+                                }}
+                                min={0}
+                                max={200}
+                                step={5}
+                                valueLabelDisplay="auto"
+                                valueLabelFormat={v => `${v}%`}
+                                sx={{ flex: 1, maxWidth: 300 }}
+                              />
+                              <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
+                                {lutStrength}%
+                              </Typography>
+                            </Box>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              Tip: 100% applies the full AI adjustments. Lower values create more subtle effects.
+                            </Typography>
+                          </Paper>
                         </Box>
 
                         <Button
