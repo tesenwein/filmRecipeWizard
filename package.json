@@ -1,6 +1,6 @@
 {
   "name": "foto-recipe-wizard",
-  "version": "2.0.14",
+  "version": "2.1.0",
   "description": "Create and apply photo recipes with AI-powered color grading and DNG RAW processing support",
   "main": "dist/main/main.js",
   "scripts": {
