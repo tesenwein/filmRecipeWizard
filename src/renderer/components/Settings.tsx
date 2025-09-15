@@ -10,8 +10,6 @@ import {
   Stack,
   TextField,
   Typography,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
@@ -20,7 +18,6 @@ const Settings: React.FC = () => {
   const [masked, setMasked] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-  const [preserveSkinTones, setPreserveSkinTones] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -30,9 +27,6 @@ const Settings: React.FC = () => {
           if (res.settings.openaiKey) {
             setOpenaiKey('');
             setMasked(true);
-          }
-          if (typeof res.settings.preserveSkinTones === 'boolean') {
-            setPreserveSkinTones(!!res.settings.preserveSkinTones);
           }
         }
       } catch {
@@ -47,7 +41,6 @@ const Settings: React.FC = () => {
     try {
       const res = await window.electronAPI.saveSettings({
         openaiKey: openaiKey.trim() || undefined,
-        preserveSkinTones,
       });
       if (res.success) {
         setMasked(!!openaiKey);
@@ -87,22 +80,6 @@ const Settings: React.FC = () => {
       </Typography>
       <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
         <Stack spacing={1.5}>
-          <Box>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={preserveSkinTones}
-                  onChange={(_, c) => setPreserveSkinTones(c)}
-                  size="small"
-                />
-              }
-              label="Preserve Skin Tones"
-            />
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: -0.5 }}>
-              Encourage masks to protect natural skin color when editing.
-            </Typography>
-          </Box>
-
           <Box>
             <Typography variant="subtitle2" color="text.secondary">
               OpenAI API Key
