@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessHistory } from '../../shared/types';
+import { useAlert } from '../context/AlertContext';
 import SingleImage from './SingleImage';
 
 interface HistoryViewProps {
@@ -29,6 +30,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null);
+  const { showSuccess, showError } = useAlert();
 
   useEffect(() => {
     loadHistory();
@@ -97,7 +99,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
     handleMenuClose();
     const res = await window.electronAPI.exportRecipe(selectedProcessId);
     if (!res.success && res.error && res.error !== 'Export canceled') {
-      alert(`Export failed: ${res.error}`);
+      showError(`Export failed: ${res.error}`);
     }
   };
 
@@ -133,10 +135,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
               if (res.success) {
                 await loadHistory();
                 if (res.count && res.count > 1) {
-                  alert(`Successfully imported ${res.count} recipes`);
+                  showSuccess(`Successfully imported ${res.count} recipes`);
                 }
               } else if (res.error && res.error !== 'Import canceled') {
-                alert(`Import failed: ${res.error}`);
+                showError(`Import failed: ${res.error}`);
               }
             }}
           >
@@ -147,9 +149,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
             onClick={async () => {
               const res = await window.electronAPI.exportAllRecipes();
               if (res.success && res.count) {
-                alert(`Successfully exported ${res.count} recipes`);
+                showSuccess(`Successfully exported ${res.count} recipes`);
               } else if (!res.success && res.error && res.error !== 'Export canceled') {
-                alert(`Export failed: ${res.error}`);
+                showError(`Export failed: ${res.error}`);
               }
             }}
             disabled={history.length === 0 || history.some(p => p.status === 'generating')}

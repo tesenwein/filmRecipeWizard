@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
+import { useAlert } from '../context/AlertContext';
 import SingleImage from './SingleImage';
 
 interface ResultsViewProps {
@@ -45,6 +46,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   processId,
   prompt,
 }) => {
+  const { showError } = useAlert();
   // Base64 image data URLs for display
   const [baseImageUrls, setBaseImageUrls] = useState<string[]>([]);
   const [activeBase, setActiveBase] = useState(0);
@@ -106,7 +108,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (files && files.length) {
         const res = await window.electronAPI.addBaseImages(processId, files.slice(0, 1));
         if (!res?.success) {
-          alert(res?.error || 'Failed to add recipe image');
+          showError(res?.error || 'Failed to add recipe image');
           return;
         }
 
@@ -127,7 +129,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (!processId) return;
       const res = await window.electronAPI.removeBaseImage(processId, 0);
       if (!res?.success) {
-        alert(res?.error || 'Failed to remove recipe image');
+        showError(res?.error || 'Failed to remove recipe image');
         return;
       }
       const data = await window.electronAPI.getImageDataUrls(processId);
@@ -245,11 +247,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         include: getOptions(index),
       });
       if (!res.success) {
-        alert(`Export failed: ${res.error}`);
+        showError(`Export failed: ${res.error}`);
       }
     } catch (e) {
       console.error('Export error:', e);
-      alert('Export failed.');
+      showError('Export failed.');
     }
   };
 
@@ -265,11 +267,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         strength: lutStrength / 100, // Convert percentage to 0-1 range
       });
       if (!res.success) {
-        alert(`LUT export failed: ${res.error}`);
+        showError(`LUT export failed: ${res.error}`);
       }
     } catch (e) {
       console.error('LUT export error:', e);
-      alert('LUT export failed.');
+      showError('LUT export failed.');
     }
   };
 
