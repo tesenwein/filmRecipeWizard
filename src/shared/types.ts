@@ -28,6 +28,7 @@ export interface StyleOptions {
   moodiness?: number; // overall curve mood
   saturationBias?: number;
   filmGrain?: boolean;
+  preserveSkinTones?: boolean;
   emphasize3DPop?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
   // Optional artist and film selections
@@ -63,6 +64,4 @@ export interface ProfileExportResult {
 
 export interface AppSettings {
   openaiKey?: string;
-  preserveSkinTones?: boolean;
-  emphasize3DPop?: boolean;
 }

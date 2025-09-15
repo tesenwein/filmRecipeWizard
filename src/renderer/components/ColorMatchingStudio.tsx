@@ -165,8 +165,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       try {
         const res = await window.electronAPI.getSettings();
         if (res?.success && res.settings) {
-          setPreserveSkinTones(!!res.settings.preserveSkinTones);
-          // Always default 3D Pop to false - it should be manually enabled each time
+          // Both preserveSkinTones and emphasize3DPop are per-generation options, not persistent settings
+          setPreserveSkinTones(false);
           setEmphasize3DPop(false);
         }
       } catch {
@@ -178,21 +178,14 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
   const handleTogglePreserveSkin = async (checked: boolean) => {
     setPreserveSkinTones(checked);
-    try {
-      await window.electronAPI.saveSettings({ preserveSkinTones: checked });
-    } catch {
-      // silently ignore errors in UI; setting persists via Settings page too
-    }
+    onStyleOptionsChange?.({ preserveSkinTones: checked });
+    // preserveSkinTones is a per-generation option, not a persistent setting
   };
 
   const handleToggle3DPop = async (checked: boolean) => {
     setEmphasize3DPop(checked);
     onStyleOptionsChange?.({ emphasize3DPop: checked });
-    try {
-      await window.electronAPI.saveSettings({ emphasize3DPop: checked });
-    } catch {
-      // silently ignore errors in UI
-    }
+    // emphasize3DPop is a per-generation option, not a persistent setting
   };
 
   return (

@@ -64,10 +64,10 @@ declare global {
       removeBaseImage: (processId: string, index: number) => Promise<{ success: boolean; error?: string }>;
 
       // Settings operations
-      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string; preserveSkinTones?: boolean; emphasize3DPop?: boolean }; error?: string }>;
+      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
       saveSettings: (
-        settings: { openaiKey?: string; preserveSkinTones?: boolean; emphasize3DPop?: boolean }
-      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; preserveSkinTones?: boolean; emphasize3DPop?: boolean }; error?: string }>;
+        settings: { openaiKey?: string }
+      ) => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
 
       // Utility functions
       removeAllListeners: (channel: string) => void;

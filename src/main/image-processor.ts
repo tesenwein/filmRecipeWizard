@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
-import { ProcessingResult } from '../shared/types';
+import { ProcessingResult, StyleOptions } from '../shared/types';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
 import { exportLightroomProfile } from './profile-exporter';
 import { SettingsService } from './settings-service';
@@ -20,6 +20,7 @@ export interface StyleMatchOptions {
   baseImageBase64?: string | string[];
   targetImageBase64?: string;
   prompt?: string;
+  styleOptions?: StyleOptions;
 }
 
 
@@ -57,7 +58,7 @@ export class ImageProcessor {
         data.prompt, // hint/prompt
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!settings.preserveSkinTones, emphasize3DPop: !!settings.emphasize3DPop }
+        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones, emphasize3DPop: !!data.styleOptions?.emphasize3DPop }
       );
 
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
@@ -71,8 +72,8 @@ export class ImageProcessor {
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
-            preserveSkinTones: !!settings.preserveSkinTones,
-            emphasize3DPop: !!settings.emphasize3DPop,
+            preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
+            emphasize3DPop: !!data.styleOptions?.emphasize3DPop,
           },
         },
       };
@@ -88,6 +89,7 @@ export class ImageProcessor {
     baseImageBase64?: string;
     targetImageBase64?: string;
     prompt?: string;
+    styleOptions?: StyleOptions;
   }): Promise<ProcessingResult> {
     console.log('[PROCESSOR] Starting AI color match analysis');
 
@@ -106,7 +108,7 @@ export class ImageProcessor {
         data.prompt,
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!settings.preserveSkinTones, emphasize3DPop: !!settings.emphasize3DPop }
+        { preserveSkinTones: !!data.styleOptions?.preserveSkinTones, emphasize3DPop: !!data.styleOptions?.emphasize3DPop }
       );
 
       return {
@@ -117,8 +119,8 @@ export class ImageProcessor {
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
-            preserveSkinTones: !!settings.preserveSkinTones,
-            emphasize3DPop: !!settings.emphasize3DPop,
+            preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
+            emphasize3DPop: !!data.styleOptions?.emphasize3DPop,
           },
         },
       };
