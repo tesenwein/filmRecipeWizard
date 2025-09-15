@@ -146,134 +146,10 @@ class FotoRecipeWizardApp {
   }
 
   private setupIPC(): void {
-    // Handle image processing requests
-    ipcMain.handle('process-image', async (_event, data) => {
-      console.log('[IPC] process-image called with:', {
-        baseImagePath: data?.baseImagePath,
-        targetImagePath: data?.targetImagePath,
-        options: { ...data, baseImagePath: '...', targetImagePath: '...' },
-      });
-      try {
-        const result = await this.imageProcessor.processImage(data);
-        console.log('[IPC] process-image completed:', {
-          success: result.success,
-          outputPath: result.outputPath,
-        });
-        return result;
-      } catch (error) {
-        console.error('[IPC] Error processing image:', error);
-        throw error;
-      }
-    });
 
-    // Handle color analysis requests
-    ipcMain.handle('analyze-colors', async (_event, imagePath) => {
-      console.log('[IPC] analyze-colors called with:', imagePath);
-      try {
-        const result = await this.imageProcessor.analyzeColors(imagePath);
-        console.log('[IPC] analyze-colors completed successfully');
-        return result;
-      } catch (error) {
-        console.error('[IPC] Error analyzing colors:', error);
-        throw error;
-      }
-    });
 
-    // Handle style matching requests
-    ipcMain.handle('match-style', async (_event, data) => {
-      console.log('[IPC] match-style called with:', {
-        baseImagePath: data?.baseImagePath,
-        targetImagePath: data?.targetImagePath,
-        options: { ...data, baseImagePath: '...', targetImagePath: '...' },
-      });
-      try {
-        const result = await this.imageProcessor.matchStyle(data);
-        console.log('[IPC] match-style completed:', {
-          success: result.success,
-          outputPath: result.outputPath,
-        });
-        return result;
-      } catch (error) {
-        console.error('[IPC] Error matching style:', error);
-        throw error;
-      }
-    });
 
-    // Handle preset generation
-    ipcMain.handle('generate-preset', async (_event, data) => {
-      console.log('[IPC] generate-preset called with data');
-      try {
-        const result = await this.imageProcessor.generateLightroomPreset(data);
-        console.log('[IPC] generate-preset completed:', {
-          success: result.success,
-          outputPath: result.outputPath,
-        });
-        return result;
-      } catch (error) {
-        console.error('[IPC] Error generating preset:', error);
-        throw error;
-      }
-    });
 
-    // Handle Lightroom camera profile export - generate profile from adjustments
-    ipcMain.handle('export-profile', async (_event, data) => {
-      console.log('[IPC] export-profile called with adjustments');
-      try {
-        // Generate camera profile XMP from adjustments
-        const result = await this.imageProcessor.generateCameraProfile(data);
-
-        if (!result.success || !result.xmpContent) {
-          return { success: false, error: result.error || 'Failed to generate camera profile' };
-        }
-
-        // Use exact same naming logic as preset export
-        const sanitizeName = (n: string) =>
-          n
-            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-        // Get AI-generated name directly from adjustments and add -Profile suffix
-        const rawName =
-          (data?.adjustments?.preset_name as string | undefined) ||
-          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const clean =
-          sanitizeName(rawName) ||
-          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const baseName = clean
-          .replace(/[^A-Za-z0-9 _-]+/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .replace(/\s/g, '-');
-        const safeName = `${baseName}-Profile`;
-
-        // Show save dialog
-        const dialogOptions = {
-          title: 'Save Camera Profile',
-          defaultPath: `${safeName}.xmp`,
-          filters: [
-            { name: 'XMP Profiles', extensions: ['xmp'] },
-            { name: 'All Files', extensions: ['*'] },
-          ],
-        };
-
-        const saveResult = this.mainWindow
-          ? await dialog.showSaveDialog(this.mainWindow, dialogOptions)
-          : await dialog.showSaveDialog(dialogOptions);
-
-        if (saveResult.canceled || !saveResult.filePath) {
-          return { success: false, error: 'Save canceled' };
-        }
-
-        // Write the profile to chosen location
-        await fs.writeFile(saveResult.filePath, result.xmpContent, 'utf8');
-        console.log('[IPC] Camera profile saved to:', saveResult.filePath);
-
-        return { success: true, filePath: saveResult.filePath };
-      } catch (error) {
-        console.error('[IPC] Error exporting camera profile:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
-    });
 
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
@@ -329,64 +205,6 @@ class FotoRecipeWizardApp {
       }
     });
 
-    // Generate 3D LUT from AI adjustments
-    ipcMain.handle('generate-lut', async (_event, data) => {
-      console.log('[IPC] generate-lut called with data', {
-        size: data?.size,
-        format: data?.format,
-        hasAdjustments: !!data?.adjustments,
-      });
-      try {
-        // Generate LUT content
-        const lutContent = this.imageProcessor.generateLUTContent(
-          data.adjustments,
-          data.size || 33,
-          data.format || 'cube'
-        );
-
-        // Show save dialog
-        const { dialog } = require('electron');
-        // Derive a friendly filename from AI if present
-        const sanitizeName = (n: string) =>
-          n
-            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-        const rawName =
-          (data?.adjustments?.preset_name as string | undefined) ||
-          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const clean =
-          sanitizeName(rawName) ||
-          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const safeName = clean
-          .replace(/[^A-Za-z0-9 _-]+/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .replace(/\s/g, '-');
-        const ext = data.format === '3dl' ? '3dl' : data.format === 'lut' ? 'lut' : 'cube';
-        const result = await dialog.showSaveDialog({
-          title: `Save ${data.size}³ ${ext.toUpperCase()} LUT`,
-          defaultPath: `${safeName}_${data.size}.${ext}`,
-          filters: [
-            { name: `${ext.toUpperCase()} Files`, extensions: [ext] },
-            { name: 'All Files', extensions: ['*'] },
-          ],
-        });
-
-        if (!result.canceled && result.filePath) {
-          // Write the file
-          const fs = require('fs').promises;
-          await fs.writeFile(result.filePath, lutContent, 'utf8');
-          console.log('[IPC] generate-lut completed:', { filePath: result.filePath });
-          return { success: true, filePath: result.filePath };
-        } else {
-          return { success: false, error: 'Save canceled' };
-        }
-      } catch (error) {
-        console.error('[IPC] Error generating LUT:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
-    });
 
     // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
     ipcMain.handle(
@@ -405,39 +223,7 @@ class FotoRecipeWizardApp {
       }
     );
 
-    // Generate adjusted preview with AI changes applied
-    ipcMain.handle(
-      'generate-adjusted-preview',
-      async (_event, args: { path: string; adjustments: any }) => {
-        console.log('[IPC] generate-adjusted-preview called');
-        try {
-          const previewPath = await this.imageProcessor.generateAdjustedPreview(args);
-          return { success: true, previewPath };
-        } catch (error) {
-          console.error('[IPC] Error generating adjusted preview:', error);
-          return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          };
-        }
-      }
-    );
 
-    // Handle AI color match analysis
-    ipcMain.handle('analyze-color-match', async (_event, data) => {
-      console.log('[IPC] analyze-color-match called with:', {
-        baseImagePath: data?.baseImagePath,
-        targetImagePath: data?.targetImagePath,
-      });
-      try {
-        const result = await this.imageProcessor.analyzeColorMatch(data);
-        console.log('[IPC] analyze-color-match completed:', { success: result.success });
-        return result;
-      } catch (error) {
-        console.error('[IPC] Error analyzing color match:', error);
-        throw error;
-      }
-    });
 
     // Handle processing with stored base64 data from recipe
     ipcMain.handle(
