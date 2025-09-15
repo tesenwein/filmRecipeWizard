@@ -832,6 +832,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                       <strong>Film Grain:</strong>{' '}
                                       {processOptions.filmGrain ? 'On' : 'Off'}
                                     </Typography>
+                                    <Typography variant="body1">
+                                      <strong>3D Pop:</strong> {processOptions.emphasize3DPop ? 'On' : 'Off'}
+                                    </Typography>
                                     {processOptions.artistStyle?.name && (
                                       <Typography variant="body1">
                                         <strong>Artist Style:</strong>{' '}

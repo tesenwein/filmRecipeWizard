@@ -54,12 +54,19 @@ export class OpenAIColorAnalyzer {
 
       // Build content via helper (use auto-recognition masks for humans)
       if (options?.emphasize3DPop) {
-        console.log('[AI] Emphasize 3D Pop enabled - expecting Subject and Background masks');
+        console.log(
+          '[AI] Emphasize 3D Pop enabled - allow subtle Subject/Background separation if beneficial'
+        );
       }
-      const userContent: any[] = buildUserContentForAnalysis(baseImageB64 as any, targetImageB64, hint, {
-        preserveSkinTones: options?.preserveSkinTones,
-        emphasize3DPop: options?.emphasize3DPop,
-      });
+      const userContent: any[] = buildUserContentForAnalysis(
+        baseImageB64 as any,
+        targetImageB64,
+        hint,
+        {
+          preserveSkinTones: options?.preserveSkinTones,
+          emphasize3DPop: options?.emphasize3DPop,
+        }
+      );
 
       // Debug: Log the complete prompt content being sent
       console.log('[AI] === PROMPT DEBUG START ===');
@@ -76,7 +83,7 @@ export class OpenAIColorAnalyzer {
       });
       console.log('[AI] === PROMPT DEBUG END ===');
 
-      const toolChoice = options?.emphasize3DPop ? 'required' : 'auto';
+      const toolChoice = 'auto';
 
       completion = await this.openai.chat.completions.create({
         model: this.model,
@@ -830,7 +837,16 @@ export class OpenAIColorAnalyzer {
                   name: { type: 'string', description: 'Human-friendly mask name' },
                   type: {
                     type: 'string',
-                    enum: ['linear', 'radial', 'person', 'subject', 'background', 'sky', 'range_color', 'range_luminance'],
+                    enum: [
+                      'linear',
+                      'radial',
+                      'person',
+                      'subject',
+                      'background',
+                      'sky',
+                      'range_color',
+                      'range_luminance',
+                    ],
                   },
                   adjustments: {
                     type: 'object',
@@ -872,9 +888,17 @@ export class OpenAIColorAnalyzer {
                   // Range mask params
                   colorAmount: { type: 'number', minimum: 0, maximum: 1 },
                   invert: { type: 'boolean' },
-                  pointModels: { type: 'array', items: { type: 'array', items: { type: 'number' } } },
+                  pointModels: {
+                    type: 'array',
+                    items: { type: 'array', items: { type: 'number' } },
+                  },
                   lumRange: { type: 'array', items: { type: 'number' }, minItems: 4, maxItems: 4 },
-                  luminanceDepthSampleInfo: { type: 'array', items: { type: 'number' }, minItems: 3, maxItems: 3 },
+                  luminanceDepthSampleInfo: {
+                    type: 'array',
+                    items: { type: 'number' },
+                    minItems: 3,
+                    maxItems: 3,
+                  },
                 },
                 required: ['type'],
               },
@@ -885,7 +909,8 @@ export class OpenAIColorAnalyzer {
             type: 'function',
             function: {
               name: 'add_linear_mask',
-              description: 'Add a Linear Gradient mask with required geometry and optional local adjustments.',
+              description:
+                'Add a Linear Gradient mask with required geometry and optional local adjustments.',
               parameters: {
                 type: 'object',
                 properties: {
@@ -909,19 +934,20 @@ export class OpenAIColorAnalyzer {
                       local_temperature: { type: 'number', minimum: -1, maximum: 1 },
                       local_tint: { type: 'number', minimum: -1, maximum: 1 },
                       local_texture: { type: 'number', minimum: -1, maximum: 1 },
-                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
-                    }
-                  }
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                    },
+                  },
                 },
-                required: ['zeroX','zeroY','fullX','fullY']
-              }
-            }
+                required: ['zeroX', 'zeroY', 'fullX', 'fullY'],
+              },
+            },
           },
           {
             type: 'function',
             function: {
               name: 'add_radial_mask',
-              description: 'Add a Radial Gradient mask with required bounding box and optional local adjustments.',
+              description:
+                'Add a Radial Gradient mask with required bounding box and optional local adjustments.',
               parameters: {
                 type: 'object',
                 properties: {
@@ -950,19 +976,20 @@ export class OpenAIColorAnalyzer {
                       local_temperature: { type: 'number', minimum: -1, maximum: 1 },
                       local_tint: { type: 'number', minimum: -1, maximum: 1 },
                       local_texture: { type: 'number', minimum: -1, maximum: 1 },
-                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
-                    }
-                  }
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                    },
+                  },
                 },
-                required: ['top','left','bottom','right']
-              }
-            }
+                required: ['top', 'left', 'bottom', 'right'],
+              },
+            },
           },
           {
             type: 'function',
             function: {
               name: 'add_subject_mask',
-              description: 'Add a Subject/People mask with a reference point and optional local adjustments.',
+              description:
+                'Add a Subject/People mask with a reference point and optional local adjustments.',
               parameters: {
                 type: 'object',
                 properties: {
@@ -984,19 +1011,20 @@ export class OpenAIColorAnalyzer {
                       local_temperature: { type: 'number', minimum: -1, maximum: 1 },
                       local_tint: { type: 'number', minimum: -1, maximum: 1 },
                       local_texture: { type: 'number', minimum: -1, maximum: 1 },
-                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
-                    }
-                  }
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                    },
+                  },
                 },
-                required: ['referenceX','referenceY']
-              }
-            }
+                required: ['referenceX', 'referenceY'],
+              },
+            },
           },
           {
             type: 'function',
             function: {
               name: 'add_background_mask',
-              description: 'Add a Background mask with a reference point and optional local adjustments. Include subCategoryId (typically 22 for general background).',
+              description:
+                'Add a Background mask with a reference point and optional local adjustments. Include subCategoryId (typically 22 for general background).',
               parameters: {
                 type: 'object',
                 properties: {
@@ -1004,7 +1032,12 @@ export class OpenAIColorAnalyzer {
                   inverted: { type: 'boolean' },
                   referenceX: { type: 'number', minimum: 0, maximum: 1 },
                   referenceY: { type: 'number', minimum: 0, maximum: 1 },
-                  subCategoryId: { type: 'number', default: 22, description: 'Background category ID (22 for general background, 24 for objects, etc.)' },
+                  subCategoryId: {
+                    type: 'number',
+                    default: 22,
+                    description:
+                      'Background category ID (22 for general background, 24 for objects, etc.)',
+                  },
                   adjustments: {
                     type: 'object',
                     properties: {
@@ -1019,13 +1052,13 @@ export class OpenAIColorAnalyzer {
                       local_temperature: { type: 'number', minimum: -1, maximum: 1 },
                       local_tint: { type: 'number', minimum: -1, maximum: 1 },
                       local_texture: { type: 'number', minimum: -1, maximum: 1 },
-                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
-                    }
-                  }
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                    },
+                  },
                 },
-                required: ['referenceX','referenceY']
-              }
-            }
+                required: ['referenceX', 'referenceY'],
+              },
+            },
           },
           {
             type: 'function',
@@ -1053,26 +1086,30 @@ export class OpenAIColorAnalyzer {
                       local_temperature: { type: 'number', minimum: -1, maximum: 1 },
                       local_tint: { type: 'number', minimum: -1, maximum: 1 },
                       local_texture: { type: 'number', minimum: -1, maximum: 1 },
-                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
-                    }
-                  }
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                    },
+                  },
                 },
-                required: ['referenceX','referenceY']
-              }
-            }
+                required: ['referenceX', 'referenceY'],
+              },
+            },
           },
           {
             type: 'function',
             function: {
               name: 'add_range_color_mask',
-              description: 'Add a Color Range mask with sample points and amount, plus optional local adjustments.',
+              description:
+                'Add a Color Range mask with sample points and amount, plus optional local adjustments.',
               parameters: {
                 type: 'object',
                 properties: {
                   name: { type: 'string' },
                   invert: { type: 'boolean' },
                   colorAmount: { type: 'number', minimum: 0, maximum: 1 },
-                  pointModels: { type: 'array', items: { type: 'array', items: { type: 'number' } } },
+                  pointModels: {
+                    type: 'array',
+                    items: { type: 'array', items: { type: 'number' } },
+                  },
                   adjustments: {
                     type: 'object',
                     properties: {
@@ -1087,26 +1124,32 @@ export class OpenAIColorAnalyzer {
                       local_temperature: { type: 'number', minimum: -1, maximum: 1 },
                       local_tint: { type: 'number', minimum: -1, maximum: 1 },
                       local_texture: { type: 'number', minimum: -1, maximum: 1 },
-                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
-                    }
-                  }
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                    },
+                  },
                 },
-                required: ['colorAmount']
-              }
-            }
+                required: ['colorAmount'],
+              },
+            },
           },
           {
             type: 'function',
             function: {
               name: 'add_range_luminance_mask',
-              description: 'Add a Luminance Range mask with range and sampling, plus optional local adjustments.',
+              description:
+                'Add a Luminance Range mask with range and sampling, plus optional local adjustments.',
               parameters: {
                 type: 'object',
                 properties: {
                   name: { type: 'string' },
                   invert: { type: 'boolean' },
                   lumRange: { type: 'array', items: { type: 'number' }, minItems: 4, maxItems: 4 },
-                  luminanceDepthSampleInfo: { type: 'array', items: { type: 'number' }, minItems: 3, maxItems: 3 },
+                  luminanceDepthSampleInfo: {
+                    type: 'array',
+                    items: { type: 'number' },
+                    minItems: 3,
+                    maxItems: 3,
+                  },
                   adjustments: {
                     type: 'object',
                     properties: {
@@ -1121,13 +1164,13 @@ export class OpenAIColorAnalyzer {
                       local_temperature: { type: 'number', minimum: -1, maximum: 1 },
                       local_tint: { type: 'number', minimum: -1, maximum: 1 },
                       local_texture: { type: 'number', minimum: -1, maximum: 1 },
-                      local_saturation: { type: 'number', minimum: -1, maximum: 1 }
-                    }
-                  }
+                      local_saturation: { type: 'number', minimum: -1, maximum: 1 },
+                    },
+                  },
                 },
-                required: ['lumRange']
-              }
-            }
+                required: ['lumRange'],
+              },
+            },
           },
         ],
         // Encourage/require tool use: when 3D Pop is emphasized, require tool calls (no plain text)
@@ -1156,13 +1199,15 @@ export class OpenAIColorAnalyzer {
         (tc: any) => tc.type === 'function' && tc.function?.name === 'generate_color_adjustments'
       );
       if (singleFull && (singleFull as any).function?.arguments) {
-        const adjustments = JSON.parse((singleFull as any).function.arguments) as AIColorAdjustments;
+        const adjustments = JSON.parse(
+          (singleFull as any).function.arguments
+        ) as AIColorAdjustments;
         console.log('[AI] AI color analysis completed (single call)');
         return adjustments;
       }
 
       // Otherwise, aggregate calls from report_global_adjustments and add_mask
-      const aggregated: any = { };
+      const aggregated: any = {};
       const masks: any[] = [];
       for (const tc of message.tool_calls as any[]) {
         if (tc.type !== 'function' || !tc.function?.arguments) continue;
@@ -1196,10 +1241,13 @@ export class OpenAIColorAnalyzer {
         }
       }
       if (masks.length) {
-        console.log(`[AI] Generated ${masks.length} mask(s):`, masks.map(m => `${m.name} (${m.type})`).join(', '));
+        console.log(
+          `[AI] Generated ${masks.length} mask(s):`,
+          masks.map(m => `${m.name} (${m.type})`).join(', ')
+        );
         aggregated.masks = masks;
       } else if (options?.emphasize3DPop) {
-        console.log('[AI] No masks generated despite 3D Pop being enabled');
+        console.log('[AI] 3D Pop enabled: no masks added (kept subtle/optional)');
       }
       if (Object.keys(aggregated).length > 0) {
         console.log('[AI] AI color analysis composed from multi-call tools');

@@ -10,6 +10,11 @@
 
 Transform your photo editing workflow with intelligent AI-driven color recipe creation. Foto Recipe Wizard helps photographers achieve consistent, professional color grading by analyzing reference photos and generating industry-standard Lightroom presets and 3D LUTs.
 
+## 📸 Screenshots
+
+![Screenshot 1](assets/screenshots/screen1.png)
+![Screenshot 2](assets/screenshots/screen2.png)
+
 ## 🚀 Quick Start
 
 1. **Download**: Get the latest release from [GitHub Releases](https://github.com/tesenwein/fotoRecipeWizard/releases/latest)

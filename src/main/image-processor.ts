@@ -88,6 +88,7 @@ export class ImageProcessor {
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
             preserveSkinTones: !!settings.preserveSkinTones,
+            emphasize3DPop: !!settings.emphasize3DPop,
           },
         },
       };
@@ -134,6 +135,7 @@ export class ImageProcessor {
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
             preserveSkinTones: !!settings.preserveSkinTones,
+            emphasize3DPop: !!settings.emphasize3DPop,
           },
         },
       };

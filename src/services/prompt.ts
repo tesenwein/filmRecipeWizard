@@ -15,7 +15,7 @@ export function buildUserContentForAnalysis(
     content.push({
       type: 'text' as const,
       text:
-        'MANDATORY 3D POP REQUIREMENT: You MUST create exactly 2 masks: (1) Subject mask named "Subject Pop" with reference point on the main subject/person, and (2) Background mask named "Background Falloff" with reference point in the background area. Use different reference coordinates for each mask. This is REQUIRED regardless of image content.',
+        '3D POP (optional, keep subtle): If it clearly improves gentle depth separation, consider up to 2 masks — (1) Subject mask named "Subject Pop" with a reference point on the main subject/person, and (2) Background mask named "Background Falloff" with a reference point in a background area. Use distinct reference coordinates. Keep local adjustments subtle (e.g., local_exposure within -0.25 to +0.25; local_clarity and local_dehaze within -0.2 to +0.2). Avoid halos, harsh transitions, or cartoonish contrast. Skip masks entirely if unnecessary.',
     });
   }
 
