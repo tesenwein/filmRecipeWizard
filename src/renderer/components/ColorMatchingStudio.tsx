@@ -187,7 +187,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         const res = await window.electronAPI.getSettings();
         if (res?.success && res.settings) {
           setPreserveSkinTones(!!res.settings.preserveSkinTones);
-          setEmphasize3DPop(!!res.settings.emphasize3DPop);
+          // Always default 3D Pop to false - it should be manually enabled each time
+          setEmphasize3DPop(false);
         }
       } catch {
         // Ignore errors when loading settings
