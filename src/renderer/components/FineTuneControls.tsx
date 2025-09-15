@@ -6,10 +6,8 @@ import {
   AccordionSummary,
   Box,
   Chip,
-  FormControlLabel,
   Paper,
   Slider,
-  Switch,
 } from '@mui/material';
 import React from 'react';
 

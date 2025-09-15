@@ -24,7 +24,9 @@ export class StorageService {
       try {
         const tmp = `${this.storageFile}.tmp`;
         await fs.rm(tmp, { force: true });
-      } catch {}
+      } catch {
+        // Ignore errors when removing temp file
+      }
     } finally {
       this.initialized = true;
     }
@@ -59,9 +61,15 @@ export class StorageService {
           }))
           .sort((a, b) => (a.time < b.time ? 1 : -1));
         for (let i = maxBackups; i < files.length; i++) {
-          try { await fs.rm(path.join(this.backupDir, files[i].name)); } catch {}
+          try {
+            await fs.rm(path.join(this.backupDir, files[i].name));
+          } catch {
+            // Ignore errors when removing old backups
+          }
         }
-      } catch {}
+      } catch {
+        // Ignore errors when accessing backup directory
+      }
     } catch (e) {
       console.warn('[STORAGE] Failed to create history backup:', e);
     }

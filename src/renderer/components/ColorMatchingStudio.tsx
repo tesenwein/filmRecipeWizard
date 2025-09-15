@@ -167,7 +167,9 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         if (res?.success && res.settings) {
           setPreserveSkinTones(!!res.settings.preserveSkinTones);
         }
-      } catch {}
+      } catch {
+        // Ignore errors when loading settings
+      }
     };
     loadSettings();
   }, []);
@@ -176,7 +178,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     setPreserveSkinTones(checked);
     try {
       await window.electronAPI.saveSettings({ preserveSkinTones: checked });
-    } catch (e) {
+    } catch {
       // silently ignore errors in UI; setting persists via Settings page too
     }
   };

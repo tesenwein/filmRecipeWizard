@@ -411,21 +411,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           </Box>
                         )}
 
-                        {/* Global Preferences */}
-                        {result.metadata?.usedSettings?.preserveSkinTones !== undefined && (
-                          <Box sx={{ mb: 3 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                              Global Preferences
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              <Chip
-                                label={`Preserve Skin Tones: ${result.metadata.usedSettings.preserveSkinTones ? 'On' : 'Off'}`}
-                                color={result.metadata.usedSettings.preserveSkinTones ? 'success' : 'default'}
-                                variant="outlined"
-                              />
-                            </Box>
-                          </Box>
-                        )}
 
                         {/* Processing Stats */}
                         <Box
