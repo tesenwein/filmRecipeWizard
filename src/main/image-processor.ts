@@ -68,7 +68,6 @@ export class ImageProcessor {
         outputPath: data.targetImagePath, // Return original path since we're not processing
         metadata: {
           aiAdjustments,
-          adjustments: aiAdjustments,
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
@@ -114,8 +113,7 @@ export class ImageProcessor {
         success: true,
         outputPath: data.targetImagePath,
         metadata: {
-          aiAdjustments: aiAdjustments,
-          adjustments: aiAdjustments,
+          aiAdjustments,
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning,
           usedSettings: {
@@ -194,7 +192,7 @@ export class ImageProcessor {
         metadata: {
           presetName: `FotoRecipeWizard-${timestamp}.xmp`,
           groupFolder: 'foto-recipe-wizard',
-          adjustments: data.adjustments,
+          aiAdjustments: data.adjustments,
         },
       };
     } catch (error) {

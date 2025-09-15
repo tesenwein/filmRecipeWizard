@@ -7,7 +7,6 @@ export interface ProcessingResult {
   error?: string;
   metadata?: {
     aiAdjustments?: AIColorAdjustments;
-    adjustments?: AIColorAdjustments;
     processingTime?: number;
     reasoning?: string;
     confidence?: number;
