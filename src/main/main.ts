@@ -126,7 +126,7 @@ class FotoRecipeWizardApp {
             label: 'About Me — Theodor Esenwein',
             click: () => {
               try {
-                shell.openExternal('https://www.instagram.com/portraits.by.theo.esenwein/');
+                shell.openExternal('https://www.theoesenwein.ch');
               } catch {}
             },
           },
