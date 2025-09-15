@@ -1,6 +1,6 @@
+import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { app } from 'electron';
 import sharp from 'sharp';
 import { ProcessHistory } from '../shared/types';
 
@@ -45,7 +45,7 @@ export class StorageService {
       const backupPath = path.join(this.backupDir, `history-${ts}.json`);
       const contents = await fs.readFile(this.storageFile);
       await fs.writeFile(backupPath, contents);
-      
+
       // Prune old backups, keep the most recent N
       const maxBackups = 20;
       try {
@@ -147,7 +147,6 @@ export class StorageService {
               : undefined,
         }));
       }
-      console.log('[STORAGE] No existing history or valid backup, starting fresh');
       return [];
     }
   }
@@ -161,7 +160,6 @@ export class StorageService {
       const tmp = `${this.storageFile}.tmp`;
       await fs.writeFile(tmp, data, 'utf8');
       await fs.rename(tmp, this.storageFile);
-      console.log('[STORAGE] History saved successfully');
     } catch (error) {
       console.error('[STORAGE] Failed to save history:', error);
       throw error;
@@ -184,7 +182,7 @@ export class StorageService {
   async updateProcess(processId: string, updates: Partial<ProcessHistory>): Promise<void> {
     const history = await this.loadHistory();
     const index = history.findIndex(p => p.id === processId);
-    
+
     if (index >= 0) {
       history[index] = { ...history[index], ...updates };
       await this.saveHistory(history);
@@ -214,8 +212,6 @@ export class StorageService {
   // Convert an image file to base64 JPEG data
   async convertImageToBase64(imagePath: string): Promise<string> {
     try {
-      console.log(`[STORAGE] Converting image to base64: ${path.basename(imagePath)}`);
-
       // Convert any supported image format to JPEG and resize for storage efficiency (1024px max long side)
       const jpegBuffer = await sharp(imagePath)
         .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
@@ -223,12 +219,14 @@ export class StorageService {
         .toBuffer();
 
       const base64Data = jpegBuffer.toString('base64');
-      console.log(`[STORAGE] Converted image to base64 (${Math.round(base64Data.length / 1024)}KB)`);
-
       return base64Data;
     } catch (error) {
       console.error(`[STORAGE] Failed to convert image to base64: ${imagePath}`, error);
-      throw new Error(`Failed to convert image to base64: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to convert image to base64: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   }
 
@@ -242,7 +240,6 @@ export class StorageService {
     const buffer = Buffer.from(base64Data, 'base64');
 
     await fs.writeFile(tempPath, buffer);
-    console.log(`[STORAGE] Created temp file from base64: ${tempPath}`);
 
     return tempPath;
   }
@@ -258,7 +255,6 @@ export class StorageService {
       const os = await import('os');
       const tmpDir = path.join(os.tmpdir(), 'foto-recipe-wizard-base64');
       await fs.rm(tmpDir, { recursive: true, force: true });
-      console.log(`[STORAGE] Cleaned up temp files: ${tmpDir}`);
     } catch {
       // Directory might not exist, which is fine
       console.log(`[STORAGE] Temp directory already cleaned or doesn't exist`);

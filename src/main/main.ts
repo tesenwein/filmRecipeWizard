@@ -9,12 +9,12 @@ import {
 } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { ProcessHistory, AppSettings } from '../shared/types';
+import { AppSettings, ProcessHistory } from '../shared/types';
 import { ImageProcessor } from './image-processor';
+import { generateLUTContent } from './lut-generator';
 import { SettingsService } from './settings-service';
 import { StorageService } from './storage-service';
 import { generateXMPContent } from './xmp-generator';
-import { generateLUTContent } from './lut-generator';
 
 class FotoRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
@@ -147,11 +147,6 @@ class FotoRecipeWizardApp {
   }
 
   private setupIPC(): void {
-
-
-
-
-
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
       try {
@@ -201,7 +196,6 @@ class FotoRecipeWizardApp {
       }
     });
 
-
     // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
     ipcMain.handle(
       'generate-preview',
@@ -219,8 +213,6 @@ class FotoRecipeWizardApp {
       }
     );
 
-
-
     // Handle processing with stored base64 data from recipe
     ipcMain.handle(
       'process-with-stored-images',
@@ -235,7 +227,6 @@ class FotoRecipeWizardApp {
           styleOptions?: any;
         }
       ) => {
-
         try {
           // Prefer inline base64 if provided by caller, otherwise load from storage
           const stored = await this.storageService.getProcess(data.processId);
@@ -430,7 +421,6 @@ class FotoRecipeWizardApp {
 
     // Handle processing for a single target (one reference + one target)
     ipcMain.handle('process-images', async (_event, data) => {
-
       if (!this.mainWindow) return [];
 
       try {
@@ -543,7 +533,9 @@ class FotoRecipeWizardApp {
 
           // Prepare target images as base64 for immediate processing only (do not persist)
           let targetImageDataEphemeral: string[] = [];
-          const targetImages: string[] | undefined = Array.isArray((processData as any).targetImages)
+          const targetImages: string[] | undefined = Array.isArray(
+            (processData as any).targetImages
+          )
             ? (processData as any).targetImages
             : undefined;
           if (targetImages && targetImages.length > 0) {
@@ -678,7 +670,9 @@ class FotoRecipeWizardApp {
             throw convErr instanceof Error ? convErr : new Error('Failed to convert image');
           }
         }
-        await this.storageService.updateProcess(processId, { recipeImageData: baseImageData } as any);
+        await this.storageService.updateProcess(processId, {
+          recipeImageData: baseImageData,
+        } as any);
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error setting base image:', error);
@@ -911,23 +905,55 @@ class FotoRecipeWizardApp {
         if (data.strength !== undefined && data.strength !== 1.0) {
           // Create a copy of adjustments with strength applied
           adjustments = { ...data.adjustments };
-          console.log('[IPC] Applying strength:', data.strength);
-
           // Apply strength to numeric adjustment values
           const numericFields = [
-            'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks',
-            'vibrance', 'saturation', 'clarity', 'temperature', 'tint',
+            'exposure',
+            'contrast',
+            'highlights',
+            'shadows',
+            'whites',
+            'blacks',
+            'vibrance',
+            'saturation',
+            'clarity',
+            'temperature',
+            'tint',
             // HSL hue/sat/lum (Lightroom scale -100..100)
-            'hue_red','hue_orange','hue_yellow','hue_green','hue_aqua','hue_blue','hue_purple','hue_magenta',
-            'sat_red','sat_orange','sat_yellow','sat_green','sat_aqua','sat_blue','sat_purple','sat_magenta',
-            'lum_red','lum_orange','lum_yellow','lum_green','lum_aqua','lum_blue','lum_purple','lum_magenta',
+            'hue_red',
+            'hue_orange',
+            'hue_yellow',
+            'hue_green',
+            'hue_aqua',
+            'hue_blue',
+            'hue_purple',
+            'hue_magenta',
+            'sat_red',
+            'sat_orange',
+            'sat_yellow',
+            'sat_green',
+            'sat_aqua',
+            'sat_blue',
+            'sat_purple',
+            'sat_magenta',
+            'lum_red',
+            'lum_orange',
+            'lum_yellow',
+            'lum_green',
+            'lum_aqua',
+            'lum_blue',
+            'lum_purple',
+            'lum_magenta',
             // Color grading saturations and luminances (0..100 or -100..100)
-            'color_grade_shadow_sat','color_grade_shadow_lum',
-            'color_grade_midtone_sat','color_grade_midtone_lum',
-            'color_grade_highlight_sat','color_grade_highlight_lum',
-            'color_grade_global_sat','color_grade_global_lum',
+            'color_grade_shadow_sat',
+            'color_grade_shadow_lum',
+            'color_grade_midtone_sat',
+            'color_grade_midtone_lum',
+            'color_grade_highlight_sat',
+            'color_grade_highlight_lum',
+            'color_grade_global_sat',
+            'color_grade_global_lum',
             // Balance is an amount (-100..100) we scale toward 0
-            'color_grade_balance'
+            'color_grade_balance',
           ];
 
           // Hues in color grading are angles (0..360) and should NOT be scaled; leave as-is
@@ -938,7 +964,7 @@ class FotoRecipeWizardApp {
                 // Temperature: apply strength to deviation from 6500K
                 const neutral = 6500;
                 const deviation = adjustments[field] - neutral;
-                adjustments[field] = neutral + (deviation * data.strength);
+                adjustments[field] = neutral + deviation * data.strength;
               } else if (field.startsWith('hue_')) {
                 // HSL hue shifts: scale toward 0
                 adjustments[field] = adjustments[field] * data.strength;
@@ -948,9 +974,6 @@ class FotoRecipeWizardApp {
               }
             }
           }
-          console.log('[IPC] Adjustments after strength applied:', adjustments);
-        } else {
-          console.log('[IPC] No strength adjustment applied');
         }
 
         // Generate LUT content
@@ -973,9 +996,10 @@ class FotoRecipeWizardApp {
           .replace(/\s+/g, ' ')
           .trim()
           .replace(/\s/g, '-');
-        const strengthSuffix = data.strength !== undefined && data.strength !== 1.0
-          ? `-${Math.round(data.strength * 100)}pct`
-          : '';
+        const strengthSuffix =
+          data.strength !== undefined && data.strength !== 1.0
+            ? `-${Math.round(data.strength * 100)}pct`
+            : '';
         const safeName = `${baseName}-LUT-${data.size}${strengthSuffix}`;
 
         const result = await dialog.showSaveDialog({
@@ -990,7 +1014,6 @@ class FotoRecipeWizardApp {
         if (!result.canceled && result.filePath) {
           // Write the file
           await fs.writeFile(result.filePath, lutContent, 'utf8');
-          console.log('[IPC] generate-lut completed:', { filePath: result.filePath });
           return { success: true, filePath: result.filePath };
         } else {
           return { success: false, error: 'Save canceled' };

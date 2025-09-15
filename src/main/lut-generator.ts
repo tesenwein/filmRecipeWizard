@@ -66,12 +66,6 @@ export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: numb
   } as const;
 
 
-  // Debug: Check if we have meaningful color adjustments
-  const hasColorGrading = adjustments.shadowSat > 0.01 || adjustments.midtoneSat > 0.01 || adjustments.highlightSat > 0.01;
-  const hasHSLAdjustments = Math.abs(adjustments.hue_red) > 1 || Math.abs(adjustments.hue_orange) > 1 ||
-                           Math.abs(adjustments.hue_yellow) > 1 || Math.abs(adjustments.hue_green) > 1 ||
-                           Math.abs(adjustments.hue_aqua) > 1 || Math.abs(adjustments.hue_blue) > 1 ||
-                           Math.abs(adjustments.hue_purple) > 1 || Math.abs(adjustments.hue_magenta) > 1;
 
   // Generate LUT based on format
   if (format === 'cube') {

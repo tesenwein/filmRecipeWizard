@@ -180,13 +180,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                 </IconButton>
                 <CardActionArea
                   onClick={() => {
-                    console.log('[HISTORY] Open clicked', {
-                      id: process.id,
-                      timestamp: process.timestamp,
-                      resultsCount: Array.isArray((process as any).results)
-                        ? (process as any).results.length
-                        : 0,
-                    });
                     onOpenRecipe(process);
                   }}
                 >
@@ -227,13 +220,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                     fullWidth
                     onClick={e => {
                       e.stopPropagation();
-                      console.log('[HISTORY] Open button', {
-                        id: process.id,
-                        timestamp: process.timestamp,
-                        resultsCount: Array.isArray((process as any).results)
-                          ? (process as any).results.length
-                          : 0,
-                      });
                       onOpenRecipe(process);
                     }}
                   >

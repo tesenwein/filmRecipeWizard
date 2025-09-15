@@ -1,11 +1,16 @@
+import BugReportIcon from '@mui/icons-material/BugReport';
+import GitHubIcon from '@mui/icons-material/Code';
 import HomeIcon from '@mui/icons-material/Home';
 import SettingsIcon from '@mui/icons-material/Settings';
-import GitHubIcon from '@mui/icons-material/Code';
-import BugReportIcon from '@mui/icons-material/BugReport';
 import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
-import { ProcessHistory, ProcessingResult, ProcessingState, StyleOptions } from '../../shared/types';
+import {
+  ProcessHistory,
+  ProcessingResult,
+  ProcessingState,
+  StyleOptions,
+} from '../../shared/types';
 import ColorMatchingStudio from './ColorMatchingStudio';
 import HistoryView from './HistoryView';
 import ProcessingView from './ProcessingView';
@@ -58,7 +63,6 @@ const App: React.FC = () => {
           response.success &&
           (!response.settings?.openaiKey || response.settings?.openaiKey === '')
         ) {
-          console.log('[APP] No API key found, opening settings');
           setSettingsOpen(true);
         }
       } catch (error) {
@@ -151,10 +155,6 @@ const App: React.FC = () => {
     }));
 
     setResults(results);
-    console.log('[APP] Processing complete', {
-      count: results.length,
-      success: results.filter(r => r.success).length,
-    });
     setProcessingState(prev => ({
       ...prev,
       isProcessing: false,
@@ -166,18 +166,15 @@ const App: React.FC = () => {
     const pid = currentProcessIdRef.current;
     if (pid) {
       try {
-        console.log('[APP] Persisting results', { id: pid, count: results.length });
         await window.electronAPI.updateProcess(pid, {
           results,
         });
-        console.log('[APP] Results persisted', { id: pid });
       } catch (error) {
         console.error('Failed to update process:', error);
       }
     }
 
     setCurrentStep('results');
-
   };
 
   const handleReset = () => {
@@ -199,7 +196,6 @@ const App: React.FC = () => {
     handleReset();
   };
 
-
   const handleOpenRecipe = async (process: ProcessHistory) => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
     // Do not rely on legacy file paths in stored recipe
@@ -208,18 +204,7 @@ const App: React.FC = () => {
     setCurrentProcessId(process.id);
     try {
       if (process.id) {
-        console.log('[APP] Open recipe request', {
-          id: process.id,
-          incomingResults: Array.isArray((process as any).results)
-            ? (process as any).results.length
-            : 0,
-        });
         const res = await window.electronAPI.getProcess(process.id);
-        console.log('[APP] getProcess response', {
-          id: process.id,
-          success: res?.success,
-          resultsCount: Array.isArray(res?.process?.results) ? res?.process?.results.length : 0,
-        });
         if (
           res?.success &&
           res.process &&
@@ -343,7 +328,9 @@ const App: React.FC = () => {
             <IconButton
               color="inherit"
               size="small"
-              onClick={() => window.electronAPI.openExternal('https://github.com/tesenwein/fotoRecipeWizard')}
+              onClick={() =>
+                window.electronAPI.openExternal('https://github.com/tesenwein/fotoRecipeWizard')
+              }
               sx={{
                 mr: 1,
                 color: 'action.active',
@@ -357,7 +344,11 @@ const App: React.FC = () => {
             <IconButton
               color="inherit"
               size="small"
-              onClick={() => window.electronAPI.openExternal('https://github.com/tesenwein/fotoRecipeWizard/issues')}
+              onClick={() =>
+                window.electronAPI.openExternal(
+                  'https://github.com/tesenwein/fotoRecipeWizard/issues'
+                )
+              }
               sx={{
                 mr: 1,
                 color: 'action.active',
@@ -488,7 +479,7 @@ const App: React.FC = () => {
         disableScrollLock
         slotProps={{
           paper: { className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } },
-          backdrop: { className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } }
+          backdrop: { className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } },
         }}
       >
         <DialogTitle>Settings</DialogTitle>

@@ -90,15 +90,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     setActiveTab(newValue);
   };
 
-  useEffect(() => {
-    console.log('[RESULTS] Render with results', {
-      count: results.length,
-      success: successfulResults.length,
-      failed: failedResults.length,
-      processId,
-    });
-  }, [results, successfulResults.length, failedResults.length, processId]);
-
   const handleAddRecipeImage = async () => {
     try {
       if (!processId) return;
@@ -113,17 +104,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         properties: ['openFile'],
       });
       if (files && files.length) {
-        console.log('[RESULTS] Adding recipe image:', files[0]);
         const res = await window.electronAPI.addBaseImages(processId, files.slice(0, 1));
         if (!res?.success) {
           alert(res?.error || 'Failed to add recipe image');
           return;
         }
-        console.log('[RESULTS] Recipe image added, reloading data');
+
         // Reload the image data after adding
         const data = await window.electronAPI.getImageDataUrls(processId);
         if (data.success) {
-          console.log('[RESULTS] Loaded recipe image URLs:', data.baseImageUrls);
           setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
           setActiveBase(0);
         }
@@ -171,7 +160,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             Array.isArray(imgResponse.baseImageUrls) ? imgResponse.baseImageUrls : []
           );
           setActiveBase(0);
-          console.log('[RESULTS] Loaded base64 images for process', processId);
         } else {
           throw new Error(imgResponse.error || 'Failed to load image data URLs');
         }
@@ -355,7 +343,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     color: 'primary.main',
                     textAlign: 'left',
                     mb: 1,
-                    fontSize: { xs: '1.5rem', sm: '2rem' }
+                    fontSize: { xs: '1.5rem', sm: '2rem' },
                   }}
                 >
                   {name}
@@ -695,7 +683,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     </Box>
                                     <Chip
                                       label={processOptions.preserveSkinTones ? 'On' : 'Off'}
-                                      color={processOptions.preserveSkinTones ? 'success' : 'default'}
+                                      color={
+                                        processOptions.preserveSkinTones ? 'success' : 'default'
+                                      }
                                       variant="filled"
                                       size="small"
                                       sx={{ fontWeight: 600 }}
@@ -1379,7 +1369,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </Box>
                         {/* Export Strength and Button - 50/50 Layout */}
                         <Box sx={{ display: 'flex', gap: 3, mt: 3, alignItems: 'stretch' }}>
-                          <Paper variant="outlined" sx={{ p: 3, flex: 1, backgroundColor: 'grey.50' }}>
+                          <Paper
+                            variant="outlined"
+                            sx={{ p: 3, flex: 1, backgroundColor: 'grey.50' }}
+                          >
                             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                               Export Strength
                             </Typography>
@@ -1411,7 +1404,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               Tip: 100% applies the full AI adjustments. 50% is softer.
                             </Typography>
                           </Paper>
-                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
+                            }}
+                          >
                             <Button
                               variant="contained"
                               startIcon={<DownloadIcon />}
@@ -1428,7 +1428,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       {/* Divider between Preset and Camera Profile */}
                       <Box sx={{ display: 'flex', alignItems: 'center', my: 4 }}>
                         <Divider sx={{ flex: 1 }} />
-                        <Typography variant="body2" sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}
+                        >
                           OR
                         </Typography>
                         <Divider sx={{ flex: 1 }} />
@@ -1569,7 +1572,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               </Typography>
                             </Box>
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              Tip: 100% applies the full AI adjustments. Lower values create more subtle effects.
+                              Tip: 100% applies the full AI adjustments. Lower values create more
+                              subtle effects.
                             </Typography>
                           </Paper>
                         </Box>

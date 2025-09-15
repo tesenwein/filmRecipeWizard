@@ -1,5 +1,4 @@
 import OpenAI from 'openai';
-import * as path from 'path';
 import sharp from 'sharp';
 import { buildUserContentForAnalysis } from './prompt';
 import type { AIColorAdjustments } from './types';
