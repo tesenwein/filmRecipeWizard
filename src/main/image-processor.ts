@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
+import { ProcessingResult } from '../shared/types';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
 import { exportLightroomProfile } from './profile-exporter';
 import { SettingsService } from './settings-service';
@@ -21,22 +22,6 @@ export interface StyleMatchOptions {
   prompt?: string;
 }
 
-export interface ProcessingResult {
-  success: boolean;
-  outputPath?: string;
-  metadata?: {
-    aiAdjustments?: AIColorAdjustments;
-    adjustments?: AIColorAdjustments;
-    confidence?: number;
-    reasoning?: string;
-    presetName?: string;
-    groupFolder?: string;
-    usedSettings?: {
-      preserveSkinTones?: boolean;
-    };
-  };
-  error?: string;
-}
 
 export class ImageProcessor {
   private aiAnalyzer: OpenAIColorAnalyzer | null = null;

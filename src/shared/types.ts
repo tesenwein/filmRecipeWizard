@@ -1,15 +1,22 @@
 import { AIColorAdjustments } from '../services/openai-color-analyzer';
 
 export interface ProcessingResult {
-  inputPath: string;
+  inputPath?: string;
   outputPath?: string;
   success: boolean;
   error?: string;
   metadata?: {
     aiAdjustments?: AIColorAdjustments;
+    adjustments?: AIColorAdjustments;
     processingTime?: number;
     reasoning?: string;
     confidence?: number;
+    presetName?: string;
+    groupFolder?: string;
+    usedSettings?: {
+      preserveSkinTones?: boolean;
+      emphasize3DPop?: boolean;
+    };
   };
 }
 
