@@ -26,6 +26,7 @@ import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import SingleImage from './SingleImage';
+import ConfirmDialog from './ConfirmDialog';
 
 interface RecipeGalleryProps {
   onOpenRecipe: (recipe: Recipe) => void;
@@ -45,8 +46,9 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('name');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { showSuccess, showError } = useAlert();
 
   // Recipes are loaded during splash screen, no need to load here
@@ -67,7 +69,11 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     parts.push(recipe.id);
     parts.push(getRecipeName(recipe));
     if (recipe.prompt) parts.push(recipe.prompt);
-    try { parts.push(new Date(recipe.timestamp).toLocaleString()); } catch {}
+    try {
+      parts.push(new Date(recipe.timestamp).toLocaleString());
+    } catch {
+      // Ignore date parsing errors
+    }
 
     // Author
     const author = (recipe as any).author as any;
@@ -160,21 +166,32 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   };
 
   const handleMenuClose = () => {
+    // Only close the menu; keep selectedRecipeId for confirm dialogs
     setAnchorEl(null);
-    setSelectedRecipeId(null);
   };
 
-  const handleDeleteRecipe = async () => {
+  const handleDeleteRecipe = () => {
     if (!selectedRecipeId) return;
     handleMenuClose();
-    if (confirm('Are you sure you want to delete this recipe?')) {
-      try {
-        await deleteRecipe(selectedRecipeId);
-      } catch (error) {
-        console.error('Failed to delete recipe:', error);
-        showError('Failed to delete recipe');
-      }
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedRecipeId) return;
+    setDeleteDialogOpen(false);
+    try {
+      await deleteRecipe(selectedRecipeId);
+      setSelectedRecipeId(null);
+      // Intentionally no success toast on delete
+    } catch (error) {
+      console.error('Failed to delete recipe:', error);
+      showError('Failed to delete recipe');
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setSelectedRecipeId(null);
   };
 
   const handleExportRecipe = async () => {
@@ -451,6 +468,15 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           <ListItemText>Delete</ListItemText>
         </MenuItem>
       </Menu>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Recipe"
+        content="Are you sure you want to delete this recipe? This action cannot be undone."
+        confirmButtonText="Delete"
+        confirmColor="error"
+      />
     </div>
   );
 };

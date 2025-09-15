@@ -6,6 +6,8 @@ const electronAPI = {
   selectFiles: (options: any) => ipcRenderer.invoke('select-files', options),
   openPath: (path: string) => ipcRenderer.invoke('open-path', path),
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+  processDroppedFiles: (files: { name: string; data: string }[]) =>
+    ipcRenderer.invoke('process-dropped-files', files),
 
 
   // Image processing

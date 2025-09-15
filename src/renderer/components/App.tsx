@@ -152,7 +152,11 @@ const App: React.FC = () => {
         addRecipe(result.process);
         // Mark as generating in gallery
         if (newProcessId) {
-          try { setGeneratingStatus(newProcessId, true); } catch {}
+          try {
+            setGeneratingStatus(newProcessId, true);
+          } catch {
+            // Ignore status update errors
+          }
         }
         // Use the single recipe image (first reference) for processing only
         returnedBase64.base = result?.process?.recipeImageData
@@ -315,7 +319,9 @@ const App: React.FC = () => {
               if ((full as any).status && (full as any).status !== 'generating') {
                 setGeneratingStatus(full.id, false);
               }
-            } catch {}
+            } catch {
+              // Ignore cleanup errors
+            }
           }
         } catch {
           // Swallow background update errors silently
@@ -345,6 +351,27 @@ const App: React.FC = () => {
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // Enable file drag-and-drop across the app without navigating away
+  useEffect(() => {
+    const preventDefault = (e: DragEvent) => {
+      e.preventDefault();
+      // Improve UX: indicate copy action when dragging files
+      try {
+        if (e.type === 'dragover' && e.dataTransfer) {
+          e.dataTransfer.dropEffect = 'copy';
+        }
+      } catch {
+        // Ignore dataTransfer errors
+      }
+    };
+    window.addEventListener('dragover', preventDefault);
+    window.addEventListener('drop', preventDefault);
+    return () => {
+      window.removeEventListener('dragover', preventDefault);
+      window.removeEventListener('drop', preventDefault);
+    };
   }, []);
 
   // When navigating to create, default to upload step if nothing selected

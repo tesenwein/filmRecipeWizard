@@ -36,7 +36,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
           setWebsite(u.website || '');
           setInstagram(u.instagram || '');
         }
-      } catch {}
+      } catch {
+        // Ignore settings load errors
+      }
     })();
   }, []);
 
@@ -131,7 +133,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         const h = parts[0] || '';
         if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
       }
-    } catch {}
+    } catch {
+      // Ignore URL parsing errors
+    }
     // Require @ prefix for handle style
     if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');

@@ -1,9 +1,8 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { Box, Paper, Typography, FormControlLabel, Switch, Stack } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import TargetImageDisplay from './TargetImageDisplay';
+import ImagePicker from './ImagePicker';
 import StyleDescriptionCard from './StyleDescriptionCard';
-import RecipeImageCard from './RecipeImageCard';
 import FineTuneControls from './FineTuneControls';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import FilmStylesCard from './FilmStylesCard';
@@ -11,6 +10,7 @@ import LightroomProfileCard from './LightroomProfileCard';
 import ProcessButton from './ProcessButton';
 import { useAppStore } from '../store/appStore';
 import { StyleOptions } from '../../shared/types';
+import ConfirmDialog from './ConfirmDialog';
 
 
 interface ColorMatchingStudioProps {
@@ -37,6 +37,9 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
   const [preserveSkinTones, setPreserveSkinTones] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState<'base' | 'target'>('base');
+  const [deleteIndex, setDeleteIndex] = useState<number>(0);
 
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
@@ -58,7 +61,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(result.slice(0, 3), targetImages);
+        // Add to existing images if any, otherwise replace
+        const next = baseImages.length > 0
+          ? Array.from(new Set([...baseImages, ...result])).slice(0, 3)
+          : result.slice(0, 3);
+        onImagesSelected(next, targetImages);
       }
     } catch (error) {
       console.error('Error selecting base image:', error);
@@ -79,7 +86,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(baseImages, result.slice(0, 3));
+        // Add to existing images if any, otherwise replace
+        const next = targetImages.length > 0
+          ? Array.from(new Set([...targetImages, ...result])).slice(0, 3)
+          : result.slice(0, 3);
+        onImagesSelected(baseImages, next);
       }
     } catch (error) {
       console.error('Error selecting target images:', error);
@@ -123,12 +134,31 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
   // Remove handlers
   const handleRemoveBase = (index: number) => {
-    const next = baseImages.filter((_, i) => i !== index);
-    onImagesSelected(next, targetImages);
+    console.log('handleRemoveBase called with index:', index);
+    setDeleteType('base');
+    setDeleteIndex(index);
+    setDeleteDialogOpen(true);
   };
   const handleRemoveTarget = (index: number) => {
-    const next = targetImages.filter((_, i) => i !== index);
-    onImagesSelected(baseImages, next);
+    console.log('handleRemoveTarget called with index:', index);
+    setDeleteType('target');
+    setDeleteIndex(index);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteType === 'base') {
+      const next = baseImages.filter((_, i) => i !== deleteIndex);
+      onImagesSelected(next, targetImages);
+    } else {
+      const next = targetImages.filter((_, i) => i !== deleteIndex);
+      onImagesSelected(baseImages, next);
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   };
 
   // Generate previews for target images
@@ -200,14 +230,31 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       </Paper>
 
       {/* Main Content Grid */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.2fr 0.8fr' }, gap: 2.5, minHeight: 500 }}>
-        {/* Left Column - Large Target Image */}
-        <TargetImageDisplay
-          targetImages={targetImages}
-          targetPreviews={targetPreviews}
-          onSelectImages={handleTargetImagesSelect}
-          onRemoveImage={handleRemoveTarget}
-        />
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.5fr 0.8fr' }, gap: 2.5, minHeight: 500 }}>
+        {/* Left Column - Profile and Target Image */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
+          <LightroomProfileCard
+            selected={styleOptions?.lightroomProfile}
+            onSelect={(profile) => onStyleOptionsChange?.({ lightroomProfile: profile })}
+          />
+
+          <Box sx={{ maxHeight: 600, display: 'flex', width: '100%' }}>
+            <ImagePicker
+              kind="target"
+              images={targetImages}
+              previews={targetPreviews}
+              onSelectFiles={handleTargetImagesSelect}
+              onRemoveImage={handleRemoveTarget}
+              onDropFiles={(paths) => {
+                if (!paths || paths.length === 0) return;
+                const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
+                onImagesSelected(baseImages, next);
+              }}
+              required
+              maxFiles={3}
+            />
+          </Box>
+        </Box>
 
         {/* Right Column - All Options */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -262,11 +309,18 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             onSelect={(s) => onStyleOptionsChange?.({ filmStyle: s })}
           />
 
-          <RecipeImageCard
-            baseImages={baseImages}
-            basePreviews={basePreviews}
-            onSelectImages={handleBaseImageSelect}
+          <ImagePicker
+            kind="reference"
+            images={baseImages}
+            previews={basePreviews}
+            onSelectFiles={handleBaseImageSelect}
             onRemoveImage={handleRemoveBase}
+            onDropFiles={(paths) => {
+              if (!paths || paths.length === 0) return;
+              const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
+              onImagesSelected(next, targetImages);
+            }}
+            maxFiles={3}
           />
 
           <FineTuneControls
@@ -278,6 +332,16 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
       {/* Process Button */}
       <ProcessButton canProcess={canProcess} onStartProcessing={onStartProcessing} />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Remove Image"
+        content={`Are you sure you want to remove this ${deleteType === 'base' ? 'recipe reference' : 'target'} image?`}
+        confirmButtonText="Remove"
+        confirmColor="error"
+      />
     </Box>
   );
 };

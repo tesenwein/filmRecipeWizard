@@ -22,6 +22,7 @@ declare global {
       
       openPath: (path: string) => Promise<{ success: boolean; error?: string }>;
       openExternal: (url: string) => Promise<{ success: boolean; error?: string }>;
+      processDroppedFiles: (files: { name: string; data: string }[]) => Promise<string[]>;
 
       // Image processing
       processImages: (data: {

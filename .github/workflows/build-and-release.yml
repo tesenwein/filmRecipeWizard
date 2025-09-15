@@ -297,4 +297,43 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Sync master changes back to develop to prevent conflicts
+  sync-branches:
+    name: Sync Master to Develop
+    runs-on: ubuntu-latest
+    needs: [check-release, prepare-version, build, release]
+    if: always() && needs.check-release.outputs.should_release == 'true' && needs.release.result == 'success' && needs.check-release.outputs.is_prerelease == 'false'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync master to develop
+        run: |
+          # Fetch latest changes
+          git fetch origin master
+          git fetch origin develop
+
+          # Checkout develop and merge master
+          git checkout develop
+          git pull origin develop
+
+          # Merge master into develop
+          if git merge origin/master --no-edit; then
+            echo "✅ Successfully merged master into develop"
+            git push origin develop
+          else
+            echo "❌ Merge conflicts detected. Manual resolution required."
+            echo "Please resolve conflicts manually and push to develop."
+            exit 1
+          fi
+
       # Version already updated by bump-version job, no need to update again

@@ -127,7 +127,9 @@ class FotoRecipeWizardApp {
             click: () => {
               try {
                 shell.openExternal('https://www.theoesenwein.ch');
-              } catch {}
+              } catch {
+                // Ignore shell open errors
+              }
             },
           },
         ],
@@ -393,7 +395,9 @@ class FotoRecipeWizardApp {
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
                 },
               });
-            } catch {}
+            } catch {
+              // Ignore IPC send errors
+            }
           } catch (err) {
             console.error('[IPC] process-with-stored-images: failed to persist results', err);
           }
@@ -454,6 +458,29 @@ class FotoRecipeWizardApp {
       } catch (error) {
         console.error('[IPC] Error opening path:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Handle dropped files - save to temp and return paths
+    ipcMain.handle('process-dropped-files', async (_event, files: { name: string; data: string }[]) => {
+      try {
+        const tempDir = app.getPath('temp');
+        const paths: string[] = [];
+
+        for (const file of files) {
+          // Create temp file path with timestamp to avoid conflicts
+          const timestamp = Date.now() + Math.random().toString(36).substring(7);
+          const tempPath = path.join(tempDir, `dropped_${timestamp}_${file.name}`);
+          // Decode base64 and save to temp file
+          const buffer = Buffer.from(file.data.split(',')[1] || file.data, 'base64');
+          await fs.writeFile(tempPath, buffer);
+          paths.push(tempPath);
+        }
+
+        return paths;
+      } catch (error) {
+        console.error('[IPC] Error processing dropped files:', error);
+        throw error;
       }
     });
 
@@ -535,7 +562,9 @@ class FotoRecipeWizardApp {
                   ...(name ? { name } : {}),
                 },
               });
-            } catch {}
+            } catch {
+              // Ignore IPC send errors
+            }
           }
         } catch (err) {
           console.error('[IPC] process-images: failed to persist results', err);
@@ -566,7 +595,11 @@ class FotoRecipeWizardApp {
           return r;
         });
         if (mutated) {
-          try { await this.storageService.saveRecipes(withAuthors); } catch {}
+          try {
+            await this.storageService.saveRecipes(withAuthors);
+          } catch {
+            // Ignore save errors
+          }
         }
         return { success: true, recipes: withAuthors };
       } catch (error) {
@@ -630,7 +663,9 @@ class FotoRecipeWizardApp {
           try {
             const settings = await this.settingsService.loadSettings();
             authorProfile = settings.userProfile;
-          } catch {}
+          } catch {
+            // Ignore settings load errors
+          }
 
           const process: ProcessHistory = {
             id: processId,
@@ -664,7 +699,9 @@ class FotoRecipeWizardApp {
           // Notify renderer that a process has been updated (useful for background updates)
           try {
             this.mainWindow?.webContents.send('process-updated', { processId, updates });
-          } catch {}
+          } catch {
+            // Ignore IPC send errors
+          }
           return { success: true };
         } catch (error) {
           console.error('[IPC] Error updating process:', error);
