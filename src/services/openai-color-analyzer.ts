@@ -1240,8 +1240,6 @@ export class OpenAIColorAnalyzer {
           masks.map(m => `${m.name} (${m.type})`).join(', ')
         );
         aggregated.masks = masks;
-      } else if (options?.emphasize3DPop) {
-        console.log('[AI] 3D Pop enabled: no masks added (kept subtle/optional)');
       }
       if (Object.keys(aggregated).length > 0) {
         console.log('[AI] AI color analysis composed from multi-call tools');
