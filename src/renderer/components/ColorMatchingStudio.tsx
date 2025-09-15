@@ -61,7 +61,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(result.slice(0, 3), targetImages);
+        // Add to existing images if any, otherwise replace
+        const next = baseImages.length > 0
+          ? Array.from(new Set([...baseImages, ...result])).slice(0, 3)
+          : result.slice(0, 3);
+        onImagesSelected(next, targetImages);
       }
     } catch (error) {
       console.error('Error selecting base image:', error);
@@ -82,7 +86,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(baseImages, result.slice(0, 3));
+        // Add to existing images if any, otherwise replace
+        const next = targetImages.length > 0
+          ? Array.from(new Set([...targetImages, ...result])).slice(0, 3)
+          : result.slice(0, 3);
+        onImagesSelected(baseImages, next);
       }
     } catch (error) {
       console.error('Error selecting target images:', error);
@@ -222,22 +230,31 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       </Paper>
 
       {/* Main Content Grid */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.2fr 0.8fr' }, gap: 2.5, minHeight: 500 }}>
-        {/* Left Column - Target Image */}
-        <ImagePicker
-          kind="target"
-          images={targetImages}
-          previews={targetPreviews}
-          onSelectFiles={handleTargetImagesSelect}
-          onRemoveImage={handleRemoveTarget}
-          onDropFiles={(paths) => {
-            if (!paths || paths.length === 0) return;
-            const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
-            onImagesSelected(baseImages, next);
-          }}
-          required
-          maxFiles={3}
-        />
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.5fr 0.8fr' }, gap: 2.5, minHeight: 500 }}>
+        {/* Left Column - Profile and Target Image */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
+          <LightroomProfileCard
+            selected={styleOptions?.lightroomProfile}
+            onSelect={(profile) => onStyleOptionsChange?.({ lightroomProfile: profile })}
+          />
+
+          <Box sx={{ maxHeight: 600, display: 'flex', width: '100%' }}>
+            <ImagePicker
+              kind="target"
+              images={targetImages}
+              previews={targetPreviews}
+              onSelectFiles={handleTargetImagesSelect}
+              onRemoveImage={handleRemoveTarget}
+              onDropFiles={(paths) => {
+                if (!paths || paths.length === 0) return;
+                const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
+                onImagesSelected(baseImages, next);
+              }}
+              required
+              maxFiles={3}
+            />
+          </Box>
+        </Box>
 
         {/* Right Column - All Options */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -275,11 +292,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             onPromptChange={onPromptChange}
             selectedVibe={styleOptions?.vibe}
             onVibeChange={handleVibeChange}
-          />
-
-          <LightroomProfileCard
-            selected={styleOptions?.lightroomProfile}
-            onSelect={(profile) => onStyleOptionsChange?.({ lightroomProfile: profile })}
           />
 
           <ArtisticStylesCard

@@ -21,7 +21,13 @@ interface ImagePickerProps {
   required?: boolean;
 }
 
-const allowedExt = ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw', 'webp', 'gif'];
+// Be generous: include common RAW + HEIC. Preview generation will handle conversion where possible.
+const allowedExt = [
+  'jpg', 'jpeg', 'png', 'webp', 'gif',
+  'tiff', 'tif',
+  'heic', 'heif',
+  'dng', 'cr2', 'cr3', 'nef', 'nrw', 'arw', 'raf', 'rw2', 'orf', 'srw', 'pef', 'raw'
+];
 
 function isValidImagePath(path?: string) {
   if (!path) return false;
@@ -72,6 +78,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    try { if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; } catch {}
     setIsDragOver(true);
   }, []);
 
@@ -82,20 +89,46 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   }, []);
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragOver(false);
 
       if (!onDropFiles) return;
-      const files = Array.from(e.dataTransfer.files || []);
-      const paths = files
-        .map((f: any) => f?.path || '')
-        .filter((p) => !!p && isValidImagePath(p));
-      if (paths.length === 0) return;
 
-      // De-duplicate and cap to maxFiles when parent merges
-      onDropFiles(paths);
+      const files = Array.from(e.dataTransfer.files || []);
+      if (files.length === 0) return;
+
+      // Filter valid image files
+      const validFiles = files.filter((f) => isValidImagePath(f.name));
+      if (validFiles.length === 0) return;
+
+      try {
+        // Read files as base64
+        const fileData = await Promise.all(
+          validFiles.map(async (file) => {
+            return new Promise<{ name: string; data: string }>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                resolve({
+                  name: file.name,
+                  data: reader.result as string,
+                });
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          })
+        );
+
+        // Send to main process to save as temp files and get paths back
+        const paths = await window.electronAPI.processDroppedFiles(fileData);
+        if (paths.length > 0) {
+          onDropFiles(paths);
+        }
+      } catch (error) {
+        console.error('[ImagePicker] Error processing dropped files:', error);
+      }
     },
     [onDropFiles]
   );
@@ -104,7 +137,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const display = (previews.length ? previews : images).slice(0, maxFiles);
 
   return (
-    <Paper className="card slide-in" elevation={0} sx={{ p: 2.5, display: 'flex', flexDirection: 'column' }}>
+    <Paper className="card slide-in" elevation={0} sx={{ p: 2.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {defaults.icon}
@@ -126,7 +159,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             sx={{
               width: '100%',
               flex: 1,
-              minHeight: kind === 'target' ? 350 : 260,
+              minHeight: kind === 'target' ? 500 : 260,
+              maxHeight: kind === 'target' ? 500 : 260,
               borderRadius: 2,
               overflow: 'hidden',
               border: isDragOver ? '2px dashed rgba(63,81,181,0.4)' : 'none',
@@ -136,7 +170,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
               WebkitAppRegion: 'no-drag',
             }}
           >
-            <SingleImage source={display[0]} alt={kind === 'target' ? 'Target' : 'Reference'} fit="cover" />
+            <SingleImage source={display[0]} alt={kind === 'target' ? 'Target' : 'Reference'} fit="contain" />
             {onRemoveImage && (
               <Tooltip title={kind === 'target' ? 'Remove this image' : 'Remove this reference'}>
                 <IconButton
@@ -160,11 +194,13 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
                 </IconButton>
               </Tooltip>
             )}
-            <Chip
-              label={defaults.countLabel(images.length)}
-              size="medium"
-              sx={{ position: 'absolute', top: 12, right: 12, background: 'primary.main', color: 'white', fontSize: 12, fontWeight: 600 }}
-            />
+            {images.length > 1 && (
+              <Chip
+                label={defaults.countLabel(images.length)}
+                size="medium"
+                sx={{ position: 'absolute', top: 12, right: 12, background: 'primary.main', color: 'white', fontSize: 12, fontWeight: 600 }}
+              />
+            )}
           </Box>
           {images.length > 1 && (
             <Box sx={{ mt: 2 }}>
@@ -177,25 +213,41 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             </Box>
           )}
           <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: '#2c3338', fontWeight: 500, marginBottom: 12 }}>
-              {images[0].split('/').pop()}
-            </p>
-            <Button
-              variant="outlined"
-              onClick={onSelectFiles}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 3,
-                py: 1,
-                color: 'primary.main',
-                borderColor: 'primary.main',
-                '&:hover': { backgroundColor: 'rgba(91, 102, 112, 0.06)' },
-              }}
-            >
-              {defaults.changeCta}
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+              <Button
+                variant="outlined"
+                onClick={onSelectFiles}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1,
+                  color: 'primary.main',
+                  borderColor: 'primary.main',
+                  '&:hover': { backgroundColor: 'rgba(91, 102, 112, 0.06)' },
+                }}
+              >
+                {defaults.changeCta}
+              </Button>
+              {images.length < maxFiles && (
+                <Button
+                  variant="contained"
+                  onClick={onSelectFiles}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1,
+                    backgroundColor: 'primary.main',
+                    '&:hover': { backgroundColor: 'primary.dark' },
+                  }}
+                >
+                  Add More
+                </Button>
+              )}
+            </Box>
           </Box>
         </Box>
       ) : (
@@ -247,4 +299,3 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
 };
 
 export default ImagePicker;
-

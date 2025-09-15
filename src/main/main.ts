@@ -457,6 +457,29 @@ class FotoRecipeWizardApp {
       }
     });
 
+    // Handle dropped files - save to temp and return paths
+    ipcMain.handle('process-dropped-files', async (_event, files: { name: string; data: string }[]) => {
+      try {
+        const tempDir = app.getPath('temp');
+        const paths: string[] = [];
+
+        for (const file of files) {
+          // Create temp file path with timestamp to avoid conflicts
+          const timestamp = Date.now() + Math.random().toString(36).substring(7);
+          const tempPath = path.join(tempDir, `dropped_${timestamp}_${file.name}`);
+          // Decode base64 and save to temp file
+          const buffer = Buffer.from(file.data.split(',')[1] || file.data, 'base64');
+          await fs.writeFile(tempPath, buffer);
+          paths.push(tempPath);
+        }
+
+        return paths;
+      } catch (error) {
+        console.error('[IPC] Error processing dropped files:', error);
+        throw error;
+      }
+    });
+
     // Handle processing for a single target (one reference + one target)
     ipcMain.handle('process-images', async (_event, data) => {
       if (!this.mainWindow) return [];
