@@ -195,7 +195,6 @@ function applyColorTransform(r: number, g: number, b: number, A: any): [number, 
   const luma = (0.299 * R + 0.587 * G + 0.114 * B);
   const shadowW = 1 - smoothstep(0.25, 0.65, luma);
   const highlightW = smoothstep(0.35, 0.85, luma);
-  const midW = 1 - Math.abs(luma - 0.5) * 2;
 
   const toneDelta = (c: number) => {
     let v = c;
@@ -377,7 +376,7 @@ function hueBandWeights(hDeg: number): { red: number; orange: number; yellow: nu
     magenta: tri(hDeg, 320, 25),
   } as any;
   // Normalize so sum<=1 (softmax-like)
-  const sum = Object.values(weights).reduce((a: number, v: number) => a + v, 0) || 1;
+  const sum = (Object.values(weights) as number[]).reduce((a: number, v: number) => a + v, 0) || 1;
   for (const k of Object.keys(weights)) weights[k] /= sum;
   return weights as any;
 }
