@@ -48,7 +48,9 @@ interface AppState {
   loadSettings: () => Promise<void>;
   saveSettings: (settings: Partial<AppSettings>) => Promise<void>;
   loadRecipes: () => Promise<void>;
-  saveRecipe: (recipeData: any) => Promise<{ success: boolean; processId?: string; error?: string }>;
+  saveRecipe: (
+    recipeData: any
+  ) => Promise<{ success: boolean; processId?: string; error?: string }>;
   updateRecipeInStorage: (processId: string, updates: any) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
   importRecipes: () => Promise<{ success: boolean; count?: number; error?: string }>;
@@ -77,80 +79,98 @@ export const useAppStore = create<AppState>()(
       pollIntervalId: null,
 
       // Sync actions
-      setSetupWizardOpen: (open) =>
-        set({ setupWizardOpen: open }, false, 'setSetupWizardOpen'),
+      setSetupWizardOpen: open => set({ setupWizardOpen: open }, false, 'setSetupWizardOpen'),
 
-      setSetupCompleted: (completed) =>
+      setSetupCompleted: completed =>
         set({ setupCompleted: completed }, false, 'setSetupCompleted'),
 
-      updateSettings: (newSettings) =>
-        set((state) => ({
-          settings: { ...state.settings, ...newSettings }
-        }), false, 'updateSettings'),
+      updateSettings: newSettings =>
+        set(
+          state => ({
+            settings: { ...state.settings, ...newSettings },
+          }),
+          false,
+          'updateSettings'
+        ),
 
-      setCurrentRoute: (route) =>
-        set({ currentRoute: route }, false, 'setCurrentRoute'),
+      setCurrentRoute: route => set({ currentRoute: route }, false, 'setCurrentRoute'),
 
       // Recipe actions
-      setRecipes: (recipes) =>
-        set(() => {
-          const generating = new Set<string>();
-          recipes.forEach(r => {
-            if (r.status === 'generating' && r.id) generating.add(r.id);
-          });
-          return { recipes, generatingRecipes: generating };
-        }, false, 'setRecipes'),
+      setRecipes: recipes =>
+        set(
+          () => {
+            const generating = new Set<string>();
+            recipes.forEach(r => {
+              if (r.status === 'generating' && r.id) generating.add(r.id);
+            });
+            return { recipes, generatingRecipes: generating };
+          },
+          false,
+          'setRecipes'
+        ),
 
-      addRecipe: (recipe) =>
-        set((state) => {
-          const next: any = { recipes: [...state.recipes, recipe] };
-          if (recipe?.status === 'generating' && recipe?.id) {
-            const gen = new Set(state.generatingRecipes);
-            gen.add(recipe.id);
-            next.generatingRecipes = gen;
-          }
-          return next;
-        }, false, 'addRecipe'),
+      addRecipe: recipe =>
+        set(
+          state => {
+            const next: any = { recipes: [...state.recipes, recipe] };
+            if (recipe?.status === 'generating' && recipe?.id) {
+              const gen = new Set(state.generatingRecipes);
+              gen.add(recipe.id);
+              next.generatingRecipes = gen;
+            }
+            return next;
+          },
+          false,
+          'addRecipe'
+        ),
 
       updateRecipe: (id, updates) =>
-        set((state) => ({
-          recipes: state.recipes.map(r => r.id === id ? { ...r, ...updates } : r)
-        }), false, 'updateRecipe'),
+        set(
+          state => ({
+            recipes: state.recipes.map(r => (r.id === id ? { ...r, ...updates } : r)),
+          }),
+          false,
+          'updateRecipe'
+        ),
 
-      removeRecipe: (id) =>
-        set((state) => {
-          const newGenerating = new Set(state.generatingRecipes);
-          newGenerating.delete(id);
-          return {
-            recipes: state.recipes.filter(r => r.id !== id),
-            generatingRecipes: newGenerating
-          };
-        }, false, 'removeRecipe'),
+      removeRecipe: id =>
+        set(
+          state => {
+            const newGenerating = new Set(state.generatingRecipes);
+            newGenerating.delete(id);
+            return {
+              recipes: state.recipes.filter(r => r.id !== id),
+              generatingRecipes: newGenerating,
+            };
+          },
+          false,
+          'removeRecipe'
+        ),
 
       setGeneratingStatus: (id, isGenerating) =>
-        set((state) => {
-          const newGenerating = new Set(state.generatingRecipes);
-          if (isGenerating) {
-            newGenerating.add(id);
-          } else {
-            newGenerating.delete(id);
-          }
-          return {
-            generatingRecipes: newGenerating,
-            recipes: state.recipes.map(r =>
-              r.id === id
-                ? { ...r, status: isGenerating ? 'generating' : 'completed' }
-                : r
-            )
-          };
-        }, false, 'setGeneratingStatus'),
+        set(
+          state => {
+            const newGenerating = new Set(state.generatingRecipes);
+            if (isGenerating) {
+              newGenerating.add(id);
+            } else {
+              newGenerating.delete(id);
+            }
+            return {
+              generatingRecipes: newGenerating,
+              recipes: state.recipes.map(r =>
+                r.id === id ? { ...r, status: isGenerating ? 'generating' : 'completed' } : r
+              ),
+            };
+          },
+          false,
+          'setGeneratingStatus'
+        ),
 
       // Processing actions
-      setCurrentProcessId: (id) =>
-        set({ currentProcessId: id }, false, 'setCurrentProcessId'),
+      setCurrentProcessId: id => set({ currentProcessId: id }, false, 'setCurrentProcessId'),
 
-      setProcessingState: (processingState) =>
-        set({ processingState }, false, 'setProcessingState'),
+      setProcessingState: processingState => set({ processingState }, false, 'setProcessingState'),
 
       // Async actions
       loadSettings: async () => {
@@ -158,31 +178,43 @@ export const useAppStore = create<AppState>()(
           const response = await window.electronAPI.getSettings();
           if (response.success && response.settings) {
             const settings = response.settings;
-            set({
-              settings,
-              setupCompleted: !!settings.setupCompleted,
-              // Open wizard if setup not completed or key missing
-              setupWizardOpen: !(settings.setupCompleted && !!settings.openaiKey)
-            }, false, 'loadSettings');
+            set(
+              {
+                settings,
+                setupCompleted: !!settings.setupCompleted,
+                // Open wizard if setup not completed or key missing
+                setupWizardOpen: !(settings.setupCompleted && !!settings.openaiKey),
+              },
+              false,
+              'loadSettings'
+            );
           } else {
             // No settings found - fresh install
-            set({
-              settings: {},
-              setupCompleted: false,
-              setupWizardOpen: true
-            }, false, 'loadSettings/noSettings');
+            set(
+              {
+                settings: {},
+                setupCompleted: false,
+                setupWizardOpen: true,
+              },
+              false,
+              'loadSettings/noSettings'
+            );
           }
         } catch (error) {
           console.error('[STORE] Error loading settings:', error);
-          set({
-            settings: {},
-            setupCompleted: false,
-            setupWizardOpen: true
-          }, false, 'loadSettings/error');
+          set(
+            {
+              settings: {},
+              setupCompleted: false,
+              setupWizardOpen: true,
+            },
+            false,
+            'loadSettings/error'
+          );
         }
       },
 
-      saveSettings: async (newSettings) => {
+      saveSettings: async newSettings => {
         try {
           const result = await window.electronAPI.updateSettings(newSettings);
           if (result.success) {
@@ -196,11 +228,15 @@ export const useAppStore = create<AppState>()(
               ? false
               : !(updatedSettings.setupCompleted && !!updatedSettings.openaiKey);
 
-            set({
-              settings: updatedSettings,
-              setupCompleted: !!updatedSettings.setupCompleted,
-              setupWizardOpen
-            }, false, 'saveSettings/success');
+            set(
+              {
+                settings: updatedSettings,
+                setupCompleted: !!updatedSettings.setupCompleted,
+                setupWizardOpen,
+              },
+              false,
+              'saveSettings/success'
+            );
           } else {
             console.error('[STORE] Failed to save settings:', result.error);
             throw new Error(result.error || 'Failed to save settings');
@@ -213,7 +249,6 @@ export const useAppStore = create<AppState>()(
 
       // Simplified loadRecipes for startup loading
       loadRecipes: async () => {
-        console.log('[STORE] loadRecipes called');
         try {
           set({ recipesLoading: true }, false, 'loadRecipes/start');
           const result = await window.electronAPI.loadHistory();
@@ -224,30 +259,41 @@ export const useAppStore = create<AppState>()(
             recipes.forEach(r => {
               if (r.status === 'generating' && r.id) generating.add(r.id);
             });
-            set({
-              recipes,
-              recipesLoading: false,
-              generatingRecipes: generating
-            }, false, 'loadRecipes/success');
-            console.log('[STORE] Loaded', recipes.length, 'recipes');
+            set(
+              {
+                recipes,
+                recipesLoading: false,
+                generatingRecipes: generating,
+              },
+              false,
+              'loadRecipes/success'
+            );
           } else {
-            set({
-              recipes: [],
-              recipesLoading: false,
-              generatingRecipes: new Set()
-            }, false, 'loadRecipes/error');
+            set(
+              {
+                recipes: [],
+                recipesLoading: false,
+                generatingRecipes: new Set(),
+              },
+              false,
+              'loadRecipes/error'
+            );
           }
         } catch (error) {
           console.error('[STORE] Error loading recipes:', error);
-          set({
-            recipes: [],
-            recipesLoading: false,
-            generatingRecipes: new Set()
-          }, false, 'loadRecipes/error');
+          set(
+            {
+              recipes: [],
+              recipesLoading: false,
+              generatingRecipes: new Set(),
+            },
+            false,
+            'loadRecipes/error'
+          );
         }
       },
 
-      saveRecipe: async (recipeData) => {
+      saveRecipe: async recipeData => {
         try {
           const result = await window.electronAPI.saveProcess(recipeData);
           if (result.success && result.process) {
@@ -259,7 +305,10 @@ export const useAppStore = create<AppState>()(
           }
         } catch (error) {
           console.error('[STORE] Error saving recipe:', error);
-          return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
         }
       },
 
@@ -277,7 +326,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      deleteRecipe: async (id) => {
+      deleteRecipe: async id => {
         try {
           await window.electronAPI.deleteProcess(id);
           get().removeRecipe(id);
@@ -301,11 +350,15 @@ export const useAppStore = create<AppState>()(
                   generating.add(recipe.id);
                 }
               });
-              set({
-                recipes,
-                generatingRecipes: generating,
-                recipesLoading: false
-              }, false, 'importRecipes/reload');
+              set(
+                {
+                  recipes,
+                  generatingRecipes: generating,
+                  recipesLoading: false,
+                },
+                false,
+                'importRecipes/reload'
+              );
             }
           }
           return result;
@@ -315,7 +368,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      exportRecipe: async (id) => {
+      exportRecipe: async id => {
         try {
           const result = await window.electronAPI.exportRecipe(id);
           return result;
@@ -363,22 +416,26 @@ export const useAppStore = create<AppState>()(
           await window.electronAPI.updateSettings({ setupCompleted: false, openaiKey: '' });
 
           // Reset entire store to initial state (no hard reload)
-          set({
-            setupWizardOpen: true,
-            setupCompleted: false,
-            settings: { setupCompleted: false, openaiKey: '' as any },
-            recipes: [],
-            recipesLoading: false,
-            generatingRecipes: new Set(),
-            currentProcessId: null,
-            processingState: {
-              isProcessing: false,
-              progress: 0,
-              status: '',
+          set(
+            {
+              setupWizardOpen: true,
+              setupCompleted: false,
+              settings: { setupCompleted: false, openaiKey: '' as any },
+              recipes: [],
+              recipesLoading: false,
+              generatingRecipes: new Set(),
+              currentProcessId: null,
+              processingState: {
+                isProcessing: false,
+                progress: 0,
+                status: '',
+              },
+              currentRoute: '/setup',
+              pollIntervalId: null,
             },
-            currentRoute: '/setup',
-            pollIntervalId: null
-          }, false, 'resetApp');
+            false,
+            'resetApp'
+          );
 
           // Navigate to Setup smoothly
           try {
@@ -386,12 +443,11 @@ export const useAppStore = create<AppState>()(
           } catch (error) {
             console.warn('Failed to navigate to setup route:', error);
           }
-
         } catch (error) {
           console.error('[STORE] Error resetting app:', error);
           throw error;
         }
-      }
+      },
     }),
     {
       name: 'foto-recipe-wizard-store',
