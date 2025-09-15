@@ -261,10 +261,78 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:Feather="${feather}"
          crs:Flipped="${m?.flipped ? 'true' : 'true'}"
          crs:Version="2"/>`;
-            } else {
-              // person/subject mask (Lightroom AI). We emit Mask/Image with SubType=1
+            } else if (m?.type === 'person' || m?.type === 'background' || m?.type === 'sky') {
+              // AI scene masks: Subject/People (1), Background (0), Sky (2)
               const rx = f3(n0_1(m.referenceX));
               const ry = f3(n0_1(m.referenceY));
+              const subType = m?.type === 'background' ? '0' : m?.type === 'sky' ? '2' : '1';
+              const subCat = typeof (m as any)?.subCategoryId === 'number' ? String((m as any).subCategoryId) : undefined;
+              maskLi = `<rdf:li
+         crs:What="Mask/Image"
+         crs:MaskActive="true"
+         crs:MaskName="${name}"
+         crs:MaskBlendMode="0"
+         crs:MaskInverted="${m?.inverted ? 'true' : 'false'}"
+         crs:MaskValue="1"
+         crs:MaskVersion="1"
+         crs:MaskSubType="${subType}"${subCat ? `\n         crs:MaskSubCategoryID="${subCat}"` : ''}
+         crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"/>`;
+            } else if (m?.type === 'range_color' || m?.type === 'range_luminance') {
+              // Range masks
+              const invert = m?.invert ? 'true' : 'false';
+              if (m?.type === 'range_color') {
+                const colorAmount = f3(n0_1(m.colorAmount));
+                const pointModels = Array.isArray(m?.pointModels) ? m.pointModels : [];
+                const pmLis = (pointModels as any[])
+                  .map((pm: any) => (Array.isArray(pm) ? (pm as any[]).map((v: any) => (typeof v === 'number' ? Number(v) : 0)).join(' ') : ''))
+                  .filter((s: string) => s.length > 0)
+                  .map((s: string) => `           <rdf:li>${s}</rdf:li>`)
+                  .join('\n');
+                const pointModelsBlock = pmLis
+                  ? `\n          <crs:PointModels>\n           <rdf:Seq>\n${pmLis}\n           </rdf:Seq>\n          </crs:PointModels>`
+                  : '';
+                maskLi = `<rdf:li>
+         <rdf:Description
+          crs:What="Mask/RangeMask"
+          crs:MaskActive="true"
+          crs:MaskName="${name}"
+          crs:MaskBlendMode="0"
+          crs:MaskInverted="false"
+          crs:MaskSyncID=""
+          crs:MaskValue="1">\n         <crs:CorrectionRangeMask>\n          <rdf:Description
+           crs:Version="3"
+           crs:Type="1"
+           crs:ColorAmount="${colorAmount ?? '0.500'}"
+           crs:Invert="${invert}"
+           crs:SampleType="0">${pointModelsBlock}\n          </rdf:Description>\n         </crs:CorrectionRangeMask>\n         </rdf:Description>\n        </rdf:li>`;
+              } else {
+                // range_luminance
+                const lum = Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
+                const lumStr = lum ? lum.map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ') : '0.000000 1.000000 1.000000 1.000000';
+                const lds = Array.isArray(m?.luminanceDepthSampleInfo) && m.luminanceDepthSampleInfo.length === 3
+                  ? m.luminanceDepthSampleInfo
+                  : [0, 0.5, 0.5];
+                const ldsStr = (lds as any[]).map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ');
+                maskLi = `<rdf:li>
+         <rdf:Description
+          crs:What="Mask/RangeMask"
+          crs:MaskActive="true"
+          crs:MaskName="${name}"
+          crs:MaskBlendMode="0"
+          crs:MaskInverted="false"
+          crs:MaskSyncID=""
+          crs:MaskValue="1">\n         <crs:CorrectionRangeMask
+          crs:Version="3"
+          crs:Type="2"
+          crs:Invert="${invert}"
+          crs:SampleType="0"
+          crs:LumRange="${lumStr}"
+          crs:LuminanceDepthSampleInfo="${ldsStr}"/>\n         </rdf:Description>\n        </rdf:li>`;
+              }
+            } else {
+              // Default to subject/person if unknown
+              const rx = f3(n0_1(m?.referenceX));
+              const ry = f3(n0_1(m?.referenceY));
               maskLi = `<rdf:li
          crs:What="Mask/Image"
          crs:MaskActive="true"

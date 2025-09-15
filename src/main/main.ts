@@ -190,6 +190,58 @@ class FotoRecipeWizardApp {
       }
     });
 
+    // Handle Lightroom camera profile export - generate profile from adjustments
+    ipcMain.handle('export-profile', async (_event, data) => {
+      console.log('[IPC] export-profile called with adjustments');
+      try {
+        // Generate camera profile XMP from adjustments
+        const result = await this.imageProcessor.generateCameraProfile(data);
+
+        if (!result.success || !result.xmpContent) {
+          return { success: false, error: result.error || 'Failed to generate camera profile' };
+        }
+
+        // Use exact same naming logic as preset export
+        const sanitizeName = (n: string) =>
+          n
+            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        // Get AI-generated name directly from adjustments and add -Profile suffix
+        const rawName = (data?.adjustments?.preset_name as string | undefined) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean = sanitizeName(rawName) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const baseName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const safeName = `${baseName}-Profile`;
+
+        // Show save dialog
+        const dialogOptions = {
+          title: 'Save Camera Profile',
+          defaultPath: `${safeName}.xmp`,
+          filters: [
+            { name: 'XMP Profiles', extensions: ['xmp'] },
+            { name: 'All Files', extensions: ['*'] }
+          ]
+        };
+
+        const saveResult = this.mainWindow
+          ? await dialog.showSaveDialog(this.mainWindow, dialogOptions)
+          : await dialog.showSaveDialog(dialogOptions);
+
+        if (saveResult.canceled || !saveResult.filePath) {
+          return { success: false, error: 'Save canceled' };
+        }
+
+        // Write the profile to chosen location
+        await fs.writeFile(saveResult.filePath, result.xmpContent, 'utf8');
+        console.log('[IPC] Camera profile saved to:', saveResult.filePath);
+
+        return { success: true, filePath: saveResult.filePath };
+      } catch (error) {
+        console.error('[IPC] Error exporting camera profile:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
       console.log('[IPC] download-xmp called with data', {
@@ -210,7 +262,8 @@ class FotoRecipeWizardApp {
             .trim();
         const rawName = (data?.adjustments?.preset_name as string | undefined) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
         const clean = sanitizeName(rawName) || `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const safeName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const baseName = clean.replace(/[^A-Za-z0-9 _-]+/g, '').replace(/\s+/g, ' ').trim().replace(/\s/g, '-');
+        const safeName = `${baseName}-Preset`;
         const result = await dialog.showSaveDialog({
           title: 'Save XMP Preset',
           defaultPath: `${safeName}.xmp`,

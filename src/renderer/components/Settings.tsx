@@ -72,6 +72,7 @@ const Settings: React.FC = () => {
     }
   };
 
+
   return (
     <Container maxWidth="sm" sx={{ py: 2 }} className="no-drag">
       <Typography variant="h5" fontWeight={700} gutterBottom>

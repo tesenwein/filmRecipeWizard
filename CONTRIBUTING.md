@@ -178,6 +178,66 @@ npm run dev
 # Manually test your changes
 ```
 
+## 🚀 Release Process
+
+### For Maintainers
+
+The release process uses automated GitHub Actions with manual version control:
+
+#### 1. Version Bumping
+
+From the `develop` branch, bump the version locally:
+
+```bash
+# For bug fixes (2.0.7 → 2.0.8)
+npm version patch
+
+# For new features (2.0.7 → 2.1.0)
+npm version minor
+
+# For breaking changes (2.0.7 → 3.0.0)
+npm version major
+
+# For specific version (2.0.7 → 2.1.5)
+npm version 2.1.5
+```
+
+This automatically:
+- Updates `package.json` and `package-lock.json`
+- Creates a git commit with message "v2.0.8"
+- Creates a git tag "v2.0.8"
+
+#### 2. Create Release PR
+
+```bash
+# Push to develop (if needed)
+git push origin develop
+
+# Create and merge PR to master
+gh pr create --title "chore: bump version to X.X.X" --head develop --base master
+gh pr merge --squash --admin
+```
+
+#### 3. Automatic Release
+
+The GitHub Actions workflow automatically:
+- Detects version bump commits (`chore: bump version to X.X.X`)
+- Builds macOS DMG and Windows installer
+- Creates GitHub release with downloadable assets
+- Uses the version from `package.json` (no automatic calculation)
+
+#### Release Assets
+
+Each release includes:
+- **macOS**: `.dmg` installer (unsigned, requires right-click → Open)
+- **Windows**: `.exe` installer (NSIS-based)
+
+#### Branch Strategy for Releases
+
+- `develop`: Active development, unprotected for easy collaboration
+- `master`: Protected, releases only via PR with review required
+- Workflow only runs on `master` branch pushes
+
 ## 📞 Getting Help
 
 - **GitHub Issues**: For bugs and feature requests

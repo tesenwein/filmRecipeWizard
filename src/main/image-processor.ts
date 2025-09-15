@@ -1,11 +1,12 @@
+import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import sharp from 'sharp';
-import { app } from 'electron';
 import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
-import { generateXMPContent as generateXMPContentImpl } from './xmp-generator';
+import { exportLightroomProfile } from './profile-exporter';
 import { SettingsService } from './settings-service';
+import { generateXMPContent as generateXMPContentImpl } from './xmp-generator';
 
 export interface StyleMatchOptions {
   baseImagePath?: string;
@@ -129,7 +130,12 @@ export class ImageProcessor {
     }
   }
 
-  async generatePreview(args: { path?: string; dataUrl?: string; processId?: string; subdir?: string }): Promise<string> {
+  async generatePreview(args: {
+    path?: string;
+    dataUrl?: string;
+    processId?: string;
+    subdir?: string;
+  }): Promise<string> {
     // Choose a persistent per-recipe directory when processId is provided
     let outDir: string;
     if (args.processId) {
@@ -178,20 +184,22 @@ export class ImageProcessor {
     }
   }
 
-
   // Legacy method for compatibility
   async processImage(data: StyleMatchOptions): Promise<ProcessingResult> {
     return this.matchStyle(data);
   }
 
-  // Legacy method for compatibility  
+  // Legacy method for compatibility
   async analyzeColors(_imagePath: string): Promise<any> {
     console.log('[PROCESSOR] analyzeColors called - this is a legacy method');
     return { histogram: {}, averageColor: {}, dominantColors: [] };
   }
 
   // Legacy method for compatibility
-  async generateAdjustedPreview(args: { path: string; adjustments: AIColorAdjustments }): Promise<string> {
+  async generateAdjustedPreview(args: {
+    path: string;
+    adjustments: AIColorAdjustments;
+  }): Promise<string> {
     return this.generatePreview({ path: args.path });
   }
 
@@ -238,16 +246,170 @@ export class ImageProcessor {
     }
   }
 
+  async generateLightroomProfile(data: {
+    sourceXmpPath: string;
+    outputDir?: string;
+  }): Promise<ProcessingResult> {
+    try {
+      console.log('[PROCESSOR] Exporting Lightroom profile from:', data.sourceXmpPath);
+      const result = await exportLightroomProfile(data.sourceXmpPath, data.outputDir);
+      if (!result.success) {
+        return { success: false, error: result.error || 'Profile export failed' };
+      }
+      return {
+        success: true,
+        outputPath: result.outputPath,
+        metadata: { presetName: result.metadata?.profileName, groupFolder: 'profiles' },
+      };
+    } catch (error) {
+      console.error('[PROCESSOR] Profile export failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  async generateCameraProfile(
+    data: any
+  ): Promise<{ success: boolean; xmpContent?: string; error?: string }> {
+    try {
+      console.log('[PROCESSOR] Generating camera profile from adjustments');
+
+      const adjustments = data?.adjustments || {};
+      // Get AI-generated name directly from adjustments (same as preset export)
+      const profileName = adjustments.preset_name || 'Camera Profile';
+
+      // Generate a simple camera profile XMP
+      // Camera profiles use lookup tables and tone curves for color grading
+      const xmpContent = this.generateCameraProfileXMP(profileName, adjustments);
+
+      return {
+        success: true,
+        xmpContent,
+      };
+    } catch (error) {
+      console.error('[PROCESSOR] Camera profile generation failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  generateCameraProfileXMP(profileName: string, adjustments: any): string {
+    // Check if this is a black and white conversion
+    const isBW = !!adjustments.monochrome ||
+                 adjustments.treatment === 'black_and_white' ||
+                 (typeof adjustments.camera_profile === 'string' && /monochrome/i.test(adjustments.camera_profile || '')) ||
+                 (typeof adjustments.saturation === 'number' && adjustments.saturation <= -100);
+
+    // Extract color adjustments
+    const exposure = adjustments.exposure || 0;
+    const contrast = adjustments.contrast || 0;
+    const highlights = adjustments.highlights || 0;
+    const shadows = adjustments.shadows || 0;
+    const whites = adjustments.whites || 0;
+    const blacks = adjustments.blacks || 0;
+    const vibrance = adjustments.vibrance || 0;
+    const saturation = isBW ? -100 : (adjustments.saturation || 0);
+
+    // Color grading
+    const shadowsHue = adjustments.shadows_hue || 0;
+    const shadowsSat = adjustments.shadows_sat || 0;
+    const midtonesSat = adjustments.midtones_sat || 0;
+    const highlightsHue = adjustments.highlights_hue || 0;
+    const highlightsSat = adjustments.highlights_sat || 0;
+
+    // Generate XMP for camera profile
+    return `<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+        xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
+        crs:PresetType="Look"
+        crs:Cluster=""
+        crs:UUID="${this.generateUUID()}"
+        crs:SupportsAmount="true"
+        crs:SupportsColor="true"
+        crs:SupportsMonochrome="true"
+        crs:SupportsHighDynamicRange="true"
+        crs:SupportsNormalDynamicRange="true"
+        crs:SupportsSceneReferred="true"
+        crs:SupportsOutputReferred="true"
+        crs:CameraModelRestriction=""
+        crs:Copyright=""
+        crs:ContactInfo=""
+        crs:Version="16.5"
+        crs:ProcessVersion="15.4"
+        crs:Exposure2012="${(exposure / 100).toFixed(2)}"
+        crs:Contrast2012="${Math.round(contrast)}"
+        crs:Highlights2012="${Math.round(highlights)}"
+        crs:Shadows2012="${Math.round(shadows)}"
+        crs:Whites2012="${Math.round(whites)}"
+        crs:Blacks2012="${Math.round(blacks)}"
+        crs:Vibrance="${Math.round(vibrance)}"
+        crs:Saturation="${Math.round(saturation)}"
+        crs:ConvertToGrayscale="${isBW ? 'true' : 'false'}"
+        ${isBW ? 'crs:Treatment="Black &amp; White"' : 'crs:Treatment="Color"'}
+        crs:SplitToningShadowHue="${Math.round(shadowsHue)}"
+        crs:SplitToningShadowSaturation="${Math.round(shadowsSat)}"
+        crs:SplitToningHighlightHue="${Math.round(highlightsHue)}"
+        crs:SplitToningHighlightSaturation="${Math.round(highlightsSat)}"
+        crs:SplitToningBalance="${Math.round(midtonesSat)}"
+        ${isBW && adjustments.bw_red !== undefined ? `crs:GrayMixerRed="${Math.round(adjustments.bw_red)}"` : ''}
+        ${isBW && adjustments.bw_orange !== undefined ? `crs:GrayMixerOrange="${Math.round(adjustments.bw_orange)}"` : ''}
+        ${isBW && adjustments.bw_yellow !== undefined ? `crs:GrayMixerYellow="${Math.round(adjustments.bw_yellow)}"` : ''}
+        ${isBW && adjustments.bw_green !== undefined ? `crs:GrayMixerGreen="${Math.round(adjustments.bw_green)}"` : ''}
+        ${isBW && adjustments.bw_aqua !== undefined ? `crs:GrayMixerAqua="${Math.round(adjustments.bw_aqua)}"` : ''}
+        ${isBW && adjustments.bw_blue !== undefined ? `crs:GrayMixerBlue="${Math.round(adjustments.bw_blue)}"` : ''}
+        ${isBW && adjustments.bw_purple !== undefined ? `crs:GrayMixerPurple="${Math.round(adjustments.bw_purple)}"` : ''}
+        ${isBW && adjustments.bw_magenta !== undefined ? `crs:GrayMixerMagenta="${Math.round(adjustments.bw_magenta)}"` : ''}
+        crs:HasSettings="true">
+      <crs:Name>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${profileName}</rdf:li>
+        </rdf:Alt>
+      </crs:Name>
+      <crs:ShortName>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${profileName}</rdf:li>
+        </rdf:Alt>
+      </crs:ShortName>
+      <crs:Group>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">Foto Recipe Wizard</rdf:li>
+        </rdf:Alt>
+      </crs:Group>
+      <crs:Description>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">Camera profile generated from Foto Recipe Wizard</rdf:li>
+        </rdf:Alt>
+      </crs:Description>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>`;
+  }
+
+  generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+      .replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      })
+      .toUpperCase();
+  }
+
   generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
     // Generate XMP content for Lightroom based on AI adjustments
-    const isBW = !!aiAdjustments.monochrome || aiAdjustments.treatment === 'black_and_white' ||
-      (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
+    const isBW =
+      !!aiAdjustments.monochrome ||
+      aiAdjustments.treatment === 'black_and_white' ||
+      (typeof aiAdjustments.camera_profile === 'string' &&
+        /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
       (typeof aiAdjustments.saturation === 'number' && aiAdjustments.saturation <= -100);
-    const cameraProfile = aiAdjustments.camera_profile || (isBW ? 'Adobe Monochrome' : 'Adobe Color');
+    const cameraProfile =
+      aiAdjustments.camera_profile || (isBW ? 'Adobe Monochrome' : 'Adobe Color');
     const profileName = cameraProfile;
-    const treatmentTag = isBW ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>' : '<crs:Treatment>Color</crs:Treatment>';
+    const treatmentTag = isBW
+      ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>'
+      : '<crs:Treatment>Color</crs:Treatment>';
     const tag = (name: string, val?: number | string) =>
-      (val === 0 || val === '0' || !!val) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
+      val === 0 || val === '0' || !!val ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
 
     // Clamp helpers to keep values within Lightroom-expected ranges
     const clamp = (v: any, min: number, max: number): number | undefined => {
@@ -276,7 +438,9 @@ export class ImageProcessor {
         .replace(/\s{2,}/g, ' ')
         .trim();
     const fallback = `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-    const rawPresetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || fallback;
+    const rawPresetName =
+      ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) ||
+      fallback;
     const presetName = sanitizeName(rawPresetName) || fallback;
     const groupName = 'foto-recipe-wizard';
     // Inclusion flags with sane defaults (back-compat: include everything when not specified)
@@ -317,7 +481,8 @@ export class ImageProcessor {
         ].join('')
       : '';
 
-    const shouldIncludeExposure = inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
+    const shouldIncludeExposure =
+      inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
     try {
       console.log('[XMP] exposure:', { value: exposure, include: shouldIncludeExposure });
     } catch {
@@ -327,29 +492,87 @@ export class ImageProcessor {
 
     const parametricCurvesBlock = inc.curves
       ? [
-          tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows, -100, 100))),
+          tag(
+            'ParametricShadows',
+            round(clamp((aiAdjustments as any).parametric_shadows, -100, 100))
+          ),
           tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks, -100, 100))),
-          tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights, -100, 100))),
-          tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights, -100, 100))),
-          tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))),
-          tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))),
-          tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))),
+          tag(
+            'ParametricLights',
+            round(clamp((aiAdjustments as any).parametric_lights, -100, 100))
+          ),
+          tag(
+            'ParametricHighlights',
+            round(clamp((aiAdjustments as any).parametric_highlights, -100, 100))
+          ),
+          tag(
+            'ParametricShadowSplit',
+            round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))
+          ),
+          tag(
+            'ParametricMidtoneSplit',
+            round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))
+          ),
+          tag(
+            'ParametricHighlightSplit',
+            round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))
+          ),
         ].join('')
       : '';
 
     const toneCurvesBlock = inc.curves
       ? [
           (aiAdjustments as any).tone_curve
-            ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n`
+            ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(
+                ((aiAdjustments as any).tone_curve as any[]) || []
+              )
+                .map(
+                  p =>
+                    `          <rdf:li>${Math.max(
+                      0,
+                      Math.min(255, Math.round(p.input || 0))
+                    )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+                )
+                .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n`
             : '',
           (aiAdjustments as any).tone_curve_red
-            ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_red as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n`
+            ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(
+                ((aiAdjustments as any).tone_curve_red as any[]) || []
+              )
+                .map(
+                  p =>
+                    `          <rdf:li>${Math.max(
+                      0,
+                      Math.min(255, Math.round(p.input || 0))
+                    )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+                )
+                .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n`
             : '',
           (aiAdjustments as any).tone_curve_green
-            ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_green as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n`
+            ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(
+                ((aiAdjustments as any).tone_curve_green as any[]) || []
+              )
+                .map(
+                  p =>
+                    `          <rdf:li>${Math.max(
+                      0,
+                      Math.min(255, Math.round(p.input || 0))
+                    )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+                )
+                .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n`
             : '',
           (aiAdjustments as any).tone_curve_blue
-            ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_blue as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n`
+            ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(
+                ((aiAdjustments as any).tone_curve_blue as any[]) || []
+              )
+                .map(
+                  p =>
+                    `          <rdf:li>${Math.max(
+                      0,
+                      Math.min(255, Math.round(p.input || 0))
+                    )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+                )
+                .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n`
             : '',
         ].join('')
       : '';
@@ -385,33 +608,97 @@ export class ImageProcessor {
 
     const colorGradingBlock = inc.colorGrading
       ? [
-          tag('ColorGradeShadowHue', round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))),
-          tag('ColorGradeShadowSat', round(clamp((aiAdjustments as any).color_grade_shadow_sat, 0, 100))),
-          tag('ColorGradeShadowLum', round(clamp((aiAdjustments as any).color_grade_shadow_lum, -100, 100))),
-          tag('ColorGradeMidtoneHue', round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))),
-          tag('ColorGradeMidtoneSat', round(clamp((aiAdjustments as any).color_grade_midtone_sat, 0, 100))),
-          tag('ColorGradeMidtoneLum', round(clamp((aiAdjustments as any).color_grade_midtone_lum, -100, 100))),
-          tag('ColorGradeHighlightHue', round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))),
-          tag('ColorGradeHighlightSat', round(clamp((aiAdjustments as any).color_grade_highlight_sat, 0, 100))),
-          tag('ColorGradeHighlightLum', round(clamp((aiAdjustments as any).color_grade_highlight_lum, -100, 100))),
-          tag('ColorGradeGlobalHue', round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))),
-          tag('ColorGradeGlobalSat', round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100))),
-          tag('ColorGradeGlobalLum', round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100))),
-          tag('ColorGradeBlending', round(clamp((aiAdjustments as any).color_grade_blending, 0, 100))),
-          tag('ColorGradeBalance', round(clamp((aiAdjustments as any).color_grade_balance, -100, 100))),
+          tag(
+            'ColorGradeShadowHue',
+            round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))
+          ),
+          tag(
+            'ColorGradeShadowSat',
+            round(clamp((aiAdjustments as any).color_grade_shadow_sat, 0, 100))
+          ),
+          tag(
+            'ColorGradeShadowLum',
+            round(clamp((aiAdjustments as any).color_grade_shadow_lum, -100, 100))
+          ),
+          tag(
+            'ColorGradeMidtoneHue',
+            round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))
+          ),
+          tag(
+            'ColorGradeMidtoneSat',
+            round(clamp((aiAdjustments as any).color_grade_midtone_sat, 0, 100))
+          ),
+          tag(
+            'ColorGradeMidtoneLum',
+            round(clamp((aiAdjustments as any).color_grade_midtone_lum, -100, 100))
+          ),
+          tag(
+            'ColorGradeHighlightHue',
+            round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))
+          ),
+          tag(
+            'ColorGradeHighlightSat',
+            round(clamp((aiAdjustments as any).color_grade_highlight_sat, 0, 100))
+          ),
+          tag(
+            'ColorGradeHighlightLum',
+            round(clamp((aiAdjustments as any).color_grade_highlight_lum, -100, 100))
+          ),
+          tag(
+            'ColorGradeGlobalHue',
+            round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))
+          ),
+          tag(
+            'ColorGradeGlobalSat',
+            round(clamp((aiAdjustments as any).color_grade_global_sat, 0, 100))
+          ),
+          tag(
+            'ColorGradeGlobalLum',
+            round(clamp((aiAdjustments as any).color_grade_global_lum, -100, 100))
+          ),
+          tag(
+            'ColorGradeBlending',
+            round(clamp((aiAdjustments as any).color_grade_blending, 0, 100))
+          ),
+          tag(
+            'ColorGradeBalance',
+            round(clamp((aiAdjustments as any).color_grade_balance, -100, 100))
+          ),
         ].join('')
       : '';
 
     const pointColorBlocks = inc.pointColor
       ? [
-          Array.isArray((aiAdjustments as any).point_colors) && (aiAdjustments as any).point_colors.length > 0
-            ? `<crs:PointColors>\n    <rdf:Seq>\n${((aiAdjustments as any).point_colors as number[][])
-                .map(arr => `     <rdf:li>${arr.map(n => (Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000')).join(', ')}</rdf:li>`) 
+          Array.isArray((aiAdjustments as any).point_colors) &&
+          (aiAdjustments as any).point_colors.length > 0
+            ? `<crs:PointColors>\n    <rdf:Seq>\n${(
+                (aiAdjustments as any).point_colors as number[][]
+              )
+                .map(
+                  arr =>
+                    `     <rdf:li>${arr
+                      .map(n =>
+                        Number.isFinite(n)
+                          ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6)
+                          : '0.000000'
+                      )
+                      .join(', ')}</rdf:li>`
+                )
                 .join('\n')}\n    </rdf:Seq>\n   </crs:PointColors>\n`
             : '',
-          Array.isArray((aiAdjustments as any).color_variance) && (aiAdjustments as any).color_variance.length > 0
-            ? `<crs:ColorVariance>\n    <rdf:Seq>\n${((aiAdjustments as any).color_variance as number[])
-                .map(n => `     <rdf:li>${Number.isFinite(n) ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6) : '0.000000'}</rdf:li>`) 
+          Array.isArray((aiAdjustments as any).color_variance) &&
+          (aiAdjustments as any).color_variance.length > 0
+            ? `<crs:ColorVariance>\n    <rdf:Seq>\n${(
+                (aiAdjustments as any).color_variance as number[]
+              )
+                .map(
+                  n =>
+                    `     <rdf:li>${
+                      Number.isFinite(n)
+                        ? (Math.round((n as number) * 1000000) / 1000000).toFixed(6)
+                        : '0.000000'
+                    }</rdf:li>`
+                )
                 .join('\n')}\n    </rdf:Seq>\n   </crs:ColorVariance>\n`
             : '',
         ].join('')
@@ -423,7 +710,10 @@ export class ImageProcessor {
       const masks = (aiAdjustments as any)?.masks as any[] | undefined;
       if (!Array.isArray(masks) || masks.length === 0) return '';
       const num = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
-      const fmt = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? (Math.round(v * 1000000) / 1000000).toFixed(6) : undefined);
+      const fmt = (v: any) =>
+        typeof v === 'number' && Number.isFinite(v)
+          ? (Math.round(v * 1000000) / 1000000).toFixed(6)
+          : undefined;
       const corrAttrs = (adj: any) => {
         const map: Record<string, any> = {
           LocalExposure2012: num(adj?.local_exposure),
@@ -444,16 +734,31 @@ export class ImageProcessor {
           .map(([k, v]) => ` crs:${k}="${fmt(v)}"`)
           .join('');
       };
-      const items = masks.map((m, i) => {
-        const name = (m?.name && String(m.name).trim()) || `Mask ${i + 1}`;
-        const cAttrs = corrAttrs(m?.adjustments || {});
-        let maskGeom = '';
-        if (m?.type === 'radial') {
-          maskGeom = `<rdf:li crs:What="Mask/CircularGradient" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${m?.inverted ? 'true' : 'false'}" crs:MaskValue="1" crs:Top="${fmt(m?.top) || '0.15'}" crs:Left="${fmt(m?.left) || '0.15'}" crs:Bottom="${fmt(m?.bottom) || '0.85'}" crs:Right="${fmt(m?.right) || '0.85'}" crs:Angle="${num(m?.angle) ?? 0}" crs:Midpoint="${num(m?.midpoint) ?? 50}" crs:Roundness="${num(m?.roundness) ?? 0}" crs:Feather="${num(m?.feather) ?? 50}" crs:Flipped="${m?.flipped ? 'true' : 'true'}" crs:Version="2"/>`;
-        } else if (m?.type === 'linear') {
-          maskGeom = `<rdf:li crs:What="Mask/Gradient" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${m?.inverted ? 'true' : 'false'}" crs:MaskValue="1" crs:ZeroX="${fmt(m?.zeroX) || '0.50'}" crs:ZeroY="${fmt(m?.zeroY) || '0.00'}" crs:FullX="${fmt(m?.fullX) || '0.50'}" crs:FullY="${fmt(m?.fullY) || '0.40'}"/>`;
-        }
-        return `
+      const items = masks
+        .map((m, i) => {
+          const name = (m?.name && String(m.name).trim()) || `Mask ${i + 1}`;
+          const cAttrs = corrAttrs(m?.adjustments || {});
+          let maskGeom = '';
+          if (m?.type === 'radial') {
+            maskGeom = `<rdf:li crs:What="Mask/CircularGradient" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${
+              m?.inverted ? 'true' : 'false'
+            }" crs:MaskValue="1" crs:Top="${fmt(m?.top) || '0.15'}" crs:Left="${
+              fmt(m?.left) || '0.15'
+            }" crs:Bottom="${fmt(m?.bottom) || '0.85'}" crs:Right="${
+              fmt(m?.right) || '0.85'
+            }" crs:Angle="${num(m?.angle) ?? 0}" crs:Midpoint="${
+              num(m?.midpoint) ?? 50
+            }" crs:Roundness="${num(m?.roundness) ?? 0}" crs:Feather="${
+              num(m?.feather) ?? 50
+            }" crs:Flipped="${m?.flipped ? 'true' : 'true'}" crs:Version="2"/>`;
+          } else if (m?.type === 'linear') {
+            maskGeom = `<rdf:li crs:What="Mask/Gradient" crs:MaskActive="true" crs:MaskName="${name}" crs:MaskBlendMode="0" crs:MaskInverted="${
+              m?.inverted ? 'true' : 'false'
+            }" crs:MaskValue="1" crs:ZeroX="${fmt(m?.zeroX) || '0.50'}" crs:ZeroY="${
+              fmt(m?.zeroY) || '0.00'
+            }" crs:FullX="${fmt(m?.fullX) || '0.50'}" crs:FullY="${fmt(m?.fullY) || '0.40'}"/>`;
+          }
+          return `
           <rdf:li>
             <rdf:Description crs:What="Correction" crs:CorrectionAmount="1" crs:CorrectionActive="true" crs:CorrectionName="${name}"${cAttrs}>
               <crs:CorrectionMasks>
@@ -463,7 +768,8 @@ export class ImageProcessor {
               </crs:CorrectionMasks>
             </rdf:Description>
           </rdf:li>`;
-      }).join('\n');
+        })
+        .join('\n');
       return `
       <crs:MaskGroupBasedCorrections>
         <rdf:Seq>
@@ -514,13 +820,15 @@ export class ImageProcessor {
       ${pointColorBlocks}
 
       <!-- Film Grain (optional) -->
-      ${inc.grain
-        ? [
-            tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100))),
-            tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100))),
-            tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
-          ].join('')
-        : ''}
+      ${
+        inc.grain
+          ? [
+              tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100))),
+              tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100))),
+              tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
+            ].join('')
+          : ''
+      }
 
       <!-- Masks (optional) -->
       ${masksBlock}
@@ -530,7 +838,11 @@ export class ImageProcessor {
     return xmp;
   }
 
-  generateLUTContent(aiAdjustments: AIColorAdjustments, size: number = 33, format: string = 'cube'): string {
+  generateLUTContent(
+    aiAdjustments: AIColorAdjustments,
+    size: number = 33,
+    format: string = 'cube'
+  ): string {
     return generateLUTContentImpl(aiAdjustments, size, format);
   }
 
@@ -553,7 +865,12 @@ LUT_3D_SIZE ${size}
           const inputB = b / (size - 1);
 
           // Apply color transformations
-          const [outputR, outputG, outputB] = this.applyColorTransform(inputR, inputG, inputB, adjustments);
+          const [outputR, outputG, outputB] = this.applyColorTransform(
+            inputR,
+            inputG,
+            inputB,
+            adjustments
+          );
 
           // Write LUT entry
           lut += `${outputR.toFixed(6)} ${outputG.toFixed(6)} ${outputB.toFixed(6)}\n`;
@@ -578,9 +895,16 @@ Mesh ${size} ${size} ${size}
           const inputG = g / (size - 1);
           const inputB = b / (size - 1);
 
-          const [outputR, outputG, outputB] = this.applyColorTransform(inputR, inputG, inputB, adjustments);
+          const [outputR, outputG, outputB] = this.applyColorTransform(
+            inputR,
+            inputG,
+            inputB,
+            adjustments
+          );
 
-          lut += `${(outputR * 1023).toFixed(0)} ${(outputG * 1023).toFixed(0)} ${(outputB * 1023).toFixed(0)}\n`;
+          lut += `${(outputR * 1023).toFixed(0)} ${(outputG * 1023).toFixed(0)} ${(
+            outputB * 1023
+          ).toFixed(0)}\n`;
         }
       }
     }
@@ -603,7 +927,12 @@ Mesh ${size} ${size} ${size}
           const inputG = g / (size - 1);
           const inputB = b / (size - 1);
 
-          const [outputR, outputG, outputB] = this.applyColorTransform(inputR, inputG, inputB, adjustments);
+          const [outputR, outputG, outputB] = this.applyColorTransform(
+            inputR,
+            inputG,
+            inputB,
+            adjustments
+          );
 
           lut += `${outputR.toFixed(6)} ${outputG.toFixed(6)} ${outputB.toFixed(6)}\n`;
         }
@@ -613,7 +942,12 @@ Mesh ${size} ${size} ${size}
     return lut;
   }
 
-  private applyColorTransform(r: number, g: number, b: number, adjustments: any): [number, number, number] {
+  private applyColorTransform(
+    r: number,
+    g: number,
+    b: number,
+    adjustments: any
+  ): [number, number, number] {
     let newR = r;
     let newG = g;
     let newB = b;
@@ -629,24 +963,24 @@ Mesh ${size} ${size} ${size}
       // Apply temperature correction (simplified)
       if (tempNormalized < 0) {
         // Cooler - reduce red, increase blue
-        newR *= (1 + tempNormalized * 0.2);
-        newB *= (1 - tempNormalized * 0.1);
+        newR *= 1 + tempNormalized * 0.2;
+        newB *= 1 - tempNormalized * 0.1;
       } else {
         // Warmer - increase red/yellow, reduce blue
-        newR *= (1 + tempNormalized * 0.1);
-        newG *= (1 + tempNormalized * 0.05);
-        newB *= (1 - tempNormalized * 0.1);
+        newR *= 1 + tempNormalized * 0.1;
+        newG *= 1 + tempNormalized * 0.05;
+        newB *= 1 - tempNormalized * 0.1;
       }
 
       // Apply tint correction (green-magenta)
       if (tintNormalized > 0) {
         // More magenta
-        newR *= (1 + tintNormalized * 0.05);
-        newB *= (1 + tintNormalized * 0.05);
-        newG *= (1 - tintNormalized * 0.05);
+        newR *= 1 + tintNormalized * 0.05;
+        newB *= 1 + tintNormalized * 0.05;
+        newG *= 1 - tintNormalized * 0.05;
       } else {
         // More green
-        newG *= (1 - tintNormalized * 0.05);
+        newG *= 1 - tintNormalized * 0.05;
       }
     }
 
@@ -660,7 +994,8 @@ Mesh ${size} ${size} ${size}
 
     // Apply contrast adjustment (fixed power curve)
     if (adjustments.contrast !== 0) {
-      const contrast = adjustments.contrast > 0 ? (1 + adjustments.contrast) : (1 / (1 - adjustments.contrast));
+      const contrast =
+        adjustments.contrast > 0 ? 1 + adjustments.contrast : 1 / (1 - adjustments.contrast);
       newR = Math.pow(Math.max(0, newR), contrast);
       newG = Math.pow(Math.max(0, newG), contrast);
       newB = Math.pow(Math.max(0, newB), contrast);
@@ -671,7 +1006,7 @@ Mesh ${size} ${size} ${size}
 
     if (adjustments.highlights !== 0 && luminance > 0.5) {
       const highlightMask = Math.pow((luminance - 0.5) * 2, 2); // Smooth curve for highlights
-      const factor = 1 + (adjustments.highlights * highlightMask * 0.5);
+      const factor = 1 + adjustments.highlights * highlightMask * 0.5;
       newR *= factor;
       newG *= factor;
       newB *= factor;
@@ -679,7 +1014,7 @@ Mesh ${size} ${size} ${size}
 
     if (adjustments.shadows !== 0 && luminance < 0.5) {
       const shadowMask = Math.pow((0.5 - luminance) * 2, 2); // Smooth curve for shadows
-      const factor = 1 + (adjustments.shadows * shadowMask * 0.5);
+      const factor = 1 + adjustments.shadows * shadowMask * 0.5;
       newR *= factor;
       newG *= factor;
       newB *= factor;
