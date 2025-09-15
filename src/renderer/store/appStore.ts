@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { AppSettings, ProcessHistory } from '../../shared/types';
+import { AppSettings, Recipe } from '../../shared/types';
 
 interface AppState {
   // Setup wizard state
@@ -11,7 +11,7 @@ interface AppState {
   settings: AppSettings;
 
   // Recipes state
-  recipes: ProcessHistory[];
+  recipes: Recipe[];
   recipesLoading: boolean;
   generatingRecipes: Set<string>; // Track which recipes are generating
 
@@ -33,9 +33,9 @@ interface AppState {
   setCurrentRoute: (route: string) => void;
 
   // Recipe actions
-  setRecipes: (recipes: ProcessHistory[]) => void;
-  addRecipe: (recipe: ProcessHistory) => void;
-  updateRecipe: (id: string, updates: Partial<ProcessHistory>) => void;
+  setRecipes: (recipes: Recipe[]) => void;
+  addRecipe: (recipe: Recipe) => void;
+  updateRecipe: (id: string, updates: Partial<Recipe>) => void;
   removeRecipe: (id: string) => void;
   setGeneratingStatus: (id: string, isGenerating: boolean) => void;
 
@@ -72,7 +72,7 @@ export const useAppStore = create<AppState>()(
         progress: 0,
         status: '',
       },
-      currentRoute: '/home',
+      currentRoute: '/gallery',
 
       // Sync actions
       setSetupWizardOpen: (open) =>
@@ -201,7 +201,7 @@ export const useAppStore = create<AppState>()(
         try {
           const result = await window.electronAPI.loadHistory();
           if (result.success) {
-            const recipes = (result.history as ProcessHistory[]) || [];
+            const recipes = (result.recipes as Recipe[]) || [];
             const generating = new Set<string>();
 
             // Track which recipes are generating
@@ -230,7 +230,7 @@ export const useAppStore = create<AppState>()(
                 try {
                   const pollResult = await window.electronAPI.loadHistory();
                   if (pollResult.success) {
-                    const updatedRecipes = (pollResult.history as ProcessHistory[]) || [];
+                    const updatedRecipes = (pollResult.recipes as Recipe[]) || [];
                     const stillGenerating = new Set<string>();
 
                     updatedRecipes.forEach(recipe => {
@@ -266,7 +266,7 @@ export const useAppStore = create<AppState>()(
         try {
           const result = await window.electronAPI.saveProcess(recipeData);
           if (result.success && result.process) {
-            const recipe = result.process as ProcessHistory;
+            const recipe = result.process as Recipe;
             get().addRecipe(recipe);
             return { success: true, processId: recipe.id };
           } else {
@@ -339,11 +339,11 @@ export const useAppStore = create<AppState>()(
             await window.electronAPI.clearHistory();
           } else {
             // Fallback: iterate deletes if IPC not available
-            const historyRes = await window.electronAPI.loadHistory();
-            if (historyRes.success && historyRes.history) {
-              for (const process of historyRes.history) {
-                if (process.id) {
-                  await window.electronAPI.deleteProcess(process.id);
+            const recipesRes = await window.electronAPI.loadHistory();
+            if (recipesRes.success && recipesRes.recipes) {
+              for (const recipe of recipesRes.recipes) {
+                if (recipe.id) {
+                  await window.electronAPI.deleteProcess(recipe.id);
                 }
               }
             }

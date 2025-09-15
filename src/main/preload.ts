@@ -45,7 +45,7 @@ const electronAPI = {
   generateAdjustedPreview: (args: { path: string; adjustments: any }) => ipcRenderer.invoke('generate-adjusted-preview', args),
 
   // Storage operations
-  loadHistory: () => ipcRenderer.invoke('load-history'),
+  loadHistory: () => ipcRenderer.invoke('load-recipes'),
   saveProcess: (processData: any) => ipcRenderer.invoke('save-process', processData),
   updateProcess: (processId: string, updates: any) => ipcRenderer.invoke('update-process', processId, updates),
   deleteProcess: (processId: string) => ipcRenderer.invoke('delete-process', processId),
@@ -54,7 +54,7 @@ const electronAPI = {
   setBaseImage: (processId: string, filePath: string) => ipcRenderer.invoke('set-base-image', processId, filePath),
   addBaseImages: (processId: string, filePaths: string[]) => ipcRenderer.invoke('add-base-images', processId, filePaths),
   removeBaseImage: (processId: string, index: number) => ipcRenderer.invoke('remove-base-image', processId, index),
-  clearHistory: () => ipcRenderer.invoke('clear-history'),
+  clearHistory: () => ipcRenderer.invoke('clear-recipes'),
 
   // Settings operations
   getSettings: () => ipcRenderer.invoke('get-settings'),

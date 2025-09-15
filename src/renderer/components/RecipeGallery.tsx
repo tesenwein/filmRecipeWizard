@@ -15,17 +15,17 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { ProcessHistory } from '../../shared/types';
+import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import SingleImage from './SingleImage';
 
-interface HistoryViewProps {
-  onOpenRecipe: (process: ProcessHistory) => void;
+interface RecipeGalleryProps {
+  onOpenRecipe: (recipe: Recipe) => void;
   onNewProcess: () => void;
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess }) => {
+const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProcess }) => {
   const {
     recipes,
     recipesLoading,
@@ -38,50 +38,50 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
   } = useAppStore();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null);
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const { showSuccess, showError } = useAlert();
 
   useEffect(() => {
     loadRecipes();
   }, [loadRecipes]);
 
-  const basePreviews = recipes.map((p: ProcessHistory) =>
-    p?.recipeImageData &&
-    typeof p.recipeImageData === 'string' &&
-    p.recipeImageData.length > 0
-      ? `data:image/jpeg;base64,${p.recipeImageData}`
+  const basePreviews = recipes.map((recipe: Recipe) =>
+    recipe?.recipeImageData &&
+    typeof recipe.recipeImageData === 'string' &&
+    recipe.recipeImageData.length > 0
+      ? `data:image/jpeg;base64,${recipe.recipeImageData}`
       : ''
   );
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, processId: string) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, recipeId: string) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
-    setSelectedProcessId(processId);
+    setSelectedRecipeId(recipeId);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedProcessId(null);
+    setSelectedRecipeId(null);
   };
 
-  const handleDeleteProcess = async () => {
-    if (!selectedProcessId) return;
+  const handleDeleteRecipe = async () => {
+    if (!selectedRecipeId) return;
     handleMenuClose();
-    if (confirm('Are you sure you want to delete this process?')) {
+    if (confirm('Are you sure you want to delete this recipe?')) {
       try {
-        await deleteRecipe(selectedProcessId);
+        await deleteRecipe(selectedRecipeId);
       } catch (error) {
-        console.error('Failed to delete process:', error);
+        console.error('Failed to delete recipe:', error);
         showError('Failed to delete recipe');
       }
     }
   };
 
-  const handleExportProcess = async () => {
-    if (!selectedProcessId) return;
+  const handleExportRecipe = async () => {
+    if (!selectedRecipeId) return;
     handleMenuClose();
     try {
-      const res = await exportRecipe(selectedProcessId);
+      const res = await exportRecipe(selectedRecipeId);
       if (!res.success && res.error && res.error !== 'Export canceled') {
         showError(`Export failed: ${res.error}`);
       }
@@ -98,7 +98,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
     return (
       <div className="container" style={{ textAlign: 'center', padding: '60px' }}>
         <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚡</div>
-        <h2>Loading History...</h2>
+        <h2>Loading Recipes...</h2>
       </div>
     );
   }
@@ -169,14 +169,14 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
         </Card>
       ) : (
         <Grid container spacing={2}>
-          {recipes.map((process, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={process.id}>
+          {recipes.map((recipe, index) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={recipe.id}>
               <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
                 {/* Menu button (top-right) */}
                 <IconButton
                   aria-label="Options"
                   size="small"
-                  onClick={e => handleMenuOpen(e, process.id)}
+                  onClick={e => handleMenuOpen(e, recipe.id)}
                   title="Options"
                   sx={{
                     position: 'absolute',
@@ -199,12 +199,12 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                 </IconButton>
                 <CardActionArea
                   onClick={() => {
-                    if (!generatingRecipes.has(process.id)) {
-                      onOpenRecipe(process);
+                    if (!generatingRecipes.has(recipe.id)) {
+                      onOpenRecipe(recipe);
                     }
                   }}
                   sx={{
-                    ...(generatingRecipes.has(process.id) && {
+                    ...(generatingRecipes.has(recipe.id) && {
                       pointerEvents: 'none',
                       opacity: 0.7,
                     }),
@@ -215,30 +215,30 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                       source={basePreviews[index] || undefined}
                       alt={`Recipe ${index + 1}`}
                       fit="contain"
-                      isGenerating={generatingRecipes.has(process.id)}
+                      isGenerating={generatingRecipes.has(recipe.id)}
                     />
                   </div>
                   <CardContent>
                     <Typography variant="subtitle1" fontWeight={700} noWrap>
                       {(() => {
-                        const aiName = (process as any)?.results?.[0]?.metadata?.aiAdjustments
+                        const aiName = (recipe as any)?.results?.[0]?.metadata?.aiAdjustments
                           ?.preset_name as string | undefined;
                         const name =
-                          process.name ||
+                          recipe.name ||
                           (typeof aiName === 'string' && aiName.trim().length > 0
                             ? aiName
                             : undefined);
                         if (name && name.trim().length > 0) return name;
                         // Fallback: human-friendly timestamp label
                         try {
-                          return new Date(process.timestamp).toLocaleString();
+                          return new Date(recipe.timestamp).toLocaleString();
                         } catch {
-                          return `Recipe ${process.id}`;
+                          return `Recipe ${recipe.id}`;
                         }
                       })()}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {formatDate(process.timestamp)}
+                      {formatDate(recipe.timestamp)}
                     </Typography>
                   </CardContent>
                 </CardActionArea>
@@ -246,13 +246,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                   <Button
                     variant="outlined"
                     fullWidth
-                    disabled={generatingRecipes.has(process.id)}
+                    disabled={generatingRecipes.has(recipe.id)}
                     onClick={e => {
                       e.stopPropagation();
-                      onOpenRecipe(process);
+                      onOpenRecipe(recipe);
                     }}
                   >
-                    {generatingRecipes.has(process.id) ? 'Generating...' : 'Open'}
+                    {generatingRecipes.has(recipe.id) ? 'Generating...' : 'Open'}
                   </Button>
                 </CardContent>
               </Card>
@@ -275,13 +275,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
           horizontal: 'right',
         }}
       >
-        <MenuItem onClick={handleExportProcess}>
+        <MenuItem onClick={handleExportRecipe}>
           <ListItemIcon>
             <DownloadIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Export Zip</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleDeleteProcess} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleDeleteRecipe} sx={{ color: 'error.main' }}>
           <ListItemIcon>
             <DeleteOutlineIcon fontSize="small" sx={{ color: 'error.main' }} />
           </ListItemIcon>
@@ -292,4 +292,4 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
   );
 };
 
-export default HistoryView;
+export default RecipeGallery;

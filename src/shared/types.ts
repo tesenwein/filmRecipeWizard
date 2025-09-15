@@ -34,7 +34,7 @@ export interface StyleOptions {
   filmStyle?: { key: string; name: string; category: string; blurb: string };
 }
 
-export interface ProcessHistory {
+export interface Recipe {
   id: string;
   timestamp: string;
   name?: string;
@@ -48,6 +48,9 @@ export interface ProcessHistory {
   // Processing status to track if generation is still in progress
   status?: 'generating' | 'completed' | 'failed';
 }
+
+// Legacy alias for backward compatibility
+export type ProcessHistory = Recipe;
 
 export interface ProcessingState {
   isProcessing: boolean;

@@ -8,6 +8,7 @@ export class StorageService {
   private storageFile: string;
   private backupDir: string;
   private initialized = false;
+  private migrated = false;
 
   constructor() {
     const userDataPath = app.getPath('userData');
@@ -28,6 +29,12 @@ export class StorageService {
         await fs.rm(tmp, { force: true });
       } catch {
         // Ignore errors when removing temp file
+      }
+
+      // Run migration only once on startup
+      if (!this.migrated) {
+        await this.migrateStatusField();
+        this.migrated = true;
       }
     } finally {
       this.initialized = true;
@@ -104,6 +111,7 @@ export class StorageService {
     return null;
   }
 
+  // Migration to add status field to existing recipes (runs only once on startup)
   private async migrateStatusField(): Promise<void> {
     try {
       const data = await fs.readFile(this.storageFile, 'utf8');
@@ -122,19 +130,16 @@ export class StorageService {
       }));
 
       // Save the migrated data
-      await this.saveHistory(migrated);
+      await this.saveRecipes(migrated);
     } catch {
       // If file doesn't exist or is corrupt, no migration needed
       console.log('[STORAGE] No migration needed - file not found or invalid');
     }
   }
 
-  async loadHistory(): Promise<ProcessHistory[]> {
+  async loadRecipes(): Promise<ProcessHistory[]> {
     try {
       await this.initialize();
-
-      // Run migration first
-      await this.migrateStatusField();
 
       const data = await fs.readFile(this.storageFile, 'utf8');
       const raw: any[] = JSON.parse(data);
@@ -184,14 +189,14 @@ export class StorageService {
         }));
 
         // Save migrated backup to main file
-        await this.saveHistory(migratedBackup);
+        await this.saveRecipes(migratedBackup);
         return migratedBackup;
       }
       return [];
     }
   }
 
-  async saveHistory(history: ProcessHistory[]): Promise<void> {
+  async saveRecipes(history: ProcessHistory[]): Promise<void> {
     try {
       await this.initialize();
       await this.backupHistoryFile();
@@ -207,7 +212,7 @@ export class StorageService {
   }
 
   async addProcess(process: ProcessHistory): Promise<void> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     history.unshift(process); // Add to beginning for most recent first
 
     // Keep only last N processes to prevent file from growing too large
@@ -216,23 +221,23 @@ export class StorageService {
       history.splice(maxHistory);
     }
 
-    await this.saveHistory(history);
+    await this.saveRecipes(history);
   }
 
   async updateProcess(processId: string, updates: Partial<ProcessHistory>): Promise<void> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     const index = history.findIndex(p => p.id === processId);
 
     if (index >= 0) {
       history[index] = { ...history[index], ...updates };
-      await this.saveHistory(history);
+      await this.saveRecipes(history);
     } else {
       console.warn('[STORAGE] Process not found for update:', processId);
     }
   }
 
   async deleteProcess(processId: string): Promise<void> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     const filteredHistory = history.filter(p => p.id !== processId);
     await this.saveHistory(filteredHistory);
 
@@ -241,7 +246,7 @@ export class StorageService {
   }
 
   async getProcess(processId: string): Promise<ProcessHistory | null> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     return history.find(p => p.id === processId) || null;
   }
 
@@ -249,7 +254,7 @@ export class StorageService {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
 
-  async clearHistory(): Promise<void> {
+  async clearRecipes(): Promise<void> {
     await this.initialize();
     await this.backupHistoryFile();
 
@@ -313,5 +318,18 @@ export class StorageService {
       // Directory might not exist, which is fine
       console.log(`[STORAGE] Temp directory already cleaned or doesn't exist`);
     }
+  }
+
+  // Backward compatibility aliases
+  async loadHistory(): Promise<ProcessHistory[]> {
+    return this.loadRecipes();
+  }
+
+  async saveHistory(history: ProcessHistory[]): Promise<void> {
+    return this.saveRecipes(history);
+  }
+
+  async clearHistory(): Promise<void> {
+    return this.clearRecipes();
   }
 }

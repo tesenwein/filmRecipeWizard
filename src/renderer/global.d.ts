@@ -56,7 +56,7 @@ declare global {
       generateAdjustedPreview: (args: { path: string; adjustments: any }) => Promise<any>;
 
       // Storage operations
-      loadHistory: () => Promise<{ success: boolean; history?: any[]; error?: string }>;
+      loadHistory: () => Promise<{ success: boolean; recipes?: any[]; error?: string }>;
       clearHistory: () => Promise<void>;
       saveProcess: (processData: any) => Promise<{ success: boolean; process?: any; error?: string }>;
       updateProcess: (processId: string, updates: any) => Promise<{ success: boolean; error?: string }>;

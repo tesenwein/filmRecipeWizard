@@ -6,14 +6,14 @@ import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/ma
 import React, { useEffect, useRef, useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
 import {
-  ProcessHistory,
+  Recipe,
   ProcessingResult,
   StyleOptions,
 } from '../../shared/types';
 import { AlertProvider } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import ColorMatchingStudio from './ColorMatchingStudio';
-import HistoryView from './HistoryView';
+import RecipeGallery from './RecipeGallery';
 import ProcessingView from './ProcessingView';
 import ResultsView from './ResultsView';
 import Settings from './Settings';
@@ -36,11 +36,11 @@ const App: React.FC = () => {
 
   // Simple hash-based router with query support
   const parseHash = () => {
-    const raw = (typeof window !== 'undefined' ? window.location.hash : '') || '#/home';
+    const raw = (typeof window !== 'undefined' ? window.location.hash : '') || '#/gallery';
     const path = raw.replace(/^#/, '');
     const [route, queryStr = ''] = path.split('?');
     const query = Object.fromEntries(new URLSearchParams(queryStr));
-    return { route: route || '/home', query } as { route: string; query: Record<string, string> };
+    return { route: route || '/gallery', query } as { route: string; query: Record<string, string> };
   };
   const initialHash = parseHash();
   const [route, setRoute] = useState<string>(initialHash.route);
@@ -50,8 +50,8 @@ const App: React.FC = () => {
   const [targetImages, setTargetImages] = useState<string[]>([]);
   const [prompt, setPrompt] = useState<string>('');
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [currentStep, setCurrentStep] = useState<'history' | 'upload' | 'processing' | 'results'>(
-    'history'
+  const [currentStep, setCurrentStep] = useState<'gallery' | 'upload' | 'processing' | 'results'>(
+    'gallery'
   );
   const currentProcessIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -203,15 +203,15 @@ const App: React.FC = () => {
     handleReset();
   };
 
-  const handleOpenRecipe = async (process: ProcessHistory) => {
+  const handleOpenRecipe = async (recipe: Recipe) => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
     // Do not rely on legacy file paths in stored recipe
     setBaseImages([]);
     setTargetImages([]);
-    setCurrentProcessId(process.id);
+    setCurrentProcessId(recipe.id);
     try {
-      if (process.id) {
-        const res = await window.electronAPI.getProcess(process.id);
+      if (recipe.id) {
+        const res = await window.electronAPI.getProcess(recipe.id);
         if (
           res?.success &&
           res.process &&
@@ -220,14 +220,14 @@ const App: React.FC = () => {
         ) {
           setResults(res.process.results);
         } else {
-          setResults(process.results || []);
+          setResults(recipe.results || []);
         }
       } else {
-        setResults(process.results || []);
+        setResults(recipe.results || []);
       }
     } finally {
       setCurrentStep('results');
-      navigate(`/recipedetails?id=${process.id}`);
+      navigate(`/recipedetails?id=${recipe.id}`);
     }
   };
 
@@ -259,7 +259,7 @@ const App: React.FC = () => {
 
   // When navigating to create, default to upload step if nothing selected
   useEffect(() => {
-    if (route === '/create' && !processingState.isProcessing && currentStep === 'history') {
+    if (route === '/create' && !processingState.isProcessing && currentStep === 'gallery') {
       setCurrentStep('upload');
     }
   }, [route]);
@@ -333,7 +333,7 @@ const App: React.FC = () => {
             <IconButton
               color="inherit"
               size="small"
-              onClick={() => navigate('/home')}
+              onClick={() => navigate('/gallery')}
               sx={{
                 mr: 1,
                 color: 'action.active',
@@ -400,11 +400,11 @@ const App: React.FC = () => {
       {/* Scroll fade-out effect overlay */}
       <div className="scroll-fade-overlay" />
       {Header}
-      {route === '/home' && (
+      {route === '/gallery' && (
         <div className="fade-in">
-          <HistoryView
-            onOpenRecipe={process => {
-              handleOpenRecipe(process);
+          <RecipeGallery
+            onOpenRecipe={recipe => {
+              handleOpenRecipe(recipe);
             }}
             onNewProcess={() => {
               handleNewProcess();
@@ -450,7 +450,7 @@ const App: React.FC = () => {
                 processId={currentProcessId || undefined}
                 onReset={() => {
                   handleReset();
-                  navigate('/home');
+                  navigate('/gallery');
                 }}
                 onRestart={() => {
                   setCurrentStep('processing');
@@ -473,7 +473,7 @@ const App: React.FC = () => {
               processId={currentProcessId || undefined}
               onReset={() => {
                 handleReset();
-                navigate('/home');
+                navigate('/gallery');
               }}
               onRestart={() => {
                 setCurrentStep('processing');

@@ -503,12 +503,12 @@ class FotoRecipeWizardApp {
     });
 
     // Storage service IPC handlers
-    ipcMain.handle('load-history', async () => {
+    ipcMain.handle('load-recipes', async () => {
       try {
-        const history = await this.storageService.loadHistory();
-        return { success: true, history };
+        const recipes = await this.storageService.loadRecipes();
+        return { success: true, recipes };
       } catch (error) {
-        console.error('[IPC] Error loading history:', error);
+        console.error('[IPC] Error loading recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
@@ -777,13 +777,13 @@ class FotoRecipeWizardApp {
       }
     });
 
-    // Fast clear of all history
-    ipcMain.handle('clear-history', async () => {
+    // Fast clear of all recipes
+    ipcMain.handle('clear-recipes', async () => {
       try {
-        await this.storageService.clearHistory();
+        await this.storageService.clearRecipes();
         return { success: true };
       } catch (error) {
-        console.error('[IPC] Error clearing history:', error);
+        console.error('[IPC] Error clearing recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
@@ -883,8 +883,8 @@ class FotoRecipeWizardApp {
     // Export all recipes to a ZIP file
     ipcMain.handle('export-all-recipes', async (): Promise<ExportResult> => {
       try {
-        const history = await this.storageService.loadHistory();
-        if (!history || history.length === 0) {
+        const recipes = await this.storageService.loadRecipes();
+        if (!recipes || recipes.length === 0) {
           throw new Error('No recipes to export');
         }
 
@@ -908,25 +908,25 @@ class FotoRecipeWizardApp {
         const manifest = {
           schema: 'foto-recipe-wizard-bulk@1',
           exportedAt: new Date().toISOString(),
-          count: history.length,
-          processes: history,
+          count: recipes.length,
+          processes: recipes,
         };
         zip.addFile('all-recipes.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 
         // Export recipe images and XMP presets for each process
-        for (let i = 0; i < history.length; i++) {
-          const process = history[i];
-          const processDir = `recipe-${i + 1}-${process.id}`;
+        for (let i = 0; i < recipes.length; i++) {
+          const recipe = recipes[i];
+          const recipeDir = `recipe-${i + 1}-${recipe.id}`;
 
           // Add recipe image if available
-          if ((process as any).recipeImageData) {
-            const buf = Buffer.from((process as any).recipeImageData, 'base64');
-            zip.addFile(`${processDir}/recipe.jpg`, buf);
+          if ((recipe as any).recipeImageData) {
+            const buf = Buffer.from((recipe as any).recipeImageData, 'base64');
+            zip.addFile(`${recipeDir}/recipe.jpg`, buf);
           }
 
           // Add XMP presets for each result
           try {
-            const results = Array.isArray(process.results) ? process.results : [];
+            const results = Array.isArray(recipe.results) ? recipe.results : [];
             results.forEach((r, idx) => {
               const adj = r?.metadata?.aiAdjustments;
               if (!adj) return;
@@ -950,25 +950,25 @@ class FotoRecipeWizardApp {
                 .trim()
                 .replace(/\s/g, '-');
               zip.addFile(
-                `${processDir}/presets/${safePreset || `Preset-${idx + 1}`}.xmp`,
+                `${recipeDir}/presets/${safePreset || `Preset-${idx + 1}`}.xmp`,
                 Buffer.from(xmp, 'utf8')
               );
             });
           } catch (e) {
-            console.warn(`[IPC] export-all-recipes: failed to add XMP presets for process ${process.id}:`, e);
+            console.warn(`[IPC] export-all-recipes: failed to add XMP presets for recipe ${recipe.id}:`, e);
           }
         }
 
         // Write out the zip
         zip.writeZip(saveRes.filePath);
-        return { success: true, filePath: saveRes.filePath, count: history.length };
+        return { success: true, filePath: saveRes.filePath, count: recipes.length };
       } catch (error) {
         console.error('[IPC] Error exporting all recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
 
-    // Import recipe(s) from ZIP and replace existing history
+    // Import recipe(s) from ZIP and replace existing recipes
     ipcMain.handle('import-recipe', async (): Promise<ImportResult> => {
       try {
         const openRes = await dialog.showOpenDialog({
@@ -998,22 +998,22 @@ class FotoRecipeWizardApp {
             throw new Error('Invalid bulk recipe manifest');
           }
 
-          // Clear existing history and import all recipes
-          await this.storageService.clearHistory();
+          // Clear existing recipes and import all new recipes
+          await this.storageService.clearRecipes();
 
           let importedCount = 0;
-          for (const process of parsed.processes) {
-            if (process && Array.isArray(process.results)) {
+          for (const recipe of parsed.processes) {
+            if (recipe && Array.isArray(recipe.results)) {
               // Normalize and assign a new id/timestamp to avoid collisions
               const newId = this.storageService.generateProcessId();
               const imported = {
                 id: newId,
                 timestamp: new Date().toISOString(),
-                name: process.name,
-                prompt: process.prompt,
-                userOptions: process.userOptions,
-                results: process.results,
-                recipeImageData: (process as any).recipeImageData,
+                name: recipe.name,
+                prompt: recipe.prompt,
+                userOptions: recipe.userOptions,
+                results: recipe.results,
+                recipeImageData: (recipe as any).recipeImageData,
               } as any;
 
               await this.storageService.addProcess(imported);
