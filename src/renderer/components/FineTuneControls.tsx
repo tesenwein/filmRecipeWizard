@@ -10,23 +10,7 @@ import {
   Slider,
 } from '@mui/material';
 import React from 'react';
-
-interface StyleOptions {
-  warmth?: number;
-  tint?: number;
-  contrast?: number;
-  vibrance?: number;
-  moodiness?: number;
-  saturationBias?: number;
-  filmGrain?: boolean;
-  vibe?: string;
-  artistStyle?: {
-    key: string;
-    name: string;
-    category: string;
-    blurb: string;
-  };
-}
+import { StyleOptions } from '../../shared/types';
 
 interface FineTuneControlsProps {
   styleOptions?: StyleOptions;

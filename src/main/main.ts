@@ -9,9 +9,9 @@ import {
 } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { ProcessHistory } from '../shared/types';
+import { ProcessHistory, AppSettings } from '../shared/types';
 import { ImageProcessor } from './image-processor';
-import { AppSettings, SettingsService } from './settings-service';
+import { SettingsService } from './settings-service';
 import { StorageService } from './storage-service';
 import { generateXMPContent } from './xmp-generator';
 import { generateLUTContent } from './lut-generator';

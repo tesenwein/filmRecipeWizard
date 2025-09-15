@@ -1,13 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { app } from 'electron';
-
-export interface AppSettings {
-  openaiKey?: string;
-  // Future settings can be added here
-  preserveSkinTones?: boolean;
-  emphasize3DPop?: boolean;
-}
+import { AppSettings } from '../shared/types';
 
 export class SettingsService {
   private settingsFile: string;

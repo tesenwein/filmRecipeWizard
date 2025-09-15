@@ -53,3 +53,16 @@ export interface ProcessingState {
   progress: number;
   status: string;
 }
+
+export interface ProfileExportResult {
+  success: boolean;
+  outputPath?: string;
+  error?: string;
+  metadata?: { profileName?: string };
+}
+
+export interface AppSettings {
+  openaiKey?: string;
+  preserveSkinTones?: boolean;
+  emphasize3DPop?: boolean;
+}
