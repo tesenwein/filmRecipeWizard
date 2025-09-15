@@ -1,5 +1,7 @@
 import HomeIcon from '@mui/icons-material/Home';
 import SettingsIcon from '@mui/icons-material/Settings';
+import GitHubIcon from '@mui/icons-material/Code';
+import BugReportIcon from '@mui/icons-material/BugReport';
 import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
@@ -23,7 +25,7 @@ const App: React.FC = () => {
   const [route, setRoute] = useState<string>(initialHash.route);
   const [routeQuery, setRouteQuery] = useState<Record<string, string>>(initialHash.query);
 
-  const [baseImage, setBaseImage] = useState<string | null>(null);
+  const [baseImages, setBaseImages] = useState<string[]>([]);
   const [targetImages, setTargetImages] = useState<string[]>([]);
   const [processingState, setProcessingState] = useState<ProcessingState>({
     isProcessing: false,
@@ -77,9 +79,9 @@ const App: React.FC = () => {
     checkApiKey();
   }, []);
 
-  const handleImagesSelected = (base: string, targets: string[]) => {
-    setBaseImage(base);
-    setTargetImages(targets);
+  const handleImagesSelected = (bases: string[], targets: string[]) => {
+    setBaseImages(bases.slice(0, 3));
+    setTargetImages(targets.slice(0, 3));
     setResults([]);
   };
 
@@ -92,7 +94,7 @@ const App: React.FC = () => {
     let returnedBase64: { base?: string | null; targets?: string[] } = {};
     try {
       const processData = {
-        baseImage: baseImage || undefined,
+        baseImages: baseImages.length ? baseImages.slice(0, 3) : undefined,
         targetImages,
         results: [],
         prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
@@ -105,7 +107,11 @@ const App: React.FC = () => {
         setCurrentProcessId(newProcessId);
         currentProcessIdRef.current = newProcessId;
         // Capture base64 returned from save-process to pass through to processing
-        returnedBase64.base = result?.process?.baseImageData || null;
+        // Prefer multi-reference data if present
+        const bMulti = Array.isArray(result?.process?.baseImagesData)
+          ? result.process.baseImagesData
+          : [];
+        returnedBase64.base = (bMulti.length ? bMulti : (result?.process?.baseImageData ? [result.process.baseImageData] : null)) as any;
         returnedBase64.targets = Array.isArray(result?.process?.targetImageData)
           ? result.process.targetImageData
           : [];
@@ -128,7 +134,7 @@ const App: React.FC = () => {
       window.electronAPI.processWithStoredImages({
         processId: newProcessId,
         targetIndex: 0,
-        baseImageData: returnedBase64.base || undefined,
+        baseImageData: (returnedBase64.base || undefined) as any,
         targetImageData: returnedBase64.targets || undefined,
         prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
       });
@@ -185,7 +191,7 @@ const App: React.FC = () => {
   };
 
   const handleReset = () => {
-    setBaseImage(null);
+    setBaseImages([]);
     setTargetImages([]);
     setResults([]);
     setCurrentProcessId(null);
@@ -207,7 +213,7 @@ const App: React.FC = () => {
   const handleOpenRecipe = async (process: ProcessHistory) => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
     // Do not rely on legacy file paths in stored recipe
-    setBaseImage(null);
+    setBaseImages([]);
     setTargetImages([]);
     setCurrentProcessId(process.id);
     try {
@@ -285,7 +291,7 @@ const App: React.FC = () => {
           try {
             const res = await window.electronAPI.getProcess(id);
             if (res?.success && res.process) {
-              setBaseImage(null);
+              setBaseImages([]);
               setTargetImages([]);
               setResults(Array.isArray(res.process.results) ? res.process.results : []);
               setCurrentProcessId(res.process.id);
@@ -313,11 +319,13 @@ const App: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#ffffff',
-          border: 'none',
-          borderRadius: 2,
+          background: 'rgba(255, 255, 255, 0.3)',
+          backdropFilter: 'blur(30px)',
+          WebkitBackdropFilter: 'blur(30px)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          borderRadius: 12,
           padding: '12px 16px',
-          boxShadow: 'none',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -335,10 +343,38 @@ const App: React.FC = () => {
               sx={{
                 mr: 1,
                 color: 'action.active',
-                '&:hover': { backgroundColor: 'rgba(17,24,39,0.05)' },
+                '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' },
               }}
             >
               <HomeIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="GitHub Repository">
+            <IconButton
+              color="inherit"
+              size="small"
+              onClick={() => window.electronAPI.openExternal('https://github.com/tesenwein/fotoRecipeWizard')}
+              sx={{
+                mr: 1,
+                color: 'action.active',
+                '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' },
+              }}
+            >
+              <GitHubIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Report Issues">
+            <IconButton
+              color="inherit"
+              size="small"
+              onClick={() => window.electronAPI.openExternal('https://github.com/tesenwein/fotoRecipeWizard/issues')}
+              sx={{
+                mr: 1,
+                color: 'action.active',
+                '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' },
+              }}
+            >
+              <BugReportIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Settings">
@@ -346,7 +382,7 @@ const App: React.FC = () => {
               color="inherit"
               size="small"
               onClick={() => setSettingsOpen(true)}
-              sx={{ color: 'action.active', '&:hover': { backgroundColor: 'rgba(17,24,39,0.05)' } }}
+              sx={{ color: 'action.active', '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' } }}
             >
               <SettingsIcon fontSize="small" />
             </IconButton>
@@ -382,7 +418,7 @@ const App: React.FC = () => {
               <ColorMatchingStudio
                 onImagesSelected={handleImagesSelected}
                 onStartProcessing={handleStartProcessing}
-                baseImage={baseImage}
+                baseImages={baseImages}
                 targetImages={targetImages}
                 prompt={prompt}
                 onPromptChange={setPrompt}
@@ -395,7 +431,7 @@ const App: React.FC = () => {
             <div className="fade-in">
               <ProcessingView
                 processingState={processingState}
-                baseImage={baseImage}
+                baseImage={baseImages[0] || null}
                 targetImages={targetImages}
                 prompt={prompt}
               />
@@ -405,7 +441,7 @@ const App: React.FC = () => {
             <div className="fade-in">
               <ResultsView
                 results={results}
-                baseImage={baseImage}
+                baseImage={baseImages[0] || null}
                 targetImages={targetImages}
                 prompt={prompt}
                 processId={currentProcessId || undefined}
@@ -428,7 +464,7 @@ const App: React.FC = () => {
           {currentProcessId && (
             <ResultsView
               results={results}
-              baseImage={baseImage}
+              baseImage={baseImages[0] || null}
               targetImages={targetImages}
               prompt={prompt}
               processId={currentProcessId || undefined}
@@ -451,15 +487,17 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <Dialog 
-        open={settingsOpen} 
-        onClose={() => setSettingsOpen(false)} 
-        fullWidth 
+      <Dialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        fullWidth
         maxWidth="sm"
         disablePortal
         disableScrollLock
-        PaperProps={{ className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } }}
-        BackdropProps={{ className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } }}
+        slotProps={{
+          paper: { className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } },
+          backdrop: { className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } }
+        }}
       >
         <DialogTitle>Settings</DialogTitle>
         <DialogContent className="no-drag" sx={{ WebkitAppRegion: 'no-drag' }}>

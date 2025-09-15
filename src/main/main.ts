@@ -375,7 +375,7 @@ class FotoRecipeWizardApp {
     // Handle processing with stored base64 data from recipe
     ipcMain.handle('process-with-stored-images', async (
       _event,
-      data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[]; prompt?: string }
+      data: { processId: string; targetIndex?: number; baseImageData?: string | string[]; targetImageData?: string[]; prompt?: string }
     ) => {
       console.log('[IPC] process-with-stored-images called with:', {
         processId: data.processId,
@@ -387,7 +387,14 @@ class FotoRecipeWizardApp {
         const stored = await this.storageService.getProcess(data.processId);
         if (!stored) throw new Error('Process not found');
 
-        const baseImageData = data.baseImageData || stored.baseImageData;
+        const baseImageData = ((): string | string[] | undefined => {
+          if (Array.isArray(data.baseImageData)) return data.baseImageData.slice(0, 3);
+          if (typeof data.baseImageData === 'string') return data.baseImageData;
+          const fromStoredArray = (stored as any).baseImagesData as string[] | undefined;
+          if (Array.isArray(fromStoredArray) && fromStoredArray.length) return fromStoredArray.slice(0, 3);
+          if (typeof stored.baseImageData === 'string') return stored.baseImageData;
+          return undefined;
+        })();
         const basePrompt = data.prompt ?? stored.prompt;
         // Build an additional hint from userOptions if present
         const options = (stored as any)?.userOptions || {};
@@ -453,9 +460,7 @@ class FotoRecipeWizardApp {
         // No strict validation: prompt/reference optional; defaults applied in analyzer
 
         // Create temporary files for processing
-        const baseImageTempPath = baseImageData
-          ? await this.storageService.base64ToTempFile(baseImageData, 'base.jpg')
-          : undefined as unknown as string; // optional
+        const baseImageTempPath = undefined as unknown as string; // not required when passing base64 directly
         const targetImageTempPath = await this.storageService.base64ToTempFile(targetImageData, 'target.jpg');
 
         // Process using the image processor
@@ -633,17 +638,23 @@ class FotoRecipeWizardApp {
 
         // Convert images to base64 data
         let baseImageData: string | undefined;
+        let baseImagesData: string[] = [];
         let targetImageData: string[] = [];
 
         try {
-          // Convert base image to base64
-          if (processData.baseImage) {
-            baseImageData = await this.storageService.convertImageToBase64(processData.baseImage);
-            console.log('[IPC] Converted base image to base64', {
-              sizeKB: baseImageData ? Math.round(baseImageData.length / 1024) : 0,
-            });
-          } else {
-            console.warn('[IPC] save-process called without baseImage path');
+          // Convert base/reference images to base64 (supports multiple)
+          const refPaths: string[] = Array.isArray((processData as any).baseImages)
+            ? ((processData as any).baseImages as string[]).slice(0, 3)
+            : (processData.baseImage ? [processData.baseImage] : []);
+          for (let i = 0; i < refPaths.length; i++) {
+            const p = refPaths[i];
+            if (!p) continue;
+            const b64 = await this.storageService.convertImageToBase64(p);
+            if (i === 0) baseImageData = b64; // keep legacy field for backward-compat
+            baseImagesData.push(b64);
+          }
+          if (!refPaths.length) {
+            console.warn('[IPC] save-process called without baseImages/baseImage path');
           }
 
           // Convert target images to base64
@@ -670,6 +681,7 @@ class FotoRecipeWizardApp {
           userOptions: (processData as any)?.userOptions,
           results: Array.isArray(processData.results) ? processData.results : [],
           baseImageData,
+          baseImagesData: baseImagesData.length ? baseImagesData : undefined,
           targetImageData,
         } as ProcessHistory;
 
@@ -732,12 +744,17 @@ class FotoRecipeWizardApp {
           throw new Error('Process not found');
         }
 
-        const result: { baseImageUrl?: string; targetImageUrls: string[] } = {
-          targetImageUrls: []
+        const result: { baseImageUrls: string[]; targetImageUrls: string[] } = {
+          baseImageUrls: [],
+          targetImageUrls: [],
         };
 
-        if (process.baseImageData) {
-          result.baseImageUrl = this.storageService.getImageDataUrl(process.baseImageData);
+        if (Array.isArray((process as any).baseImagesData) && (process as any).baseImagesData.length) {
+          result.baseImageUrls = (process as any).baseImagesData
+            .slice(0, 3)
+            .map((b64: string) => this.storageService.getImageDataUrl(b64));
+        } else if (process.baseImageData) {
+          result.baseImageUrls = [this.storageService.getImageDataUrl(process.baseImageData)];
         }
 
         if (process.targetImageData) {
@@ -748,8 +765,8 @@ class FotoRecipeWizardApp {
 
         console.log('[IPC] get-image-data-urls completed:', {
           processId,
-          hasBaseImage: !!result.baseImageUrl,
-          targetImageCount: result.targetImageUrls.length
+          baseCount: result.baseImageUrls.length,
+          targetImageCount: result.targetImageUrls.length,
         });
         return { success: true, ...result };
       } catch (error) {
@@ -779,6 +796,59 @@ class FotoRecipeWizardApp {
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error setting base image:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Add multiple base/reference images (appends and limits to 3)
+    ipcMain.handle('add-base-images', async (_event, processId: string, filePaths: string[]) => {
+      try {
+        if (!processId || !Array.isArray(filePaths)) throw new Error('Invalid arguments');
+        const process = await this.storageService.getProcess(processId);
+        if (!process) throw new Error('Process not found');
+        const existing: string[] = Array.isArray((process as any).baseImagesData)
+          ? (process as any).baseImagesData
+          : process.baseImageData
+          ? [process.baseImageData]
+          : [];
+        const converted: string[] = [];
+        for (const fp of filePaths.slice(0, 3)) {
+          try {
+            const b64 = await this.storageService.convertImageToBase64(fp);
+            converted.push(b64);
+          } catch (e) {
+            console.warn('[IPC] add-base-images: convert failed for', fp, e);
+          }
+        }
+        const merged = [...existing, ...converted].slice(0, 3);
+        await this.storageService.updateProcess(processId, { baseImagesData: merged } as any);
+        return { success: true, count: merged.length };
+      } catch (error) {
+        console.error('[IPC] Error adding base images:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Remove a base/reference image by index
+    ipcMain.handle('remove-base-image', async (_event, processId: string, index: number) => {
+      try {
+        if (!processId || typeof index !== 'number') throw new Error('Invalid arguments');
+        const process = await this.storageService.getProcess(processId);
+        if (!process) throw new Error('Process not found');
+        const existing: string[] = Array.isArray((process as any).baseImagesData)
+          ? (process as any).baseImagesData
+          : process.baseImageData
+          ? [process.baseImageData]
+          : [];
+        if (index < 0 || index >= existing.length) throw new Error('Index out of range');
+        const next = existing.filter((_, i) => i !== index);
+        const updates: any = { baseImagesData: next.length ? next : undefined };
+        // Keep legacy baseImageData aligned to first reference when present
+        updates.baseImageData = next[0] || undefined;
+        await this.storageService.updateProcess(processId, updates);
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error removing base image:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
@@ -947,6 +1017,17 @@ class FotoRecipeWizardApp {
         return { success: true, count: 1 };
       } catch (error) {
         console.error('[IPC] Error importing recipe:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Handle opening external URLs
+    ipcMain.handle('open-external', async (_event, url: string) => {
+      try {
+        await shell.openExternal(url);
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error opening external URL:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });

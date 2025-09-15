@@ -5,6 +5,7 @@ const electronAPI = {
   // File operations
   selectFiles: (options: any) => ipcRenderer.invoke('select-files', options),
   openPath: (path: string) => ipcRenderer.invoke('open-path', path),
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 
   // Legacy file operations (keep for backward compatibility)
   onBaseImageSelected: (callback: (filePath: string) => void) => {
@@ -16,7 +17,7 @@ const electronAPI = {
 
   // Image processing
   processImages: (data: any) => ipcRenderer.invoke('process-images', data),
-  processWithStoredImages: (data: { processId: string; targetIndex?: number; baseImageData?: string; targetImageData?: string[]; prompt?: string }) =>
+  processWithStoredImages: (data: { processId: string; targetIndex?: number; baseImageData?: string | string[]; targetImageData?: string[]; prompt?: string }) =>
     ipcRenderer.invoke('process-with-stored-images', data),
   processImage: (data: any) => ipcRenderer.invoke('process-image', data),
   analyzeColors: (imagePath: string) => ipcRenderer.invoke('analyze-colors', imagePath),
@@ -50,6 +51,8 @@ const electronAPI = {
   getProcess: (processId: string) => ipcRenderer.invoke('get-process', processId),
   getImageDataUrls: (processId: string) => ipcRenderer.invoke('get-image-data-urls', processId),
   setBaseImage: (processId: string, filePath: string) => ipcRenderer.invoke('set-base-image', processId, filePath),
+  addBaseImages: (processId: string, filePaths: string[]) => ipcRenderer.invoke('add-base-images', processId, filePaths),
+  removeBaseImage: (processId: string, index: number) => ipcRenderer.invoke('remove-base-image', processId, index),
 
   // Settings operations
   getSettings: () => ipcRenderer.invoke('get-settings'),
