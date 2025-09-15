@@ -51,7 +51,6 @@ export class ImageProcessor {
 
     try {
       console.log('[PROCESSOR] Analyzing images with AI');
-      const settings = await this.settingsService.loadSettings();
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
@@ -101,7 +100,6 @@ export class ImageProcessor {
     }
 
     try {
-      const settings = await this.settingsService.loadSettings();
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
         data.targetImagePath,
