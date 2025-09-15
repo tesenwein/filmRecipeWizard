@@ -72,6 +72,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // LUT export state
   const [lutSize, setLutSize] = useState<'17' | '33' | '65'>('33');
   const [lutFormat, setLutFormat] = useState<'cube' | '3dl' | 'lut'>('cube');
+  const [profileExportStatus, setProfileExportStatus] = useState<{ ok: boolean; msg: string; path?: string } | null>(null);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -240,6 +241,33 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     } catch (e) {
       console.error('LUT export error:', e);
       alert('LUT export failed.');
+    }
+  };
+
+  const handleExportProfile = async () => {
+    setProfileExportStatus(null);
+    try {
+      const files = await window.electronAPI.selectFiles({
+        title: 'Select Lightroom Profile (.xmp)',
+        filters: [{ name: 'XMP Profiles', extensions: ['xmp'] }],
+        properties: ['openFile'],
+      });
+      if (!files || files.length === 0) return;
+      const source = files[0];
+      const res = await (window.electronAPI as any).exportProfile({ sourceXmpPath: source });
+      if (res?.success) {
+        setProfileExportStatus({ ok: true, msg: 'Profile exported', path: res.outputPath });
+      } else {
+        setProfileExportStatus({ ok: false, msg: res?.error || 'Profile export failed' });
+      }
+    } catch (e) {
+      setProfileExportStatus({ ok: false, msg: e instanceof Error ? e.message : 'Profile export failed' });
+    }
+  };
+
+  const handleOpenExportedProfile = async () => {
+    if (profileExportStatus?.path) {
+      await window.electronAPI.openPath(profileExportStatus.path);
     }
   };
 
@@ -1055,6 +1083,37 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       elevation={1}
                       sx={{ p: 4, background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)' }}
                     >
+                      {/* Profile Export */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Profiles
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          Export an existing Lightroom/Camera Raw Profile (.xmp) into the app’s profiles folder.
+                        </Typography>
+                        {profileExportStatus && (
+                          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                            <Typography
+                              variant="body2"
+                              color={profileExportStatus.ok ? 'success.main' : 'error.main'}
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {profileExportStatus.msg}
+                            </Typography>
+                          </Paper>
+                        )}
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button variant="outlined" onClick={handleExportProfile}>
+                            Export Profile (.xmp)
+                          </Button>
+                          {profileExportStatus?.ok && profileExportStatus.path && (
+                            <Button variant="text" onClick={handleOpenExportedProfile}>
+                              Show in Finder
+                            </Button>
+                          )}
+                        </Box>
+                      </Box>
+
                       <Box sx={{ mb: 3 }}>
                         <FormControlLabel
                           control={
