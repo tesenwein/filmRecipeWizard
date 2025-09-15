@@ -135,15 +135,6 @@ export class ImageProcessor {
     }
   }
 
-  // Legacy method for compatibility
-  async processImage(data: StyleMatchOptions): Promise<ProcessingResult> {
-    return this.matchStyle(data);
-  }
-
-  // Legacy method for compatibility
-  async analyzeColors(_imagePath: string): Promise<any> {
-    return { histogram: {}, averageColor: {}, dominantColors: [] };
-  }
 
   // Legacy method for compatibility
   async generateAdjustedPreview(args: {
@@ -168,7 +159,7 @@ export class ImageProcessor {
       await fs.mkdir(presetsDir, { recursive: true });
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const presetPath = path.join(presetsDir, `FotoRecipeWizard-${timestamp}.xmp`);
+      const presetPath = path.join(presetsDir, `Foto Recipe Wizard-${timestamp}.xmp`);
 
       // Generate XMP preset content
       const xmpContent = generateXMPContentImpl(data.adjustments, data.include);
@@ -179,7 +170,7 @@ export class ImageProcessor {
         success: true,
         outputPath: presetPath,
         metadata: {
-          presetName: `FotoRecipeWizard-${timestamp}.xmp`,
+          presetName: `Foto Recipe Wizard-${timestamp}.xmp`,
           groupFolder: 'foto-recipe-wizard',
           aiAdjustments: data.adjustments,
         },

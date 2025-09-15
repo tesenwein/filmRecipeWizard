@@ -120,6 +120,19 @@ class FotoRecipeWizardApp {
         ],
       },
       {
+        label: 'Help',
+        submenu: [
+          {
+            label: 'About Me — Theodor Esenwein',
+            click: () => {
+              try {
+                shell.openExternal('https://www.instagram.com/portraits.by.theo.esenwein/');
+              } catch {}
+            },
+          },
+        ],
+      },
+      {
         label: 'Window',
         submenu: [{ role: 'minimize' }, { role: 'close' }],
       },
@@ -505,8 +518,23 @@ class FotoRecipeWizardApp {
     // Storage service IPC handlers
     ipcMain.handle('load-recipes', async () => {
       try {
-        const recipes = await this.storageService.loadRecipes();
-        return { success: true, recipes };
+        const [recipes, settings] = await Promise.all([
+          this.storageService.loadRecipes(),
+          this.settingsService.loadSettings(),
+        ]);
+        const author = settings.userProfile;
+        let mutated = false;
+        const withAuthors = recipes.map(r => {
+          if (!r.author && author) {
+            mutated = true;
+            return { ...r, author } as ProcessHistory;
+          }
+          return r;
+        });
+        if (mutated) {
+          try { await this.storageService.saveRecipes(withAuthors); } catch {}
+        }
+        return { success: true, recipes: withAuthors };
       } catch (error) {
         console.error('[IPC] Error loading recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -563,6 +591,13 @@ class FotoRecipeWizardApp {
             }
           }
 
+          // Load author profile from settings, if available
+          let authorProfile: AppSettings['userProfile'] | undefined = undefined;
+          try {
+            const settings = await this.settingsService.loadSettings();
+            authorProfile = settings.userProfile;
+          } catch {}
+
           const process: ProcessHistory = {
             id: processId,
             timestamp: new Date().toISOString(),
@@ -572,6 +607,7 @@ class FotoRecipeWizardApp {
             results: Array.isArray(processData.results) ? processData.results : [],
             recipeImageData,
             status: 'generating',
+            author: authorProfile,
           } as ProcessHistory;
 
           await this.storageService.addProcess(process);
@@ -823,10 +859,18 @@ class FotoRecipeWizardApp {
         const zip = new AdmZip();
 
         // Write manifest with embedded base64 images and results
+        // Ensure author metadata is present
+        let toExport = process as any;
+        try {
+          const settings = await this.settingsService.loadSettings();
+          if (!toExport.author && settings.userProfile) {
+            toExport = { ...toExport, author: settings.userProfile };
+          }
+        } catch {}
         const manifest = {
           schema: 'foto-recipe-wizard@1',
           exportedAt: new Date().toISOString(),
-          process: process,
+          process: toExport,
         };
         zip.addFile('recipe.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 
@@ -884,6 +928,11 @@ class FotoRecipeWizardApp {
     ipcMain.handle('export-all-recipes', async (): Promise<ExportResult> => {
       try {
         const recipes = await this.storageService.loadRecipes();
+        let authorFromSettings: any;
+        try {
+          const settings = await this.settingsService.loadSettings();
+          authorFromSettings = settings.userProfile;
+        } catch {}
         if (!recipes || recipes.length === 0) {
           throw new Error('No recipes to export');
         }
@@ -909,7 +958,7 @@ class FotoRecipeWizardApp {
           schema: 'foto-recipe-wizard-bulk@1',
           exportedAt: new Date().toISOString(),
           count: recipes.length,
-          processes: recipes,
+          processes: recipes.map(r => (!r.author && authorFromSettings ? { ...r, author: authorFromSettings } : r)),
         };
         zip.addFile('all-recipes.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 
@@ -1014,6 +1063,7 @@ class FotoRecipeWizardApp {
                 userOptions: recipe.userOptions,
                 results: recipe.results,
                 recipeImageData: (recipe as any).recipeImageData,
+                author: (recipe as any).author,
               } as any;
 
               await this.storageService.addProcess(imported);
@@ -1044,6 +1094,7 @@ class FotoRecipeWizardApp {
             userOptions: process.userOptions,
             results: process.results,
             recipeImageData: (process as any).recipeImageData,
+            author: (process as any).author,
           } as any;
 
           await this.storageService.addProcess(imported);

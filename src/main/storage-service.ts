@@ -149,6 +149,7 @@ export class StorageService {
         prompt: p.prompt,
         userOptions: p.userOptions,
         results: Array.isArray(p.results) ? p.results : [],
+        author: p.author,
         // Persisted recipe image (single) — maintain backward compatibility
         recipeImageData:
           typeof p.recipeImageData === 'string'
@@ -174,6 +175,7 @@ export class StorageService {
           prompt: p.prompt,
           userOptions: p.userOptions,
           results: Array.isArray(p.results) ? p.results : [],
+          author: p.author,
           recipeImageData:
             typeof p.recipeImageData === 'string'
               ? p.recipeImageData

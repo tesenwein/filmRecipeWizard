@@ -38,7 +38,7 @@ interface RouterProps {
 
 const Router: React.FC<RouterProps> = ({
   route,
-  routeQuery,
+  routeQuery: _routeQuery,
   startupStatus,
   currentStep,
   currentProcessId,

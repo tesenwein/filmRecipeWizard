@@ -7,13 +7,6 @@ const electronAPI = {
   openPath: (path: string) => ipcRenderer.invoke('open-path', path),
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 
-  // Legacy file operations (keep for backward compatibility)
-  onBaseImageSelected: (callback: (filePath: string) => void) => {
-    ipcRenderer.on('base-image-selected', (_event, filePath) => callback(filePath));
-  },
-  onTargetImagesSelected: (callback: (filePaths: string[]) => void) => {
-    ipcRenderer.on('target-images-selected', (_event, filePaths) => callback(filePaths));
-  },
 
   // Image processing
   processImages: (data: any) => ipcRenderer.invoke('process-images', data),

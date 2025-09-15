@@ -83,6 +83,15 @@ const Settings: React.FC = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [setupCompleted, setSetupCompleted] = useState<boolean>(false);
+  // Profile state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [websiteError, setWebsiteError] = useState('');
+  const [instagramError, setInstagramError] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -94,6 +103,12 @@ const Settings: React.FC = () => {
             setMasked(true);
           }
           setSetupCompleted(!!res.settings.setupCompleted);
+          const u = (res.settings as any).userProfile || {};
+          setFirstName(u.firstName || '');
+          setLastName(u.lastName || '');
+          setEmail(u.email || '');
+          setWebsite(u.website || '');
+          setInstagram(u.instagram || '');
         }
       } catch {
         setStatus({ type: 'error', msg: 'Failed to load settings' });
@@ -137,6 +152,29 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Validation helpers
+  const isValidEmail = (value: string) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
+  const normalizeUrl = (value: string): string | null => {
+    if (!value) return '';
+    const v = value.trim();
+    const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+    try { return new URL(withScheme).toString(); } catch { return null; }
+  };
+  const normalizeInstagram = (value: string): { ok: boolean; handle?: string; url?: string } => {
+    const v = value.trim();
+    if (!v) return { ok: true };
+    try {
+      const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
+      if (/instagram\.com$/i.test(u.hostname)) {
+        const h = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
+        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: h, url: `https://instagram.com/${h}` };
+      }
+    } catch {}
+    const handle = v.replace(/^@/, '');
+    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle, url: `https://instagram.com/${handle}` };
+    return { ok: false };
+  };
+
   const handleSave = async () => {
     setStatus(null);
     setIsValidating(true);
@@ -150,9 +188,32 @@ const Settings: React.FC = () => {
         }
       }
 
+      // Validate profile fields
+      if (!isValidEmail(email)) {
+        setEmailError('Enter a valid email');
+        return;
+      }
+      const nWebsite = normalizeUrl(website);
+      if (nWebsite === null) {
+        setWebsiteError('Enter a valid URL');
+        return;
+      }
+      const ig = normalizeInstagram(instagram);
+      if (!ig.ok) {
+        setInstagramError('Enter a valid handle or Instagram URL');
+        return;
+      }
+
       const res = await window.electronAPI.saveSettings({
         openaiKey: openaiKey.trim() || undefined,
-      });
+        userProfile: {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim() ? email.trim() : undefined,
+          website: nWebsite || undefined,
+          instagram: ig.handle || undefined,
+        }
+      } as any);
       if (res.success) {
         setMasked(!!openaiKey);
         setOpenaiKey('');
@@ -281,7 +342,7 @@ const Settings: React.FC = () => {
                     setSetupCompleted(true);
                     // Navigate to create page after completing setup
                     setTimeout(() => (window.location.hash = '#/create'), 150);
-                  } catch (e) {
+                  } catch {
                     setStatus({ type: 'error', msg: 'Failed to complete setup' });
                   }
                 }}
@@ -290,6 +351,49 @@ const Settings: React.FC = () => {
               </Button>
             </Box>
           )}
+        </Stack>
+      </Paper>
+
+      <Typography variant="h6" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
+        Your Profile
+      </Typography>
+      <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+        <Stack spacing={1.5}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+            <TextField fullWidth label="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+            <TextField fullWidth label="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} />
+          </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setEmailError(isValidEmail(e.target.value) ? '' : 'Enter a valid email'); }}
+              error={!!emailError}
+              helperText={emailError || 'Optional'}
+            />
+            <TextField
+              fullWidth
+              label="Website"
+              value={website}
+              onChange={e => { setWebsite(e.target.value); const ok = normalizeUrl(e.target.value); setWebsiteError(ok === null ? 'Enter a valid URL' : ''); }}
+              error={!!websiteError}
+              helperText={websiteError || 'Optional (e.g., example.com or https://example.com)'}
+            />
+          </Stack>
+          <TextField
+            fullWidth
+            label="Instagram"
+            placeholder="@yourhandle or instagram.com/yourhandle"
+            value={instagram}
+            onChange={e => { setInstagram(e.target.value); const ok = normalizeInstagram(e.target.value).ok; setInstagramError(ok ? '' : 'Enter a valid handle or Instagram URL'); }}
+            error={!!instagramError}
+            helperText={instagramError || 'Optional'}
+          />
+          <Typography variant="caption" color="text.secondary">
+            These details are stored locally, attached to new recipes, and included in exports.
+          </Typography>
         </Stack>
       </Paper>
 

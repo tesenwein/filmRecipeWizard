@@ -23,7 +23,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { ProcessingResult } from '../../shared/types';
+import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import SingleImage from './SingleImage';
 
@@ -73,6 +73,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const failedResults = results.filter(result => !result.success);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
+  const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
 
   // New state for tab management
   const [activeTab, setActiveTab] = useState(0);
@@ -168,6 +169,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         if (processResponse.success && processResponse.process) {
           setProcessPrompt(processResponse.process.prompt);
           setProcessOptions(processResponse.process.userOptions);
+          setAuthor((processResponse.process as any).author);
         } else {
           setProcessPrompt(prompt);
         }
@@ -352,6 +354,33 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 </Typography>
               );
             })()}
+            {author && (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                By {author.firstName || ''} {author.lastName || ''}
+                {author.website ? (
+                  <>
+                    {' '}•{' '}
+                    <a href={author.website} onClick={(e) => { e.preventDefault(); window.open(author.website!, '_blank'); }}>
+                      Website
+                    </a>
+                  </>
+                ) : null}
+                {author.instagram ? (
+                  <>
+                    {' '}•{' '}
+                    <a href={`https://instagram.com/${author.instagram.replace(/^@/, '')}`} onClick={(e) => { e.preventDefault(); window.open(`https://instagram.com/${author.instagram!.replace(/^@/, '')}`, '_blank'); }}>
+                      Instagram
+                    </a>
+                  </>
+                ) : null}
+                {author.email ? (
+                  <>
+                    {' '}•{' '}
+                    <a href={`mailto:${author.email}`}>{author.email}</a>
+                  </>
+                ) : null}
+              </Typography>
+            )}
           </Box>
 
           <Tabs

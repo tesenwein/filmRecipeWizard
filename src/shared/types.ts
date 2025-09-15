@@ -47,10 +47,13 @@ export interface Recipe {
   userOptions?: StyleOptions;
   // Processing status to track if generation is still in progress
   status?: 'generating' | 'completed' | 'failed';
+  // Optional author/creator profile attached to the recipe
+  author?: UserProfile;
 }
 
 // Legacy alias for backward compatibility
 export type ProcessHistory = Recipe;
+
 
 export interface ProcessingState {
   isProcessing: boolean;
@@ -68,6 +71,7 @@ export interface ProfileExportResult {
 export interface AppSettings {
   openaiKey?: string;
   setupCompleted?: boolean;
+  userProfile?: UserProfile;
 }
 
 export interface ExportResult {
@@ -81,4 +85,12 @@ export interface ImportResult {
   success: boolean;
   count?: number;
   error?: string;
+}
+
+export interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  website?: string;
+  instagram?: string;
 }

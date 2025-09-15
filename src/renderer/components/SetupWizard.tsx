@@ -13,6 +13,32 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [keyError, setKeyError] = useState<string>('');
+  // User profile fields
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [websiteError, setWebsiteError] = useState('');
+  const [instagramError, setInstagramError] = useState('');
+
+  // Prefill from existing settings if present
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await window.electronAPI.getSettings();
+        if (res?.success && res.settings?.userProfile) {
+          const u = res.settings.userProfile as any;
+          setFirstName(u.firstName || '');
+          setLastName(u.lastName || '');
+          setEmail(u.email || '');
+          setWebsite(u.website || '');
+          setInstagram(u.instagram || '');
+        }
+      } catch {}
+    })();
+  }, []);
 
   const handleApiKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setApiKey(event.target.value);
@@ -67,7 +93,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         return; // Error message already set by testOpenAIKey
       }
 
-      // If key is valid, save it and proceed
+      // If key is valid, save it and advance to profile step
       await saveSettings({ openaiKey: apiKey.trim() });
       setCurrentStep(3);
     } catch (error) {
@@ -76,6 +102,40 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Basic validators and normalizers
+  const isValidEmail = (value: string) =>
+    !value || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
+
+  const normalizeUrl = (value: string): string | null => {
+    if (!value) return '';
+    const v = value.trim();
+    const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+    try {
+      const u = new URL(withScheme);
+      return u.toString();
+    } catch {
+      return null;
+    }
+  };
+
+  const normalizeInstagram = (value: string): { ok: boolean; handle?: string; url?: string } => {
+    const v = value.trim();
+    if (!v) return { ok: true, handle: undefined, url: undefined };
+    // Accept full URL
+    try {
+      const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
+      if (/instagram\.com$/i.test(u.hostname)) {
+        const parts = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+        const h = parts[0] || '';
+        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: h, url: `https://instagram.com/${h}` };
+      }
+    } catch {}
+    // Accept handle style
+    const handle = v.replace(/^@/, '');
+    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle, url: `https://instagram.com/${handle}` };
+    return { ok: false };
   };
 
   const handleComplete = async () => {
@@ -97,7 +157,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     }
   };
 
-  const progress = (currentStep / 3) * 100;
+  const progress = (currentStep / 4) * 100;
 
   return (
     <div
@@ -183,6 +243,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     }}
                   />
                 </div>
+                {/* Profile moved to Step 3 */}
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"
@@ -204,6 +265,115 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             )}
 
             {currentStep === 3 && (
+              <div>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                  Your Profile (optional)
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
+                  These details are attached to your recipes and included in exports.
+                </Typography>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                  <TextField label="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                  <TextField label="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                  <TextField
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      setEmailError(isValidEmail(e.target.value) ? '' : 'Enter a valid email');
+                    }}
+                    error={!!emailError}
+                    helperText={emailError || 'Optional'}
+                  />
+                  <TextField
+                    label="Website"
+                    value={website}
+                    onChange={e => {
+                      setWebsite(e.target.value);
+                      const n = normalizeUrl(e.target.value);
+                      setWebsiteError(n === null ? 'Enter a valid URL' : '');
+                    }}
+                    error={!!websiteError}
+                    helperText={websiteError || 'Optional (e.g., example.com or https://example.com)'}
+                  />
+                </div>
+                <div style={{ marginBottom: 24 }}>
+                  <TextField
+                    fullWidth
+                    label="Instagram"
+                    placeholder="@yourhandle or instagram.com/yourhandle"
+                    value={instagram}
+                    onChange={e => {
+                      setInstagram(e.target.value);
+                      const ok = normalizeInstagram(e.target.value).ok;
+                      setInstagramError(ok ? '' : 'Enter a valid handle or Instagram URL');
+                    }}
+                    error={!!instagramError}
+                    helperText={instagramError || 'Optional'}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setCurrentStep(2)}
+                    disabled={isLoading}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant="text"
+                    onClick={() => setCurrentStep(4)}
+                    disabled={isLoading}
+                  >
+                    Skip
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      try {
+                        // Final validation and normalization
+                        if (!isValidEmail(email)) {
+                          setEmailError('Enter a valid email');
+                          return;
+                        }
+                        const nWebsite = normalizeUrl(website);
+                        if (nWebsite === null) {
+                          setWebsiteError('Enter a valid URL');
+                          return;
+                        }
+                        const ig = normalizeInstagram(instagram);
+                        if (!ig.ok) {
+                          setInstagramError('Enter a valid handle or Instagram URL');
+                          return;
+                        }
+                        await saveSettings({
+                          userProfile: {
+                            firstName: firstName.trim(),
+                            lastName: lastName.trim(),
+                            email: email.trim() ? email.trim() : undefined,
+                            website: nWebsite || undefined,
+                            instagram: ig.handle || undefined,
+                          },
+                        });
+                        setCurrentStep(4);
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    disabled={isLoading}
+                    sx={{ minWidth: 120 }}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 4 && (
               <div>
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Setup Complete!

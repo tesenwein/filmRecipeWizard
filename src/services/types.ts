@@ -12,7 +12,7 @@ export interface AIColorAdjustments {
   shadows?: number; // -100..100
   whites?: number; // -100..100
   blacks?: number; // -100..100
-  brightness?: number; // legacy
+  brightness?: number; // -100..100
   contrast?: number; // -100..100
   clarity?: number; // -100..100
   vibrance?: number; // -100..100

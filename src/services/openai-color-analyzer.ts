@@ -158,7 +158,7 @@ export class OpenAIColorAnalyzer {
                   },
                   brightness: {
                     type: 'number',
-                    description: 'Legacy brightness adjustment (-100 to +100)',
+                    description: 'Brightness adjustment (-100 to +100)',
                     minimum: -100,
                     maximum: 100,
                   },
