@@ -114,9 +114,15 @@ export class StorageService {
         prompt: p.prompt,
         userOptions: p.userOptions,
         results: Array.isArray(p.results) ? p.results : [],
-        // Preserve stored base64 image data if present
-        baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,
-        targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
+        // Persisted recipe image (single) — maintain backward compatibility
+        recipeImageData:
+          typeof p.recipeImageData === 'string'
+            ? p.recipeImageData
+            : typeof p.baseImageData === 'string'
+            ? p.baseImageData
+            : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
+            ? p.baseImagesData[0]
+            : undefined,
       }));
       return history;
     } catch {
@@ -131,8 +137,14 @@ export class StorageService {
           prompt: p.prompt,
           userOptions: p.userOptions,
           results: Array.isArray(p.results) ? p.results : [],
-          baseImageData: typeof p.baseImageData === 'string' ? p.baseImageData : undefined,
-          targetImageData: Array.isArray(p.targetImageData) ? p.targetImageData : undefined,
+          recipeImageData:
+            typeof p.recipeImageData === 'string'
+              ? p.recipeImageData
+              : typeof p.baseImageData === 'string'
+              ? p.baseImageData
+              : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
+              ? p.baseImagesData[0]
+              : undefined,
         }));
       }
       console.log('[STORAGE] No existing history or valid backup, starting fresh');
@@ -204,9 +216,9 @@ export class StorageService {
     try {
       console.log(`[STORAGE] Converting image to base64: ${path.basename(imagePath)}`);
 
-      // Convert any supported image format to JPEG and resize for storage efficiency
+      // Convert any supported image format to JPEG and resize for storage efficiency (1024px max long side)
       const jpegBuffer = await sharp(imagePath)
-        .resize(2048, 2048, { fit: 'inside', withoutEnlargement: true })
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: 90 })
         .toBuffer();
 

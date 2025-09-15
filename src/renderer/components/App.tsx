@@ -106,14 +106,13 @@ const App: React.FC = () => {
         newProcessId = result.process.id;
         setCurrentProcessId(newProcessId);
         currentProcessIdRef.current = newProcessId;
-        // Capture base64 returned from save-process to pass through to processing
-        // Prefer multi-reference data if present
-        const bMulti = Array.isArray(result?.process?.baseImagesData)
-          ? result.process.baseImagesData
-          : [];
-        returnedBase64.base = (bMulti.length ? bMulti : (result?.process?.baseImageData ? [result.process.baseImageData] : null)) as any;
-        returnedBase64.targets = Array.isArray(result?.process?.targetImageData)
-          ? result.process.targetImageData
+        // Use the single recipe image (first reference) for processing only
+        returnedBase64.base = result?.process?.recipeImageData
+          ? [result.process.recipeImageData]
+          : (null as any);
+        // Use ephemeral target base64 data returned by save-process (not persisted)
+        returnedBase64.targets = Array.isArray((result as any)?.targetImageData)
+          ? (result as any).targetImageData
           : [];
       } else {
         console.warn('[APP] Failed to save process', result.error);

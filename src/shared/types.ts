@@ -34,12 +34,9 @@ export interface ProcessHistory {
   name?: string;
   // Optional freeform text prompt used instead of a reference image
   prompt?: string;
-  baseImage?: string;
-  targetImages?: string[];
   results: ProcessingResult[];
-  // Base64 image data for offline storage
-  baseImageData?: string; // base64 encoded image
-  targetImageData?: string[]; // base64 encoded images
+  // Recipe image (single) to show in detail view; do not persist full reference/target sets
+  recipeImageData?: string; // base64 encoded image
   // User-selected style options (sliders/toggles)
   userOptions?: StyleOptions;
 }

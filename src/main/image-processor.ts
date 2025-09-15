@@ -16,7 +16,7 @@ export interface StyleMatchOptions {
   matchSaturation?: boolean;
   matchColorGrading?: boolean;
   aiAdjustments?: AIColorAdjustments;
-  baseImageBase64?: string;
+  baseImageBase64?: string | string[];
   targetImageBase64?: string;
   prompt?: string;
 }
@@ -72,7 +72,7 @@ export class ImageProcessor {
         data.prompt, // hint/prompt
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!settings.preserveSkinTones }
+        { preserveSkinTones: !!settings.preserveSkinTones, emphasize3DPop: !!settings.emphasize3DPop }
       );
 
       console.log('[PROCESSOR] AI analysis complete - confidence:', aiAdjustments.confidence);
@@ -121,7 +121,7 @@ export class ImageProcessor {
         data.prompt,
         data.baseImageBase64,
         data.targetImageBase64,
-        { preserveSkinTones: !!settings.preserveSkinTones }
+        { preserveSkinTones: !!settings.preserveSkinTones, emphasize3DPop: !!settings.emphasize3DPop }
       );
 
       return {

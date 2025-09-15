@@ -41,8 +41,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
         const items = (result.history as any[]) || [];
         setHistory(items);
         const previews = items.map((p: any) =>
-          p?.baseImageData && typeof p.baseImageData === 'string' && p.baseImageData.length > 0
-            ? `data:image/jpeg;base64,${p.baseImageData}`
+          p?.recipeImageData && typeof p.recipeImageData === 'string' && p.recipeImageData.length > 0
+            ? `data:image/jpeg;base64,${p.recipeImageData}`
             : ''
         );
         setBasePreviews(previews);
@@ -191,7 +191,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onOpenRecipe, onNewProcess })
                   <div style={{ height: 240, borderRadius: 2, overflow: 'hidden' }}>
                     <SingleImage
                       source={basePreviews[index] || undefined}
-                      alt={`Base preview ${index + 1}`}
+                      alt={`Recipe ${index + 1}`}
                       fit="contain"
                     />
                   </div>

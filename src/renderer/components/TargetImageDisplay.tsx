@@ -1,5 +1,6 @@
 import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
-import { Button, Chip, Box, Paper } from '@mui/material';
+import { Button, Chip, Box, Paper, Tooltip, IconButton } from '@mui/material';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import React from 'react';
 import SingleImage from './SingleImage';
 import ImageGrid from './ImageGrid';
@@ -8,12 +9,14 @@ interface TargetImageDisplayProps {
   targetImages: string[];
   targetPreviews: string[];
   onSelectImages: () => void;
+  onRemoveImage?: (index: number) => void;
 }
 
 const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
   targetImages,
   targetPreviews,
   onSelectImages,
+  onRemoveImage,
 }) => {
   return (
     <Paper className="card slide-in" sx={{ p: 2.5, display: 'flex', flexDirection: 'column' }}>
@@ -51,6 +54,29 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
                 <SingleImage source={previewPath} alt="Target" fit="cover" />
               );
             })()}
+            {onRemoveImage && (
+              <Tooltip title="Remove this image">
+                <IconButton
+                  size="small"
+                  onClick={() => onRemoveImage(0)}
+                  sx={{
+                    position: 'absolute',
+                    top: 10,
+                    left: 10,
+                    zIndex: 2,
+                    background: 'rgba(255,255,255,0.6)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    color: '#111',
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+                    '&:hover': { background: 'rgba(255,255,255,0.75)' },
+                  }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
             <Chip
               label={`${targetImages.length} image${targetImages.length !== 1 ? 's' : ''} selected`}
               size="medium"
@@ -67,7 +93,12 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
           </Box>
           {targetImages.length > 1 && (
             <Box sx={{ mt: 2 }}>
-              <ImageGrid sources={(targetPreviews.length ? targetPreviews : targetImages).slice(1)} columns={4} tileHeight={80} />
+              <ImageGrid
+                sources={(targetPreviews.length ? targetPreviews : targetImages).slice(1)}
+                columns={4}
+                tileHeight={80}
+                onRemove={onRemoveImage ? (i) => onRemoveImage(i + 1) : undefined}
+              />
             </Box>
           )}
           <Box sx={{ mt: 2, textAlign: 'center' }}>

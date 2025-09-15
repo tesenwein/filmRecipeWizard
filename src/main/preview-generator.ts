@@ -42,10 +42,9 @@ export async function generatePreviewFile(args: {
   }
 
   await img
-    .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
+    .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
     .jpeg({ quality: 92 })
     .toFile(outPath);
 
   return outPath;
 }
-

@@ -33,9 +33,9 @@ interface StyleOptions {
 }
 
 interface ColorMatchingStudioProps {
-  onImagesSelected: (baseImage: string, targetImages: string[]) => void;
+  onImagesSelected: (baseImages: string[], targetImages: string[]) => void;
   onStartProcessing: () => void;
-  baseImage: string | null;
+  baseImages: string[];
   targetImages: string[];
   prompt: string;
   onPromptChange: (value: string) => void;
@@ -46,7 +46,7 @@ interface ColorMatchingStudioProps {
 const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   onImagesSelected,
   onStartProcessing,
-  baseImage,
+  baseImages,
   targetImages,
   prompt,
   onPromptChange,
@@ -54,8 +54,9 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   onStyleOptionsChange,
 }) => {
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
-  const [baseDisplay, setBaseDisplay] = useState<string | null>(null);
+  const [basePreviews, setBasePreviews] = useState<string[]>([]);
   const [preserveSkinTones, setPreserveSkinTones] = useState<boolean>(false);
+  const [emphasize3DPop, setEmphasize3DPop] = useState<boolean>(false);
 
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
@@ -73,11 +74,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'],
           },
         ],
-        properties: ['openFile'],
+        properties: ['openFile', 'multiSelections'],
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(result[0], targetImages);
+        onImagesSelected(result.slice(0, 3), targetImages);
       }
     } catch (error) {
       console.error('Error selecting base image:', error);
@@ -98,7 +99,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       });
 
       if (result && result.length > 0) {
-        onImagesSelected(baseImage || '', result);
+        onImagesSelected(baseImages, result.slice(0, 3));
       }
     } catch (error) {
       console.error('Error selecting target images:', error);
@@ -112,22 +113,42 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     onStyleOptionsChange?.({ vibe });
   };
 
-  // Convert base image for display if unsupported
+  // Convert base images for display if unsupported
   useEffect(() => {
     const run = async () => {
-      if (baseImage && !isSafeForImg(baseImage)) {
-        try {
-          const res = await window.electronAPI.generatePreview({ path: baseImage });
-          setBaseDisplay(res?.success ? res.previewPath : baseImage);
-        } catch {
-          setBaseDisplay(baseImage);
-        }
-      } else {
-        setBaseDisplay(baseImage);
+      if (!Array.isArray(baseImages) || baseImages.length === 0) {
+        setBasePreviews([]);
+        return;
+      }
+      try {
+        const previews = await Promise.all(
+          baseImages.slice(0, 3).map(async p => {
+            if (isSafeForImg(p)) return p;
+            try {
+              const res = await window.electronAPI.generatePreview({ path: p });
+              return res?.success ? res.previewPath : p;
+            } catch {
+              return p;
+            }
+          })
+        );
+        setBasePreviews(previews);
+      } catch {
+        setBasePreviews(baseImages.slice(0, 3));
       }
     };
     run();
-  }, [baseImage]);
+  }, [baseImages]);
+
+  // Remove handlers
+  const handleRemoveBase = (index: number) => {
+    const next = baseImages.filter((_, i) => i !== index);
+    onImagesSelected(next, targetImages);
+  };
+  const handleRemoveTarget = (index: number) => {
+    const next = targetImages.filter((_, i) => i !== index);
+    onImagesSelected(baseImages, next);
+  };
 
   // Generate previews for target images
   useEffect(() => {
@@ -166,6 +187,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         const res = await window.electronAPI.getSettings();
         if (res?.success && res.settings) {
           setPreserveSkinTones(!!res.settings.preserveSkinTones);
+          setEmphasize3DPop(!!res.settings.emphasize3DPop);
         }
       } catch {
         // Ignore errors when loading settings
@@ -180,6 +202,15 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       await window.electronAPI.saveSettings({ preserveSkinTones: checked });
     } catch {
       // silently ignore errors in UI; setting persists via Settings page too
+    }
+  };
+
+  const handleToggle3DPop = async (checked: boolean) => {
+    setEmphasize3DPop(checked);
+    try {
+      await window.electronAPI.saveSettings({ emphasize3DPop: checked });
+    } catch {
+      // silently ignore errors in UI
     }
   };
 
@@ -205,6 +236,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           targetImages={targetImages}
           targetPreviews={targetPreviews}
           onSelectImages={handleTargetImagesSelect}
+          onRemoveImage={handleRemoveTarget}
         />
 
         {/* Right Column - All Options */}
@@ -235,6 +267,16 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
                 }
                 label="Preserve Skin Tones"
               />
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={emphasize3DPop}
+                    onChange={(_, c) => handleToggle3DPop(c)}
+                  />
+                }
+                label="Emphasize 3D Pop"
+              />
             </Stack>
           </Paper>
 
@@ -256,9 +298,10 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           />
 
           <RecipeImageCard
-            baseImage={baseImage}
-            baseDisplay={baseDisplay}
-            onSelectImage={handleBaseImageSelect}
+            baseImages={baseImages}
+            basePreviews={basePreviews}
+            onSelectImages={handleBaseImageSelect}
+            onRemoveImage={handleRemoveBase}
           />
 
           <FineTuneControls

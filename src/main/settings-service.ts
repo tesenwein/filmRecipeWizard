@@ -6,6 +6,7 @@ export interface AppSettings {
   openaiKey?: string;
   // Future settings can be added here
   preserveSkinTones?: boolean;
+  emphasize3DPop?: boolean;
 }
 
 export class SettingsService {
