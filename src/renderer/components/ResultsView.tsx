@@ -1,6 +1,6 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -11,15 +11,15 @@ import {
   AccordionSummary,
   Box,
   Button,
-  IconButton,
   Checkbox,
   Chip,
   FormControlLabel,
+  IconButton,
   Paper,
+  Slider,
   Tab,
   Tabs,
   Typography,
-  Slider,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingResult } from '../../shared/types';
@@ -190,7 +190,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     loadBase64Images();
   }, [processId, prompt]);
 
-
   const defaultOptions = {
     wbBasic: true,
     exposure: false,
@@ -327,6 +326,41 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       {/* Main Content with Tabs */}
       {successfulResults.length > 0 && (
         <Paper className="card" sx={{ p: 0, overflow: 'hidden' }}>
+          {/* Recipe Name Header */}
+          <Box sx={{ px: 3, pt: 3, pb: 1 }}>
+            {(() => {
+              const currentResult = successfulResults[selectedResult];
+              const aiName =
+                currentResult?.metadata?.aiAdjustments &&
+                (currentResult.metadata.aiAdjustments as any).preset_name;
+              let name: string;
+              if (typeof aiName === 'string' && aiName.trim().length > 0) {
+                const extras: string[] = [];
+                const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
+                const film = (processOptions as any)?.filmStyle?.name as string | undefined;
+                if (artist && artist.trim().length > 0) extras.push(artist.trim());
+                if (film && film.trim().length > 0) extras.push(film.trim());
+                name = extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
+              } else {
+                name = `Recipe ${selectedResult + 1}`;
+              }
+              return (
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    color: 'primary.main',
+                    textAlign: 'left',
+                    mb: 1,
+                    fontSize: { xs: '1.5rem', sm: '2rem' }
+                  }}
+                >
+                  {name}
+                </Typography>
+              );
+            })()}
+          </Box>
+
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -334,7 +368,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
               borderBottom: 1,
               borderColor: 'divider',
               px: 3,
-              pt: 2,
+              pt: 1,
               '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 },
             }}
           >
@@ -413,13 +447,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     >
                       {/* Left Column: Basic Information */}
                       <Paper elevation={1} sx={{ p: 3 }}>
-                        <Typography
-                          variant="h6"
-                          sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
-                        >
-                          Processing Information
-                        </Typography>
-
                         {/* AI Analysis */}
                         {result.metadata?.aiAdjustments?.reasoning && (
                           <Box sx={{ mb: 3 }}>
@@ -444,33 +471,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Paper>
                           </Box>
                         )}
-
-                        {/* Processing Stats */}
-                        <Box
-                          sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}
-                        >
-                          <Box>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              Confidence
-                            </Typography>
-                            <Typography
-                              variant="h6"
-                              sx={{ fontWeight: 600, color: 'primary.main' }}
-                            >
-                              {Math.round((result.metadata?.aiAdjustments?.confidence || 0) * 100)}%
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              Preset Name
-                            </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                              {(result.metadata?.aiAdjustments &&
-                                (result.metadata.aiAdjustments as any).preset_name) ||
-                                'Custom'}
-                            </Typography>
-                          </Box>
-                        </Box>
 
                         {/* Style Information */}
                         {processOptions &&
@@ -650,16 +650,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       {/* Right Column: Recipe Image */}
                       <Box>
                         <Paper elevation={1} sx={{ p: 3 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
-                          >
-                            Recipe Image
-                          </Typography>
                           <Box
                             sx={{
                               width: '100%',
-                              height: 250,
+                              height: 400,
                               borderRadius: 2,
                               overflow: 'hidden',
                               position: 'relative',
@@ -668,79 +662,87 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             }}
                             onClick={baseImageUrls.length === 0 ? handleAddRecipeImage : undefined}
                           >
-                          <SingleImage
-                            source={baseImageUrls[activeBase]}
-                            alt={`Recipe Image ${activeBase + 1}`}
-                            fit="contain"
-                            placeholderLabel={baseImageUrls.length === 0 ? "Click to add" : "No image"}
-                            placeholderIcon={baseImageUrls.length === 0 ? <AddPhotoAlternateOutlinedIcon style={{ fontSize: 28, color: '#7c8aa0', opacity: 0.9 }} /> : undefined}
-                          />
-                          {baseImageUrls.length > 0 && (
-                            <IconButton
-                              aria-label="Remove recipe image"
-                              title="Remove recipe image"
-                              onClick={handleRemoveRecipeImage}
-                              size="small"
-                              sx={{
-                                position: 'absolute',
-                                top: 8,
-                                right: 8,
-                                zIndex: 2,
-                                bgcolor: 'rgba(255,255,255,0.7)',
-                                backdropFilter: 'blur(8px)',
-                                WebkitBackdropFilter: 'blur(8px)',
-                                border: '1px solid rgba(0,0,0,0.06)',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                color: 'error.main',
-                                '&:hover': {
-                                  bgcolor: 'rgba(255,255,255,0.9)',
-                                },
-                              }}
-                            >
-                              <DeleteOutlineIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                          {baseImageUrls.length > 1 && (
-                            <>
-                              <Button
-                                variant="contained"
+                            <SingleImage
+                              source={baseImageUrls[activeBase]}
+                              alt={`Recipe Image ${activeBase + 1}`}
+                              fit="contain"
+                              placeholderLabel={
+                                baseImageUrls.length === 0 ? 'Click to add' : 'No image'
+                              }
+                              placeholderIcon={
+                                baseImageUrls.length === 0 ? (
+                                  <AddPhotoAlternateOutlinedIcon
+                                    style={{ fontSize: 28, color: '#7c8aa0', opacity: 0.9 }}
+                                  />
+                                ) : undefined
+                              }
+                            />
+                            {baseImageUrls.length > 0 && (
+                              <IconButton
+                                aria-label="Remove recipe image"
+                                title="Remove recipe image"
+                                onClick={handleRemoveRecipeImage}
                                 size="small"
-                                onClick={() =>
-                                  setActiveBase(
-                                    (activeBase - 1 + baseImageUrls.length) % baseImageUrls.length
-                                  )
-                                }
                                 sx={{
                                   position: 'absolute',
-                                  top: 'calc(50% - 16px)',
-                                  left: 8,
-                                  minWidth: 0,
-                                  p: 0.5,
-                                  opacity: 0.8,
-                                }}
-                              >
-                                ‹
-                              </Button>
-                              <Button
-                                variant="contained"
-                                size="small"
-                                onClick={() =>
-                                  setActiveBase((activeBase + 1) % baseImageUrls.length)
-                                }
-                                sx={{
-                                  position: 'absolute',
-                                  top: 'calc(50% - 16px)',
+                                  top: 8,
                                   right: 8,
-                                  minWidth: 0,
-                                  p: 0.5,
-                                  opacity: 0.8,
+                                  zIndex: 2,
+                                  bgcolor: 'rgba(255,255,255,0.7)',
+                                  backdropFilter: 'blur(8px)',
+                                  WebkitBackdropFilter: 'blur(8px)',
+                                  border: '1px solid rgba(0,0,0,0.06)',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                  color: 'error.main',
+                                  '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.9)',
+                                  },
                                 }}
                               >
-                                ›
-                              </Button>
-                            </>
-                          )}
-                        </Box>
+                                <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {baseImageUrls.length > 1 && (
+                              <>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() =>
+                                    setActiveBase(
+                                      (activeBase - 1 + baseImageUrls.length) % baseImageUrls.length
+                                    )
+                                  }
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 'calc(50% - 16px)',
+                                    left: 8,
+                                    minWidth: 0,
+                                    p: 0.5,
+                                    opacity: 0.8,
+                                  }}
+                                >
+                                  ‹
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() =>
+                                    setActiveBase((activeBase + 1) % baseImageUrls.length)
+                                  }
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 'calc(50% - 16px)',
+                                    right: 8,
+                                    minWidth: 0,
+                                    p: 0.5,
+                                    opacity: 0.8,
+                                  }}
+                                >
+                                  ›
+                                </Button>
+                              </>
+                            )}
+                          </Box>
                         </Paper>
                       </Box>
                     </Box>
@@ -1190,7 +1192,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               const chips = Object.keys(labels)
                                 .filter(k => !!opts[k])
                                 .map(k => (
-                                  <Chip key={k} size="small" label={labels[k]} color="primary" variant="outlined" />
+                                  <Chip
+                                    key={k}
+                                    size="small"
+                                    label={labels[k]}
+                                    color="primary"
+                                    variant="outlined"
+                                  />
                                 ));
                               // Strength always shown
                               chips.push(
@@ -1227,7 +1235,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               max={200}
                               step={5}
                               valueLabelDisplay="auto"
-                              valueLabelFormat={(v) => `${v}%`}
+                              valueLabelFormat={v => `${v}%`}
                               sx={{ flex: 1, maxWidth: 420 }}
                             />
                             <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>

@@ -74,7 +74,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   // Auto-advance through targets during processing for a subtle slideshow effect
   useEffect(() => {
     if (!targetPreviews.length || targetPreviews.length < 2) return;
-    const intervalMs = 2200;
+    const intervalMs = 2800;
     const t = setInterval(() => {
       setActiveIdx(prev => (prev + 1) % targetPreviews.length);
     }, intervalMs);
