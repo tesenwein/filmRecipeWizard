@@ -22,20 +22,67 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [keyError, setKeyError] = useState<string>('');
 
   const handleApiKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setApiKey(event.target.value);
+    setKeyError(''); // Clear error when user types
+  };
+
+  const testOpenAIKey = async (key: string): Promise<boolean> => {
+    try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch('https://api.openai.com/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.status === 401) {
+        setKeyError('Invalid API key. Please check your key and try again.');
+        return false;
+      } else if (response.status === 429) {
+        setKeyError('Rate limit exceeded. Your key is valid but quota may be exhausted.');
+        return true; // Key is valid even if rate limited
+      } else if (!response.ok) {
+        setKeyError('Unable to verify API key. Please check your internet connection.');
+        return false;
+      }
+
+      return true;
+    } catch {
+      setKeyError('Network error. Please check your internet connection.');
+      return false;
+    }
   };
 
   const handleApiKeySubmit = async () => {
     if (!apiKey.trim()) return;
 
     setIsLoading(true);
+    setKeyError('');
+
     try {
+      // Test the API key first
+      const isValid = await testOpenAIKey(apiKey.trim());
+      if (!isValid) {
+        return; // Error message already set by testOpenAIKey
+      }
+
+      // If key is valid, save it and proceed
       await saveSettings({ openaiKey: apiKey.trim() });
       setCurrentStep(3);
     } catch (error) {
       console.error('Failed to save API key:', error);
+      setKeyError('Failed to save API key. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -153,7 +200,8 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
                     onChange={handleApiKeyChange}
                     placeholder="sk-..."
                     sx={{ WebkitAppRegion: 'no-drag' }}
-                    helperText="Your API key is stored securely on your local machine"
+                    error={!!keyError}
+                    helperText={keyError || "Your API key is stored securely on your local machine"}
                     InputProps={{
                       style: { WebkitAppRegion: 'no-drag' },
                       onPointerDown: (e) => e.stopPropagation(),
@@ -175,7 +223,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
                     disabled={!apiKey.trim() || isLoading}
                     sx={{ minWidth: 120 }}
                   >
-                    {isLoading ? 'Saving...' : 'Continue'}
+                    {isLoading ? 'Verifying...' : 'Continue'}
                   </Button>
                 </div>
               </div>

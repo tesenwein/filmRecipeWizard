@@ -18,26 +18,25 @@ export class StorageService {
 
   private async initialize(): Promise<void> {
     if (this.initialized) return;
+    // Ensure both the main storage directory and backup directory exist
+    const storageDir = path.dirname(this.storageFile);
+    await fs.mkdir(storageDir, { recursive: true });
+    await fs.mkdir(this.backupDir, { recursive: true });
+    // Clean up any stale temp history file from a previous interrupted save
     try {
-      // Ensure both the main storage directory and backup directory exist
-      const storageDir = path.dirname(this.storageFile);
-      await fs.mkdir(storageDir, { recursive: true });
-      await fs.mkdir(this.backupDir, { recursive: true });
-      // Clean up any stale temp history file from a previous interrupted save
-      try {
-        const tmp = `${this.storageFile}.tmp`;
-        await fs.rm(tmp, { force: true });
-      } catch {
-        // Ignore errors when removing temp file
-      }
+      const tmp = `${this.storageFile}.tmp`;
+      await fs.rm(tmp, { force: true });
+    } catch {
+      // Ignore errors when removing temp file
+    }
 
-      // Run migration only once on startup
-      if (!this.migrated) {
-        await this.migrateStatusField();
-        this.migrated = true;
-      }
-    } finally {
-      this.initialized = true;
+    // Mark initialized BEFORE running migration to avoid re-entrant initialize() during saveRecipes()
+    this.initialized = true;
+
+    // Run migration only once on startup
+    if (!this.migrated) {
+      await this.migrateStatusField();
+      this.migrated = true;
     }
   }
 

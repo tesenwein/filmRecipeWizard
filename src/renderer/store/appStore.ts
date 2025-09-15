@@ -25,6 +25,7 @@ interface AppState {
 
   // UI state
   currentRoute: string;
+  pollIntervalId: number | null;
 
   // Actions
   setSetupWizardOpen: (open: boolean) => void;
@@ -73,6 +74,7 @@ export const useAppStore = create<AppState>()(
         status: '',
       },
       currentRoute: '/gallery',
+      pollIntervalId: null,
 
       // Sync actions
       setSetupWizardOpen: (open) =>
@@ -195,70 +197,35 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      // Recipe async actions
+      // Simplified loadRecipes for startup loading
       loadRecipes: async () => {
-        set({ recipesLoading: true }, false, 'loadRecipes/start');
+        console.log('[STORE] loadRecipes called');
         try {
+          set({ recipesLoading: true }, false, 'loadRecipes/start');
           const result = await window.electronAPI.loadHistory();
+
           if (result.success) {
             const recipes = (result.recipes as Recipe[]) || [];
-            const generating = new Set<string>();
-
-            // Track which recipes are generating
-            recipes.forEach(recipe => {
-              if (recipe.status === 'generating') {
-                generating.add(recipe.id);
-              }
-            });
-
             set({
               recipes,
-              generatingRecipes: generating,
-              recipesLoading: false
+              recipesLoading: false,
+              generatingRecipes: new Set()
             }, false, 'loadRecipes/success');
-
-            // Set up polling for generating recipes
-            const hasGenerating = generating.size > 0;
-            if (hasGenerating) {
-              const pollInterval = setInterval(async () => {
-                const state = get();
-                if (state.generatingRecipes.size === 0) {
-                  clearInterval(pollInterval);
-                  return;
-                }
-
-                try {
-                  const pollResult = await window.electronAPI.loadHistory();
-                  if (pollResult.success) {
-                    const updatedRecipes = (pollResult.recipes as Recipe[]) || [];
-                    const stillGenerating = new Set<string>();
-
-                    updatedRecipes.forEach(recipe => {
-                      if (recipe.status === 'generating') {
-                        stillGenerating.add(recipe.id);
-                      }
-                    });
-
-                    set({
-                      recipes: updatedRecipes,
-                      generatingRecipes: stillGenerating
-                    }, false, 'loadRecipes/poll');
-
-                    if (stillGenerating.size === 0) {
-                      clearInterval(pollInterval);
-                    }
-                  }
-                } catch (error) {
-                  console.error('[STORE] Error polling recipes:', error);
-                }
-              }, 3000);
-            }
+            console.log('[STORE] Loaded', recipes.length, 'recipes');
           } else {
-            set({ recipesLoading: false }, false, 'loadRecipes/error');
+            set({
+              recipes: [],
+              recipesLoading: false,
+              generatingRecipes: new Set()
+            }, false, 'loadRecipes/error');
           }
         } catch (error) {
           console.error('[STORE] Error loading recipes:', error);
-          set({ recipesLoading: false }, false, 'loadRecipes/error');
+          set({
+            recipes: [],
+            recipesLoading: false,
+            generatingRecipes: new Set()
+          }, false, 'loadRecipes/error');
         }
       },
 
@@ -302,8 +269,22 @@ export const useAppStore = create<AppState>()(
         try {
           const result = await window.electronAPI.importRecipe();
           if (result.success) {
-            // Reload recipes after import
-            await get().loadRecipes();
+            // Manually reload recipes to avoid recursive calls
+            const loadResult = await window.electronAPI.loadHistory();
+            if (loadResult.success) {
+              const recipes = (loadResult.recipes as Recipe[]) || [];
+              const generating = new Set<string>();
+              recipes.forEach(recipe => {
+                if (recipe.status === 'generating') {
+                  generating.add(recipe.id);
+                }
+              });
+              set({
+                recipes,
+                generatingRecipes: generating,
+                recipesLoading: false
+              }, false, 'importRecipes/reload');
+            }
           }
           return result;
         } catch (error) {
@@ -334,6 +315,13 @@ export const useAppStore = create<AppState>()(
 
       resetApp: async () => {
         try {
+          // Stop any active polling interval to prevent leaks
+          const prev = get().pollIntervalId;
+          if (prev) {
+            clearInterval(prev as any);
+            set({ pollIntervalId: null }, false, 'resetApp/clearInterval');
+          }
+
           // Fast clear all recipes
           if (window.electronAPI.clearHistory) {
             await window.electronAPI.clearHistory();
@@ -366,7 +354,8 @@ export const useAppStore = create<AppState>()(
               progress: 0,
               status: '',
             },
-            currentRoute: '/create'
+            currentRoute: '/create',
+            pollIntervalId: null
           }, false, 'resetApp');
 
           // Navigate to Create smoothly

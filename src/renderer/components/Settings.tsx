@@ -81,6 +81,8 @@ const Settings: React.FC = () => {
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [setupCompleted, setSetupCompleted] = useState<boolean>(false);
 
   useEffect(() => {
     const load = async () => {
@@ -91,6 +93,7 @@ const Settings: React.FC = () => {
             setOpenaiKey('');
             setMasked(true);
           }
+          setSetupCompleted(!!res.settings.setupCompleted);
         }
       } catch {
         setStatus({ type: 'error', msg: 'Failed to load settings' });
@@ -99,9 +102,54 @@ const Settings: React.FC = () => {
     load();
   }, []);
 
+  const testOpenAIKey = async (key: string): Promise<boolean> => {
+    try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch('https://api.openai.com/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.status === 401) {
+        setStatus({ type: 'error', msg: 'Invalid API key. Please check your key and try again.' });
+        return false;
+      } else if (response.status === 429) {
+        setStatus({ type: 'error', msg: 'Rate limit exceeded. Your key is valid but quota may be exhausted.' });
+        return true; // Key is valid even if rate limited
+      } else if (!response.ok) {
+        setStatus({ type: 'error', msg: 'Unable to verify API key. Please check your internet connection.' });
+        return false;
+      }
+
+      return true;
+    } catch {
+      setStatus({ type: 'error', msg: 'Network error. Please check your internet connection.' });
+      return false;
+    }
+  };
+
   const handleSave = async () => {
     setStatus(null);
+    setIsValidating(true);
+
     try {
+      // If API key is provided, validate it first
+      if (openaiKey.trim()) {
+        const isValid = await testOpenAIKey(openaiKey.trim());
+        if (!isValid) {
+          return; // Error message already set by testOpenAIKey
+        }
+      }
+
       const res = await window.electronAPI.saveSettings({
         openaiKey: openaiKey.trim() || undefined,
       });
@@ -109,12 +157,14 @@ const Settings: React.FC = () => {
         setMasked(!!openaiKey);
         setOpenaiKey('');
         setShowKey(false);
-        setStatus({ type: 'success', msg: 'Settings saved' });
+        setStatus({ type: 'success', msg: 'Settings saved successfully' });
       } else {
         setStatus({ type: 'error', msg: res.error || 'Failed to save settings' });
       }
     } catch {
       setStatus({ type: 'error', msg: 'Failed to save settings' });
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -207,9 +257,10 @@ const Settings: React.FC = () => {
               variant="contained"
               color="primary"
               onClick={handleSave}
+              disabled={isValidating}
               startIcon={<SaveIcon />}
             >
-              Save
+              {isValidating ? 'Verifying...' : 'Save'}
             </Button>
             <Button
               variant="outlined"
@@ -220,6 +271,25 @@ const Settings: React.FC = () => {
               Clear
             </Button>
           </Stack>
+          {!setupCompleted && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="contained"
+                onClick={async () => {
+                  try {
+                    await window.electronAPI.updateSettings({ setupCompleted: true });
+                    setSetupCompleted(true);
+                    // Navigate to create page after completing setup
+                    setTimeout(() => (window.location.hash = '#/create'), 150);
+                  } catch (e) {
+                    setStatus({ type: 'error', msg: 'Failed to complete setup' });
+                  }
+                }}
+              >
+                Complete Setup
+              </Button>
+            </Box>
+          )}
         </Stack>
       </Paper>
 

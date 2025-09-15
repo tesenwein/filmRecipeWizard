@@ -1004,11 +1004,11 @@ class FotoRecipeWizardApp {
           let importedCount = 0;
           for (const recipe of parsed.processes) {
             if (recipe && Array.isArray(recipe.results)) {
-              // Normalize and assign a new id/timestamp to avoid collisions
+              // Normalize and assign a new id but preserve original timestamp
               const newId = this.storageService.generateProcessId();
               const imported = {
                 id: newId,
-                timestamp: new Date().toISOString(),
+                timestamp: recipe.timestamp || new Date().toISOString(), // Preserve original timestamp
                 name: recipe.name,
                 prompt: recipe.prompt,
                 userOptions: recipe.userOptions,
@@ -1034,11 +1034,11 @@ class FotoRecipeWizardApp {
             throw new Error('Invalid recipe manifest');
           }
 
-          // Normalize and assign a new id/timestamp to avoid collisions
+          // Normalize and assign a new id but preserve original timestamp
           const newId = this.storageService.generateProcessId();
           const imported = {
             id: newId,
-            timestamp: new Date().toISOString(),
+            timestamp: process.timestamp || new Date().toISOString(), // Preserve original timestamp
             name: process.name,
             prompt: process.prompt,
             userOptions: process.userOptions,

@@ -1,20 +1,26 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import SearchIcon from '@mui/icons-material/Search';
 import {
   Button,
   Card,
   CardActionArea,
   CardContent,
+  FormControl,
   Grid,
   IconButton,
+  InputAdornment,
+  InputLabel,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
+  Select,
+  TextField,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -39,19 +45,62 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('name');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { showSuccess, showError } = useAlert();
 
-  useEffect(() => {
-    loadRecipes();
-  }, [loadRecipes]);
+  // Recipes are loaded during splash screen, no need to load here
 
-  const basePreviews = recipes.map((recipe: Recipe) =>
-    recipe?.recipeImageData &&
-    typeof recipe.recipeImageData === 'string' &&
-    recipe.recipeImageData.length > 0
-      ? `data:image/jpeg;base64,${recipe.recipeImageData}`
-      : ''
-  );
+  // Helper function to get recipe name for sorting and searching
+  const getRecipeName = (recipe: Recipe) => {
+    const aiName = (recipe as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
+    return recipe.name ||
+           (typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : '') ||
+           new Date(recipe.timestamp).toLocaleString();
+  };
+
+  // Memoize filtered and sorted recipes to prevent endless recalculations
+  const { sortedRecipes, basePreviews } = useMemo(() => {
+    console.log('[GALLERY] useMemo recalculating with:', recipes.length, 'recipes, searchQuery:', searchQuery, 'sortBy:', sortBy);
+
+    // Filter recipes based on search query
+    const filteredRecipes = recipes.filter(recipe => {
+      if (!searchQuery.trim()) return true;
+
+      const searchTerm = searchQuery.toLowerCase();
+      const recipeName = getRecipeName(recipe).toLowerCase();
+      const prompt = (recipe.prompt || '').toLowerCase();
+
+      return recipeName.includes(searchTerm) || prompt.includes(searchTerm);
+    });
+
+    console.log('[GALLERY] filtered to:', filteredRecipes.length, 'recipes');
+
+    // Sort filtered recipes based on selected criteria
+    const sortedRecipes = [...filteredRecipes].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        case 'oldest':
+          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        case 'name':
+          return getRecipeName(a).localeCompare(getRecipeName(b));
+        default:
+          return 0;
+      }
+    });
+
+    const basePreviews = sortedRecipes.map((recipe: Recipe) =>
+      recipe?.recipeImageData &&
+      typeof recipe.recipeImageData === 'string' &&
+      recipe.recipeImageData.length > 0
+        ? `data:image/jpeg;base64,${recipe.recipeImageData}`
+        : ''
+    );
+
+    console.log('[GALLERY] useMemo completed');
+    return { sortedRecipes, basePreviews };
+  }, [recipes, searchQuery, sortBy]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, recipeId: string) => {
     event.stopPropagation();
@@ -111,10 +160,38 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             Your Recipes
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Past color matching sessions
+            {sortedRecipes.length === recipes.length
+              ? `${recipes.length} recipes`
+              : `${sortedRecipes.length} of ${recipes.length} recipes`}
           </Typography>
         </Grid>
-        <Grid style={{ display: 'flex', gap: 8 }}>
+        <Grid style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Search recipes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 200 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Sort by</InputLabel>
+            <Select
+              value={sortBy}
+              label="Sort by"
+              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
+            >
+              <MenuItem value="name">Name</MenuItem>
+              <MenuItem value="newest">Newest</MenuItem>
+              <MenuItem value="oldest">Oldest</MenuItem>
+            </Select>
+          </FormControl>
           <Button
             variant="outlined"
             onClick={async () => {
@@ -142,7 +219,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                 showError('Export failed');
               }
             }}
-            disabled={recipes.length === 0 || generatingRecipes.size > 0}
+            disabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}
           >
             Export All
           </Button>
@@ -167,9 +244,24 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             Create First Recipe
           </Button>
         </Card>
+      ) : sortedRecipes.length === 0 ? (
+        <Card sx={{ p: 6, textAlign: 'center' }}>
+          <Typography variant="h3" sx={{ opacity: 0.5, mb: 2 }}>
+            🔍
+          </Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            No recipes found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Try adjusting your search query or sort criteria
+          </Typography>
+          <Button variant="outlined" onClick={() => setSearchQuery('')}>
+            Clear Search
+          </Button>
+        </Card>
       ) : (
         <Grid container spacing={2}>
-          {recipes.map((recipe, index) => (
+          {sortedRecipes.map((recipe, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={recipe.id}>
               <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
                 {/* Menu button (top-right) */}
