@@ -6,6 +6,7 @@ import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-colo
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
 import { generateXMPContent as generateXMPContentImpl } from './xmp-generator';
 import { SettingsService } from './settings-service';
+import { exportLightroomProfile } from './profile-exporter';
 
 export interface StyleMatchOptions {
   baseImagePath?: string;
@@ -235,6 +236,24 @@ export class ImageProcessor {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  async generateLightroomProfile(data: { sourceXmpPath: string; outputDir?: string }): Promise<ProcessingResult> {
+    try {
+      console.log('[PROCESSOR] Exporting Lightroom profile from:', data.sourceXmpPath);
+      const result = await exportLightroomProfile(data.sourceXmpPath, data.outputDir);
+      if (!result.success) {
+        return { success: false, error: result.error || 'Profile export failed' };
+      }
+      return {
+        success: true,
+        outputPath: result.outputPath,
+        metadata: { presetName: result.metadata?.profileName, groupFolder: 'profiles' },
+      };
+    } catch (error) {
+      console.error('[PROCESSOR] Profile export failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
