@@ -287,17 +287,12 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             </Stack>
           </Paper>
 
-          <StyleDescriptionCard
-            prompt={prompt}
-            onPromptChange={onPromptChange}
-            selectedVibe={styleOptions?.vibe}
-            onVibeChange={handleVibeChange}
-          />
-
-          <LightroomProfileCard
-            selected={styleOptions?.lightroomProfile}
-            onSelect={(profile) => onStyleOptionsChange?.({ lightroomProfile: profile })}
-          />
+		  <StyleDescriptionCard
+			prompt={prompt}
+			onPromptChange={onPromptChange}
+			selectedVibe={styleOptions?.vibe}
+			onVibeChange={handleVibeChange}
+		  />
 
           <ArtisticStylesCard
             selected={styleOptions?.artistStyle?.key}
