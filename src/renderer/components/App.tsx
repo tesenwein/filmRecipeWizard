@@ -126,6 +126,7 @@ const App: React.FC = () => {
         baseImageData: (returnedBase64.base || undefined) as any,
         targetImageData: returnedBase64.targets || undefined,
         prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
+        styleOptions: styleOptions,
       });
     }
   };

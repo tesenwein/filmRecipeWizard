@@ -237,6 +237,7 @@ class FotoRecipeWizardApp {
           baseImageData?: string | string[];
           targetImageData?: string[];
           prompt?: string;
+          styleOptions?: any;
         }
       ) => {
         console.log('[IPC] process-with-stored-images called with:', {
@@ -257,7 +258,8 @@ class FotoRecipeWizardApp {
           })();
           const basePrompt = data.prompt ?? stored.prompt;
           // Build an additional hint from userOptions if present
-          const options = (stored as any)?.userOptions || {};
+          // Use passed styleOptions if provided, otherwise fall back to stored userOptions
+          const options = data.styleOptions || (stored as any)?.userOptions || {};
           const optionsHintParts: string[] = [];
           if (typeof options.vibe === 'string' && options.vibe.trim().length > 0) {
             optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
@@ -348,6 +350,7 @@ class FotoRecipeWizardApp {
             targetImageBase64: targetImageData,
             aiAdjustments: undefined,
             prompt,
+            styleOptions: options,
           });
 
           try {

@@ -506,8 +506,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             processOptions.contrast !== undefined ||
                             processOptions.vibrance !== undefined ||
                             processOptions.moodiness !== undefined ||
-                            processOptions.saturationBias !== undefined ||
-                            processOptions.filmGrain !== undefined) && (
+                            processOptions.saturationBias !== undefined) && (
                             <Box>
                               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                                 Fine-tune Settings
@@ -606,6 +605,26 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                       </Paper>
                                     )
                                 )}
+                              </Box>
+                            </Box>
+                          )}
+
+                        {/* Options */}
+                        {processOptions &&
+                          (processOptions.filmGrain !== undefined ||
+                            processOptions.emphasize3DPop !== undefined ||
+                            processOptions.preserveSkinTones !== undefined) && (
+                            <Box>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                                Options
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                  gap: 2,
+                                }}
+                              >
                                 {processOptions.filmGrain !== undefined && (
                                   <Paper
                                     variant="outlined"
@@ -639,6 +658,84 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     <Chip
                                       label={processOptions.filmGrain ? 'On' : 'Off'}
                                       color={processOptions.filmGrain ? 'success' : 'default'}
+                                      variant="filled"
+                                      size="small"
+                                      sx={{ fontWeight: 600 }}
+                                    />
+                                  </Paper>
+                                )}
+                                {processOptions.emphasize3DPop !== undefined && (
+                                  <Paper
+                                    variant="outlined"
+                                    sx={{
+                                      p: 2,
+                                      textAlign: 'center',
+                                      backgroundColor: 'grey.50',
+                                      border: '1px solid',
+                                      borderColor: 'grey.200',
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 0.5,
+                                        mb: 1,
+                                      }}
+                                    >
+                                      <Typography variant="body2" sx={{ fontSize: '16px' }}>
+                                        🔮
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                      >
+                                        3D Pop
+                                      </Typography>
+                                    </Box>
+                                    <Chip
+                                      label={processOptions.emphasize3DPop ? 'On' : 'Off'}
+                                      color={processOptions.emphasize3DPop ? 'success' : 'default'}
+                                      variant="filled"
+                                      size="small"
+                                      sx={{ fontWeight: 600 }}
+                                    />
+                                  </Paper>
+                                )}
+                                {processOptions.preserveSkinTones !== undefined && (
+                                  <Paper
+                                    variant="outlined"
+                                    sx={{
+                                      p: 2,
+                                      textAlign: 'center',
+                                      backgroundColor: 'grey.50',
+                                      border: '1px solid',
+                                      borderColor: 'grey.200',
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 0.5,
+                                        mb: 1,
+                                      }}
+                                    >
+                                      <Typography variant="body2" sx={{ fontSize: '16px' }}>
+                                        👤
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ color: 'text.secondary', fontWeight: 600 }}
+                                      >
+                                        Preserve Skin Tones
+                                      </Typography>
+                                    </Box>
+                                    <Chip
+                                      label={processOptions.preserveSkinTones ? 'On' : 'Off'}
+                                      color={processOptions.preserveSkinTones ? 'success' : 'default'}
                                       variant="filled"
                                       size="small"
                                       sx={{ fontWeight: 600 }}
@@ -834,6 +931,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     </Typography>
                                     <Typography variant="body1">
                                       <strong>3D Pop:</strong> {processOptions.emphasize3DPop ? 'On' : 'Off'}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                      <strong>Preserve Skin Tones:</strong>{' '}
+                                      {processOptions.preserveSkinTones ? 'On' : 'Off'}
                                     </Typography>
                                     {processOptions.artistStyle?.name && (
                                       <Typography variant="body1">
