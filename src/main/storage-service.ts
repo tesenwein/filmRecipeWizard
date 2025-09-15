@@ -18,7 +18,9 @@ export class StorageService {
   private async initialize(): Promise<void> {
     if (this.initialized) return;
     try {
-      // Ensure backup directory exists
+      // Ensure both the main storage directory and backup directory exist
+      const storageDir = path.dirname(this.storageFile);
+      await fs.mkdir(storageDir, { recursive: true });
       await fs.mkdir(this.backupDir, { recursive: true });
       // Clean up any stale temp history file from a previous interrupted save
       try {
@@ -206,7 +208,7 @@ export class StorageService {
   }
 
   generateProcessId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
 
   async clearHistory(): Promise<void> {
