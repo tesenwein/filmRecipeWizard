@@ -10,6 +10,7 @@ import RecipeGallery from './RecipeGallery';
 import ProcessingView from './ProcessingView';
 import ResultsView from './ResultsView';
 import Settings from './Settings';
+import SetupWizard from './SetupWizard';
 import SplashScreen from './SplashScreen';
 
 interface RouterProps {
@@ -166,10 +167,11 @@ const Router: React.FC<RouterProps> = ({
   if (route === '/setup') {
     return (
       <div className="fade-in">
-        <div className="card" style={{ padding: 16 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>Setup</Typography>
-          <Settings />
-        </div>
+        <SetupWizard
+          onComplete={() => {
+            onNavigate('/create');
+          }}
+        />
       </div>
     );
   }

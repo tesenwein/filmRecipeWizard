@@ -69,6 +69,10 @@ const App: React.FC = () => {
         const res = await window.electronAPI.getSettings();
         if (!mounted) return;
 
+        const setupCompleted = !!(res.success && res.settings && res.settings.setupCompleted);
+        const hasKey = !!(res.success && res.settings && res.settings.openaiKey);
+        const wizardNeeded = !setupCompleted || !hasKey;
+
         setStartupStatus({ status: 'Loading recipes...', progress: 60 });
         const { loadRecipes } = useAppStore.getState();
         await loadRecipes();
@@ -77,20 +81,28 @@ const App: React.FC = () => {
         setStartupStatus({ status: 'Finalizing...', progress: 90 });
         setTimeout(() => {
           if (!mounted) return;
-          const done = !!(res.success && res.settings && res.settings.setupCompleted);
-          window.location.hash = done ? '#/gallery' : '#/setup';
+          window.location.hash = wizardNeeded ? '#/setup' : '#/gallery';
         }, 300);
       } catch {
         if (!mounted) return;
-        window.location.hash = '#/gallery';
+        // On error, prefer wizard to help user configure
+        window.location.hash = '#/setup';
       }
     };
     boot();
 
     // Safety timeout to prevent getting stuck on splash
-    const safetyTimeout = setTimeout(() => {
+    const safetyTimeout = setTimeout(async () => {
       if (mounted && window.location.hash === '#/splash') {
-        window.location.hash = '#/gallery';
+        try {
+          const res = await window.electronAPI.getSettings();
+          const setupCompleted = !!(res.success && res.settings && res.settings.setupCompleted);
+          const hasKey = !!(res.success && res.settings && res.settings.openaiKey);
+          const wizardNeeded = !setupCompleted || !hasKey;
+          window.location.hash = wizardNeeded ? '#/setup' : '#/gallery';
+        } catch {
+          window.location.hash = '#/setup';
+        }
       }
     }, 5000);
 
@@ -337,7 +349,7 @@ const App: React.FC = () => {
         {/* Scroll fade-out effect overlay */}
         <div className="scroll-fade-overlay" />
 
-        {route !== '/splash' && <AppHeader onNavigate={navigate} />}
+        {route !== '/splash' && route !== '/setup' && <AppHeader onNavigate={navigate} />}
 
         <Router
           route={route}

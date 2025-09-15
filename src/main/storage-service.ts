@@ -238,7 +238,7 @@ export class StorageService {
   async deleteProcess(processId: string): Promise<void> {
     const history = await this.loadRecipes();
     const filteredHistory = history.filter(p => p.id !== processId);
-    await this.saveHistory(filteredHistory);
+    await this.saveRecipes(filteredHistory);
 
     // Clean up any temporary files (optional)
     await this.cleanupTempFiles();
@@ -317,18 +317,5 @@ export class StorageService {
       // Directory might not exist, which is fine
       console.log(`[STORAGE] Temp directory already cleaned or doesn't exist`);
     }
-  }
-
-  // Backward compatibility aliases
-  async loadHistory(): Promise<ProcessHistory[]> {
-    return this.loadRecipes();
-  }
-
-  async saveHistory(history: ProcessHistory[]): Promise<void> {
-    return this.saveRecipes(history);
-  }
-
-  async clearHistory(): Promise<void> {
-    return this.clearRecipes();
   }
 }

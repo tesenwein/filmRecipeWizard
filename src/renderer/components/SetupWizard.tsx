@@ -1,23 +1,13 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  Dialog,
-  DialogContent,
-  LinearProgress,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Card, CardContent, LinearProgress, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
 import { useAppStore } from '../store/appStore';
 
 interface SetupWizardProps {
-  open: boolean;
   onComplete: () => void;
 }
 
-const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
+const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const { saveSettings, setSetupCompleted, setSetupWizardOpen, importRecipes } = useAppStore() as any;
   const [currentStep, setCurrentStep] = useState(1);
   const [apiKey, setApiKey] = useState('');
@@ -110,36 +100,20 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
   const progress = (currentStep / 3) * 100;
 
   return (
-    <Dialog
-      key={open ? 'wizard-open' : 'wizard-closed'}
-      open={open}
-      maxWidth="sm"
-      fullWidth
-      disablePortal={false}
-      disableEnforceFocus
-      disableAutoFocus
-      disableRestoreFocus
-      slotProps={{
-        backdrop: {
-          style: { backgroundColor: 'rgba(0,0,0,0.4)' },
-          sx: { WebkitAppRegion: 'no-drag' }
-        },
-        paper: {
-          sx: {
-            WebkitAppRegion: 'no-drag',
-            backgroundColor: '#ffffff',
-            borderRadius: 3,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-            border: 'none'
-          }
-        }
+    <div
+      className="fade-in"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        padding: 16,
       }}
     >
-      <DialogContent sx={{ p: 0, WebkitAppRegion: 'no-drag' }}>
-        <Card elevation={0} sx={{
+      <div style={{ maxWidth: 720, width: '100%' }}>
+        <Card elevation={1} sx={{
           minHeight: 500,
           backgroundColor: '#ffffff',
-          border: 'none',
           borderRadius: 3
         }}>
           <LinearProgress
@@ -267,8 +241,8 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ open, onComplete }) => {
             )}
           </CardContent>
         </Card>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 

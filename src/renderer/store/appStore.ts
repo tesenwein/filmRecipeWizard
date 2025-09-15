@@ -149,8 +149,8 @@ export const useAppStore = create<AppState>()(
             set({
               settings,
               setupCompleted: !!settings.setupCompleted,
-              // Wizard should only depend on setup completion; once completed, never reopen
-              setupWizardOpen: !settings.setupCompleted
+              // Open wizard if setup not completed or key missing
+              setupWizardOpen: !(settings.setupCompleted && !!settings.openaiKey)
             }, false, 'loadSettings');
           } else {
             // No settings found - fresh install
@@ -179,8 +179,10 @@ export const useAppStore = create<AppState>()(
 
             // If setup is being completed, close the wizard regardless
             const shouldCloseWizard = newSettings.setupCompleted === true;
-            // Keep wizard open until setup is explicitly completed; never reopen after
-            const setupWizardOpen = shouldCloseWizard ? false : !updatedSettings.setupCompleted;
+            // Keep wizard open until setup completed AND key present
+            const setupWizardOpen = shouldCloseWizard
+              ? false
+              : !(updatedSettings.setupCompleted && !!updatedSettings.openaiKey);
 
             set({
               settings: updatedSettings,
@@ -354,15 +356,15 @@ export const useAppStore = create<AppState>()(
               progress: 0,
               status: '',
             },
-            currentRoute: '/create',
+            currentRoute: '/setup',
             pollIntervalId: null
           }, false, 'resetApp');
 
-          // Navigate to Create smoothly
+          // Navigate to Setup smoothly
           try {
-            window.location.hash = '#/create';
+            window.location.hash = '#/setup';
           } catch (error) {
-            console.warn('Failed to navigate to create route:', error);
+            console.warn('Failed to navigate to setup route:', error);
           }
 
         } catch (error) {
