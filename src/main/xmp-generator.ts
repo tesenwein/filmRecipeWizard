@@ -49,7 +49,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const fallback = `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
   const rawPresetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || fallback;
   const presetName = sanitizeName(rawPresetName) || fallback;
-  const groupName = 'foto-recipe-wizard';
+  const groupName = 'film-recipe-wizard';
   // Inclusion flags with sane defaults (back-compat: include everything when not specified)
   const inc = {
     wbBasic: include?.wbBasic !== false,
@@ -402,7 +402,7 @@ ${correctionLis}
       </crs:Name>
       <crs:Group>
         <rdf:Alt>
-          <rdf:li xml:lang="x-default">Foto Recipe Wizard</rdf:li>
+          <rdf:li xml:lang="x-default">Film Recipe Wizard</rdf:li>
         </rdf:Alt>
       </crs:Group>
       ${treatmentTag}
