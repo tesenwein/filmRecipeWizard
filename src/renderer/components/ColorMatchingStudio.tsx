@@ -7,7 +7,9 @@ import RecipeImageCard from './RecipeImageCard';
 import FineTuneControls from './FineTuneControls';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import FilmStylesCard from './FilmStylesCard';
+import LightroomProfileCard from './LightroomProfileCard';
 import ProcessButton from './ProcessButton';
+import { useAppStore } from '../store/appStore';
 import { StyleOptions } from '../../shared/types';
 
 
@@ -84,8 +86,9 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     }
   };
 
-  // Enable processing as soon as user has target images (prompt/base optional)
-  const canProcess: boolean = Boolean(targetImages.length > 0);
+  // Enable processing only when targets present and not currently processing
+  const { processingState } = useAppStore();
+  const canProcess: boolean = Boolean(targetImages.length > 0 && !processingState.isProcessing);
 
   const handleVibeChange = (vibe: string) => {
     onStyleOptionsChange?.({ vibe });
@@ -242,6 +245,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             onPromptChange={onPromptChange}
             selectedVibe={styleOptions?.vibe}
             onVibeChange={handleVibeChange}
+          />
+
+          <LightroomProfileCard
+            selected={styleOptions?.lightroomProfile}
+            onSelect={(profile) => onStyleOptionsChange?.({ lightroomProfile: profile })}
           />
 
           <ArtisticStylesCard

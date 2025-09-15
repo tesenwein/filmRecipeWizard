@@ -50,13 +50,15 @@ declare global {
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;
       onProcessingComplete?: (callback: (results: any[]) => void) => void;
+      onProcessUpdated?: (callback: (payload: { processId: string; updates: any }) => void) => void;
 
       // Preview generation
       generatePreview: (args: { path?: string; dataUrl?: string }) => Promise<any>;
       generateAdjustedPreview: (args: { path: string; adjustments: any }) => Promise<any>;
 
       // Storage operations
-      loadHistory: () => Promise<{ success: boolean; history?: any[]; error?: string }>;
+      loadHistory: () => Promise<{ success: boolean; recipes?: any[]; error?: string }>;
+      clearHistory: () => Promise<void>;
       saveProcess: (processData: any) => Promise<{ success: boolean; process?: any; error?: string }>;
       updateProcess: (processId: string, updates: any) => Promise<{ success: boolean; error?: string }>;
       deleteProcess: (processId: string) => Promise<{ success: boolean; error?: string }>;
@@ -67,17 +69,17 @@ declare global {
       removeBaseImage: (processId: string, index: number) => Promise<{ success: boolean; error?: string }>;
 
       // Settings operations
-      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
+      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
       saveSettings: (
-        settings: { openaiKey?: string }
-      ) => Promise<{ success: boolean; settings?: { openaiKey?: string }; error?: string }>;
+        settings: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
+      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
+      updateSettings: (
+        settings: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
+      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
 
       // Utility functions
       removeAllListeners: (channel: string) => void;
 
-      // Legacy operations (backward compatibility)
-      onBaseImageSelected: (callback: (filePath: string) => void) => void;
-      onTargetImagesSelected: (callback: (filePaths: string[]) => void) => void;
     };
   }
 }

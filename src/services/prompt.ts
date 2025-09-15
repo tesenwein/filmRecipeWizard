@@ -5,7 +5,7 @@ export function buildUserContentForAnalysis(
   baseImageB64: string | string[] | undefined,
   targetImageB64: string,
   hint?: string,
-  opts?: { preserveSkinTones?: boolean }
+  opts?: { preserveSkinTones?: boolean; lightroomProfile?: string }
 ): any[] {
   const content: any[] = [];
   if (hint) {
@@ -18,6 +18,7 @@ Call functions to:
 1. Report global adjustments with confidence and reasoning
 2. Create masks when needed (max 3 masks)` +
     (opts?.preserveSkinTones ? `\n3. Preserve natural skin tones in Subject masks` : '') +
+    (opts?.lightroomProfile ? `\n\nIMPORTANT: Use "${opts.lightroomProfile}" as the base camera profile in your adjustments. This profile determines the baseline color rendition and contrast.` : '') +
     `
 3. For portraits, ensure a match in skin tone and backdrop
 4. For landscapes, ensure sky/foliage mood and lighting alignment

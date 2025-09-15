@@ -8,6 +8,7 @@ export class StorageService {
   private storageFile: string;
   private backupDir: string;
   private initialized = false;
+  private migrated = false;
 
   constructor() {
     const userDataPath = app.getPath('userData');
@@ -17,20 +18,25 @@ export class StorageService {
 
   private async initialize(): Promise<void> {
     if (this.initialized) return;
+    // Ensure both the main storage directory and backup directory exist
+    const storageDir = path.dirname(this.storageFile);
+    await fs.mkdir(storageDir, { recursive: true });
+    await fs.mkdir(this.backupDir, { recursive: true });
+    // Clean up any stale temp history file from a previous interrupted save
     try {
-      // Ensure both the main storage directory and backup directory exist
-      const storageDir = path.dirname(this.storageFile);
-      await fs.mkdir(storageDir, { recursive: true });
-      await fs.mkdir(this.backupDir, { recursive: true });
-      // Clean up any stale temp history file from a previous interrupted save
-      try {
-        const tmp = `${this.storageFile}.tmp`;
-        await fs.rm(tmp, { force: true });
-      } catch {
-        // Ignore errors when removing temp file
-      }
-    } finally {
-      this.initialized = true;
+      const tmp = `${this.storageFile}.tmp`;
+      await fs.rm(tmp, { force: true });
+    } catch {
+      // Ignore errors when removing temp file
+    }
+
+    // Mark initialized BEFORE running migration to avoid re-entrant initialize() during saveRecipes()
+    this.initialized = true;
+
+    // Run migration only once on startup
+    if (!this.migrated) {
+      await this.migrateStatusField();
+      this.migrated = true;
     }
   }
 
@@ -104,6 +110,7 @@ export class StorageService {
     return null;
   }
 
+  // Migration to add status field to existing recipes (runs only once on startup)
   private async migrateStatusField(): Promise<void> {
     try {
       const data = await fs.readFile(this.storageFile, 'utf8');
@@ -113,28 +120,25 @@ export class StorageService {
       const needsMigration = raw.some((p: any) => p.status === undefined);
       if (!needsMigration) return;
 
-      console.log('[STORAGE] Migrating existing processes to add status field');
-
       // Update processes without status field
       const migrated = raw.map((p: any) => ({
         ...p,
-        status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
+        status:
+          p.status ||
+          (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
       }));
 
       // Save the migrated data
-      await this.saveHistory(migrated);
+      await this.saveRecipes(migrated);
     } catch {
       // If file doesn't exist or is corrupt, no migration needed
       console.log('[STORAGE] No migration needed - file not found or invalid');
     }
   }
 
-  async loadHistory(): Promise<ProcessHistory[]> {
+  async loadRecipes(): Promise<ProcessHistory[]> {
     try {
       await this.initialize();
-
-      // Run migration first
-      await this.migrateStatusField();
 
       const data = await fs.readFile(this.storageFile, 'utf8');
       const raw: any[] = JSON.parse(data);
@@ -145,6 +149,7 @@ export class StorageService {
         prompt: p.prompt,
         userOptions: p.userOptions,
         results: Array.isArray(p.results) ? p.results : [],
+        author: p.author,
         // Persisted recipe image (single) — maintain backward compatibility
         recipeImageData:
           typeof p.recipeImageData === 'string'
@@ -170,6 +175,7 @@ export class StorageService {
           prompt: p.prompt,
           userOptions: p.userOptions,
           results: Array.isArray(p.results) ? p.results : [],
+          author: p.author,
           recipeImageData:
             typeof p.recipeImageData === 'string'
               ? p.recipeImageData
@@ -178,18 +184,20 @@ export class StorageService {
               : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
               ? p.baseImagesData[0]
               : undefined,
-          status: p.status || (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
+          status:
+            p.status ||
+            (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
         }));
 
         // Save migrated backup to main file
-        await this.saveHistory(migratedBackup);
+        await this.saveRecipes(migratedBackup);
         return migratedBackup;
       }
       return [];
     }
   }
 
-  async saveHistory(history: ProcessHistory[]): Promise<void> {
+  async saveRecipes(history: ProcessHistory[]): Promise<void> {
     try {
       await this.initialize();
       await this.backupHistoryFile();
@@ -205,7 +213,7 @@ export class StorageService {
   }
 
   async addProcess(process: ProcessHistory): Promise<void> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     history.unshift(process); // Add to beginning for most recent first
 
     // Keep only last N processes to prevent file from growing too large
@@ -214,32 +222,32 @@ export class StorageService {
       history.splice(maxHistory);
     }
 
-    await this.saveHistory(history);
+    await this.saveRecipes(history);
   }
 
   async updateProcess(processId: string, updates: Partial<ProcessHistory>): Promise<void> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     const index = history.findIndex(p => p.id === processId);
 
     if (index >= 0) {
       history[index] = { ...history[index], ...updates };
-      await this.saveHistory(history);
+      await this.saveRecipes(history);
     } else {
       console.warn('[STORAGE] Process not found for update:', processId);
     }
   }
 
   async deleteProcess(processId: string): Promise<void> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     const filteredHistory = history.filter(p => p.id !== processId);
-    await this.saveHistory(filteredHistory);
+    await this.saveRecipes(filteredHistory);
 
     // Clean up any temporary files (optional)
     await this.cleanupTempFiles();
   }
 
   async getProcess(processId: string): Promise<ProcessHistory | null> {
-    const history = await this.loadHistory();
+    const history = await this.loadRecipes();
     return history.find(p => p.id === processId) || null;
   }
 
@@ -247,7 +255,7 @@ export class StorageService {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
 
-  async clearHistory(): Promise<void> {
+  async clearRecipes(): Promise<void> {
     await this.initialize();
     await this.backupHistoryFile();
 

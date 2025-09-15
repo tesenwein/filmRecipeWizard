@@ -4,6 +4,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PaletteIcon from '@mui/icons-material/Palette';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
   Accordion,
@@ -17,14 +18,16 @@ import {
   FormControlLabel,
   IconButton,
   Paper,
+  Avatar,
   Slider,
   Tab,
   Tabs,
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { ProcessingResult } from '../../shared/types';
+import { ProcessingResult, UserProfile, getLightroomProfileDisplayName } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
+import { useAppStore } from '../store/appStore';
 import SingleImage from './SingleImage';
 
 interface ResultsViewProps {
@@ -73,6 +76,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const failedResults = results.filter(result => !result.success);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
+  const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
 
   // New state for tab management
   const [activeTab, setActiveTab] = useState(0);
@@ -113,10 +117,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         }
 
         // Reload the image data after adding
-        const data = await window.electronAPI.getImageDataUrls(processId);
+        const [data, proc] = await Promise.all([
+          window.electronAPI.getImageDataUrls(processId),
+          window.electronAPI.getProcess(processId),
+        ]);
         if (data.success) {
           setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
           setActiveBase(0);
+        }
+        if (proc.success && proc.process) {
+          try {
+            useAppStore.getState().updateRecipe(processId, {
+              recipeImageData: (proc.process as any).recipeImageData,
+            } as any);
+          } catch {}
         }
       }
     } catch (e) {
@@ -132,10 +146,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         showError(res?.error || 'Failed to remove recipe image');
         return;
       }
-      const data = await window.electronAPI.getImageDataUrls(processId);
+      const [data, proc] = await Promise.all([
+        window.electronAPI.getImageDataUrls(processId),
+        window.electronAPI.getProcess(processId),
+      ]);
       if (data.success) {
         setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
         setActiveBase(0);
+      }
+      if (proc.success && proc.process) {
+        try {
+          useAppStore.getState().updateRecipe(processId, {
+            recipeImageData: (proc.process as any).recipeImageData,
+          } as any);
+        } catch {}
       }
     } catch (e) {
       console.error('Failed to remove recipe image:', e);
@@ -168,6 +192,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         if (processResponse.success && processResponse.process) {
           setProcessPrompt(processResponse.process.prompt);
           setProcessOptions(processResponse.process.userOptions);
+          setAuthor((processResponse.process as any).author);
         } else {
           setProcessPrompt(prompt);
         }
@@ -369,6 +394,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             <Tab icon={<TuneIcon />} label="Adjustments Details" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
+            {author && (
+              <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />
+            )}
           </Tabs>
 
           {/* Image Selection */}
@@ -467,12 +495,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                         {/* Style Information */}
                         {processOptions &&
-                          (processOptions.artistStyle || processOptions.filmStyle) && (
+                          (processOptions.artistStyle || processOptions.filmStyle || processOptions.lightroomProfile) && (
                             <Box sx={{ mb: 3 }}>
                               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Applied Styles
                               </Typography>
                               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {processOptions.lightroomProfile && (
+                                  <Chip
+                                    label={`Profile: ${getLightroomProfileDisplayName(processOptions.lightroomProfile)}`}
+                                    variant="filled"
+                                    color="primary"
+                                    size="small"
+                                  />
+                                )}
                                 {processOptions.artistStyle?.name && (
                                   <Chip
                                     label={`Artist: ${processOptions.artistStyle.name}`}
@@ -885,6 +921,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                       <strong>Preserve Skin Tones:</strong>{' '}
                                       {processOptions.preserveSkinTones ? 'On' : 'Off'}
                                     </Typography>
+                                    {processOptions.lightroomProfile && (
+                                      <Typography variant="body1">
+                                        <strong>Lightroom Profile:</strong>{' '}
+                                        {getLightroomProfileDisplayName(processOptions.lightroomProfile)}
+                                      </Typography>
+                                    )}
                                     {processOptions.artistStyle?.name && (
                                       <Typography variant="body1">
                                         <strong>Artist Style:</strong>{' '}
@@ -1656,6 +1698,130 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             33³ LUTs offer the best balance of quality and file size for most
                             applications.
                           </Typography>
+                        </Box>
+                      </Paper>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Tab Panel 5: Author */}
+                {author && activeTab === 4 && (
+                  <Box>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ mb: 3, fontWeight: 600, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}
+                    >
+                      <PersonOutlineIcon color="action" />
+                      Author
+                    </Typography>
+
+                    {/* Single centered card with author information */}
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <Paper elevation={0} sx={{ p: 4, maxWidth: 560, width: '100%', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+                        <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: '1fr' }}>
+                          {/* Avatar + Name */}
+                          <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 2, textAlign: 'left' }}>
+                            <Avatar
+                              sx={{ width: 48, height: 48, bgcolor: 'grey.100', color: 'text.primary', fontWeight: 600 }}
+                            >
+                              {`${(author.firstName?.[0] || '').toUpperCase()}${(author.lastName?.[0] || '').toUpperCase()}`}
+                            </Avatar>
+                            {(author.firstName || author.lastName) && (
+                              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                {[author.firstName, author.lastName].filter(Boolean).join(' ')}
+                              </Typography>
+                            )}
+                          </Box>
+
+                          <Divider />
+
+                          {/* Contact Information Grid */}
+                          <Box sx={{
+                            display: 'grid',
+                            gap: 2.5,
+                            gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(220px, 1fr))' },
+                            alignItems: 'start'
+                          }}>
+                            {/* Email */}
+                            {author.email && (
+                              <Box sx={{ textAlign: 'left' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
+                                  Email
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  component="a"
+                                  href={`mailto:${author.email}`}
+                                  sx={{
+                                    color: 'text.primary',
+                                    textDecoration: 'none',
+                                    '&:hover': { textDecoration: 'underline' },
+                                    wordBreak: 'break-all'
+                                  }}
+                                >
+                                  {author.email}
+                                </Typography>
+                              </Box>
+                            )}
+
+                            {/* Website */}
+                            {author.website && (
+                              <Box sx={{ textAlign: 'left' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
+                                  Website
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  component="a"
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    window.open(author.website!, '_blank');
+                                  }}
+                                  sx={{
+                                    color: 'text.primary',
+                                    textDecoration: 'none',
+                                    '&:hover': { textDecoration: 'underline' },
+                                    wordBreak: 'break-all'
+                                  }}
+                                >
+                                  {author.website}
+                                </Typography>
+                              </Box>
+                            )}
+
+                            {/* Instagram */}
+                            {author.instagram && (
+                              <Box sx={{ textAlign: 'left' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
+                                  Instagram
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  component="a"
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    let url: string;
+                                    if (author.instagram!.startsWith('http')) {
+                                      url = author.instagram!;
+                                    } else {
+                                      const instagramHandle = author.instagram!.replace(/^@/, '');
+                                      url = `https://www.instagram.com/${instagramHandle}`;
+                                    }
+                                    window.open(url, '_blank');
+                                  }}
+                                  sx={{
+                                    color: 'text.primary',
+                                    textDecoration: 'none',
+                                    '&:hover': { textDecoration: 'underline' }
+                                  }}
+                                >
+                                  {author.instagram}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
                       </Paper>
                     </Box>

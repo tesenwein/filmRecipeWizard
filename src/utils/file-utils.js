@@ -168,7 +168,7 @@ class FileUtils {
     /**
      * Generate preset filename with timestamp
      */
-    static generatePresetFilename(baseName = 'FotoRecipeWizard') {
+    static generatePresetFilename(baseName = 'Foto Recipe Wizard') {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
         return `${baseName}-${timestamp}.xmp`;
     }

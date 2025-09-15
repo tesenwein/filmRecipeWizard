@@ -28,7 +28,7 @@ export class OpenAIColorAnalyzer {
     hint?: string,
     baseImageBase64?: string | string[],
     targetImageBase64?: string,
-    options?: { preserveSkinTones?: boolean }
+    options?: { preserveSkinTones?: boolean; lightroomProfile?: string }
   ): Promise<AIColorAdjustments> {
     if (!this.initialized || !this.openai) {
       throw new Error(
@@ -55,6 +55,7 @@ export class OpenAIColorAnalyzer {
         hint,
         {
           preserveSkinTones: options?.preserveSkinTones,
+          lightroomProfile: options?.lightroomProfile,
         }
       );
 
@@ -158,7 +159,7 @@ export class OpenAIColorAnalyzer {
                   },
                   brightness: {
                     type: 'number',
-                    description: 'Legacy brightness adjustment (-100 to +100)',
+                    description: 'Brightness adjustment (-100 to +100)',
                     minimum: -100,
                     maximum: 100,
                   },

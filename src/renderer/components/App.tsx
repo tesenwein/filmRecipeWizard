@@ -1,31 +1,34 @@
-import BugReportIcon from '@mui/icons-material/BugReport';
-import GitHubIcon from '@mui/icons-material/Code';
-import HomeIcon from '@mui/icons-material/Home';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import IconSvg from '../../../assets/icons/icon.svg';
 import {
-  ProcessHistory,
+  Recipe,
   ProcessingResult,
-  ProcessingState,
   StyleOptions,
+  LightroomProfile,
 } from '../../shared/types';
 import { AlertProvider } from '../context/AlertContext';
-import ColorMatchingStudio from './ColorMatchingStudio';
-import HistoryView from './HistoryView';
-import ProcessingView from './ProcessingView';
-import ResultsView from './ResultsView';
-import Settings from './Settings';
+import { useAppStore } from '../store/appStore';
+import AppHeader from './AppHeader';
+import Router from './Router';
 
 const App: React.FC = () => {
+  // Zustand store
+  const {
+    currentProcessId,
+    setCurrentProcessId,
+    processingState,
+    setProcessingState,
+    addRecipe,
+    updateRecipeInStorage,
+    setGeneratingStatus,
+  } = useAppStore();
+
   // Simple hash-based router with query support
   const parseHash = () => {
-    const raw = (typeof window !== 'undefined' ? window.location.hash : '') || '#/home';
+    const raw = (typeof window !== 'undefined' ? window.location.hash : '') || '#/splash';
     const path = raw.replace(/^#/, '');
     const [route, queryStr = ''] = path.split('?');
     const query = Object.fromEntries(new URLSearchParams(queryStr));
-    return { route: route || '/home', query } as { route: string; query: Record<string, string> };
+    return { route: route || '/splash', query } as { route: string; query: Record<string, string> };
   };
   const initialHash = parseHash();
   const [route, setRoute] = useState<string>(initialHash.route);
@@ -33,18 +36,13 @@ const App: React.FC = () => {
 
   const [baseImages, setBaseImages] = useState<string[]>([]);
   const [targetImages, setTargetImages] = useState<string[]>([]);
-  const [processingState, setProcessingState] = useState<ProcessingState>({
-    isProcessing: false,
-    progress: 0,
-    status: '',
-  });
   const [prompt, setPrompt] = useState<string>('');
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [currentStep, setCurrentStep] = useState<'history' | 'upload' | 'processing' | 'results'>(
-    'history'
+  const [currentStep, setCurrentStep] = useState<'gallery' | 'upload' | 'processing' | 'results'>(
+    'gallery'
   );
-  const [currentProcessId, setCurrentProcessId] = useState<string | null>(null);
   const currentProcessIdRef = useRef<string | null>(null);
+  const startingRef = useRef<boolean>(false);
   useEffect(() => {
     currentProcessIdRef.current = currentProcessId;
   }, [currentProcessId]);
@@ -52,27 +50,74 @@ const App: React.FC = () => {
   useEffect(() => {
     targetImagesRef.current = targetImages;
   }, [targetImages]);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [styleOptions, setStyleOptions] = useState<StyleOptions>({});
+  const [startupStatus, setStartupStatus] = useState<{
+    status: string;
+    progress: number;
+  }>({ status: 'Loading...', progress: 0 });
+  const [styleOptions, setStyleOptions] = useState<StyleOptions>({
+    lightroomProfile: LightroomProfile.ADOBE_COLOR // Default to Adobe Color as specified
+  });
 
-  // Check if API key is configured on startup
+  // Force start at splash, then redirect based on setup completion (run only once)
   useEffect(() => {
-    const checkApiKey = async () => {
+    let mounted = true;
+
+    const boot = async () => {
+      // Always force start at splash
+      if (window.location.hash !== '#/splash') {
+        window.location.hash = '#/splash';
+        return;
+      }
+
       try {
-        const response = await window.electronAPI.getSettings();
-        if (
-          response.success &&
-          (!response.settings?.openaiKey || response.settings?.openaiKey === '')
-        ) {
-          setSettingsOpen(true);
-        }
-      } catch (error) {
-        console.error('[APP] Error checking settings:', error);
-        setSettingsOpen(true); // Open settings if there's an error
+        setStartupStatus({ status: 'Loading settings...', progress: 20 });
+        const res = await window.electronAPI.getSettings();
+        if (!mounted) return;
+
+        const setupCompleted = !!(res.success && res.settings && res.settings.setupCompleted);
+        const hasKey = !!(res.success && res.settings && res.settings.openaiKey);
+        const wizardNeeded = !setupCompleted || !hasKey;
+
+        setStartupStatus({ status: 'Loading recipes...', progress: 60 });
+        const { loadRecipes } = useAppStore.getState();
+        await loadRecipes();
+        if (!mounted) return;
+
+        setStartupStatus({ status: 'Finalizing...', progress: 90 });
+        setTimeout(() => {
+          if (!mounted) return;
+          window.location.hash = wizardNeeded ? '#/setup' : '#/gallery';
+        }, 300);
+      } catch {
+        if (!mounted) return;
+        // On error, prefer wizard to help user configure
+        window.location.hash = '#/setup';
       }
     };
-    checkApiKey();
-  }, []);
+    boot();
+
+    // Safety timeout to prevent getting stuck on splash
+    const safetyTimeout = setTimeout(async () => {
+      if (mounted && window.location.hash === '#/splash') {
+        try {
+          const res = await window.electronAPI.getSettings();
+          const setupCompleted = !!(res.success && res.settings && res.settings.setupCompleted);
+          const hasKey = !!(res.success && res.settings && res.settings.openaiKey);
+          const wizardNeeded = !setupCompleted || !hasKey;
+          window.location.hash = wizardNeeded ? '#/setup' : '#/gallery';
+        } catch {
+          window.location.hash = '#/setup';
+        }
+      }
+    }, 5000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(safetyTimeout);
+    };
+  }, []); // Remove route dependency to prevent endless loop
+
+  // No settings dialog anymore; routing controls settings page
 
   const handleImagesSelected = (bases: string[], targets: string[]) => {
     setBaseImages(bases.slice(0, 3));
@@ -81,8 +126,9 @@ const App: React.FC = () => {
   };
 
   const handleStartProcessing = async () => {
-    // Allow processing as long as there are target images; base/prompt optional
-    if (targetImages.length === 0) return;
+    // Prevent concurrent runs and require at least one target image
+    if (startingRef.current || processingState.isProcessing || targetImages.length === 0) return;
+    startingRef.current = true;
 
     // Save process to storage (converts to base64 and persists only base64 + results)
     let newProcessId: string | null = null;
@@ -96,11 +142,18 @@ const App: React.FC = () => {
         userOptions: styleOptions,
       } as any;
 
+      // Call electronAPI directly to get the base64 data for processing
       const result = await window.electronAPI.saveProcess(processData);
       if (result.success) {
         newProcessId = result.process.id;
         setCurrentProcessId(newProcessId);
         currentProcessIdRef.current = newProcessId;
+        // Update the store with the newly created process without re-saving
+        addRecipe(result.process);
+        // Mark as generating in gallery
+        if (newProcessId) {
+          try { setGeneratingStatus(newProcessId, true); } catch {}
+        }
         // Use the single recipe image (first reference) for processing only
         returnedBase64.base = result?.process?.recipeImageData
           ? [result.process.recipeImageData]
@@ -111,9 +164,13 @@ const App: React.FC = () => {
           : [];
       } else {
         console.warn('[APP] Failed to save process', result.error);
+        startingRef.current = false;
+        return;
       }
     } catch (error) {
       console.error('Failed to save process:', error);
+      startingRef.current = false;
+      return;
     }
 
     setCurrentStep('processing');
@@ -137,14 +194,15 @@ const App: React.FC = () => {
   };
 
   const handleProcessingUpdate = (progress: number, status: string) => {
-    setProcessingState(prev => ({
-      ...prev,
+    setProcessingState({
+      isProcessing: processingState.isProcessing,
       progress,
       status,
-    }));
+    });
   };
 
   const handleProcessingComplete = async (processingResults: any[]) => {
+    startingRef.current = false;
     // Convert the results to include inputPath for proper storage
     const inputs = targetImagesRef.current || [];
     const results: ProcessingResult[] = processingResults.map((result, index) => ({
@@ -156,20 +214,21 @@ const App: React.FC = () => {
     }));
 
     setResults(results);
-    setProcessingState(prev => ({
-      ...prev,
+    setProcessingState({
       isProcessing: false,
       progress: 100,
       status: 'Processing complete!',
-    }));
+    });
 
     // Update process in storage
     const pid = currentProcessIdRef.current;
     if (pid) {
       try {
-        await window.electronAPI.updateProcess(pid, {
+        const anySuccess = results.some(r => r.success);
+        await updateRecipeInStorage(pid, {
           results,
-        });
+          status: anySuccess ? 'completed' : 'failed',
+        } as any);
       } catch (error) {
         console.error('Failed to update process:', error);
       }
@@ -191,21 +250,22 @@ const App: React.FC = () => {
       progress: 0,
       status: '',
     });
+    // Do not mutate recipe status on reset; completion handler will update store
   };
 
   const handleNewProcess = () => {
     handleReset();
   };
 
-  const handleOpenRecipe = async (process: ProcessHistory) => {
+  const handleOpenRecipe = async (recipe: Recipe) => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
     // Do not rely on legacy file paths in stored recipe
     setBaseImages([]);
     setTargetImages([]);
-    setCurrentProcessId(process.id);
+    setCurrentProcessId(recipe.id);
     try {
-      if (process.id) {
-        const res = await window.electronAPI.getProcess(process.id);
+      if (recipe.id) {
+        const res = await window.electronAPI.getProcess(recipe.id);
         if (
           res?.success &&
           res.process &&
@@ -214,14 +274,14 @@ const App: React.FC = () => {
         ) {
           setResults(res.process.results);
         } else {
-          setResults(process.results || []);
+          setResults(recipe.results || []);
         }
       } else {
-        setResults(process.results || []);
+        setResults(recipe.results || []);
       }
     } finally {
       setCurrentStep('results');
-      navigate(`/recipedetails?id=${process.id}`);
+      navigate(`/recipedetails?id=${recipe.id}`);
     }
   };
 
@@ -229,14 +289,50 @@ const App: React.FC = () => {
   React.useEffect(() => {
     if (typeof window !== 'undefined' && window.electronAPI) {
       // Listen for processing updates
-      window.electronAPI.onProcessingProgress?.((progress: number, status: string) => {
+      const onProgress = (progress: number, status: string) => {
         handleProcessingUpdate(progress, status);
-      });
+      };
+      window.electronAPI.onProcessingProgress?.(onProgress);
 
       // Listen for processing completion
-      window.electronAPI.onProcessingComplete?.((results: ProcessingResult[]) => {
+      const onComplete = (results: ProcessingResult[]) => {
         handleProcessingComplete(results);
-      });
+      };
+      window.electronAPI.onProcessingComplete?.(onComplete);
+
+      // Listen for background process updates (e.g., status flip to completed)
+      const onProcessUpdated = async (payload: { processId: string; updates: any }) => {
+        try {
+          if (!payload?.processId) return;
+          // Fetch the latest process to ensure canonical data
+          const res = await window.electronAPI.getProcess(payload.processId);
+          if (res?.success && res.process) {
+            const full = res.process as Recipe;
+            try {
+              const { updateRecipe, setGeneratingStatus } = useAppStore.getState();
+              updateRecipe(full.id, full as any);
+              // If status changed away from generating, clear flag
+              if ((full as any).status && (full as any).status !== 'generating') {
+                setGeneratingStatus(full.id, false);
+              }
+            } catch {}
+          }
+        } catch {
+          // Swallow background update errors silently
+        }
+      };
+      window.electronAPI.onProcessUpdated?.(onProcessUpdated);
+
+      // Cleanup to avoid duplicate listeners (dev StrictMode mounts twice)
+      return () => {
+        try {
+          window.electronAPI.removeAllListeners?.('processing-progress');
+          window.electronAPI.removeAllListeners?.('processing-complete');
+          window.electronAPI.removeAllListeners?.('process-updated');
+        } catch {
+          // no-op
+        }
+      };
     }
   }, []);
 
@@ -253,10 +349,10 @@ const App: React.FC = () => {
 
   // When navigating to create, default to upload step if nothing selected
   useEffect(() => {
-    if (route === '/create' && !processingState.isProcessing && currentStep === 'history') {
+    if (route === '/create' && !processingState.isProcessing && currentStep === 'gallery') {
       setCurrentStep('upload');
     }
-  }, [route]);
+  }, [route, processingState.isProcessing, currentStep]);
 
   // Restore recipe when landing directly on recipe details (e.g., after refresh)
   useEffect(() => {
@@ -286,211 +382,42 @@ const App: React.FC = () => {
     window.location.hash = to.startsWith('#') ? to : `#${to}`;
   };
 
-  const Header = (
-    <header style={{ position: 'sticky', top: 8, zIndex: 50, marginBottom: '16px' }}>
-      <div className="drag-region" />
-      <div
-        style={{
-          WebkitAppRegion: 'drag',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'rgba(255, 255, 255, 0.3)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          borderRadius: 12,
-          padding: '12px 16px',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src={IconSvg} alt="Foto Recipe Wizard" style={{ width: 28, height: 28 }} />
-          <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>
-            Foto Recipe Wizard
-          </span>
-        </div>
-        <div className="no-drag">
-          <Tooltip title="Home">
-            <IconButton
-              color="inherit"
-              size="small"
-              onClick={() => navigate('/home')}
-              sx={{
-                mr: 1,
-                color: 'action.active',
-                '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' },
-              }}
-            >
-              <HomeIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="GitHub Repository">
-            <IconButton
-              color="inherit"
-              size="small"
-              onClick={() =>
-                window.electronAPI.openExternal('https://github.com/tesenwein/fotoRecipeWizard')
-              }
-              sx={{
-                mr: 1,
-                color: 'action.active',
-                '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' },
-              }}
-            >
-              <GitHubIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Report Issues">
-            <IconButton
-              color="inherit"
-              size="small"
-              onClick={() =>
-                window.electronAPI.openExternal(
-                  'https://github.com/tesenwein/fotoRecipeWizard/issues'
-                )
-              }
-              sx={{
-                mr: 1,
-                color: 'action.active',
-                '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' },
-              }}
-            >
-              <BugReportIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Settings">
-            <IconButton
-              color="inherit"
-              size="small"
-              onClick={() => setSettingsOpen(true)}
-              sx={{ color: 'action.active', '&:hover': { backgroundColor: 'rgba(17,24,39,0.1)' } }}
-            >
-              <SettingsIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-      </div>
-    </header>
-  );
 
   return (
     <AlertProvider>
       <div className={`container ${currentStep}`}>
-      {/* Global drag strip at very top so window can always be moved (even over modals) */}
-      <div className="global-drag-strip" />
-      {/* Scroll fade-out effect overlay */}
-      <div className="scroll-fade-overlay" />
-      {Header}
-      {route === '/home' && (
-        <div className="fade-in">
-          <HistoryView
-            onOpenRecipe={process => {
-              handleOpenRecipe(process);
-            }}
-            onNewProcess={() => {
-              handleNewProcess();
-              navigate('/create');
-            }}
-          />
-        </div>
-      )}
+        {/* Global drag strip at very top so window can always be moved (even over modals) */}
+        <div className="global-drag-strip" />
+        {/* Scroll fade-out effect overlay */}
+        <div className="scroll-fade-overlay" />
 
-      {route === '/create' && (
-        <div>
-          {currentStep === 'upload' && (
-            <div className="fade-in">
-              <ColorMatchingStudio
-                onImagesSelected={handleImagesSelected}
-                onStartProcessing={handleStartProcessing}
-                baseImages={baseImages}
-                targetImages={targetImages}
-                prompt={prompt}
-                onPromptChange={setPrompt}
-                styleOptions={styleOptions}
-                onStyleOptionsChange={u => setStyleOptions(prev => ({ ...prev, ...u }))}
-              />
-            </div>
-          )}
-          {currentStep === 'processing' && (
-            <div className="fade-in">
-              <ProcessingView
-                processingState={processingState}
-                baseImage={baseImages[0] || null}
-                targetImages={targetImages}
-                prompt={prompt}
-              />
-            </div>
-          )}
-          {currentStep === 'results' && (
-            <div className="fade-in">
-              <ResultsView
-                results={results}
-                baseImage={baseImages[0] || null}
-                targetImages={targetImages}
-                prompt={prompt}
-                processId={currentProcessId || undefined}
-                onReset={() => {
-                  handleReset();
-                  navigate('/home');
-                }}
-                onRestart={() => {
-                  setCurrentStep('processing');
-                  handleStartProcessing();
-                }}
-              />
-            </div>
-          )}
-        </div>
-      )}
+        {route !== '/splash' && route !== '/setup' && <AppHeader onNavigate={navigate} />}
 
-      {route === '/recipedetails' && (
-        <div className="fade-in">
-          {currentProcessId && (
-            <ResultsView
-              results={results}
-              baseImage={baseImages[0] || null}
-              targetImages={targetImages}
-              prompt={prompt}
-              processId={currentProcessId || undefined}
-              onReset={() => {
-                handleReset();
-                navigate('/home');
-              }}
-              onRestart={() => {
-                setCurrentStep('processing');
-                handleStartProcessing();
-              }}
-            />
-          )}
-          {!currentProcessId && (
-            <div className="card" style={{ padding: 24 }}>
-              <div style={{ marginBottom: 8, fontWeight: 600 }}>No project selected</div>
-              <div style={{ color: '#6b7280' }}>Choose one from Home → Your Projects.</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <Dialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        fullWidth
-        maxWidth="sm"
-        disablePortal
-        disableScrollLock
-        slotProps={{
-          paper: { className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } },
-          backdrop: { className: 'no-drag', sx: { WebkitAppRegion: 'no-drag' } },
-        }}
-      >
-        <DialogTitle>Settings</DialogTitle>
-        <DialogContent className="no-drag" sx={{ WebkitAppRegion: 'no-drag' }}>
-          <div style={{ paddingTop: 8, paddingBottom: 8 }}>
-            <Settings />
-          </div>
-        </DialogContent>
-      </Dialog>
+        <Router
+          route={route}
+          routeQuery={routeQuery}
+          startupStatus={startupStatus}
+          currentStep={currentStep}
+          currentProcessId={currentProcessId}
+          baseImages={baseImages}
+          targetImages={targetImages}
+          prompt={prompt}
+          results={results}
+          styleOptions={styleOptions}
+          processingState={processingState}
+          onOpenRecipe={handleOpenRecipe}
+          onNewProcess={handleNewProcess}
+          onImagesSelected={handleImagesSelected}
+          onStartProcessing={handleStartProcessing}
+          onPromptChange={setPrompt}
+          onStyleOptionsChange={u => setStyleOptions(prev => ({ ...prev, ...u }))}
+          onReset={handleReset}
+          onRestart={() => {
+            setCurrentStep('processing');
+            handleStartProcessing();
+          }}
+          onNavigate={navigate}
+        />
       </div>
     </AlertProvider>
   );
