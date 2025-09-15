@@ -1,7 +1,11 @@
 import OpenAI from 'openai';
 import * as path from 'path';
 import sharp from 'sharp';
+import { buildUserContentForAnalysis } from './prompt';
+import type { AIColorAdjustments } from './types';
+export type { AIColorAdjustments } from './types';
 
+/* Legacy inline type kept for reference (now imported from ./types)
 export interface AIColorAdjustments {
   // Rendering intent / profile
   treatment?: 'color' | 'black_and_white';
@@ -78,8 +82,12 @@ export interface AIColorAdjustments {
   // Local masks proposed by AI
   masks?: Array<{
     name?: string;
-    // 'person' corresponds to Lightroom's AI Subject/People mask
-    type: 'radial' | 'linear' | 'person';
+    // Mask type: geometric, AI-detected subjects, scene parts, or range masks
+    // 'person' maps to Lightroom Subject/People (MaskSubType=1)
+    // 'background' maps to Background (MaskSubType=0)
+    // 'sky' maps to Sky (MaskSubType=2)
+    // 'range_color' and 'range_luminance' map to CorrectionRangeMask structures
+    type: 'radial' | 'linear' | 'person' | 'background' | 'sky' | 'range_color' | 'range_luminance';
     adjustments?: {
       local_exposure?: number;
       local_contrast?: number;
@@ -94,6 +102,8 @@ export interface AIColorAdjustments {
       local_texture?: number;
       local_saturation?: number;
     };
+    // Optional sub-category for background masks (Lightroom may include MaskSubCategoryID)
+    subCategoryId?: number;
     // Radial geometry
     top?: number;
     left?: number;
@@ -113,8 +123,17 @@ export interface AIColorAdjustments {
     // Person mask reference point (normalized 0..1, defaults to 0.5,0.5)
     referenceX?: number;
     referenceY?: number;
+    // Range mask parameters
+    // Color range mask
+    colorAmount?: number; // 0..1 amount
+    invert?: boolean; // invert for range masks
+    pointModels?: number[][]; // array of sample models: [cx, cy, r, g, b, flags]
+    // Luminance range mask
+    lumRange?: number[]; // 4 numbers like [loStart, loEnd, hiStart, hiEnd]
+    luminanceDepthSampleInfo?: number[]; // 3 numbers (e.g., [0, v1, v2])
   }>;
 }
+*/
 
 export class OpenAIColorAnalyzer {
   private openai: OpenAI | null = null;
@@ -162,74 +181,8 @@ export class OpenAIColorAnalyzer {
     try {
       console.log(`[AI] Calling OpenAI API with model: ${this.model}`);
 
-      // Build content dynamically to support prompt-only flow
-      const userContent: any[] = [];
-      if (hint) {
-        userContent.push({ type: 'text' as const, text: `Hint: ${hint}` });
-      }
-      if (baseImageB64) {
-        userContent.push(
-          {
-            type: 'text' as const,
-            text: `You are a professional photo editor and colorist. I have two images:
-
-1. BASE IMAGE: This is the reference photo with the desired color grading, mood, and style
-2. TARGET IMAGE: This is the photo I want to adjust to match the BASE IMAGE's color characteristics
-3. For portraits, ensure a match in skin tone and backdrop
-4. For landscapes, ensure a match in overall scene mood and lighting, specifically sky and foliage colors
-
-Please analyze both images and provide detailed Lightroom/Camera Raw adjustments to make the TARGET IMAGE match the color grading, mood, white balance, and overall aesthetic of the BASE IMAGE.
-
-Additionally, provide a short, human-friendly preset_name we can use for the XMP preset and the recipe title. Naming rules:
-- 2–4 words, Title Case, descriptive of the look and Artist or Film type if provided (e.g., “Warm Sunset Glow”, “Soft Mono Film”).
-- Do not include words like “Match”, “Target”, “Base”, “AI”, file names, or dates.
-- Avoid special characters (only letters, numbers, spaces, and hyphens).
-- Keep it unique to the style you are proposing.
-
-Additionally, propose up to 3 local adjustment masks (radial, linear, or person/subject). Use normalized geometry (0..1) and conservative values. For person masks, provide a reference point near the face (referenceX/referenceY).`,
-          },
-          { type: 'text' as const, text: 'BASE IMAGE (reference style):' },
-          {
-            type: 'image_url' as const,
-            image_url: { url: `data:image/jpeg;base64,${baseImageB64}` },
-          },
-          { type: 'text' as const, text: 'TARGET IMAGE (to be adjusted):' },
-          {
-            type: 'image_url' as const,
-            image_url: { url: `data:image/jpeg;base64,${targetImageB64}` },
-          }
-        );
-      } else {
-        // No base/reference: allow prompt-less processing by using a neutral default style
-        const effectiveHint =
-          hint && hint.trim().length > 0
-            ? hint
-            : 'Apply natural, balanced color grading with clean contrast, pleasing skin tones, and faithful color.';
-        userContent.push(
-          {
-            type: 'text' as const,
-            text: `You are a professional photo editor and colorist. I have one image:
-
-• TARGET IMAGE: Apply Lightroom/Camera Raw adjustments to achieve the following style description.
-
-Style description:\n${effectiveHint}
-
-Please provide a complete set of adjustments that best produces this look on the target image, including white balance, tone, HSL, curves, and color grading as needed.
-
-Also include a short preset_name following these rules:
-- 2–4 words, Title Case, descriptive of the look
-- Avoid words like “AI”, file names, or dates
-- Only letters, numbers, spaces, and hyphens.
-
-Additionally, propose up to 3 local adjustment masks (radial, linear, or person/subject). Use normalized geometry (0..1) and conservative values. For person masks, provide a reference point near the face (referenceX/referenceY).`,
-          },
-          { type: 'text' as const, text: 'TARGET IMAGE:' },
-          {
-            type: 'image_url' as const,
-            image_url: { url: `data:image/jpeg;base64,${targetImageB64}` },
-          }
-        );
-      }
+      // Build content via helper (use auto-recognition masks for humans)
+      const userContent: any[] = buildUserContentForAnalysis(baseImageB64, targetImageB64, hint);
 
       // Debug: Log the complete prompt content being sent
       console.log('[AI] === PROMPT DEBUG START ===');
@@ -827,7 +780,19 @@ Additionally, propose up to 3 local adjustment masks (radial, linear, or person/
                       type: 'object',
                       properties: {
                         name: { type: 'string' },
-                        type: { type: 'string', enum: ['radial', 'linear', 'person'] },
+                        type: {
+                          type: 'string',
+                          enum: [
+                            'radial',
+                            'linear',
+                            'person',
+                            'subject',
+                            'background',
+                            'sky',
+                            'range_color',
+                            'range_luminance',
+                          ],
+                        },
                         adjustments: {
                           type: 'object',
                           properties: {
@@ -845,6 +810,7 @@ Additionally, propose up to 3 local adjustment masks (radial, linear, or person/
                             local_saturation: { type: 'number', minimum: -1, maximum: 1 },
                           },
                         },
+                        subCategoryId: { type: 'number' },
                         top: { type: 'number', minimum: 0, maximum: 1 },
                         left: { type: 'number', minimum: 0, maximum: 1 },
                         bottom: { type: 'number', minimum: 0, maximum: 1 },
@@ -861,6 +827,25 @@ Additionally, propose up to 3 local adjustment masks (radial, linear, or person/
                         fullY: { type: 'number', minimum: 0, maximum: 1 },
                         referenceX: { type: 'number', minimum: 0, maximum: 1 },
                         referenceY: { type: 'number', minimum: 0, maximum: 1 },
+                        // Range mask parameters (optional)
+                        colorAmount: { type: 'number', minimum: 0, maximum: 1 },
+                        invert: { type: 'boolean' },
+                        pointModels: {
+                          type: 'array',
+                          items: { type: 'array', items: { type: 'number' } },
+                        },
+                        lumRange: {
+                          type: 'array',
+                          items: { type: 'number' },
+                          minItems: 4,
+                          maxItems: 4,
+                        },
+                        luminanceDepthSampleInfo: {
+                          type: 'array',
+                          items: { type: 'number' },
+                          minItems: 3,
+                          maxItems: 3,
+                        },
                       },
                       required: ['type'],
                     },
