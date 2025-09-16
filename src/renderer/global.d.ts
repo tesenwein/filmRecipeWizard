@@ -81,6 +81,8 @@ declare global {
       // Utility functions
       removeAllListeners: (channel: string) => void;
 
+      // App info
+      getAppVersion: () => Promise<{ success: boolean; version?: string; error?: string }>;
     };
   }
 }
