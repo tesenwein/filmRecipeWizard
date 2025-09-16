@@ -3,6 +3,8 @@ name: Build and Release
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'
     paths-ignore:
       - '**.md'
       - '.gitignore'
@@ -27,7 +29,7 @@ permissions:
   actions: write
 
 jobs:
-  # Check if version number changed in package.json
+  # Check if version number changed in package.json OR if this is a version tag push
   check-release:
     name: Check Release Needed
     runs-on: ubuntu-latest
@@ -35,58 +37,89 @@ jobs:
       should_release: ${{ steps.check.outputs.should_release }}
       new_version: ${{ steps.check.outputs.new_version }}
       version_changed: ${{ steps.check.outputs.version_changed }}
+      is_tag_push: ${{ steps.check.outputs.is_tag_push }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - name: Check for version changes
+      - name: Check for version changes or tag push
         id: check
         run: |
           # Get current version from package.json
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current version: $CURRENT_VERSION"
           
-          # Get previous version from the last commit
-          PREVIOUS_VERSION=""
-          if git show HEAD~1:package.json >/dev/null 2>&1; then
-            PREVIOUS_VERSION=$(git show HEAD~1:package.json | node -e "
-              let data = '';
-              process.stdin.on('data', chunk => data += chunk);
-              process.stdin.on('end', () => {
-                try {
-                  const pkg = JSON.parse(data);
-                  console.log(pkg.version || '');
-                } catch (e) {
-                  console.log('');
-                }
-              });
-            ")
-          fi
-          
-          echo "Previous version: $PREVIOUS_VERSION"
-          
           SHOULD_RELEASE=false
           VERSION_CHANGED=false
+          IS_TAG_PUSH=false
+          
+          # Check if this is a tag push (from npm version)
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            IS_TAG_PUSH=true
+            TAG_VERSION="${{ github.ref_name }}"
+            echo "Tag push detected: $TAG_VERSION"
+            
+            # Extract version from tag (remove 'v' prefix)
+            TAG_VERSION_NUMBER="${TAG_VERSION#v}"
+            echo "Tag version number: $TAG_VERSION_NUMBER"
+            
+            # Check if tag version matches package.json version
+            if [ "$TAG_VERSION_NUMBER" = "$CURRENT_VERSION" ]; then
+              SHOULD_RELEASE=true
+              echo "Tag version matches package.json version - triggering release"
+            else
+              echo "Warning: Tag version ($TAG_VERSION_NUMBER) doesn't match package.json version ($CURRENT_VERSION)"
+              # Still trigger release but use package.json version
+              SHOULD_RELEASE=true
+            fi
+          else
+            # This is a regular commit push - check for manual version changes
+            echo "Regular commit push - checking for version changes"
+            
+            # Get previous version from the last commit
+            PREVIOUS_VERSION=""
+            if git show HEAD~1:package.json >/dev/null 2>&1; then
+              PREVIOUS_VERSION=$(git show HEAD~1:package.json | node -e "
+                let data = '';
+                process.stdin.on('data', chunk => data += chunk);
+                process.stdin.on('end', () => {
+                  try {
+                    const pkg = JSON.parse(data);
+                    console.log(pkg.version || '');
+                  } catch (e) {
+                    console.log('');
+                  }
+                });
+              ")
+            fi
+            
+            echo "Previous version: $PREVIOUS_VERSION"
+            
+            # Check if version changed manually
+            if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ] && [ -n "$PREVIOUS_VERSION" ]; then
+              SHOULD_RELEASE=true
+              VERSION_CHANGED=true
+              echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+            fi
+          fi
           
           # Force release if manually triggered
           if [ "${{ github.event.inputs.force_release }}" = "true" ]; then
             SHOULD_RELEASE=true
             echo "Force release triggered"
-          # Check if version changed
-          elif [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ] && [ -n "$PREVIOUS_VERSION" ]; then
-            SHOULD_RELEASE=true
-            VERSION_CHANGED=true
-            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
-          else
-            echo "No version change detected"
+          fi
+          
+          if [ "$SHOULD_RELEASE" = "false" ]; then
+            echo "No release trigger detected"
           fi
           
           echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
           echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "version_changed=$VERSION_CHANGED" >> $GITHUB_OUTPUT
-          echo "Should release: $SHOULD_RELEASE (version changed: $VERSION_CHANGED)"
+          echo "is_tag_push=$IS_TAG_PUSH" >> $GITHUB_OUTPUT
+          echo "Should release: $SHOULD_RELEASE (version changed: $VERSION_CHANGED, tag push: $IS_TAG_PUSH)"
 
   # Build the application for all platforms
   build:
@@ -166,7 +199,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed for changelog generation
+          fetch-depth: 0 # Needed for changelog generation and tag operations
           ref: ${{ github.ref }}
 
       - name: Setup Node.js
@@ -192,6 +225,15 @@ jobs:
         run: |
           VERSION="${{ needs.check-release.outputs.new_version }}"
           
+          # Check if release already exists (to avoid duplicates)
+          if gh release view "v${VERSION}" >/dev/null 2>&1; then
+            echo "Release v${VERSION} already exists - skipping release creation"
+            echo "skip_release=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "skip_release=false" >> $GITHUB_OUTPUT
+          
           # Get commits since last tag/release
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           if [ -z "$LAST_TAG" ]; then
@@ -203,8 +245,12 @@ jobs:
           echo "## 📋 Changes in v${VERSION}" > CHANGELOG.md
           echo "" >> CHANGELOG.md
 
-          # If version changed, highlight the version bump
-          if [ "${{ needs.check-release.outputs.version_changed }}" = "true" ]; then
+          # If this is a tag push, highlight that it was triggered by npm version
+          if [ "${{ needs.check-release.outputs.is_tag_push }}" = "true" ]; then
+            echo "### 🚀 Version Update (via npm version)" >> CHANGELOG.md
+            echo "- Released version ${VERSION} using \`npm version\`" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          elif [ "${{ needs.check-release.outputs.version_changed }}" = "true" ]; then
             echo "### 🚀 Version Update" >> CHANGELOG.md
             echo "- Updated to version ${VERSION}" >> CHANGELOG.md
             echo "" >> CHANGELOG.md
@@ -222,14 +268,18 @@ jobs:
           echo "Choose the appropriate version for your platform:" >> CHANGELOG.md
           echo "- **macOS**: \`.dmg\` (installer)" >> CHANGELOG.md
           echo "- **Windows**: \`.exe\` (installer)" >> CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
+        if: steps.changelog.outputs.skip_release != 'true'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.check-release.outputs.new_version }}
           name: Film Recipe Wizard v${{ needs.check-release.outputs.new_version }}
           body_path: CHANGELOG.md
           prerelease: false
+          make_latest: true
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.exe
