@@ -44,7 +44,7 @@
     "photography",
     "ai-photo-editing"
   ],
-  "author": "Theodore Senwein",
+  "author": "Theodore Esenwein",
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.35.0",
