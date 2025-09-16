@@ -164,14 +164,7 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Generate icons (non-Windows)
-        if: matrix.platform != 'win'
-        run: npm run generate-icons
-
-      - name: Generate icons (Windows)
-        if: matrix.platform == 'win'
-        run: npm run generate-icons
-        shell: cmd
+      # Icons are copied from assets/icons to build/icons during build process
 
       # macOS builds
       - name: Build macOS app
@@ -179,10 +172,10 @@ jobs:
         run: npm run package:mac:universal
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false # Disable code signing for CI
-          CSC_LINK: ""
-          CSC_KEY_PASSWORD: ""
-          APPLE_ID: ""
-          APPLE_ID_PASSWORD: ""
+          CSC_LINK: ''
+          CSC_KEY_PASSWORD: ''
+          APPLE_ID: ''
+          APPLE_ID_PASSWORD: ''
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Windows builds

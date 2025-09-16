@@ -1,4 +1,3 @@
-const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
@@ -7,34 +6,87 @@ const iconsDir = path.join(__dirname, '../build/icons');
 
 const sizes = [16, 32, 48, 64, 128, 256, 512, 1024];
 
+let sharp = null;
+
+try {
+  // Try to require sharp; it can fail on some CI/platform combinations
+  sharp = require('sharp');
+} catch (err) {
+  console.warn('`sharp` could not be loaded — will copy existing icons as fallback.');
+}
+
+function ensureIconsDir() {
+  if (!fs.existsSync(iconsDir)) {
+    fs.mkdirSync(iconsDir, { recursive: true });
+  }
+}
+
+async function generateWithSharp(svgBuffer) {
+  for (const size of sizes) {
+    await sharp(svgBuffer)
+      .resize(size, size)
+      .png()
+      .toFile(path.join(iconsDir, `${size}x${size}.png`));
+    console.log(`Generated ${size}x${size}.png`);
+  }
+
+  await sharp(svgBuffer)
+    .resize(512, 512)
+    .png()
+    .toFile(path.join(iconsDir, 'icon.png'));
+  console.log('Generated icon.png');
+}
+
+// jimp removed: we prefer sharp. If sharp isn't available we copy prebuilt icons.
+
+function copyExistingIcons() {
+  // Copy prebuilt icons from assets/icons to build/icons
+  const assetsIconsDir = path.join(__dirname, '../assets/icons');
+  if (!fs.existsSync(assetsIconsDir)) {
+    console.warn('No existing assets icons found to copy. Nothing to do.');
+    return;
+  }
+
+  ensureIconsDir();
+  const files = fs.readdirSync(assetsIconsDir).filter(file => file.endsWith('.png') || file.endsWith('.svg'));
+  for (const file of files) {
+    const src = path.join(assetsIconsDir, file);
+    const dest = path.join(iconsDir, file);
+    try {
+      fs.copyFileSync(src, dest);
+      console.log(`Copied existing icon: ${file}`);
+    } catch (err) {
+      console.warn(`Failed to copy ${file}:`, err.message);
+    }
+  }
+}
+
 async function generateIcons() {
   try {
-    // Ensure icons directory exists
-    if (!fs.existsSync(iconsDir)) {
-      fs.mkdirSync(iconsDir, { recursive: true });
+    ensureIconsDir();
+
+    if (!fs.existsSync(svgPath)) {
+      console.warn('SVG source icon not found:', svgPath);
+      // fallback to copying existing icons from assets
+      copyExistingIcons();
+      return;
     }
 
     const svgBuffer = fs.readFileSync(svgPath);
 
-    // Generate PNG files for each size
-    for (const size of sizes) {
-      await sharp(svgBuffer)
-        .resize(size, size)
-        .png()
-        .toFile(path.join(iconsDir, `${size}x${size}.png`));
-      console.log(`Generated ${size}x${size}.png`);
+    if (sharp) {
+      await generateWithSharp(svgBuffer);
+      console.log('All icons generated successfully with sharp!');
+      return;
     }
 
-    // Copy 512x512 as the main icon.png (electron-builder requires at least 512x512)
-    await sharp(svgBuffer)
-      .resize(512, 512)
-      .png()
-      .toFile(path.join(iconsDir, 'icon.png'));
-    console.log('Generated icon.png');
-
-    console.log('All icons generated successfully!');
+    // sharp not available — copy prebuilt icons from assets
+    console.warn('`sharp` not available; copying prebuilt icons from assets instead.');
+    copyExistingIcons();
   } catch (error) {
-    console.error('Error generating icons:', error);
+    console.error('Error generating icons:', error && error.message ? error.message : error);
+    console.log('Falling back to copying prebuilt icons from assets...');
+    copyExistingIcons();
   }
 }
 

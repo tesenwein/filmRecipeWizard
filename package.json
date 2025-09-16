@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run build && electron .",
     "dev": "concurrently \"npm run watch:main\" \"npm run watch:renderer\" \"wait-on dist/main/main.js && electron .\"",
-    "build": "npm run build:main && npm run build:renderer",
+    "build": "npm run generate-icons && npm run build:main && npm run build:renderer",
     "build:main": "tsc -p src/main/tsconfig.json",
     "build:renderer": "webpack --config webpack.renderer.js",
     "watch:main": "tsc -p src/main/tsconfig.json --watch",
@@ -15,12 +15,11 @@
     "lint:check": "eslint 'src/**/*.ts' 'src/**/*.tsx'",
     "typecheck": "tsc -p src/main/tsconfig.json --noEmit && tsc -p src/renderer/tsconfig.json --noEmit",
     "clean": "rimraf dist",
-    "package": "npm run generate-icons && npm run build && electron-builder",
-    "package:mac": "npm run generate-icons && npm run build && electron-builder --mac",
-    "package:mac:dmg": "npm run generate-icons && npm run build && electron-builder --mac dmg",
-    "package:mac:universal": "npm run generate-icons && npm run build && electron-builder --mac --universal",
+    "package": "npm run build && electron-builder",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:mac:dmg": "npm run build && electron-builder --mac dmg",
+    "package:mac:universal": "npm run build && electron-builder --mac --universal",
     "generate-icons": "node scripts/generate-icons.js",
-    "generate:sample-xmp": "npm run build:main && node scripts/generate-sample-xmp.js",
     "knip": "knip"
   },
   "keywords": [
@@ -67,8 +66,10 @@
     "openai": "^5.20.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "sharp": "^0.34.3",
     "zustand": "^5.0.8"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.34.3"
   },
   "build": {
     "appId": "com.theodoresenwein.filmrecipewizard",
