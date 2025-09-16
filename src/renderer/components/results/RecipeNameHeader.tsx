@@ -1,0 +1,152 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Box, IconButton, TextField, Typography } from '@mui/material';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import { ProcessingResult } from '../../../shared/types';
+import { useAppStore } from '../../store/appStore';
+import { useAlert } from '../../context/AlertContext';
+
+interface RecipeNameHeaderProps {
+  processId?: string;
+  successfulResults: ProcessingResult[];
+  selectedResult: number;
+  processOptions?: any;
+}
+
+const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
+  processId,
+  successfulResults,
+  selectedResult,
+  processOptions,
+}) => {
+  const { showError } = useAlert();
+  const [savedName, setSavedName] = useState<string | undefined>(undefined);
+  const [editing, setEditing] = useState(false);
+  const [input, setInput] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Load saved name directly from storage when processId changes
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (!processId) {
+        if (mounted) setSavedName(undefined);
+        return;
+      }
+      try {
+        const res = await window.electronAPI.getProcess(processId);
+        if (mounted) {
+          const name = (res?.success && res.process && (res.process as any).name) || '';
+          setSavedName(typeof name === 'string' && name.trim().length > 0 ? name : undefined);
+        }
+      } catch {
+        if (mounted) setSavedName(undefined);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [processId]);
+
+  const computedDefaultName = useMemo(() => {
+    const current = successfulResults[selectedResult];
+    const aiName = current?.metadata?.aiAdjustments && (current.metadata.aiAdjustments as any).preset_name;
+    if (typeof aiName === 'string' && aiName.trim().length > 0) {
+      const extras: string[] = [];
+      const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
+      const film = (processOptions as any)?.filmStyle?.name as string | undefined;
+      if (artist && artist.trim().length > 0) extras.push(artist.trim());
+      if (film && film.trim().length > 0) extras.push(film.trim());
+      return extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
+    }
+    return `Recipe ${selectedResult + 1}`;
+  }, [successfulResults, selectedResult, processOptions]);
+
+  const displayedName = savedName || computedDefaultName;
+
+  const startEditing = () => {
+    setInput(displayedName || '');
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setInput('');
+  };
+
+  const save = async () => {
+    if (!processId) return;
+    const newName = (input || '').trim();
+    if (!newName) {
+      cancelEditing();
+      return;
+    }
+    try {
+      setSaving(true);
+      await useAppStore.getState().updateRecipeInStorage(processId, { name: newName } as any);
+      setSavedName(newName);
+      setEditing(false);
+    } catch (e) {
+      console.error('Failed to save recipe name:', e);
+      showError('Failed to save name');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+      {editing ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+          <TextField
+            size="small"
+            fullWidth
+            value={input}
+            autoFocus
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                save();
+              } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelEditing();
+              }
+            }}
+            inputProps={{ maxLength: 120 }}
+          />
+          <IconButton aria-label="Save name" onClick={save} disabled={saving}>
+            <CheckIcon />
+          </IconButton>
+          <IconButton aria-label="Cancel editing" onClick={cancelEditing} disabled={saving}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      ) : (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: 'primary.main',
+              textAlign: 'left',
+              mb: 1,
+              fontSize: { xs: '1.5rem', sm: '2rem' },
+              flex: 1,
+            }}
+          >
+            {displayedName}
+          </Typography>
+          <IconButton aria-label="Edit name" title="Edit name" onClick={startEditing}>
+            <EditOutlinedIcon />
+          </IconButton>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+export default RecipeNameHeader;
+
