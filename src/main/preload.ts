@@ -68,6 +68,7 @@ const electronAPI = {
   clearHistory: () => ipcRenderer.invoke('clear-recipes'),
 
   // Settings operations
+  selectStorageFolder: () => ipcRenderer.invoke('select-storage-folder'),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
   updateSettings: (settings: any) => ipcRenderer.invoke('update-settings', settings),

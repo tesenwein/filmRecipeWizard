@@ -1,27 +1,79 @@
 import { app } from 'electron';
 import * as fs from 'fs/promises';
+import * as os from 'os';
 import * as path from 'path';
 import sharp from 'sharp';
-import { ProcessHistory } from '../shared/types';
+import { ProcessHistory, AppSettings, DEFAULT_STORAGE_FOLDER } from '../shared/types';
 
 export class StorageService {
   private storageFile: string;
   private backupDir: string;
   private initialized = false;
-  private migrated = false;
+  private settingsFile: string;
+  private storageLocation: string;
 
   constructor() {
+    // Settings are always stored in app's userData
     const userDataPath = app.getPath('userData');
-    this.storageFile = path.join(userDataPath, 'filmRecipeWizard-history.json');
-    this.backupDir = path.join(userDataPath, 'history-backups');
+    this.settingsFile = path.join(userDataPath, 'settings.json');
+
+    // Default storage location (will be overridden by settings if configured)
+    const homeDir = os.homedir();
+    this.storageLocation = path.join(homeDir, DEFAULT_STORAGE_FOLDER);
+    this.storageFile = path.join(this.storageLocation, 'recipes.json');
+    this.backupDir = path.join(this.storageLocation, 'backups');
+  }
+
+  async setStorageLocation(location: string): Promise<void> {
+    this.storageLocation = location;
+    this.storageFile = path.join(this.storageLocation, 'recipes.json');
+    this.backupDir = path.join(this.storageLocation, 'backups');
+
+    // Ensure the new directories exist
+    await fs.mkdir(this.storageLocation, { recursive: true });
+    await fs.mkdir(this.backupDir, { recursive: true });
+  }
+
+  async getSettings(): Promise<AppSettings> {
+    try {
+      const data = await fs.readFile(this.settingsFile, 'utf8');
+      const settings = JSON.parse(data);
+
+      // Apply storage location from settings if available
+      if (settings.storageLocation) {
+        await this.setStorageLocation(settings.storageLocation);
+      }
+
+      // Always return current storage location (either from settings or default)
+      return { ...settings, storageLocation: this.storageLocation };
+    } catch {
+      // Return default storage location if no settings file exists
+      return { storageLocation: this.storageLocation };
+    }
+  }
+
+  async saveSettings(settings: AppSettings): Promise<void> {
+    const settingsDir = path.dirname(this.settingsFile);
+    await fs.mkdir(settingsDir, { recursive: true });
+    await fs.writeFile(this.settingsFile, JSON.stringify(settings, null, 2), 'utf8');
+
+    // Apply storage location if it changed
+    if (settings.storageLocation) {
+      await this.setStorageLocation(settings.storageLocation);
+    }
   }
 
   private async initialize(): Promise<void> {
     if (this.initialized) return;
+
+    // Load settings to get storage location
+    await this.getSettings();
+
     // Ensure both the main storage directory and backup directory exist
     const storageDir = path.dirname(this.storageFile);
     await fs.mkdir(storageDir, { recursive: true });
     await fs.mkdir(this.backupDir, { recursive: true });
+
     // Clean up any stale temp history file from a previous interrupted save
     try {
       const tmp = `${this.storageFile}.tmp`;
@@ -30,14 +82,7 @@ export class StorageService {
       // Ignore errors when removing temp file
     }
 
-    // Mark initialized BEFORE running migration to avoid re-entrant initialize() during saveRecipes()
     this.initialized = true;
-
-    // Run migration only once on startup
-    if (!this.migrated) {
-      await this.migrateStatusField();
-      this.migrated = true;
-    }
   }
 
   private async backupHistoryFile(): Promise<void> {
@@ -110,31 +155,6 @@ export class StorageService {
     return null;
   }
 
-  // Migration to add status field to existing recipes (runs only once on startup)
-  private async migrateStatusField(): Promise<void> {
-    try {
-      const data = await fs.readFile(this.storageFile, 'utf8');
-      const raw: any[] = JSON.parse(data);
-
-      // Check if migration is needed
-      const needsMigration = raw.some((p: any) => p.status === undefined);
-      if (!needsMigration) return;
-
-      // Update processes without status field
-      const migrated = raw.map((p: any) => ({
-        ...p,
-        status:
-          p.status ||
-          (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
-      }));
-
-      // Save the migrated data
-      await this.saveRecipes(migrated);
-    } catch {
-      // If file doesn't exist or is corrupt, no migration needed
-      console.log('[STORAGE] No migration needed - file not found or invalid');
-    }
-  }
 
   async loadRecipes(): Promise<ProcessHistory[]> {
     try {
@@ -167,31 +187,7 @@ export class StorageService {
       console.warn('[STORAGE] Failed to load history; attempting backup restore');
       const fromBackup = await this.loadFromBackups();
       if (fromBackup) {
-        // Migrate backup data and save to main file
-        const migratedBackup = (fromBackup as any[]).map((p: any) => ({
-          id: p.id,
-          timestamp: p.timestamp,
-          name: p.name,
-          prompt: p.prompt,
-          userOptions: p.userOptions,
-          results: Array.isArray(p.results) ? p.results : [],
-          author: p.author,
-          recipeImageData:
-            typeof p.recipeImageData === 'string'
-              ? p.recipeImageData
-              : typeof p.baseImageData === 'string'
-              ? p.baseImageData
-              : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
-              ? p.baseImagesData[0]
-              : undefined,
-          status:
-            p.status ||
-            (Array.isArray(p.results) && p.results.length > 0 ? 'completed' : 'generating'),
-        }));
-
-        // Save migrated backup to main file
-        await this.saveRecipes(migratedBackup);
-        return migratedBackup;
+        return fromBackup;
       }
       return [];
     }

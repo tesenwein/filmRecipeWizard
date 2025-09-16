@@ -70,12 +70,13 @@ declare global {
       removeBaseImage: (processId: string, index: number) => Promise<{ success: boolean; error?: string }>;
 
       // Settings operations
-      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
+      selectStorageFolder: () => Promise<{ success: boolean; path?: string; error?: string }>;
+      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
       saveSettings: (
-        settings: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
-      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
+        settings: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
+      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
       updateSettings: (
-        settings: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
+        settings: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
       ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
 
       // Utility functions

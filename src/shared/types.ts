@@ -1,5 +1,8 @@
 import { AIColorAdjustments } from '../services/openai-color-analyzer';
 
+// Default storage location for recipes
+export const DEFAULT_STORAGE_FOLDER = '.film-recipes-wizard';
+
 export enum LightroomProfile {
   ADOBE_COLOR = 'adobe-color',
   ADOBE_MONOCHROME = 'adobe-monochrome',
@@ -93,6 +96,7 @@ export interface AppSettings {
   openaiKey?: string;
   setupCompleted?: boolean;
   userProfile?: UserProfile;
+  storageLocation?: string;  // Path to the recipe storage folder
 }
 
 export interface ExportResult {

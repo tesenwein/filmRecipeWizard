@@ -27,6 +27,7 @@ import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import SingleImage from './SingleImage';
 import ConfirmDialog from './ConfirmDialog';
+import ErrorDialog from './ErrorDialog';
 
 interface RecipeGalleryProps {
   onOpenRecipe: (recipe: Recipe) => void;
@@ -49,6 +50,9 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorDetails, setErrorDetails] = useState('');
   const { showSuccess, showError } = useAlert();
 
   // Recipes are loaded during splash screen, no need to load here
@@ -265,11 +269,25 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             onClick={async () => {
               try {
                 const res = await importRecipes();
-                if (res.success && res.count && res.count > 1) {
-                  showSuccess(`Successfully imported ${res.count} recipes`);
+                if (res.success) {
+                  if (res.count && res.count > 1) {
+                    showSuccess(`Successfully imported ${res.count} recipes`);
+                  } else if (res.count === 1) {
+                    showSuccess('Successfully imported 1 recipe');
+                  } else {
+                    showSuccess('Import completed');
+                  }
+                } else {
+                  // Show detailed error dialog
+                  setErrorMessage('Failed to import recipes');
+                  setErrorDetails(res.error || 'Unknown error occurred during import');
+                  setErrorDialogOpen(true);
                 }
-              } catch {
-                showError('Import failed');
+              } catch (error) {
+                // Show detailed error dialog for unexpected errors
+                setErrorMessage('Import failed unexpectedly');
+                setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
+                setErrorDialogOpen(true);
               }
             }}
           >
@@ -476,6 +494,18 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         content="Are you sure you want to delete this recipe? This action cannot be undone."
         confirmButtonText="Delete"
         confirmColor="error"
+      />
+
+      <ErrorDialog
+        open={errorDialogOpen}
+        title="Import Error"
+        message={errorMessage}
+        details={errorDetails}
+        onClose={() => {
+          setErrorDialogOpen(false);
+          setErrorMessage('');
+          setErrorDetails('');
+        }}
       />
     </div>
   );

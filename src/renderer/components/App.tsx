@@ -9,6 +9,7 @@ import { AlertProvider } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import AppHeader from './AppHeader';
 import Router from './Router';
+import ErrorDialog from './ErrorDialog';
 
 const App: React.FC = () => {
   // Zustand store
@@ -41,6 +42,9 @@ const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'gallery' | 'upload' | 'processing' | 'results'>(
     'gallery'
   );
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorDetails, setErrorDetails] = useState('');
   const currentProcessIdRef = useRef<string | null>(null);
   const startingRef = useRef<boolean>(false);
   useEffect(() => {
@@ -217,18 +221,40 @@ const App: React.FC = () => {
       metadata: result.metadata,
     }));
 
+    // Check for errors and show error dialog if all processing failed
+    const anySuccess = results.some(r => r.success);
+    const anyErrors = results.some(r => !r.success && r.error);
+
+    if (!anySuccess && anyErrors) {
+      // All processing failed - show error dialog
+      const errorDetails = results
+        .filter(r => !r.success && r.error)
+        .map(r => r.error)
+        .join('\n\n');
+
+      setErrorMessage('AI Processing Failed');
+      setErrorDetails(errorDetails || 'All images failed to process. This might be due to API issues or invalid images.');
+      setErrorDialogOpen(true);
+
+      setProcessingState({
+        isProcessing: false,
+        progress: 0,
+        status: 'Processing failed',
+      });
+    } else {
+      setProcessingState({
+        isProcessing: false,
+        progress: 100,
+        status: anyErrors ? 'Processing completed with some errors' : 'Processing complete!',
+      });
+    }
+
     setResults(results);
-    setProcessingState({
-      isProcessing: false,
-      progress: 100,
-      status: 'Processing complete!',
-    });
 
     // Update process in storage
     const pid = currentProcessIdRef.current;
     if (pid) {
       try {
-        const anySuccess = results.some(r => r.success);
         await updateRecipeInStorage(pid, {
           results,
           status: anySuccess ? 'completed' : 'failed',
@@ -444,6 +470,18 @@ const App: React.FC = () => {
             handleStartProcessing();
           }}
           onNavigate={navigate}
+        />
+
+        <ErrorDialog
+          open={errorDialogOpen}
+          title="Processing Error"
+          message={errorMessage}
+          details={errorDetails}
+          onClose={() => {
+            setErrorDialogOpen(false);
+            setErrorMessage('');
+            setErrorDetails('');
+          }}
         />
       </div>
     </AlertProvider>
