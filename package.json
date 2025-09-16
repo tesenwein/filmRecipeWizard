@@ -1,6 +1,6 @@
 {
   "name": "film-recipe-wizard",
-  "version": "2.2.9",
+  "version": "2.2.10",
   "description": "Create and apply photo recipes with AI-powered color grading and DNG RAW processing support",
   "main": "dist/main/main.js",
   "scripts": {
