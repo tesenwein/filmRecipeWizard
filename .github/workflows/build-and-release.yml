@@ -302,7 +302,6 @@ jobs:
           prerelease: false
           files: |
             artifacts/build-mac/*.dmg
-            artifacts/build-mac/*.zip
             artifacts/build-win/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
