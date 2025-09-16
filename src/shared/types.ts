@@ -75,7 +75,7 @@ export interface Recipe {
   author?: UserProfile;
 }
 
-// Legacy alias for backward compatibility
+// Type alias for recipes in storage/persistence context
 export type ProcessHistory = Recipe;
 
 
