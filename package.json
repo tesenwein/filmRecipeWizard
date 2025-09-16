@@ -103,7 +103,7 @@
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "artifactName": "Film-Recipe-Wizard-${version}-${os}-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
@@ -147,7 +147,7 @@
         }
       ],
       "icon": "build/icons/icon.ico",
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "artifactName": "Film-Recipe-Wizard-${version}-${os}-${arch}.${ext}",
       "requestedExecutionLevel": "asInvoker",
       "verifyUpdateCodeSignature": false
     },
@@ -167,7 +167,7 @@
         }
       ],
       "icon": "build/icons/icon.png",
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "artifactName": "Film-Recipe-Wizard-${version}-${os}-${arch}.${ext}",
       "category": "Graphics"
     },
     "nsis": {
