@@ -143,8 +143,7 @@
           "target": "portable",
           "arch": [
             "x64"
-          ],
-          "artifactName": "${productName}-${version}-portable-${arch}.${ext}"
+          ]
         }
       ],
       "icon": "build/icons/icon.ico",
