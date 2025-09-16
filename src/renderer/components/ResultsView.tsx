@@ -19,11 +19,15 @@ import {
   IconButton,
   Paper,
   Avatar,
+  TextField,
   Slider,
   Tab,
   Tabs,
   Typography,
 } from '@mui/material';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import React, { useEffect, useState } from 'react';
 import ConfirmDialog from './ConfirmDialog';
 import { ProcessingResult, UserProfile, getLightroomProfileDisplayName } from '../../shared/types';
@@ -78,6 +82,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
   const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
+  const [recipeName, setRecipeName] = useState<string | undefined>(undefined);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   // New state for tab management
   const [activeTab, setActiveTab] = useState(0);
@@ -190,6 +198,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         // Clear base64 data when no processId
         setBaseImageUrls([]);
         setProcessPrompt(prompt);
+        setRecipeName(undefined);
         return;
       }
 
@@ -210,6 +219,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setProcessPrompt(processResponse.process.prompt);
           setProcessOptions(processResponse.process.userOptions);
           setAuthor((processResponse.process as any).author);
+          const savedName = (processResponse.process as any).name as string | undefined;
+          setRecipeName(savedName && savedName.trim().length > 0 ? savedName : undefined);
         } else {
           setProcessPrompt(prompt);
         }
@@ -218,11 +229,62 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         setBaseImageUrls([]);
         setProcessPrompt(prompt);
         setProcessOptions(undefined);
+        setRecipeName(undefined);
       }
     };
 
     loadBase64Images();
   }, [processId, prompt]);
+
+  // Compute a default display name from AI + style extras when no saved name
+  const computedDefaultName = React.useMemo(() => {
+    const current = successfulResults[selectedResult];
+    const aiName =
+      current?.metadata?.aiAdjustments &&
+      (current.metadata.aiAdjustments as any).preset_name;
+    if (typeof aiName === 'string' && aiName.trim().length > 0) {
+      const extras: string[] = [];
+      const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
+      const film = (processOptions as any)?.filmStyle?.name as string | undefined;
+      if (artist && artist.trim().length > 0) extras.push(artist.trim());
+      if (film && film.trim().length > 0) extras.push(film.trim());
+      return extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
+    }
+    return `Recipe ${selectedResult + 1}`;
+  }, [successfulResults, selectedResult, processOptions]);
+
+  const displayedName = recipeName || computedDefaultName;
+
+  const startEditingName = () => {
+    setNameInput(displayedName || '');
+    setEditingName(true);
+  };
+
+  const cancelEditingName = () => {
+    setEditingName(false);
+    setNameInput('');
+  };
+
+  const saveName = async () => {
+    if (!processId) return;
+    const newName = (nameInput || '').trim();
+    if (newName.length === 0) {
+      // Treat empty as cancel
+      cancelEditingName();
+      return;
+    }
+    try {
+      setSavingName(true);
+      await useAppStore.getState().updateRecipeInStorage(processId, { name: newName } as any);
+      setRecipeName(newName);
+      setEditingName(false);
+    } catch (e) {
+      console.error('Failed to save recipe name:', e);
+      showError('Failed to save name');
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   const defaultOptions = {
     wbBasic: true,
@@ -361,25 +423,36 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       {/* Main Content with Tabs */}
       {successfulResults.length > 0 && (
         <Paper className="card" sx={{ p: 0, overflow: 'hidden' }}>
-          {/* Recipe Name Header */}
-          <Box sx={{ px: 3, pt: 3, pb: 1 }}>
-            {(() => {
-              const currentResult = successfulResults[selectedResult];
-              const aiName =
-                currentResult?.metadata?.aiAdjustments &&
-                (currentResult.metadata.aiAdjustments as any).preset_name;
-              let name: string;
-              if (typeof aiName === 'string' && aiName.trim().length > 0) {
-                const extras: string[] = [];
-                const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
-                const film = (processOptions as any)?.filmStyle?.name as string | undefined;
-                if (artist && artist.trim().length > 0) extras.push(artist.trim());
-                if (film && film.trim().length > 0) extras.push(film.trim());
-                name = extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
-              } else {
-                name = `Recipe ${selectedResult + 1}`;
-              }
-              return (
+          {/* Recipe Name Header (inline editable) */}
+          <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            {editingName ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  value={nameInput}
+                  autoFocus
+                  onChange={e => setNameInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      saveName();
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      cancelEditingName();
+                    }
+                  }}
+                  inputProps={{ maxLength: 120 }}
+                />
+                <IconButton aria-label="Save name" onClick={saveName} disabled={savingName}>
+                  <CheckIcon />
+                </IconButton>
+                <IconButton aria-label="Cancel editing" onClick={cancelEditingName} disabled={savingName}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                 <Typography
                   variant="h4"
                   sx={{
@@ -388,12 +461,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     textAlign: 'left',
                     mb: 1,
                     fontSize: { xs: '1.5rem', sm: '2rem' },
+                    flex: 1,
                   }}
                 >
-                  {name}
+                  {displayedName}
                 </Typography>
-              );
-            })()}
+                <IconButton aria-label="Edit name" title="Edit name" onClick={startEditingName}>
+                  <EditOutlinedIcon />
+                </IconButton>
+              </Box>
+            )}
           </Box>
 
           <Tabs

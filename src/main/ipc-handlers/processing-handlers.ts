@@ -254,6 +254,23 @@ export class ProcessingHandlers {
           // Persist result (without absolute paths)
           try {
             const firstBase = Array.isArray(baseImageData) ? baseImageData[0] : baseImageData;
+            // Derive a friendly name from AI preset name and selected styles
+            let derivedName: string | undefined;
+            try {
+              const aiName = (result as any)?.metadata?.aiAdjustments?.preset_name as
+                | string
+                | undefined;
+              if (aiName && typeof aiName === 'string' && aiName.trim().length > 0) {
+                const extras: string[] = [];
+                const artist = (options as any)?.artistStyle?.name as string | undefined;
+                const film = (options as any)?.filmStyle?.name as string | undefined;
+                if (artist && artist.trim().length > 0) extras.push(artist.trim());
+                if (film && film.trim().length > 0) extras.push(film.trim());
+                derivedName = extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
+              }
+            } catch {
+              // Ignore name derivation errors
+            }
             await this.storageService.updateProcess(data.processId, {
               results: [
                 {
@@ -264,6 +281,7 @@ export class ProcessingHandlers {
               ],
               status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
+              ...(derivedName ? { name: derivedName } : {}),
             } as any);
             try {
               mainWindow?.webContents.send('process-updated', {
@@ -280,6 +298,7 @@ export class ProcessingHandlers {
                   ],
                   status: result.success ? 'completed' : 'failed',
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
+                  ...(derivedName ? { name: derivedName } : {}),
                 },
               });
             } catch {
