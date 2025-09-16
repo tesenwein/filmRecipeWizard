@@ -29,6 +29,7 @@ When you push the tag, the GitHub Actions workflow will automatically:
 1. Detect the version tag
 2. Build the application for macOS and Windows
 3. Create a GitHub release with built artifacts
+4. Upload installers as downloadable assets
 
 ## Method 2: Manual Version Bump
 
