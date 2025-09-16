@@ -194,7 +194,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
         const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
         const nM1_1_scaled = (v: any) => (typeof v === 'number' ? Math.max(-1, Math.min(1, v * strength)) : undefined);
-        // Removed unused tagIf function - using attrIf for all attributes
         const attrIf = (k: string, val?: string | number) =>
           val === 0 || val === '0' || (val !== undefined && val !== null)
             ? ` crs:${k}="${val}"`

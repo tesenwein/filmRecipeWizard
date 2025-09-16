@@ -134,13 +134,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
   // Remove handlers
   const handleRemoveBase = (index: number) => {
-    console.log('handleRemoveBase called with index:', index);
     setDeleteType('base');
     setDeleteIndex(index);
     setDeleteDialogOpen(true);
   };
   const handleRemoveTarget = (index: number) => {
-    console.log('handleRemoveTarget called with index:', index);
     setDeleteType('target');
     setDeleteIndex(index);
     setDeleteDialogOpen(true);

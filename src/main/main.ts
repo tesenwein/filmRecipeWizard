@@ -339,8 +339,7 @@ class FilmRecipeWizardApp {
 
           // No strict validation: prompt/reference optional; defaults applied in analyzer
 
-          // Create temporary files for processing
-          const baseImageTempPath = undefined as unknown as string; // not required when passing base64 directly
+          // Create temporary files for processing (baseImagePath not needed when using base64)
           const targetImageTempPath = await this.storageService.base64ToTempFile(
             targetImageData,
             'target.jpg'
@@ -348,7 +347,7 @@ class FilmRecipeWizardApp {
 
           // Process using the image processor
           const result = await this.imageProcessor.matchStyle({
-            baseImagePath: baseImageTempPath,
+            baseImagePath: undefined,
             targetImagePath: targetImageTempPath,
             baseImageBase64: baseImageData,
             targetImageBase64: targetImageData,
@@ -402,7 +401,7 @@ class FilmRecipeWizardApp {
             console.error('[IPC] process-with-stored-images: failed to persist results', err);
           }
 
-          // Emit completion event in same shape as legacy API
+          // Emit completion event
           try {
             this.mainWindow?.webContents.send('processing-complete', [result]);
           } catch {

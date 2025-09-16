@@ -1160,8 +1160,6 @@ export class OpenAIColorAnalyzer {
       );
     }
 
-    // Debug: Log the complete response details
-
     // Parse tool calls response (support multiple calls to compose result)
     const message = completion.choices[0]?.message;
     if (message?.tool_calls && message.tool_calls.length > 0) {
