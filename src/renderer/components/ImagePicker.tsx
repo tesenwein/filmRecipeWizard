@@ -21,12 +21,9 @@ interface ImagePickerProps {
   required?: boolean;
 }
 
-// Be generous: include common RAW + HEIC. Preview generation will handle conversion where possible.
+// Supported web-safe image formats only
 const allowedExt = [
-  'jpg', 'jpeg', 'png', 'webp', 'gif',
-  'tiff', 'tif',
-  'heic', 'heif',
-  'dng', 'cr2', 'cr3', 'nef', 'nrw', 'arw', 'raf', 'rw2', 'orf', 'srw', 'pef', 'raw'
+  'jpg', 'jpeg', 'png', 'webp'
 ];
 
 function isValidImagePath(path?: string) {
@@ -293,7 +290,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
                 <PaletteOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />
               )}
               <h4 style={{ fontSize: 18, color: '#868e96', marginBottom: 8 }}>Drop images here or click to browse</h4>
-              <p style={{ fontSize: 13, color: '#868e96' }}>JPEG, PNG, TIFF, DNG. Up to {maxFiles} files.</p>
+              <p style={{ fontSize: 13, color: '#868e96' }}>JPEG, PNG, WebP. Up to {maxFiles} files.</p>
             </Box>
           </Box>
           <Box 

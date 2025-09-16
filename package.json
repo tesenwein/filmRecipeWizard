@@ -1,7 +1,7 @@
 {
   "name": "film-recipe-wizard",
   "version": "2.2.15",
-  "description": "Create and apply photo recipes with AI-powered color grading and DNG RAW processing support",
+  "description": "Create and apply photo recipes with AI-powered color grading",
   "main": "dist/main/main.js",
   "scripts": {
     "start": "npm run build && electron .",
@@ -36,8 +36,6 @@
     "electron",
     "photo-recipes",
     "image-processing",
-    "dng",
-    "raw",
     "color-grading",
     "style-transfer",
     "lightroom",
@@ -57,7 +55,6 @@
     "eslint": "^9.35.0",
     "html-webpack-plugin": "^5.6.4",
     "knip": "^5.63.1",
-    "png-to-ico": "^3.0.1",
     "rimraf": "^6.0.1",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.4",
@@ -74,13 +71,12 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "adm-zip": "^0.5.16",
+    "jimp": "^0.22.12",
     "openai": "^5.20.2",
+    "png-to-ico": "^2.1.8",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zustand": "^5.0.8"
-  },
-  "optionalDependencies": {
-    "sharp": "^0.34.3"
   },
   "build": {
     "appId": "com.theodoresenwein.filmrecipewizard",

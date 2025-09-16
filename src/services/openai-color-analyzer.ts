@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import sharp from 'sharp';
+import Jimp from 'jimp';
 import { buildUserContentForAnalysis } from './prompt';
 import type { AIColorAdjustments } from './types';
 export type { AIColorAdjustments } from './types';
@@ -1245,13 +1245,13 @@ export class OpenAIColorAnalyzer {
   private async convertToBase64Jpeg(imagePath: string): Promise<string> {
 
     try {
-      // Convert any supported image format to JPEG and resize for API efficiency (1024px max long side)
-      const jpegBuffer = await sharp(imagePath)
-        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 90 })
-        .toBuffer();
+      // Read and resize image for API efficiency (1024px max long side)
+      const img = await Jimp.read(imagePath);
+      img.scaleToFit(1024, 1024);
+      img.quality(90);
 
-      return jpegBuffer.toString('base64');
+      const buffer = await img.getBufferAsync(Jimp.MIME_JPEG);
+      return buffer.toString('base64');
     } catch (error) {
       console.error('[AI] Failed to convert image:', error);
       throw new Error(

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // Image processing worker for heavy computations
-const sharp_1 = __importDefault(require("sharp"));
+const jimp_1 = __importDefault(require("jimp"));
 class ImageProcessingWorker {
     constructor() {
         // Listen for messages from the main thread
@@ -22,9 +22,6 @@ class ImageProcessingWorker {
                     break;
                 case 'match-style':
                     result = await this.matchStyle(data);
-                    break;
-                case 'process-raw':
-                    result = await this.processRawImage(data);
                     break;
                 default:
                     throw new Error(`Unknown worker task type: ${type}`);
@@ -45,33 +42,39 @@ class ImageProcessingWorker {
         }
     }
     async analyzeColors(imagePath) {
-        // Use Sharp for color analysis in the worker
-        const image = (0, sharp_1.default)(imagePath);
-        const { data, info } = await image
-            .resize(256, 256, { fit: 'inside' })
-            .raw()
-            .toBuffer({ resolveWithObject: true });
-        const pixels = new Uint8Array(data);
+        // Use Jimp for color analysis in the worker
+        const image = await jimp_1.default.read(imagePath);
+        image.scaleToFit(256, 256);
+
+        const width = image.getWidth();
+        const height = image.getHeight();
         const histogram = { red: new Array(256).fill(0), green: new Array(256).fill(0), blue: new Array(256).fill(0) };
         let totalR = 0, totalG = 0, totalB = 0;
-        const pixelCount = pixels.length / info.channels;
+        const pixelCount = width * height;
         const colorMap = new Map();
-        for (let i = 0; i < pixels.length; i += info.channels) {
-            const r = pixels[i];
-            const g = pixels[i + 1];
-            const b = pixels[i + 2];
-            histogram.red[r]++;
-            histogram.green[g]++;
-            histogram.blue[b]++;
-            totalR += r;
-            totalG += g;
-            totalB += b;
-            // Track color occurrences for dominant colors (quantize to reduce memory)
-            const quantR = Math.floor(r / 16) * 16;
-            const quantG = Math.floor(g / 16) * 16;
-            const quantB = Math.floor(b / 16) * 16;
-            const colorKey = `${quantR},${quantG},${quantB}`;
-            colorMap.set(colorKey, (colorMap.get(colorKey) || 0) + 1);
+
+        // Scan each pixel using Jimp's getPixelColor
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const color = image.getPixelColor(x, y);
+                const r = (color >>> 24) & 0xFF;
+                const g = (color >>> 16) & 0xFF;
+                const b = (color >>> 8) & 0xFF;
+
+                histogram.red[r]++;
+                histogram.green[g]++;
+                histogram.blue[b]++;
+                totalR += r;
+                totalG += g;
+                totalB += b;
+
+                // Track color occurrences for dominant colors (quantize to reduce memory)
+                const quantR = Math.floor(r / 16) * 16;
+                const quantG = Math.floor(g / 16) * 16;
+                const quantB = Math.floor(b / 16) * 16;
+                const colorKey = `${quantR},${quantG},${quantB}`;
+                colorMap.set(colorKey, (colorMap.get(colorKey) || 0) + 1);
+            }
         }
         const averageColor = {
             r: Math.round(totalR / pixelCount),
@@ -112,11 +115,6 @@ class ImageProcessingWorker {
             targetColors,
             adjustments,
         };
-    }
-    async processRawImage(data) {
-        // TODO: Implement RAW processing with LibRaw-Wasm
-        // For now, return a placeholder
-        throw new Error('RAW processing not yet implemented in worker');
     }
     calculateColorTemperature(color) {
         // Simplified color temperature calculation

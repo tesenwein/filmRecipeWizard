@@ -21,7 +21,6 @@ class ProductionConsoleProtection implements ConsoleProtection {
     this.blockConsole();
     this.blockKeyboardShortcuts();
     this.blockContextMenu();
-    this.preventDebugger();
     this.blockSourceInspection();
   }
 
@@ -162,6 +161,7 @@ class ProductionConsoleProtection implements ConsoleProtection {
     );
   }
 
+
   private blockSourceInspection(): void {
     // Block common inspection methods
     (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ = undefined;
@@ -184,11 +184,6 @@ class ProductionConsoleProtection implements ConsoleProtection {
     }
   }
 
-  private handleDebuggerDetected(): void {
-    // Optionally clear the page or redirect
-    document.body.innerHTML = '';
-    throw new Error('Debug tools detected');
-  }
 }
 
 // Auto-initialize when script loads

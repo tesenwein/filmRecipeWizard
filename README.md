@@ -40,7 +40,7 @@
 
 - **AI-Powered Analysis**: Upload reference photos to extract color characteristics
 - **Smart Target Processing**: Apply extracted color styles to your target images
-- **Reference Image Support**: Multiple format support (JPG, PNG, TIFF, DNG, CR2, NEF, ARW)
+- **Reference Image Support**: Multiple format support (JPG, PNG, WebP)
 
 ### 🎬 **Film Emulation & Lightroom Presets**
 
@@ -130,7 +130,7 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 ### 🎨 **Professional Color Matching**
 - **AI-Powered Analysis**: Upload reference photos to extract color characteristics
 - **Smart Target Processing**: Apply extracted color styles to your target images
-- **Reference Image Support**: Multiple format support (JPG, PNG, TIFF, DNG, CR2, NEF, ARW)
+- **Reference Image Support**: Multiple format support (JPG, PNG, WebP)
 
 ### 🎬 **Film Emulation & Lightroom Presets**
 Perfect for photographers seeking **Fujifilm film simulations for Lightroom** and classic film looks unavailable in Adobe's default profiles.

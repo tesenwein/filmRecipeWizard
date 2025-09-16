@@ -54,7 +54,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         filters: [
           {
             name: 'Images',
-            extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'],
+            extensions: ['jpg', 'jpeg', 'png', 'webp'],
           },
         ],
         properties: ['openFile', 'multiSelections'],
@@ -79,7 +79,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         filters: [
           {
             name: 'Images',
-            extensions: ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'dng', 'cr2', 'nef', 'arw'],
+            extensions: ['jpg', 'jpeg', 'png', 'webp'],
           },
         ],
         properties: ['openFile', 'multiSelections'],

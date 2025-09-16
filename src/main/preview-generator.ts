@@ -1,7 +1,7 @@
 import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import sharp from 'sharp';
+import Jimp from 'jimp';
 
 export async function generatePreviewFile(args: {
   path?: string;
@@ -30,21 +30,31 @@ export async function generatePreviewFile(args: {
     `${Date.now()}-${Math.floor(Math.random() * 1e6)}-${srcName}.jpg`
   );
 
-  let img = sharp();
-  if (args.path) {
-    img = sharp(args.path);
-  } else if (args.dataUrl) {
-    const base64 = args.dataUrl.split(',')[1] || '';
-    const buf = Buffer.from(base64, 'base64');
-    img = sharp(buf);
-  } else {
-    throw new Error('No input provided for preview');
+  try {
+    let img: any;
+
+    if (args.path) {
+      img = await Jimp.read(args.path);
+    } else if (args.dataUrl) {
+      const base64 = args.dataUrl.split(',')[1] || '';
+      const buf = Buffer.from(base64, 'base64');
+      img = await Jimp.read(buf);
+    } else {
+      throw new Error('No input provided for preview');
+    }
+
+    // Resize with aspect ratio preservation
+    img.scaleToFit(1024, 1024);
+
+    // Set JPEG quality
+    img.quality(92);
+
+    // Write to file
+    await img.writeAsync(outPath);
+
+    return outPath;
+  } catch (error) {
+    console.error('[PREVIEW] Error generating preview:', error);
+    throw new Error(`Failed to generate preview: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  await img
-    .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-    .jpeg({ quality: 92 })
-    .toFile(outPath);
-
-  return outPath;
 }
