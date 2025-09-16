@@ -199,8 +199,10 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     handleMenuClose();
     try {
       const res = await exportRecipe(selectedRecipeId);
-      if (!res.success && res.error && res.error !== 'Export canceled') {
+      if (!res.success && res.error && res.error !== 'Export canceled' && res.error !== 'Save cancelled') {
         showError(`Export failed: ${res.error}`);
+      } else if (res.success) {
+        showSuccess('Recipe exported');
       }
     } catch {
       showError('Export failed');
@@ -502,7 +504,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           <ListItemIcon>
             <DownloadIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Export Zip</ListItemText>
+          <ListItemText>Export Recipe</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDeleteRecipe} sx={{ color: 'error.main' }}>
           <ListItemIcon>

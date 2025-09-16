@@ -181,6 +181,27 @@ export class StorageService {
             : undefined,
         status: p.status,
       }));
+      // Normalize entries (backfill missing ids or timestamps)
+      let changed = false;
+      const nowIso = new Date().toISOString();
+      for (const rec of history) {
+        if (!rec.id || typeof rec.id !== 'string' || rec.id.trim().length === 0) {
+          rec.id = this.generateProcessId();
+          changed = true;
+        }
+        if (!rec.timestamp || typeof rec.timestamp !== 'string') {
+          rec.timestamp = nowIso;
+          changed = true;
+        }
+        if (!rec.status) {
+          rec.status = 'completed';
+          changed = true;
+        }
+      }
+      if (changed) {
+        // Persist normalized history to avoid future issues (e.g., deletion not working)
+        await this.saveRecipes(history);
+      }
       return history;
     } catch {
       // File doesn't exist or is invalid, try backups
