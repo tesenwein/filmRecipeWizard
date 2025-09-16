@@ -20,7 +20,6 @@
     "package:mac:dmg": "npm run build && electron-builder --mac dmg",
     "package:mac:universal": "npm run build && electron-builder --mac --universal",
     "generate-icons": "node scripts/generate-icons.js",
-    "generate:sample-xmp": "npm run build:main && node scripts/generate-sample-xmp.js",
     "knip": "knip"
   },
   "keywords": [
