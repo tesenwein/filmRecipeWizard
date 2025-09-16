@@ -141,15 +141,6 @@ export class ImageProcessor {
     }
   }
 
-
-  // Legacy method for compatibility
-  async generateAdjustedPreview(args: {
-    path: string;
-    adjustments: AIColorAdjustments;
-  }): Promise<string> {
-    return this.generatePreview({ path: args.path });
-  }
-
   // Set OpenAI API key
   async setOpenAIKey(key: string): Promise<void> {
     await this.settingsService.saveSettings({ openaiKey: key });

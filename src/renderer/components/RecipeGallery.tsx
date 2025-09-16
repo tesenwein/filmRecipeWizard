@@ -125,8 +125,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
   // Memoize filtered and sorted recipes to prevent endless recalculations
   const { sortedRecipes, basePreviews } = useMemo(() => {
-    console.log('[GALLERY] useMemo recalculating with:', recipes.length, 'recipes, searchQuery:', searchQuery, 'sortBy:', sortBy);
-
     // Filter recipes based on search query
     const filteredRecipes = recipes.filter(recipe => {
       if (!searchQuery.trim()) return true;
@@ -134,8 +132,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       const haystack = buildSearchHaystack(recipe);
       return haystack.includes(searchTerm);
     });
-
-    console.log('[GALLERY] filtered to:', filteredRecipes.length, 'recipes');
 
     // Sort filtered recipes based on selected criteria
     const sortedRecipes = [...filteredRecipes].sort((a, b) => {
@@ -159,7 +155,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         : ''
     );
 
-    console.log('[GALLERY] useMemo completed');
     return { sortedRecipes, basePreviews };
   }, [recipes, searchQuery, sortBy]);
 

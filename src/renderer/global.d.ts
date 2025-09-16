@@ -55,7 +55,6 @@ declare global {
 
       // Preview generation
       generatePreview: (args: { path?: string; dataUrl?: string }) => Promise<any>;
-      generateAdjustedPreview: (args: { path: string; adjustments: any }) => Promise<any>;
 
       // Storage operations
       loadHistory: () => Promise<{ success: boolean; recipes?: any[]; error?: string }>;

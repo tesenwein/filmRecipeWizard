@@ -289,7 +289,7 @@ const App: React.FC = () => {
 
   const handleOpenRecipe = async (recipe: Recipe) => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
-    // Do not rely on legacy file paths in stored recipe
+    // Clear current images when opening a recipe
     setBaseImages([]);
     setTargetImages([]);
     setCurrentProcessId(recipe.id);

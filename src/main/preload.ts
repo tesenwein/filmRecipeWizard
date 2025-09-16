@@ -48,8 +48,6 @@ const electronAPI = {
   // Preview generation
   generatePreview: (args: { path?: string; dataUrl?: string }) =>
     ipcRenderer.invoke('generate-preview', args),
-  generateAdjustedPreview: (args: { path: string; adjustments: any }) =>
-    ipcRenderer.invoke('generate-adjusted-preview', args),
 
   // Storage operations
   loadHistory: () => ipcRenderer.invoke('load-recipes'),
