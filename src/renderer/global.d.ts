@@ -77,7 +77,7 @@ declare global {
       ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
       updateSettings: (
         settings: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
-      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
+      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
 
       // Utility functions
       removeAllListeners: (channel: string) => void;

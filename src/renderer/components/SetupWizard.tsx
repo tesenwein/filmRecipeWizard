@@ -1,6 +1,7 @@
 import { Button, Card, CardContent, LinearProgress, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
+import { DEFAULT_STORAGE_FOLDER } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
 import ErrorDialog from './ErrorDialog';
 
@@ -23,7 +24,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const [emailError, setEmailError] = useState('');
   const [websiteError, setWebsiteError] = useState('');
   const [instagramError, setInstagramError] = useState('');
-  const [storageLocation, setStorageLocation] = useState('');
+  const [storageLocation, setStorageLocation] = useState(`~/${DEFAULT_STORAGE_FOLDER}`);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDetails, setErrorDetails] = useState('');
@@ -43,7 +44,10 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             setInstagram(u.instagram || '');
           }
           // Storage location will have a default from backend or user's setting
-          setStorageLocation(res.settings?.storageLocation || '');
+          if (res.settings?.storageLocation) {
+            setStorageLocation(res.settings.storageLocation);
+          }
+          // If no storageLocation from backend, keep the initial default
         }
       } catch {
         // Ignore settings load errors
