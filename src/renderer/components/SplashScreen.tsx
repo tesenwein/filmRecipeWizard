@@ -24,9 +24,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ status, progress }) => {
         zIndex: 9999,
       }}
     >
-      <img src={IconSvg} alt="Foto Recipe Wizard" style={{ width: 80, height: 80, marginBottom: 24 }} />
+      <img src={IconSvg} alt="Film Recipe Wizard" style={{ width: 80, height: 80, marginBottom: 24 }} />
       <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-        Foto Recipe Wizard
+        Film Recipe Wizard
       </Typography>
       <Box sx={{ width: '300px', mb: 2 }}>
         <LinearProgress variant="determinate" value={progress} sx={{ height: 6, borderRadius: 3 }} />

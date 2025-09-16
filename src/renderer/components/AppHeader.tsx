@@ -30,9 +30,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src={IconSvg} alt="Foto Recipe Wizard" style={{ width: 28, height: 28 }} />
+          <img src={IconSvg} alt="Film Recipe Wizard" style={{ width: 28, height: 28 }} />
           <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>
-            Foto Recipe Wizard
+            Film Recipe Wizard
           </span>
         </div>
         <div className="no-drag">
@@ -55,7 +55,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
               color="inherit"
               size="small"
               onClick={() =>
-                window.electronAPI.openExternal('https://github.com/tesenwein/fotoRecipeWizard')
+                window.electronAPI.openExternal('https://github.com/tesenwein/filmRecipeWizard')
               }
               sx={{
                 mr: 1,
@@ -72,7 +72,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
               size="small"
               onClick={() =>
                 window.electronAPI.openExternal(
-                  'https://github.com/tesenwein/fotoRecipeWizard/issues'
+                  'https://github.com/tesenwein/filmRecipeWizard/issues'
                 )
               }
               sx={{

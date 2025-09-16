@@ -233,12 +233,12 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
           <CardContent sx={{ p: 5, textAlign: 'center' }}>
             {currentStep === 1 && (
               <div>
-                <img src={IconSvg} alt="Foto Recipe Wizard" style={{ width: 64, height: 64, marginBottom: 24 }} />
+                <img src={IconSvg} alt="Film Recipe Wizard" style={{ width: 64, height: 64, marginBottom: 24 }} />
                 <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
-                  Welcome to Foto Recipe Wizard!
+                  Welcome to Film Recipe Wizard!
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6 }}>
-                  Thank you for choosing Foto Recipe Wizard. This powerful AI-driven tool helps you create stunning photo recipes with advanced color grading and style transfer capabilities.
+                  Thank you for choosing Film Recipe Wizard. This powerful AI-driven tool helps you create stunning photo recipes with advanced color grading and style transfer capabilities.
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}>
                   We appreciate your support and welcome any contributions to make this tool even better. Visit our GitHub repository to contribute, report issues, or suggest new features.
@@ -467,7 +467,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   Setup Complete!
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}>
-                  You're all set! Foto Recipe Wizard is now ready to transform your photos with AI-powered style recipes.
+                  You're all set! Film Recipe Wizard is now ready to transform your photos with AI-powered style recipes.
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}>
                   Want to get started with some sample recipes? Import our curated collection to explore different styles and techniques.
