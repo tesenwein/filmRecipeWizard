@@ -74,7 +74,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   // Auto-advance through targets during processing for a subtle slideshow effect
   useEffect(() => {
     if (!targetPreviews.length || targetPreviews.length < 2) return;
-    const intervalMs = 2800;
+    const intervalMs = 3200;
     const t = setInterval(() => {
       setActiveIdx(prev => (prev + 1) % targetPreviews.length);
     }, intervalMs);
@@ -96,66 +96,65 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
       </Box>
 
       {targetImages.length > 0 ? (
-        // Prepare slides array for rendering/width calculations
         (() => {
           const slides = targetPreviews.length ? targetPreviews : targetImages;
-          const slideCount = slides.length || 1;
-          const trackWidth = `${slideCount * 100}%`;
-          const offsetPct = `${(activeIdx * 100) / slideCount}%`;
+          const intervalMs = 3200;
           return (
-        <Box
-          sx={{
-            position: 'relative',
-            width: '100%',
-            height: { xs: 320, sm: 420, md: 520 },
-            borderRadius: 2,
-            overflow: 'hidden',
-            border: 'none',
-            boxShadow: 'none',
-            background:
-              'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
-              'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +
-              '#f8fafc',
-          }}
-        >
-          {/* Horizontal slider track */}
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              height: '100%',
-              width: trackWidth,
-              transform: `translateX(-${offsetPct})`,
-              transition: 'transform 600ms ease',
-            }}
-          >
-            {slides.map((src, i) => (
-              <Box key={i} sx={{ minWidth: '100%', height: '100%' }}>
-                <SingleImage
-                  source={src}
-                  alt={`Processing ${i + 1}`}
-                  fit="contain"
-                  backgroundBlur={0}
-                  backgroundOpacity={0}
-                />
+            <Box
+              sx={{
+                position: 'relative',
+                width: '100%',
+                height: { xs: 320, sm: 420, md: 520 },
+                borderRadius: 2,
+                overflow: 'hidden',
+                border: 'none',
+                boxShadow: 'none',
+                background:
+                  'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
+                  'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +
+                  '#f8fafc',
+              }}
+            >
+              {/* Crossfade stack */}
+              <Box sx={{ position: 'absolute', inset: 0 }}>
+                {slides.map((src, i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: i === activeIdx ? 1 : 0,
+                      transform: i === activeIdx ? 'scale(1.01)' : 'scale(1.00)',
+                      transition: 'opacity 900ms ease-in-out, transform 900ms ease',
+                    }}
+                  >
+                    <SingleImage
+                      source={src}
+                      alt={`Processing ${i + 1}`}
+                      fit="contain"
+                      backgroundBlur={0}
+                      backgroundOpacity={0}
+                    />
+                  </Box>
+                ))}
               </Box>
-            ))}
-          </Box>
 
-          {/* Horizontal shimmer overlay to match slide direction */}
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              background:
-                'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.24) 15%, transparent 30%)',
-              transform: 'translateX(-100%)',
-              animation: 'shine 2.8s linear infinite',
-            }}
-          />
-        </Box>
+              {/* Vertical shimmer overlay synced with fade interval */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  background:
+                    'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.22) 14%, transparent 28%)',
+                  transform: 'translateY(-100%)',
+                  animationName: 'vshine',
+                  animationDuration: `${intervalMs}ms`,
+                  animationTimingFunction: 'linear',
+                  animationIterationCount: 'infinite',
+                }}
+              />
+            </Box>
           );
         })()
       ) : (
@@ -164,9 +163,9 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
 
       <style>
         {`
-          @keyframes shine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+          @keyframes vshine {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
           }
         `}
       </style>
