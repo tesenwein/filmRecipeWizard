@@ -1,4 +1,5 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, dialog, ipcMain } from 'electron';
+import * as fs from 'fs/promises';
 import { ImageProcessor } from '../image-processor';
 import { StorageService } from '../storage-service';
 import { generateLUTContent } from '../lut-generator';
@@ -31,59 +32,282 @@ export class ProcessingHandlers {
       if (!mainWindow) return [];
 
       try {
-        // Use the analyzeColorMatch method which is the main processing method
-        const result = await this.imageProcessor.analyzeColorMatch(data);
-        
-        // Return as array to match expected interface
-        return [result];
+        const targetPath =
+          Array.isArray(data.targetImagePaths) && data.targetImagePaths.length > 0
+            ? data.targetImagePaths[0]
+            : undefined;
+        if (!targetPath) throw new Error('No target image provided');
+        const prompt =
+          typeof data?.hint === 'string' && data.hint.trim().length > 0
+            ? data.hint.trim()
+            : typeof data?.prompt === 'string' && data.prompt.trim().length > 0
+            ? data.prompt.trim()
+            : undefined;
+
+        mainWindow.webContents.send('processing-progress', 5, 'Analyzing...');
+
+        let result: any;
+        try {
+          result = await this.imageProcessor.matchStyle({
+            baseImagePath: data.baseImagePath,
+            targetImagePath: targetPath,
+            matchColors: true,
+            matchBrightness: true,
+            matchContrast: true,
+            matchSaturation: true,
+            prompt,
+            ...data.options,
+          });
+          mainWindow.webContents.send('processing-progress', 100, 'Completed');
+        } catch (error) {
+          console.error('[IPC] Error processing image:', error);
+          const errMsg = error instanceof Error ? error.message : 'Unknown error';
+          try {
+            mainWindow.webContents.send('processing-progress', 100, `Failed: ${errMsg}`);
+          } catch {
+            // Ignore IPC send errors
+          }
+          result = { success: false, error: errMsg };
+        }
+
+        const results = [result];
+
+        try {
+          if (data?.processId && this.storageService) {
+            const persistedResults = [
+              {
+                success: !!result.success,
+                error: result.error,
+                metadata: result.metadata,
+              },
+            ];
+            let name: string | undefined;
+            try {
+              name = result?.metadata?.aiAdjustments?.preset_name;
+            } catch {
+              // Ignore preset name extraction errors
+            }
+            await this.storageService.updateProcess(data.processId, {
+              results: persistedResults as any,
+              status: persistedResults.some(r => r.success) ? 'completed' : 'failed',
+              ...(name ? { name } : {}),
+            });
+            try {
+              mainWindow?.webContents.send('process-updated', {
+                processId: data.processId,
+                updates: {
+                  results: persistedResults,
+                  status: persistedResults.some(r => r.success) ? 'completed' : 'failed',
+                  ...(name ? { name } : {}),
+                },
+              });
+            } catch {
+              // Ignore IPC send errors
+            }
+          }
+        } catch (err) {
+          console.error('[IPC] process-images: failed to persist results', err);
+        }
+
+        mainWindow.webContents.send('processing-complete', results);
+        return results;
       } catch (error) {
-        console.error('[IPC] Error processing images:', error);
-        const errMsg = error instanceof Error ? error.message : 'Processing failed';
-        // Emit progress with failure status
-        try {
-          mainWindow.webContents.send('processing-progress', 0, `Failed: ${errMsg}`);
-        } catch {
-          /* Ignore IPC send errors */
-        }
-        // Emit completion with failure result
-        try {
-          mainWindow.webContents.send('processing-complete', [
-            { success: false, error: errMsg },
-          ]);
-        } catch {
-          /* Ignore IPC send errors */
-        }
+        console.error('[IPC] Error in processing:', error);
         throw error;
       }
     });
 
-    // Process with stored images (for re-processing existing recipes)
+    // Handle processing with stored base64 data from recipe
     ipcMain.handle(
       'process-with-stored-images',
-      async (_event, data: { processId: string; prompt?: string; styleOptions?: any }) => {
+      async (
+        _event,
+        data: {
+          processId: string;
+          targetIndex?: number;
+          baseImageData?: string | string[];
+          targetImageData?: string[];
+          prompt?: string;
+          styleOptions?: any;
+        }
+      ) => {
         const mainWindow = this.getMainWindow();
-        if (!mainWindow) return [];
+        if (!mainWindow || !this.storageService) return [];
 
         try {
-          // This handler is for re-processing stored recipes
-          // For now, return success but indicate that stored processing is not yet implemented
-          return [{
-            success: false,
-            error: 'Re-processing stored images is not yet implemented'
-          }];
+          // Prefer inline base64 if provided by caller, otherwise load from storage
+          const stored = await this.storageService.getProcess(data.processId);
+          if (!stored) throw new Error('Process not found');
+
+          // Only use base image data provided for this run; do not pull stored references
+          const baseImageData = ((): string | string[] | undefined => {
+            if (Array.isArray(data.baseImageData)) return data.baseImageData.slice(0, 3);
+            if (typeof data.baseImageData === 'string') return data.baseImageData;
+            return undefined;
+          })();
+          const basePrompt = data.prompt ?? stored.prompt;
+          // Build an additional hint from userOptions if present
+          // Use passed styleOptions if provided, otherwise fall back to stored userOptions
+          const options = data.styleOptions || (stored as any)?.userOptions || {};
+          const optionsHintParts: string[] = [];
+          if (typeof options.vibe === 'string' && options.vibe.trim().length > 0) {
+            optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
+          }
+          const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
+          if (options.warmth !== undefined) {
+            const w = Math.max(0, Math.min(100, Number(options.warmth)));
+            const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
+            optionsHintParts.push(
+              `White Balance Warmth Bias: ${warmthBias} (negative=cool, positive=warm)`
+            );
+          }
+          if (options.tint !== undefined) {
+            const t = Math.max(-50, Math.min(50, Number(options.tint)));
+            optionsHintParts.push(`Tint Bias: ${t} (negative=green, positive=magenta)`);
+          }
+          if (options.contrast !== undefined)
+            optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);
+          if (options.vibrance !== undefined)
+            optionsHintParts.push(`Vibrance: ${pct(options.vibrance)}`);
+          if (options.moodiness !== undefined)
+            optionsHintParts.push(`Moodiness: ${pct(options.moodiness)}`);
+          if (options.saturationBias !== undefined)
+            optionsHintParts.push(`Saturation Bias: ${pct(options.saturationBias)}`);
+          if (options.filmGrain !== undefined)
+            optionsHintParts.push(`Film Grain: ${options.filmGrain ? 'On' : 'Off'}`);
+          if (options.lightroomProfile !== undefined) {
+            const profileName = options.lightroomProfile === 'adobe-color' ? 'Adobe Color' :
+                               options.lightroomProfile === 'adobe-monochrome' ? 'Adobe Monochrome' :
+                               options.lightroomProfile === 'flat' ? 'Flat Profile' : options.lightroomProfile;
+            optionsHintParts.push(`Lightroom Base Profile: ${profileName}`);
+          }
+          if (options.artistStyle && typeof options.artistStyle.name === 'string') {
+            const name = String(options.artistStyle.name).trim();
+            const category = String(options.artistStyle.category || '').trim();
+            const blurb = String(options.artistStyle.blurb || '').trim();
+            optionsHintParts.push(
+              `Artist Style: ${name}${category ? ` (${category})` : ''}` +
+                (blurb ? `\nNotes: ${blurb}` : '')
+            );
+          }
+          if (options.filmStyle && typeof options.filmStyle.name === 'string') {
+            const name = String(options.filmStyle.name).trim();
+            const category = String(options.filmStyle.category || '').trim();
+            const blurb = String(options.filmStyle.blurb || '').trim();
+            optionsHintParts.push(
+              `Film Stock: ${name}${category ? ` (${category})` : ''}` +
+                (blurb ? `\nTraits: ${blurb}` : '')
+            );
+          }
+          const optionsHint =
+            optionsHintParts.length > 0 ? `\nPreferences:\n- ${optionsHintParts.join('\n- ')}` : '';
+          // Compose prompt from user text and preferences; fall back to a neutral default
+          const prompt =
+            ((basePrompt || '') + optionsHint).trim() ||
+            'Apply natural, balanced color grading with clean contrast and faithful skin tones.';
+
+          // Determine which target image to use (for processing, not storage)
+          const targetIndex = data.targetIndex || 0;
+          const providedTargets = data.targetImageData || [];
+          const targetImageData = providedTargets[targetIndex];
+
+          if (!targetImageData) {
+            console.error('[IPC] Missing targetImageData', {
+              inlineProvidedCount: Array.isArray(data.targetImageData)
+                ? data.targetImageData.length
+                : 0,
+              targetIndex,
+            });
+            throw new Error(`No target image data found at index ${targetIndex}`);
+          }
+
+          // Emit initial progress
+          try {
+            mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...');
+          } catch {
+            /* Ignore IPC send errors */
+          }
+
+          // Create temporary files for processing (baseImagePath not needed when using base64)
+          const targetImageTempPath = await this.storageService.base64ToTempFile(
+            targetImageData,
+            'target.jpg'
+          );
+
+          // Process using the image processor
+          const result = await this.imageProcessor.matchStyle({
+            baseImagePath: undefined,
+            targetImagePath: targetImageTempPath,
+            baseImageBase64: baseImageData,
+            targetImageBase64: targetImageData,
+            aiAdjustments: undefined,
+            prompt,
+            styleOptions: options,
+          });
+
+          try {
+            mainWindow?.webContents.send('processing-progress', 100, 'Completed');
+          } catch {
+            /* Ignore IPC send errors */
+          }
+
+          // Persist result (without absolute paths)
+          try {
+            const firstBase = Array.isArray(baseImageData) ? baseImageData[0] : baseImageData;
+            await this.storageService.updateProcess(data.processId, {
+              results: [
+                {
+                  success: !!result.success,
+                  error: result.error,
+                  metadata: result.metadata,
+                },
+              ],
+              status: result.success ? 'completed' : 'failed',
+              ...(firstBase ? { recipeImageData: firstBase } : {}),
+            } as any);
+            try {
+              mainWindow?.webContents.send('process-updated', {
+                processId: data.processId,
+                updates: {
+                  results: [
+                    {
+                      inputPath: '',
+                      outputPath: result.outputPath,
+                      success: !!result.success,
+                      error: result.error,
+                      metadata: result.metadata,
+                    },
+                  ],
+                  status: result.success ? 'completed' : 'failed',
+                  ...(firstBase ? { recipeImageData: firstBase } : {}),
+                },
+              });
+            } catch {
+              // Ignore IPC send errors
+            }
+          } catch (err) {
+            console.error('[IPC] process-with-stored-images: failed to persist results', err);
+          }
+
+          // Emit completion event
+          try {
+            mainWindow?.webContents.send('processing-complete', [result]);
+          } catch {
+            /* Ignore IPC send errors */
+          }
+
+          return result;
         } catch (error) {
           console.error('[IPC] Error processing with stored images:', error);
-          const errMsg = error instanceof Error ? error.message : 'Processing failed';
-          // Emit progress with failure status
+          // Emit a final failure status so the UI shows immediate feedback
+          const errMsg = error instanceof Error ? error.message : 'Unknown error';
           try {
-            const mainWindow = this.getMainWindow();
-            mainWindow?.webContents.send('processing-progress', 0, `Failed: ${errMsg}`);
+            mainWindow?.webContents.send('processing-progress', 100, `Failed: ${errMsg}`);
           } catch {
             /* Ignore IPC send errors */
           }
           // Emit completion with failure result
           try {
-            const mainWindow = this.getMainWindow();
             mainWindow?.webContents.send('processing-complete', [
               { success: false, error: errMsg },
             ]);
@@ -95,19 +319,128 @@ export class ProcessingHandlers {
       }
     );
 
-    // Generate LUT from adjustments
+    // Handle LUT generation and download
     ipcMain.handle('generate-lut', async (_event, data) => {
       try {
-        if (!data.adjustments) {
-          throw new Error('No adjustments data provided');
+        // Apply strength multiplier to adjustments if provided
+        let adjustments = data.adjustments;
+
+        if (data.strength !== undefined && data.strength !== 1.0) {
+          // Create a copy of adjustments with strength applied
+          adjustments = { ...data.adjustments };
+          // Apply strength to numeric adjustment values
+          const numericFields = [
+            'exposure',
+            'contrast',
+            'highlights',
+            'shadows',
+            'whites',
+            'blacks',
+            'vibrance',
+            'saturation',
+            'clarity',
+            'temperature',
+            'tint',
+            // HSL hue/sat/lum (Lightroom scale -100..100)
+            'hue_red',
+            'hue_orange',
+            'hue_yellow',
+            'hue_green',
+            'hue_aqua',
+            'hue_blue',
+            'hue_purple',
+            'hue_magenta',
+            'sat_red',
+            'sat_orange',
+            'sat_yellow',
+            'sat_green',
+            'sat_aqua',
+            'sat_blue',
+            'sat_purple',
+            'sat_magenta',
+            'lum_red',
+            'lum_orange',
+            'lum_yellow',
+            'lum_green',
+            'lum_aqua',
+            'lum_blue',
+            'lum_purple',
+            'lum_magenta',
+            // Color grading saturations and luminances (0..100 or -100..100)
+            'color_grade_shadow_sat',
+            'color_grade_shadow_lum',
+            'color_grade_midtone_sat',
+            'color_grade_midtone_lum',
+            'color_grade_highlight_sat',
+            'color_grade_highlight_lum',
+            'color_grade_global_sat',
+            'color_grade_global_lum',
+            // Balance is an amount (-100..100) we scale toward 0
+            'color_grade_balance',
+          ];
+
+          // Hues in color grading are angles (0..360) and should NOT be scaled; leave as-is
+
+          for (const field of numericFields) {
+            if (typeof adjustments[field] === 'number') {
+              if (field === 'temperature') {
+                // Temperature: apply strength to deviation from 6500K
+                const neutral = 6500;
+                const deviation = adjustments[field] - neutral;
+                adjustments[field] = neutral + deviation * data.strength;
+              } else if (field.startsWith('hue_')) {
+                // HSL hue shifts: scale toward 0
+                adjustments[field] = adjustments[field] * data.strength;
+              } else {
+                // Other fields: apply strength directly
+                adjustments[field] = adjustments[field] * data.strength;
+              }
+            }
+          }
         }
 
-        const lutContent = generateLUTContent(data.adjustments);
-        if (!lutContent) {
-          throw new Error('Failed to generate LUT content');
-        }
+        // Generate LUT content
+        const lutContent = generateLUTContent(adjustments, data.size, data.format);
 
-        return { success: true, content: lutContent };
+        // Show save dialog
+        const sanitizeName = (n: string) =>
+          n
+            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        const rawName =
+          (data?.adjustments?.preset_name as string | undefined) ||
+          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean =
+          sanitizeName(rawName) ||
+          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const baseName = clean
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
+        const strengthSuffix =
+          data.strength !== undefined && data.strength !== 1.0
+            ? `-${Math.round(data.strength * 100)}pct`
+            : '';
+        const safeName = `${baseName}-LUT-${data.size}${strengthSuffix}`;
+
+        const result = await dialog.showSaveDialog({
+          title: 'Save LUT File',
+          defaultPath: `${safeName}.${data.format}`,
+          filters: [
+            { name: 'LUT Files', extensions: [data.format] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+
+        if (!result.canceled && result.filePath) {
+          // Write the file
+          await fs.writeFile(result.filePath, lutContent, 'utf8');
+          return { success: true, filePath: result.filePath };
+        } else {
+          return { success: false, error: 'Save canceled' };
+        }
       } catch (error) {
         console.error('[IPC] Error generating LUT:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };

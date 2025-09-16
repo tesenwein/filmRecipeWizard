@@ -36,7 +36,7 @@ class FilmRecipeWizardApp {
     // Initialize IPC handlers
     this.fileHandlers = new FileHandlers(() => this.mainWindow);
     this.processingHandlers = new ProcessingHandlers(() => this.mainWindow, this.imageProcessor, this.storageService);
-    this.storageHandlers = new StorageHandlers(this.storageService);
+    this.storageHandlers = new StorageHandlers(this.storageService, this.settingsService, this.imageProcessor);
     this.settingsHandlers = new SettingsHandlers(this.settingsService, this.imageProcessor, this.storageService);
     this.exportHandlers = new ExportHandlers(this.imageProcessor, this.storageService);
     
