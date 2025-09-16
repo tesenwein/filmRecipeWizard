@@ -89,12 +89,12 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
       </crs:ShortName>
       <crs:Group>
         <rdf:Alt>
-          <rdf:li xml:lang="x-default">Foto Recipe Wizard</rdf:li>
+          <rdf:li xml:lang="x-default">Film Recipe Wizard</rdf:li>
         </rdf:Alt>
       </crs:Group>
       <crs:Description>
         <rdf:Alt>
-          <rdf:li xml:lang="x-default">Camera profile generated from Foto Recipe Wizard</rdf:li>
+          <rdf:li xml:lang="x-default">Camera profile generated from Film Recipe Wizard</rdf:li>
         </rdf:Alt>
       </crs:Description>
     </rdf:Description>

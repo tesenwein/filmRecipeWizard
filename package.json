@@ -1,6 +1,6 @@
 {
-  "name": "foto-recipe-wizard",
-  "version": "2.2.2",
+  "name": "film-recipe-wizard",
+  "version": "2.2.3",
   "description": "Create and apply photo recipes with AI-powered color grading and DNG RAW processing support",
   "main": "dist/main/main.js",
   "scripts": {
@@ -71,8 +71,8 @@
     "zustand": "^5.0.8"
   },
   "build": {
-    "appId": "com.theodoresenwein.fotorecipewizard",
-    "productName": "Foto Recipe Wizard",
+    "appId": "com.theodoresenwein.filmrecipewizard",
+    "productName": "Film Recipe Wizard",
     "directories": {
       "output": "release"
     },

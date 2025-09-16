@@ -165,7 +165,7 @@ export class ImageProcessor {
       await fs.mkdir(presetsDir, { recursive: true });
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const presetPath = path.join(presetsDir, `Foto Recipe Wizard-${timestamp}.xmp`);
+      const presetPath = path.join(presetsDir, `Film Recipe Wizard-${timestamp}.xmp`);
 
       // Generate XMP preset content
       const xmpContent = generateXMPContentImpl(data.adjustments, data.include);
@@ -176,8 +176,8 @@ export class ImageProcessor {
         success: true,
         outputPath: presetPath,
         metadata: {
-          presetName: `Foto Recipe Wizard-${timestamp}.xmp`,
-          groupFolder: 'foto-recipe-wizard',
+          presetName: `Film Recipe Wizard-${timestamp}.xmp`,
+          groupFolder: 'film-recipe-wizard',
           aiAdjustments: data.adjustments,
         },
       };

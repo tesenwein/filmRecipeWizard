@@ -8,15 +8,16 @@ import {
   shell,
 } from 'electron';
 import * as fs from 'fs/promises';
+import * as os from 'os';
 import * as path from 'path';
-import { AppSettings, ProcessHistory, ExportResult, ImportResult } from '../shared/types';
+import { AppSettings, ProcessHistory, ExportResult, ImportResult, DEFAULT_STORAGE_FOLDER } from '../shared/types';
 import { ImageProcessor } from './image-processor';
 import { generateLUTContent } from './lut-generator';
 import { SettingsService } from './settings-service';
 import { StorageService } from './storage-service';
 import { generateXMPContent } from './xmp-generator';
 
-class FotoRecipeWizardApp {
+class FilmRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
   private imageProcessor: ImageProcessor;
   private storageService: StorageService;
@@ -362,14 +363,13 @@ class FotoRecipeWizardApp {
             /* Ignore IPC send errors */
           }
 
-          // Persist result
+          // Persist result (without absolute paths)
           try {
             const firstBase = Array.isArray(baseImageData) ? baseImageData[0] : baseImageData;
             await this.storageService.updateProcess(data.processId, {
               results: [
                 {
-                  inputPath: '',
-                  outputPath: result.outputPath,
+                  // Don't store absolute paths - they're temporary and machine-specific
                   success: !!result.success,
                   error: result.error,
                   metadata: result.metadata,
@@ -534,8 +534,7 @@ class FotoRecipeWizardApp {
           if (data?.processId) {
             const persistedResults = [
               {
-                inputPath: targetPath,
-                outputPath: result.outputPath,
+                // Don't store absolute paths - they're temporary and machine-specific
                 success: !!result.success,
                 error: result.error,
                 metadata: result.metadata,
@@ -839,6 +838,25 @@ class FotoRecipeWizardApp {
       }
     });
 
+    // Handle folder selection for storage location
+    ipcMain.handle('select-storage-folder', async () => {
+      try {
+        const result = await dialog.showOpenDialog({
+          title: 'Select Recipe Storage Folder',
+          properties: ['openDirectory', 'createDirectory'],
+          defaultPath: path.join(os.homedir(), DEFAULT_STORAGE_FOLDER),
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+          return { success: true, path: result.filePaths[0] };
+        }
+        return { success: false, error: 'Selection canceled' };
+      } catch (error) {
+        console.error('[IPC] Error selecting storage folder:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Settings IPC handlers
     ipcMain.handle('get-settings', async () => {
       try {
@@ -860,6 +878,10 @@ class FotoRecipeWizardApp {
         if (partial.openaiKey !== undefined) {
           // Update processor with new key (re-init AI analyzer lazily)
           await this.imageProcessor.setOpenAIKey(partial.openaiKey);
+        }
+        if (partial.storageLocation !== undefined) {
+          // Update storage location
+          await this.storageService.setStorageLocation(partial.storageLocation);
         }
         return {
           success: true,
@@ -921,7 +943,7 @@ class FotoRecipeWizardApp {
           title: 'Export Recipe (ZIP)',
           defaultPath: `${safeName || 'Recipe'}.frw.zip`,
           filters: [
-            { name: 'Foto Recipe Wizard Zip', extensions: ['zip'] },
+            { name: 'Film Recipe Wizard Zip', extensions: ['zip'] },
             { name: 'All Files', extensions: ['*'] },
           ],
         });
@@ -933,11 +955,23 @@ class FotoRecipeWizardApp {
         const AdmZip = require('adm-zip');
         const zip = new AdmZip();
 
+        // Clean up process to remove absolute paths
+        const cleanedProcess = { ...process };
+        if (cleanedProcess.results) {
+          cleanedProcess.results = cleanedProcess.results.map(result => {
+            const cleanedResult = { ...result };
+            // Remove absolute paths - these are temporary/local paths that won't be valid on import
+            delete cleanedResult.inputPath;
+            delete cleanedResult.outputPath;
+            return cleanedResult;
+          });
+        }
+
         // Write manifest with embedded base64 images and results
         const manifest = {
-          schema: 'foto-recipe-wizard@1',
+          schema: 'film-recipe-wizard@1',
           exportedAt: new Date().toISOString(),
-          process: process,
+          process: cleanedProcess,
         };
         zip.addFile('recipe.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 
@@ -1003,7 +1037,7 @@ class FotoRecipeWizardApp {
           title: 'Export All Recipes (ZIP)',
           defaultPath: `All-Recipes-${new Date().toISOString().split('T')[0]}.frw.zip`,
           filters: [
-            { name: 'Foto Recipe Wizard Zip', extensions: ['zip'] },
+            { name: 'Film Recipe Wizard Zip', extensions: ['zip'] },
             { name: 'All Files', extensions: ['*'] },
           ],
         });
@@ -1015,12 +1049,27 @@ class FotoRecipeWizardApp {
         const AdmZip = require('adm-zip');
         const zip = new AdmZip();
 
+        // Clean up recipes to remove absolute paths
+        const cleanedRecipes = recipes.map(recipe => {
+          const cleaned = { ...recipe };
+          if (cleaned.results) {
+            cleaned.results = cleaned.results.map(result => {
+              const cleanedResult = { ...result };
+              // Remove absolute paths - these are temporary/local paths that won't be valid on import
+              delete cleanedResult.inputPath;
+              delete cleanedResult.outputPath;
+              return cleanedResult;
+            });
+          }
+          return cleaned;
+        });
+
         // Write manifest with all processes
         const manifest = {
-          schema: 'foto-recipe-wizard-bulk@1',
+          schema: 'film-recipe-wizard-bulk@1',
           exportedAt: new Date().toISOString(),
-          count: recipes.length,
-          processes: recipes,
+          count: cleanedRecipes.length,
+          processes: cleanedRecipes,
         };
         zip.addFile('all-recipes.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
 
@@ -1098,14 +1147,26 @@ class FotoRecipeWizardApp {
         const AdmZip = require('adm-zip');
         const zip = new AdmZip(filePath);
 
-        // Check for bulk export (all-recipes.json)
-        const bulkEntry = zip.getEntry('all-recipes.json');
+        // Check for bulk export (all-recipes.json) - try both at root and in subdirectories
+        let bulkEntry = zip.getEntry('all-recipes.json');
+
+        // If not found at root, search in subdirectories
+        if (!bulkEntry) {
+          const entries = zip.getEntries();
+          for (const entry of entries) {
+            if (entry.entryName.endsWith('all-recipes.json')) {
+              bulkEntry = entry;
+              break;
+            }
+          }
+        }
+
         if (bulkEntry) {
           // Handle bulk import
           const json = bulkEntry.getData().toString('utf8');
           const parsed = JSON.parse(json);
 
-          if (parsed.schema !== 'foto-recipe-wizard-bulk@1' || !Array.isArray(parsed.processes)) {
+          if (parsed.schema !== 'film-recipe-wizard-bulk@1' || !Array.isArray(parsed.processes)) {
             throw new Error('Invalid bulk recipe manifest');
           }
 
@@ -1135,9 +1196,26 @@ class FotoRecipeWizardApp {
 
           return { success: true, count: importedCount };
         } else {
-          // Handle single recipe import
-          const entry = zip.getEntry('recipe.json');
-          if (!entry) throw new Error('Invalid recipe file: neither recipe.json nor all-recipes.json found');
+          // Handle single recipe import - try both at root and in subdirectories
+          let entry = zip.getEntry('recipe.json');
+
+          // If not found at root, search in subdirectories
+          if (!entry) {
+            const entries = zip.getEntries();
+            for (const e of entries) {
+              if (e.entryName.endsWith('recipe.json')) {
+                entry = e;
+                break;
+              }
+            }
+          }
+
+          if (!entry) {
+            // Provide more helpful error message
+            const entries = zip.getEntries();
+            const fileList = entries.map((e: any) => e.entryName).join(', ');
+            throw new Error(`Invalid recipe file: neither recipe.json nor all-recipes.json found. ZIP contains: ${fileList}`);
+          }
 
           const json = entry.getData().toString('utf8');
           const parsed = JSON.parse(json);
@@ -1310,4 +1388,4 @@ class FotoRecipeWizardApp {
 }
 
 // Create and start the application
-new FotoRecipeWizardApp();
+new FilmRecipeWizardApp();

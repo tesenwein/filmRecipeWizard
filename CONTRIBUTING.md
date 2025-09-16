@@ -1,6 +1,6 @@
-# Contributing to Foto Recipe Wizard
+# Contributing to Film Recipe Wizard
 
-Thank you for your interest in contributing to Foto Recipe Wizard! We welcome contributions from photographers, developers, and anyone passionate about improving AI-powered photo editing workflows.
+Thank you for your interest in contributing to Film Recipe Wizard! We welcome contributions from photographers, developers, and anyone passionate about improving AI-powered photo editing workflows.
 
 ## 🚀 Getting Started
 
@@ -14,8 +14,8 @@ Thank you for your interest in contributing to Foto Recipe Wizard! We welcome co
 
 1. **Fork and clone the repository**
    ```bash
-   git clone https://github.com/your-username/fotoRecipeWizard.git
-   cd fotoRecipeWizard
+   git clone https://github.com/your-username/filmRecipeWizard.git
+   cd filmRecipeWizard
    ```
 
 2. **Install dependencies**

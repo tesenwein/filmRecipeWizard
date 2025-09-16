@@ -1,7 +1,9 @@
 import { Button, Card, CardContent, LinearProgress, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
+import { DEFAULT_STORAGE_FOLDER } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
+import ErrorDialog from './ErrorDialog';
 
 interface SetupWizardProps {
   onComplete: () => void;
@@ -22,19 +24,30 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const [emailError, setEmailError] = useState('');
   const [websiteError, setWebsiteError] = useState('');
   const [instagramError, setInstagramError] = useState('');
+  const [storageLocation, setStorageLocation] = useState(`~/${DEFAULT_STORAGE_FOLDER}`);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorDetails, setErrorDetails] = useState('');
 
   // Prefill from existing settings if present
   React.useEffect(() => {
     (async () => {
       try {
         const res = await window.electronAPI.getSettings();
-        if (res?.success && res.settings?.userProfile) {
-          const u = res.settings.userProfile as any;
-          setFirstName(u.firstName || '');
-          setLastName(u.lastName || '');
-          setEmail(u.email || '');
-          setWebsite(u.website || '');
-          setInstagram(u.instagram || '');
+        if (res?.success) {
+          if (res.settings?.userProfile) {
+            const u = res.settings.userProfile as any;
+            setFirstName(u.firstName || '');
+            setLastName(u.lastName || '');
+            setEmail(u.email || '');
+            setWebsite(u.website || '');
+            setInstagram(u.instagram || '');
+          }
+          // Storage location will have a default from backend or user's setting
+          if (res.settings?.storageLocation) {
+            setStorageLocation(res.settings.storageLocation);
+          }
+          // If no storageLocation from backend, keep the initial default
         }
       } catch {
         // Ignore settings load errors
@@ -95,7 +108,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         return; // Error message already set by testOpenAIKey
       }
 
-      // If key is valid, save it and advance to profile step
+      // If key is valid, save it and advance to storage step
       await saveSettings({ openaiKey: apiKey.trim() });
       setCurrentStep(3);
     } catch (error) {
@@ -162,7 +175,32 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     }
   };
 
-  const progress = (currentStep / 4) * 100;
+  const handleSelectStorageFolder = async () => {
+    try {
+      const result = await (window.electronAPI as any).selectStorageFolder();
+      if (result?.success && result.path) {
+        setStorageLocation(result.path);
+      }
+    } catch (error) {
+      console.error('Failed to select storage folder:', error);
+    }
+  };
+
+  const handleStorageLocationSubmit = async () => {
+    if (!storageLocation.trim()) return;
+
+    setIsLoading(true);
+    try {
+      await saveSettings({ storageLocation: storageLocation.trim() });
+      setCurrentStep(4);
+    } catch (error) {
+      console.error('Failed to save storage location:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const progress = (currentStep / 5) * 100;
 
   return (
     <div
@@ -272,6 +310,51 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             {currentStep === 3 && (
               <div>
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                  Choose Storage Location
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
+                  Select where your recipes and backups will be stored. This folder will be created if it doesn't exist.
+                </Typography>
+                <div style={{ marginBottom: 24 }}>
+                  <TextField
+                    fullWidth
+                    label="Storage Location"
+                    value={storageLocation}
+                    onChange={(e) => setStorageLocation(e.target.value)}
+                    placeholder="e.g., /Users/yourname/.film-recipes-wizard"
+                    helperText="This folder will store all your recipes and backups"
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={handleSelectStorageFolder}
+                    sx={{ mt: 2, display: 'block' }}
+                  >
+                    Browse Folder...
+                  </Button>
+                </div>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setCurrentStep(2)}
+                    disabled={isLoading}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleStorageLocationSubmit}
+                    disabled={!storageLocation.trim() || isLoading}
+                    sx={{ minWidth: 120 }}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 4 && (
+              <div>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Your Profile (optional)
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
@@ -323,14 +406,14 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"
-                    onClick={() => setCurrentStep(2)}
+                    onClick={() => setCurrentStep(3)}
                     disabled={isLoading}
                   >
                     Back
                   </Button>
                   <Button
                     variant="text"
-                    onClick={() => setCurrentStep(4)}
+                    onClick={() => setCurrentStep(5)}
                     disabled={isLoading}
                   >
                     Skip
@@ -364,7 +447,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                             instagram: ig.handle || undefined,
                           },
                         });
-                        setCurrentStep(4);
+                        setCurrentStep(5);
                       } finally {
                         setIsLoading(false);
                       }
@@ -378,7 +461,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
               </div>
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <div>
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Setup Complete!
@@ -394,9 +477,18 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     variant="outlined"
                     onClick={async () => {
                       try {
-                        await importRecipes();
+                        const res = await importRecipes();
+                        if (!res.success) {
+                          // Show detailed error dialog
+                          setErrorMessage('Failed to import recipes');
+                          setErrorDetails(res.error || 'Unknown error occurred during import');
+                          setErrorDialogOpen(true);
+                        }
                       } catch (error) {
-                        console.error('Failed to import recipes:', error);
+                        // Show detailed error dialog for unexpected errors
+                        setErrorMessage('Import failed unexpectedly');
+                        setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
+                        setErrorDialogOpen(true);
                       }
                     }}
                     sx={{ minWidth: 160 }}
@@ -416,6 +508,18 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             )}
           </CardContent>
         </Card>
+
+        <ErrorDialog
+          open={errorDialogOpen}
+          title="Import Error"
+          message={errorMessage}
+          details={errorDetails}
+          onClose={() => {
+            setErrorDialogOpen(false);
+            setErrorMessage('');
+            setErrorDetails('');
+          }}
+        />
       </div>
     </div>
   );

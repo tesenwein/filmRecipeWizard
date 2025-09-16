@@ -34,6 +34,7 @@ const Settings: React.FC = () => {
   const [emailError, setEmailError] = useState('');
   const [websiteError, setWebsiteError] = useState('');
   const [instagramError, setInstagramError] = useState('');
+  const [storageLocation, setStorageLocation] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -45,6 +46,7 @@ const Settings: React.FC = () => {
             setMasked(true);
           }
           setSetupCompleted(!!res.settings.setupCompleted);
+          setStorageLocation(res.settings.storageLocation || '');
           const u = (res.settings as any).userProfile || {};
           setFirstName(u.firstName || '');
           setLastName(u.lastName || '');
@@ -121,6 +123,18 @@ const Settings: React.FC = () => {
     return { ok: false };
   };
 
+  const handleSelectStorageFolder = async () => {
+    try {
+      const result = await window.electronAPI.selectStorageFolder();
+      if (result?.success && result.path) {
+        setStorageLocation(result.path);
+      }
+    } catch (error) {
+      console.error('Failed to select storage folder:', error);
+      setStatus({ type: 'error', msg: 'Failed to select storage folder' });
+    }
+  };
+
   const handleSave = async () => {
     setStatus(null);
     setIsValidating(true);
@@ -152,6 +166,7 @@ const Settings: React.FC = () => {
 
       const res = await window.electronAPI.saveSettings({
         openaiKey: openaiKey.trim() || undefined,
+        storageLocation: storageLocation.trim() || undefined,
         userProfile: {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
@@ -325,6 +340,37 @@ const Settings: React.FC = () => {
           />
           <Typography variant="caption" color="text.secondary">
             These details are stored locally, attached to new recipes, and included in exports.
+          </Typography>
+        </Stack>
+      </Paper>
+
+      <Typography variant="h6" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
+        Storage Location
+      </Typography>
+      <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+        <Stack spacing={1.5}>
+          <TextField
+            fullWidth
+            label="Recipe Storage Folder"
+            value={storageLocation}
+            onChange={e => setStorageLocation(e.target.value)}
+            helperText="Where your recipes and backups are stored"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleSelectStorageFolder}
+                  >
+                    Browse...
+                  </Button>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            This folder stores all your recipes and automatic backups. Changes take effect after saving.
           </Typography>
         </Stack>
       </Paper>

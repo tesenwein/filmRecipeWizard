@@ -288,7 +288,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: Foto Recipe Wizard v${{ steps.version.outputs.version }}
+          name: Film Recipe Wizard v${{ steps.version.outputs.version }}
           body_path: CHANGELOG.md
           prerelease: ${{ needs.check-release.outputs.is_prerelease == 'true' }}
           files: |
