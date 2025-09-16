@@ -16,6 +16,8 @@ npm version patch  # ✅ Creates commit + tag
 git push --tags    # ✅ Automatically triggers build & release
 ```
 
+> **Note**: As of version 2.2.10, the release workflow has been fixed and now properly creates GitHub releases with downloadable installers.
+
 ## 🚀 Quick Start
 
 ### Recommended Workflow (npm version):
