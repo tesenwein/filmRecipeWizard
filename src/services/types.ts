@@ -18,6 +18,9 @@ export interface AIColorAdjustments {
   vibrance?: number; // -100..100
   saturation?: number; // -100..100
 
+  // Black & White Mix (applies when monochrome/treatment is B&W)
+  gray_red?: number; gray_orange?: number; gray_yellow?: number; gray_green?: number; gray_aqua?: number; gray_blue?: number; gray_purple?: number; gray_magenta?: number;
+
   // HSL hue
   hue_red?: number; hue_orange?: number; hue_yellow?: number; hue_green?: number; hue_aqua?: number; hue_blue?: number; hue_purple?: number; hue_magenta?: number;
   // HSL sat
@@ -80,4 +83,3 @@ export interface AIColorAdjustments {
 }
 
 export type { AIColorAdjustments as default };
-

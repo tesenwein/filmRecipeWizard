@@ -1,5 +1,21 @@
 import { AIColorAdjustments } from '../services/openai-color-analyzer';
 
+// Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
+export function getExampleBWMixer(): Pick<AIColorAdjustments,
+  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
+> {
+  return {
+    gray_red: -20,
+    gray_orange: 31,
+    gray_yellow: -70,
+    gray_green: -32,
+    gray_aqua: 0,
+    gray_blue: -13,
+    gray_purple: -43,
+    gray_magenta: -32,
+  };
+}
+
 export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
   // Generate XMP content for Lightroom based on AI adjustments
   const isBW = !!aiAdjustments.monochrome || aiAdjustments.treatment === 'black_and_white' ||
@@ -115,7 +131,8 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  const hslBlock = inc.hsl
+  // HSL only applies to color treatment; B&W uses GrayMixer tags
+  const hslBlock = inc.hsl && !isBW
     ? [
         tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
         tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange),
@@ -162,6 +179,41 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         tag('ColorGradeBlending', round(clamp(scale((aiAdjustments as any).color_grade_blending), 0, 100))),
         tag('ColorGradeBalance', round(clamp(scale((aiAdjustments as any).color_grade_balance), -100, 100))),
       ].join('')
+    : '';
+
+  // Black & White Mix block (GrayMixer*) when in monochrome
+  const bwMixerBlock = isBW
+    ? (() => {
+        const clamp = (v: any, min: number, max: number): number | undefined => {
+          if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
+          return Math.max(min, Math.min(max, v));
+        };
+        const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
+        const src = aiAdjustments as any;
+        const vals = [
+          src.gray_red,
+          src.gray_orange,
+          src.gray_yellow,
+          src.gray_green,
+          src.gray_aqua,
+          src.gray_blue,
+          src.gray_purple,
+          src.gray_magenta,
+        ];
+        const hasAny = vals.some((v) => typeof v === 'number' && Number.isFinite(v));
+        if (!hasAny) return '';
+        const tag = (name: string, val?: number) => (val === 0 || val === -0 || (typeof val === 'number' && Number.isFinite(val)) ? `      <crs:${name}>${val}</crs:${name}>\n` : '');
+        return [
+          tag('GrayMixerRed', round(clamp(src.gray_red, -100, 100) as any)),
+          tag('GrayMixerOrange', round(clamp(src.gray_orange, -100, 100) as any)),
+          tag('GrayMixerYellow', round(clamp(src.gray_yellow, -100, 100) as any)),
+          tag('GrayMixerGreen', round(clamp(src.gray_green, -100, 100) as any)),
+          tag('GrayMixerAqua', round(clamp(src.gray_aqua, -100, 100) as any)),
+          tag('GrayMixerBlue', round(clamp(src.gray_blue, -100, 100) as any)),
+          tag('GrayMixerPurple', round(clamp(src.gray_purple, -100, 100) as any)),
+          tag('GrayMixerMagenta', round(clamp(src.gray_magenta, -100, 100) as any)),
+        ].join('');
+      })()
     : '';
 
   // Point Color block (optional)
@@ -405,7 +457,7 @@ ${correctionLis}
         </rdf:Alt>
       </crs:Group>
       ${treatmentTag}
-${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}
+${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}
       <!-- Masks (optional) -->
       ${masksBlock}
     </rdf:Description>

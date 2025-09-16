@@ -23,7 +23,8 @@ Call functions to:
 3. For portraits, ensure a match in skin tone and backdrop
 4. For landscapes, ensure sky/foliage mood and lighting alignment
 
-Include a short preset_name (2-4 words, Title Case).`;
+Include a short preset_name (2-4 words, Title Case).
+If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).`;
 
   if (baseImageB64) {
     const bases = Array.isArray(baseImageB64) ? baseImageB64 : [baseImageB64];

@@ -4,6 +4,22 @@ import { buildUserContentForAnalysis } from './prompt';
 import type { AIColorAdjustments } from './types';
 export type { AIColorAdjustments } from './types';
 
+// Example B&W mixer derived from example-bw.xmp
+export function getExampleBWMixer(): Pick<AIColorAdjustments,
+  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
+> {
+  return {
+    gray_red: -20,
+    gray_orange: 31,
+    gray_yellow: -70,
+    gray_green: -32,
+    gray_aqua: 0,
+    gray_blue: -13,
+    gray_purple: -43,
+    gray_magenta: -32,
+  };
+}
+
 export class OpenAIColorAnalyzer {
   private openai: OpenAI | null = null;
   private initialized = false;
@@ -21,6 +37,7 @@ export class OpenAIColorAnalyzer {
       console.warn('[AI] OpenAI API key not provided');
     }
   }
+
 
   async analyzeColorMatch(
     baseImagePath: string | undefined,
@@ -187,6 +204,15 @@ export class OpenAIColorAnalyzer {
                     minimum: -100,
                     maximum: 100,
                   },
+                  // Black & White Mix (GrayMixer*)
+                  gray_red: { type: 'number', description: 'B&W mix: red (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_orange: { type: 'number', description: 'B&W mix: orange (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_yellow: { type: 'number', description: 'B&W mix: yellow (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_green: { type: 'number', description: 'B&W mix: green (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_aqua: { type: 'number', description: 'B&W mix: aqua (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_blue: { type: 'number', description: 'B&W mix: blue (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_purple: { type: 'number', description: 'B&W mix: purple (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_magenta: { type: 'number', description: 'B&W mix: magenta (-100 to 100)', minimum: -100, maximum: 100 },
                   hue_red: {
                     type: 'number',
                     description: 'Red hue shift (-100 to +100)',
@@ -746,6 +772,15 @@ export class OpenAIColorAnalyzer {
                   clarity: { type: 'number', minimum: -100, maximum: 100 },
                   vibrance: { type: 'number', minimum: -100, maximum: 100 },
                   saturation: { type: 'number', minimum: -100, maximum: 100 },
+                  // Black & White Mix (GrayMixer*)
+                  gray_red: { type: 'number', minimum: -100, maximum: 100 },
+                  gray_orange: { type: 'number', minimum: -100, maximum: 100 },
+                  gray_yellow: { type: 'number', minimum: -100, maximum: 100 },
+                  gray_green: { type: 'number', minimum: -100, maximum: 100 },
+                  gray_aqua: { type: 'number', minimum: -100, maximum: 100 },
+                  gray_blue: { type: 'number', minimum: -100, maximum: 100 },
+                  gray_purple: { type: 'number', minimum: -100, maximum: 100 },
+                  gray_magenta: { type: 'number', minimum: -100, maximum: 100 },
                   hue_red: { type: 'number', minimum: -100, maximum: 100 },
                   hue_orange: { type: 'number', minimum: -100, maximum: 100 },
                   hue_yellow: { type: 'number', minimum: -100, maximum: 100 },
@@ -1241,6 +1276,8 @@ export class OpenAIColorAnalyzer {
     console.error('[AI] No usable adjustments in OpenAI response');
     throw new Error('Failed to get color adjustments from OpenAI');
   }
+
+  // No default injection of B&W mixer here; AI should provide gray_* values when using monochrome.
 
   private async convertToBase64Jpeg(imagePath: string): Promise<string> {
 
