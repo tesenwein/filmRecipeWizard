@@ -153,7 +153,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline
 
       - name: Rebuild Sharp for current platform
         run: npm rebuild sharp
@@ -162,7 +162,7 @@ jobs:
         run: npm run typecheck
 
       - name: Build application
-        run: npm run build
+        run: npm run prepare:build
 
       # Icons are copied from assets/icons to build/icons during build process
 
@@ -183,7 +183,7 @@ jobs:
         if: matrix.platform == 'win'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win
+        run: npm run package:win
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
