@@ -4,7 +4,6 @@ import { ExportResult, ImportResult } from '../../shared/types';
 import { ImageProcessor } from '../image-processor';
 import { StorageService } from '../storage-service';
 import { generateXMPContent } from '../xmp-generator';
-import { generateLUTContent } from '../lut-generator';
 
 export class ExportHandlers {
   constructor(

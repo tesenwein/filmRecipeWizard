@@ -2,7 +2,7 @@ import { dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STORAGE_FOLDER, Recipe, AppSettings, ProcessHistory } from '../../shared/types';
+import { DEFAULT_STORAGE_FOLDER, AppSettings, ProcessHistory } from '../../shared/types';
 import { StorageService } from '../storage-service';
 import { SettingsService } from '../settings-service';
 import { ImageProcessor } from '../image-processor';

@@ -202,7 +202,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         ];
         const hasAny = vals.some((v) => typeof v === 'number' && Number.isFinite(v));
         if (!hasAny) return '';
-        const tag = (name: string, val?: number) => (val === 0 || val === -0 || (typeof val === 'number' && Number.isFinite(val)) ? `      <crs:${name}>${val}</crs:${name}>\n` : '');
+        const tag = (name: string, val?: number) => (val === 0 || (typeof val === 'number' && Number.isFinite(val)) ? `      <crs:${name}>${val}</crs:${name}>\n` : '');
         return [
           tag('GrayMixerRed', round(clamp(src.gray_red, -100, 100) as any)),
           tag('GrayMixerOrange', round(clamp(src.gray_orange, -100, 100) as any)),
