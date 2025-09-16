@@ -19,7 +19,7 @@ on:
 
 # Cancel previous runs if new commits are pushed
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 permissions:
