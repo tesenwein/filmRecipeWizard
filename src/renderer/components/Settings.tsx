@@ -10,6 +10,7 @@ import {
   Box,
   Button,
   Container,
+  Divider,
   IconButton,
   InputAdornment,
   Paper,
@@ -31,6 +32,7 @@ const Settings: React.FC = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [setupCompleted, setSetupCompleted] = useState<boolean>(false);
+  const [appVersion, setAppVersion] = useState<string>('');
   // Profile state
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: '',
@@ -45,15 +47,19 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await window.electronAPI.getSettings();
-        if (res.success && res.settings) {
-          if (res.settings.openaiKey) {
+        const [settingsRes, versionRes] = await Promise.all([
+          window.electronAPI.getSettings(),
+          window.electronAPI.getAppVersion(),
+        ]);
+
+        if (settingsRes.success && settingsRes.settings) {
+          if (settingsRes.settings.openaiKey) {
             setOpenaiKey('');
             setMasked(true);
           }
-          setSetupCompleted(!!res.settings.setupCompleted);
-          setStorageLocation(res.settings.storageLocation || '');
-          const u = (res.settings as any).userProfile || {};
+          setSetupCompleted(!!settingsRes.settings.setupCompleted);
+          setStorageLocation(settingsRes.settings.storageLocation || '');
+          const u = (settingsRes.settings as any).userProfile || {};
           setProfileData({
             firstName: u.firstName || '',
             lastName: u.lastName || '',
@@ -61,6 +67,10 @@ const Settings: React.FC = () => {
             website: u.website || '',
             instagram: u.instagram || '',
           });
+        }
+
+        if (versionRes.success && versionRes.version) {
+          setAppVersion(versionRes.version);
         }
       } catch {
         setStatus({ type: 'error', msg: 'Failed to load settings' });
@@ -396,7 +406,19 @@ const Settings: React.FC = () => {
         analysis.
       </Typography>
 
-      <Paper elevation={1} sx={{ p: 2, borderRadius: 2, mt: 3 }}>
+      {/* Version Display */}
+      {appVersion && (
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
+            Film Recipe Wizard v{appVersion}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Divider before Reset Section */}
+      <Divider sx={{ my: 3 }} />
+
+      <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
         <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
           Reset Application
         </Typography>

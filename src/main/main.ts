@@ -1383,6 +1383,16 @@ class FilmRecipeWizardApp {
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
+
+    // Get application version
+    ipcMain.handle('get-app-version', async () => {
+      try {
+        return { success: true, version: app.getVersion() };
+      } catch (error) {
+        console.error('[IPC] Error getting app version:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
   }
 }
 

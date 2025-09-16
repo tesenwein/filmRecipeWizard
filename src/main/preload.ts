@@ -75,6 +75,9 @@ const electronAPI = {
   removeAllListeners: (channel: string) => {
     ipcRenderer.removeAllListeners(channel);
   },
+
+  // App info
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 };
 
 // Expose the API to the renderer process
