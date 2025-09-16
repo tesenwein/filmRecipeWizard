@@ -158,15 +158,6 @@ jobs:
       - name: Rebuild Sharp for current platform
         run: npm rebuild sharp
 
-      - name: Rebuild Sharp for current platform
-        run: npm rebuild sharp
-
-      - name: Rebuild Sharp for current platform
-        run: npm rebuild sharp
-
-      - name: Rebuild Sharp for current platform
-        run: npm rebuild sharp
-
       - name: Run type checking
         run: npm run typecheck
 
