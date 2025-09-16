@@ -37,11 +37,32 @@ module.exports = [
     },
   },
   {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        global: 'readonly',
+      },
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     ignores: [
       'dist/**',
       'node_modules/**',
       'webpack.*.js',
-      '*.js',
+      'eslint.config.js',
       '**/*.d.ts',
       'release/**',
       'build/**',
