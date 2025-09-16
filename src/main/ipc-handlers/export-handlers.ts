@@ -394,5 +394,45 @@ export class ExportHandlers {
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
+
+    // Export camera profile (generate from adjustments and save)
+    ipcMain.handle('export-profile', async (_event, data: { adjustments: any; recipeIndex?: number }) => {
+      try {
+        // First generate the camera profile XMP content
+        const profileResult = await this.imageProcessor.generateCameraProfile(data);
+        if (!profileResult.success || !profileResult.xmpContent) {
+          return { success: false, error: profileResult.error || 'Failed to generate profile' };
+        }
+
+        // Show save dialog
+        const { dialog } = require('electron');
+        const profileName = data.adjustments?.preset_name || 'Camera Profile';
+        const safeName = profileName
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
+
+        const result = await dialog.showSaveDialog({
+          title: 'Save Camera Profile',
+          defaultPath: `${safeName}.xmp`,
+          filters: [
+            { name: 'Camera Profile', extensions: ['xmp'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+
+        if (!result.canceled && result.filePath) {
+          // Write the file
+          await fs.writeFile(result.filePath, profileResult.xmpContent, 'utf8');
+          return { success: true, outputPath: result.filePath };
+        } else {
+          return { success: false, error: 'Save canceled' };
+        }
+      } catch (error) {
+        console.error('[IPC] Error exporting profile:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
   }
 }

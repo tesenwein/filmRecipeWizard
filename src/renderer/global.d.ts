@@ -41,7 +41,7 @@ declare global {
       generatePreset: (data: any) => Promise<any>;
       downloadXMP: (data: any) => Promise<any>;
       generateLUT: (data: any) => Promise<any>;
-      exportProfile: (data: { sourceXmpPath: string; outputDir?: string }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+      exportProfile: (data: { adjustments: any; recipeIndex?: number }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
 
       // Recipe import/export
       exportRecipe: (processId: string) => Promise<ExportResult>;
