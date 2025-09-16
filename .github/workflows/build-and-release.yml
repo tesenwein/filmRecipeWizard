@@ -206,13 +206,6 @@ jobs:
         with:
           path: artifacts/
 
-      - name: Display structure of downloaded files
-        run: |
-          echo "=== Contents of artifacts directory ==="
-          find artifacts/ -type f -ls || echo "No files found in artifacts/"
-          echo "=== Directory structure ==="
-          ls -la artifacts/
-
       - name: Generate changelog
         id: changelog
         run: |
@@ -258,22 +251,6 @@ jobs:
           EOF
           
           echo "Release notes generated"
-
-      - name: Verify artifact files exist
-        run: |
-          echo "=== Checking for release files ==="
-          echo "Looking for Mac files:"
-          ls -la artifacts/build-mac/*.dmg artifacts/build-mac/*.zip 2>/dev/null || echo "Mac files not found"
-          echo "Looking for Windows files:"
-          ls -la artifacts/build-win/*.exe 2>/dev/null || echo "Windows files not found"
-          
-          echo "=== File patterns to be uploaded ==="
-          echo "Mac DMG files:"
-          find artifacts/build-mac/ -name "*.dmg" -ls || echo "No DMG files found"
-          echo "Mac ZIP files:"
-          find artifacts/build-mac/ -name "*.zip" -ls || echo "No ZIP files found"
-          echo "Windows EXE files:"
-          find artifacts/build-win/ -name "*.exe" -ls || echo "No EXE files found"
 
       - name: Check if release exists
         id: check_release
