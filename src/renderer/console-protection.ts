@@ -131,16 +131,6 @@ class ProductionConsoleProtection implements ConsoleProtection {
   }
 
   private preventDebugger(): void {
-    // Block debugger statements
-    setInterval(() => {
-      const start = Date.now();
-      debugger;
-      if (Date.now() - start > 100) {
-        // Debugger was likely open, take action
-        this.handleDebuggerDetected();
-      }
-    }, 1000);
-
     // Block toString() debugging
     const originalToString = Function.prototype.toString;
     Function.prototype.toString = function() {
@@ -173,11 +163,6 @@ class ProductionConsoleProtection implements ConsoleProtection {
     }
   }
 
-  private handleDebuggerDetected(): void {
-    // Optionally clear the page or redirect
-    document.body.innerHTML = '';
-    throw new Error('Debug tools detected');
-  }
 }
 
 // Auto-initialize when script loads
