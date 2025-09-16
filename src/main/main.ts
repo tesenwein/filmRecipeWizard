@@ -155,10 +155,20 @@ class FilmRecipeWizardApp {
         label: 'Help',
         submenu: [
           {
-            label: 'About Me — Theodor Esenwein',
+            label: 'GitHub Repository',
             click: () => {
               try {
-                shell.openExternal('https://www.theoesenwein.ch');
+                shell.openExternal('https://github.com/tesenwein/filmRecipeWizard');
+              } catch {
+                // Ignore shell open errors
+              }
+            },
+          },
+          {
+            label: 'Report Issues',
+            click: () => {
+              try {
+                shell.openExternal('https://github.com/tesenwein/filmRecipeWizard/issues');
               } catch {
                 // Ignore shell open errors
               }
