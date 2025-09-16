@@ -266,7 +266,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:Midpoint="${midpoint}"
          crs:Roundness="${roundness}"
          crs:Feather="${feather}"
-         crs:Flipped="${m?.flipped ? 'true' : 'true'}"
+         crs:Flipped="${m?.flipped ? 'true' : 'false'}"
          crs:Version="2"/>`;
             } else if (mType === 'person' || mType === 'subject' || mType === 'background' || mType === 'sky') {
               // AI scene masks: Subject/People (1), Background (0), Sky (2)
