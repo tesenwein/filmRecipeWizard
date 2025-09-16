@@ -4,26 +4,28 @@ import IconSvg from '../../../assets/icons/icon.svg';
 import { DEFAULT_STORAGE_FOLDER } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
 import ErrorDialog from './ErrorDialog';
+import ProfileEdit, { ProfileData } from './ProfileEdit';
 
 interface SetupWizardProps {
   onComplete: () => void;
 }
 
 const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
-  const { saveSettings, setSetupCompleted, setSetupWizardOpen, importRecipes } = useAppStore() as any;
+  const { saveSettings, setSetupCompleted, setSetupWizardOpen, importRecipes } =
+    useAppStore() as any;
   const [currentStep, setCurrentStep] = useState(1);
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [keyError, setKeyError] = useState<string>('');
   // User profile fields
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [website, setWebsite] = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [websiteError, setWebsiteError] = useState('');
-  const [instagramError, setInstagramError] = useState('');
+  const [profileData, setProfileData] = useState<ProfileData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    website: '',
+    instagram: '',
+  });
+  const [isProfileValid, setIsProfileValid] = useState(true);
   const [storageLocation, setStorageLocation] = useState(`~/${DEFAULT_STORAGE_FOLDER}`);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -37,11 +39,13 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
         if (res?.success) {
           if (res.settings?.userProfile) {
             const u = res.settings.userProfile as any;
-            setFirstName(u.firstName || '');
-            setLastName(u.lastName || '');
-            setEmail(u.email || '');
-            setWebsite(u.website || '');
-            setInstagram(u.instagram || '');
+            setProfileData({
+              firstName: u.firstName || '',
+              lastName: u.lastName || '',
+              email: u.email || '',
+              website: u.website || '',
+              instagram: u.instagram || '',
+            });
           }
           // Storage location will have a default from backend or user's setting
           if (res.settings?.storageLocation) {
@@ -69,7 +73,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       const response = await fetch('https://api.openai.com/v1/models', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${key}`,
+          Authorization: `Bearer ${key}`,
           'Content-Type': 'application/json',
         },
         signal: controller.signal,
@@ -119,10 +123,6 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     }
   };
 
-  // Basic validators and normalizers
-  const isValidEmail = (value: string) =>
-    !value || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
-
   const normalizeUrl = (value: string): string | null => {
     if (!value) return '';
     const v = value.trim();
@@ -138,21 +138,21 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const normalizeInstagram = (value: string): { ok: boolean; handle?: string; url?: string } => {
     const v = value.trim();
     if (!v) return { ok: true, handle: undefined, url: undefined };
-    // Accept full URL
     try {
       const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
       if (/instagram\.com$/i.test(u.hostname)) {
         const parts = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
         const h = parts[0] || '';
-        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
+        if (/^[A-Za-z0-9._]{1,30}$/.test(h))
+          return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
       }
     } catch {
       // Ignore URL parsing errors
     }
-    // Require @ prefix for handle style
     if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');
-    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle: `@${handle}`, url: `https://www.instagram.com/${handle}` };
+    if (/^[A-Za-z0-9._]{1,30}$/.test(handle))
+      return { ok: true, handle: `@${handle}`, url: `https://www.instagram.com/${handle}` };
     return { ok: false };
   };
 
@@ -214,11 +214,14 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       }}
     >
       <div style={{ maxWidth: 720, width: '100%' }}>
-        <Card elevation={1} sx={{
-          minHeight: 500,
-          backgroundColor: '#ffffff',
-          borderRadius: 3
-        }}>
+        <Card
+          elevation={1}
+          sx={{
+            minHeight: 500,
+            backgroundColor: '#ffffff',
+            borderRadius: 3,
+          }}
+        >
           <LinearProgress
             variant="determinate"
             value={progress}
@@ -226,22 +229,36 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
               height: 4,
               backgroundColor: 'rgba(91, 102, 112, 0.1)',
               '& .MuiLinearProgress-bar': {
-                backgroundColor: '#5b6670'
-              }
+                backgroundColor: '#5b6670',
+              },
             }}
           />
           <CardContent sx={{ p: 5, textAlign: 'center' }}>
             {currentStep === 1 && (
               <div>
-                <img src={IconSvg} alt="Film Recipe Wizard" style={{ width: 64, height: 64, marginBottom: 24 }} />
+                <img
+                  src={IconSvg}
+                  alt="Film Recipe Wizard"
+                  style={{ width: 64, height: 64, marginBottom: 24 }}
+                />
                 <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
                   Welcome to Film Recipe Wizard!
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6 }}>
-                  Thank you for choosing Film Recipe Wizard. This powerful AI-driven tool helps you create stunning photo recipes with advanced color grading and style transfer capabilities.
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6 }}
+                >
+                  Thank you for choosing Film Recipe Wizard. This powerful AI-driven tool helps you
+                  create stunning photo recipes with advanced color grading and style transfer
+                  capabilities.
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}>
-                  We appreciate your support and welcome any contributions to make this tool even better. Visit our GitHub repository to contribute, report issues, or suggest new features.
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}
+                >
+                  We appreciate your support and welcome any contributions to make this tool even
+                  better. Visit our GitHub repository to contribute, report issues, or suggest new
+                  features.
                 </Typography>
                 <Button
                   variant="contained"
@@ -259,8 +276,12 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Configure OpenAI API
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
-                  To unlock the full power of AI-driven color analysis and style transfer, you'll need an OpenAI API key. This enables:
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}
+                >
+                  To unlock the full power of AI-driven color analysis and style transfer, you'll
+                  need an OpenAI API key. This enables:
                 </Typography>
                 <ul style={{ textAlign: 'left', marginBottom: 24, color: '#5f6b74' }}>
                   <li>Advanced color matching and analysis</li>
@@ -278,21 +299,17 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     placeholder="sk-..."
                     sx={{ WebkitAppRegion: 'no-drag' }}
                     error={!!keyError}
-                    helperText={keyError || "Your API key is stored securely on your local machine"}
+                    helperText={keyError || 'Your API key is stored securely on your local machine'}
                     InputProps={{
                       style: { WebkitAppRegion: 'no-drag' },
-                      onPointerDown: (e) => e.stopPropagation(),
-                      onClick: (e) => e.stopPropagation()
+                      onPointerDown: e => e.stopPropagation(),
+                      onClick: e => e.stopPropagation(),
                     }}
                   />
                 </div>
                 {/* Profile moved to Step 3 */}
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setCurrentStep(1)}
-                    disabled={isLoading}
-                  >
+                  <Button variant="outlined" onClick={() => setCurrentStep(1)} disabled={isLoading}>
                     Back
                   </Button>
                   <Button
@@ -312,15 +329,19 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Choose Storage Location
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
-                  Select where your recipes and backups will be stored. This folder will be created if it doesn't exist.
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}
+                >
+                  Select where your recipes and backups will be stored. This folder will be created
+                  if it doesn't exist.
                 </Typography>
                 <div style={{ marginBottom: 24 }}>
                   <TextField
                     fullWidth
                     label="Storage Location"
                     value={storageLocation}
-                    onChange={(e) => setStorageLocation(e.target.value)}
+                    onChange={e => setStorageLocation(e.target.value)}
                     placeholder="e.g., /Users/yourname/.film-recipes-wizard"
                     helperText="This folder will store all your recipes and backups"
                   />
@@ -333,11 +354,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   </Button>
                 </div>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setCurrentStep(2)}
-                    disabled={isLoading}
-                  >
+                  <Button variant="outlined" onClick={() => setCurrentStep(2)} disabled={isLoading}>
                     Back
                   </Button>
                   <Button
@@ -357,92 +374,44 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Your Profile (optional)
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}
+                >
                   These details are attached to your recipes and included in exports.
                 </Typography>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                  <TextField label="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} />
-                  <TextField label="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                  <TextField
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={e => {
-                      setEmail(e.target.value);
-                      setEmailError(isValidEmail(e.target.value) ? '' : 'Enter a valid email');
-                    }}
-                    error={!!emailError}
-                    helperText={emailError || 'Optional'}
-                  />
-                  <TextField
-                    label="Website"
-                    value={website}
-                    onChange={e => {
-                      setWebsite(e.target.value);
-                      const n = normalizeUrl(e.target.value);
-                      setWebsiteError(n === null ? 'Enter a valid URL' : '');
-                    }}
-                    error={!!websiteError}
-                    helperText={websiteError || 'Optional (e.g., example.com or https://example.com)'}
-                  />
-                </div>
-                <div style={{ marginBottom: 24 }}>
-                  <TextField
-                    fullWidth
-                    label="Instagram"
-                    placeholder="@yourhandle (required) or instagram.com/yourhandle"
-                    value={instagram}
-                    onChange={e => {
-                      setInstagram(e.target.value);
-                      const ok = normalizeInstagram(e.target.value).ok;
-                      setInstagramError(ok ? '' : 'Enter a valid handle or Instagram URL');
-                    }}
-                    error={!!instagramError}
-                    helperText={instagramError || 'Optional'}
-                  />
-                </div>
+                <ProfileEdit
+                  initialData={profileData}
+                  onChange={({ isValid, ...data }) => {
+                    setProfileData(data);
+                    setIsProfileValid(isValid);
+                  }}
+                  layout="grid"
+                />
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setCurrentStep(3)}
-                    disabled={isLoading}
-                  >
+                  <Button variant="outlined" onClick={() => setCurrentStep(3)} disabled={isLoading}>
                     Back
                   </Button>
-                  <Button
-                    variant="text"
-                    onClick={() => setCurrentStep(5)}
-                    disabled={isLoading}
-                  >
+                  <Button variant="text" onClick={() => setCurrentStep(5)} disabled={isLoading}>
                     Skip
                   </Button>
                   <Button
                     variant="contained"
                     onClick={async () => {
+                      if (!isProfileValid) {
+                        return;
+                      }
+                      
                       setIsLoading(true);
                       try {
-                        // Final validation and normalization
-                        if (!isValidEmail(email)) {
-                          setEmailError('Enter a valid email');
-                          return;
-                        }
-                        const nWebsite = normalizeUrl(website);
-                        if (nWebsite === null) {
-                          setWebsiteError('Enter a valid URL');
-                          return;
-                        }
-                        const ig = normalizeInstagram(instagram);
-                        if (!ig.ok) {
-                          setInstagramError('Enter a valid handle or Instagram URL');
-                          return;
-                        }
+                        const nWebsite = normalizeUrl(profileData.website);
+                        const ig = normalizeInstagram(profileData.instagram);
+                        
                         await saveSettings({
                           userProfile: {
-                            firstName: firstName.trim(),
-                            lastName: lastName.trim(),
-                            email: email.trim() ? email.trim() : undefined,
+                            firstName: profileData.firstName.trim(),
+                            lastName: profileData.lastName.trim(),
+                            email: profileData.email.trim() ? profileData.email.trim() : undefined,
                             website: nWebsite || undefined,
                             instagram: ig.handle || undefined,
                           },
@@ -466,13 +435,23 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Setup Complete!
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}>
-                  You're all set! Film Recipe Wizard is now ready to transform your photos with AI-powered style recipes.
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}
+                >
+                  You're all set! Film Recipe Wizard is now ready to transform your photos with
+                  AI-powered style recipes.
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}>
-                  Want to get started with some sample recipes? Import our curated collection to explore different styles and techniques.
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 4, color: 'text.secondary', lineHeight: 1.6 }}
+                >
+                  Want to get started with some sample recipes? Import our curated collection to
+                  explore different styles and techniques.
                 </Typography>
-                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div
+                  style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}
+                >
                   <Button
                     variant="outlined"
                     onClick={async () => {
@@ -487,7 +466,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                       } catch (error) {
                         // Show detailed error dialog for unexpected errors
                         setErrorMessage('Import failed unexpectedly');
-                        setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
+                        setErrorDetails(
+                          error instanceof Error ? error.message : 'An unexpected error occurred'
+                        );
                         setErrorDialogOpen(true);
                       }
                     }}
