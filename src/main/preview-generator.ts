@@ -1,7 +1,7 @@
 import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import Jimp from 'jimp';
+import { imageProcessingService } from '../services/image-processing-service';
 
 export async function generatePreviewFile(args: {
   path?: string;
@@ -31,26 +31,21 @@ export async function generatePreviewFile(args: {
   );
 
   try {
-    let img: any;
-
     if (args.path) {
-      img = await Jimp.read(args.path);
+      await imageProcessingService.generatePreview(args.path, outPath, {
+        maxWidth: 1024,
+        maxHeight: 1024,
+        quality: 92
+      });
     } else if (args.dataUrl) {
-      const base64 = args.dataUrl.split(',')[1] || '';
-      const buf = Buffer.from(base64, 'base64');
-      img = await Jimp.read(buf);
+      await imageProcessingService.generatePreviewFromDataUrl(args.dataUrl, outPath, {
+        maxWidth: 1024,
+        maxHeight: 1024,
+        quality: 92
+      });
     } else {
       throw new Error('No input provided for preview');
     }
-
-    // Resize with aspect ratio preservation
-    img.scaleToFit(1024, 1024);
-
-    // Set JPEG quality
-    img.quality(92);
-
-    // Write to file
-    await img.writeAsync(outPath);
 
     return outPath;
   } catch (error) {

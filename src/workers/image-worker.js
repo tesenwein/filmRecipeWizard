@@ -5,6 +5,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // Image processing worker for heavy computations
 const jimp_1 = __importDefault(require("jimp"));
+
+// Configure jimp memory limits for worker context
+(() => {
+  try {
+    const jpegJs = require('jpeg-js');
+
+    // Override the default JPEG decoder with much higher limits
+    jimp_1.default.decoders['image/jpeg'] = (data) => {
+      return jpegJs.decode(data, {
+        maxMemoryUsageInMB: 2048,  // Increase to 2GB
+        maxResolutionInMP: 1000,   // Allow up to 1000 megapixel images
+        tolerantDecoding: true     // Be more tolerant of decode errors
+      });
+    };
+
+    console.log('[WORKER] Jimp JPEG decoder configured with 2GB memory limit');
+  } catch (error) {
+    console.error('[WORKER] Failed to configure jimp decoder:', error);
+  }
+})();
 class ImageProcessingWorker {
     constructor() {
         // Listen for messages from the main thread

@@ -2,7 +2,7 @@ import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import Jimp from 'jimp';
+import { imageProcessingService } from '../services/image-processing-service';
 import { ProcessHistory, AppSettings, DEFAULT_STORAGE_FOLDER } from '../shared/types';
 
 export class StorageService {
@@ -268,14 +268,8 @@ export class StorageService {
   // Convert an image file to base64 JPEG data
   async convertImageToBase64(imagePath: string): Promise<string> {
     try {
-      // Read and resize image for storage efficiency (1024px max long side)
-      const img = await Jimp.read(imagePath);
-      img.scaleToFit(1024, 1024);
-      img.quality(90);
-
-      const buffer = await img.getBufferAsync(Jimp.MIME_JPEG);
-      const base64Data = buffer.toString('base64');
-      return base64Data;
+      // Use the centralized image processing service
+      return await imageProcessingService.convertToBase64Jpeg(imagePath);
     } catch (error) {
       console.error(`[STORAGE] Failed to convert image to base64: ${imagePath}`, error);
       throw new Error(

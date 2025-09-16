@@ -16,6 +16,8 @@ import { generateLUTContent } from './lut-generator';
 import { SettingsService } from './settings-service';
 import { StorageService } from './storage-service';
 import { generateXMPContent } from './xmp-generator';
+// Initialize image processing service early
+import '../services/image-processing-service';
 
 class FilmRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
