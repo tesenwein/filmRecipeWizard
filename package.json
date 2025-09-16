@@ -89,6 +89,11 @@
       "output": "release",
       "buildResources": "build"
     },
+    "publish": {
+      "provider": "github",
+      "owner": "tesenwein",
+      "repo": "filmRecipeWizard"
+    },
     "files": [
       "dist/**/*",
       "node_modules/**/*",
