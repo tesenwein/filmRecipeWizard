@@ -1,5 +1,5 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { Button, Box, Paper } from '@mui/material';
+import { Box, Button, Paper } from '@mui/material';
 import React from 'react';
 
 interface ProcessButtonProps {
@@ -15,9 +15,6 @@ const ProcessButton: React.FC<ProcessButtonProps> = ({ canProcess, onStartProces
         <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: '#2c3338' }}>
           Ready to Transform
         </h3>
-        <p style={{ fontSize: 13, margin: 0, color: '#5f6b74' }}>
-          AI will analyze and apply intelligent color grading to your images
-        </p>
       </Box>
       <Button
         variant="contained"
@@ -25,7 +22,14 @@ const ProcessButton: React.FC<ProcessButtonProps> = ({ canProcess, onStartProces
         onClick={onStartProcessing}
         size="large"
         disabled={!canProcess}
-        sx={{ textTransform: 'none', fontWeight: 700, fontSize: 16, px: 4, py: 1.5, borderRadius: 2 }}
+        sx={{
+          textTransform: 'none',
+          fontWeight: 700,
+          fontSize: 16,
+          px: 4,
+          py: 1.5,
+          borderRadius: 2,
+        }}
       >
         Start Color Matching
       </Button>

@@ -17,6 +17,7 @@ import {
   Menu,
   MenuItem,
   Select,
+  Stack,
   TextField,
   Typography,
 } from '@mui/material';
@@ -221,8 +222,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
   return (
     <div className="container">
-      <Grid container alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Grid>
+      <Grid container alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <Typography variant="h5" fontWeight={700}>
             Your Recipes
           </Typography>
@@ -232,81 +233,110 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
               : `${sortedRecipes.length} of ${recipes.length} recipes`}
           </Typography>
         </Grid>
-        <Grid style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <TextField
-            size="small"
-            placeholder="Search recipes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            useFlexGap
+            sx={{
+              width: '100%',
+              alignItems: { xs: 'stretch', sm: 'center' },
+              justifyContent: { xs: 'flex-start', lg: 'flex-end' },
+              flexWrap: 'wrap',
             }}
-            sx={{ minWidth: 200 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Sort by</InputLabel>
-            <Select
-              value={sortBy}
-              label="Sort by"
-              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
+          >
+            <TextField
+              size="small"
+              placeholder="Search recipes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                minWidth: { sm: 220 },
+                width: { xs: '100%', sm: 'auto' },
+                flex: { sm: '1 1 260px' },
+              }}
+            />
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: { sm: 150 },
+                width: { xs: '100%', sm: 'auto' },
+                flex: { sm: '0 0 160px' },
+              }}
             >
-              <MenuItem value="name">Name</MenuItem>
-              <MenuItem value="newest">Newest</MenuItem>
-              <MenuItem value="oldest">Oldest</MenuItem>
-            </Select>
-          </FormControl>
-          <Button
-            variant="outlined"
-            onClick={async () => {
-              try {
-                const res = await importRecipes();
-                if (res.success) {
-                  if (res.count && res.count > 1) {
-                    showSuccess(`Successfully imported ${res.count} recipes`);
-                  } else if (res.count === 1) {
-                    showSuccess('Successfully imported 1 recipe');
+              <InputLabel>Sort by</InputLabel>
+              <Select
+                value={sortBy}
+                label="Sort by"
+                onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
+              >
+                <MenuItem value="name">Name</MenuItem>
+                <MenuItem value="newest">Newest</MenuItem>
+                <MenuItem value="oldest">Oldest</MenuItem>
+              </Select>
+            </FormControl>
+            <Button
+              variant="outlined"
+              onClick={async () => {
+                try {
+                  const res = await importRecipes();
+                  if (res.success) {
+                    if (res.count && res.count > 1) {
+                      showSuccess(`Successfully imported ${res.count} recipes`);
+                    } else if (res.count === 1) {
+                      showSuccess('Successfully imported 1 recipe');
+                    } else {
+                      showSuccess('Import completed');
+                    }
                   } else {
-                    showSuccess('Import completed');
+                    // Show detailed error dialog
+                    setErrorMessage('Failed to import recipes');
+                    setErrorDetails(res.error || 'Unknown error occurred during import');
+                    setErrorDialogOpen(true);
                   }
-                } else {
-                  // Show detailed error dialog
-                  setErrorMessage('Failed to import recipes');
-                  setErrorDetails(res.error || 'Unknown error occurred during import');
+                } catch (error) {
+                  // Show detailed error dialog for unexpected errors
+                  setErrorMessage('Import failed unexpectedly');
+                  setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
                   setErrorDialogOpen(true);
                 }
-              } catch (error) {
-                // Show detailed error dialog for unexpected errors
-                setErrorMessage('Import failed unexpectedly');
-                setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
-                setErrorDialogOpen(true);
-              }
-            }}
-          >
-            Import Recipe
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={async () => {
-              try {
-                const res = await exportAllRecipes();
-                if (res.success && res.count) {
-                  showSuccess(`Successfully exported ${res.count} recipes`);
+              }}
+              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
+            >
+              Import Recipe
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={async () => {
+                try {
+                  const res = await exportAllRecipes();
+                  if (res.success && res.count) {
+                    showSuccess(`Successfully exported ${res.count} recipes`);
+                  }
+                } catch {
+                  showError('Export failed');
                 }
-              } catch {
-                showError('Export failed');
-              }
-            }}
-            disabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}
-          >
-            Export All
-          </Button>
-          <Button variant="contained" onClick={onNewProcess}>
-            New Recipe
-          </Button>
+              }}
+              disabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}
+              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
+            >
+              Export All
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onNewProcess}
+              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
+            >
+              New Recipe
+            </Button>
+          </Stack>
         </Grid>
       </Grid>
 
