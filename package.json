@@ -52,7 +52,6 @@
     "@typescript-eslint/parser": "^8.43.0",
     "concurrently": "^9.2.1",
     "css-loader": "^7.1.2",
-    "dmg-license": "^1.0.11",
     "electron": "^38.1.0",
     "electron-builder": "^26.0.12",
     "eslint": "^9.35.0",
@@ -86,7 +85,8 @@
     "appId": "com.theodoresenwein.filmrecipewizard",
     "productName": "Film Recipe Wizard",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
@@ -102,6 +102,7 @@
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
@@ -129,14 +130,49 @@
       ]
     },
     "win": {
-      "target": "nsis",
-      "icon": "build/icons/icon.png"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icons/icon.png",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "requestedExecutionLevel": "asInvoker",
+      "verifyUpdateCodeSignature": false
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icons/icon.png",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "category": "Graphics"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "deleteAppDataOnUninstall": false,
-      "packElevateHelper": false
+      "packElevateHelper": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Film Recipe Wizard",
+      "artifactName": "${productName}-${version}-Setup.${ext}",
+      "installerIcon": "build/icons/icon.png",
+      "uninstallerIcon": "build/icons/icon.png",
+      "license": "LICENSE",
+      "warningsAsErrors": false
     }
   }
 }
