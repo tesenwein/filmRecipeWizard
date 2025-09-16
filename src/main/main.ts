@@ -60,6 +60,7 @@ class FilmRecipeWizardApp {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, 'preload.js'),
+        devTools: process.env.NODE_ENV === 'development',
       },
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
       show: false,
@@ -72,6 +73,36 @@ class FilmRecipeWizardApp {
       this.mainWindow.webContents.openDevTools();
     } else {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+      
+      // Block dev tools in production
+      this.mainWindow.webContents.on('before-input-event', (event, input) => {
+        // Block common dev tools shortcuts
+        if (input.control && input.shift && input.key.toLowerCase() === 'i') {
+          event.preventDefault();
+        }
+        if (input.control && input.shift && input.key.toLowerCase() === 'j') {
+          event.preventDefault();
+        }
+        if (input.control && input.shift && input.key.toLowerCase() === 'c') {
+          event.preventDefault();
+        }
+        if (input.key === 'F12') {
+          event.preventDefault();
+        }
+        if (input.meta && input.alt && input.key.toLowerCase() === 'i') { // Mac
+          event.preventDefault();
+        }
+      });
+
+      // Block right-click context menu in production
+      this.mainWindow.webContents.on('context-menu', (event) => {
+        event.preventDefault();
+      });
+
+      // Block dev tools from being opened programmatically
+      this.mainWindow.webContents.on('devtools-opened', () => {
+        this.mainWindow?.webContents.closeDevTools();
+      });
     }
 
     this.mainWindow.once('ready-to-show', () => {
@@ -111,7 +142,7 @@ class FilmRecipeWizardApp {
         submenu: [
           { role: 'reload' },
           { role: 'forceReload' },
-          { role: 'toggleDevTools' },
+          ...(process.env.NODE_ENV === 'development' ? [{ role: 'toggleDevTools' as const }] : []),
           { type: 'separator' },
           { role: 'resetZoom' },
           { role: 'zoomIn' },

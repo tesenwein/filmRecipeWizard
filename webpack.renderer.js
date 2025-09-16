@@ -3,11 +3,14 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
-  entry: './src/renderer/index.tsx',
+  entry: {
+    'anti-tamper': './src/renderer/anti-tamper.js',
+    'renderer': './src/renderer/index.tsx'
+  },
   target: 'electron-renderer',
   output: {
     path: path.resolve(__dirname, 'dist/renderer'),
-    filename: 'renderer.js',
+    filename: '[name].js',
     clean: true
   },
   resolve: {
@@ -39,5 +42,5 @@ module.exports = {
       filename: 'index.html'
     })
   ],
-  devtool: 'source-map'
+  devtool: process.env.NODE_ENV === 'production' ? false : 'source-map'
 };

@@ -2,6 +2,7 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { createRoot } from 'react-dom/client';
 import App from './components/App';
 import './styles/index.css';
+import './console-protection';
 
 const container = document.getElementById('root');
 const root = createRoot(container!);
