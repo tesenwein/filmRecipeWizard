@@ -2,7 +2,7 @@ name: PR Validation
 
 on:
   pull_request:
-    branches: [master, main, develop]
+    branches: [main, develop]
     types: [opened, synchronize, reopened]
 
 # Cancel previous runs if new commits are pushed to the PR
