@@ -1,4 +1,10 @@
-import { DeleteOutline, RestartAlt, Save as SaveIcon, Visibility, VisibilityOff } from '@mui/icons-material';
+import {
+  DeleteOutline,
+  RestartAlt,
+  Save as SaveIcon,
+  Visibility,
+  VisibilityOff,
+} from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -14,7 +20,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import ConfirmDialog from './ConfirmDialog';
-
+import ProfileEdit, { ProfileData } from './ProfileEdit';
 
 const Settings: React.FC = () => {
   const { resetApp } = useAppStore();
@@ -26,14 +32,14 @@ const Settings: React.FC = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [setupCompleted, setSetupCompleted] = useState<boolean>(false);
   // Profile state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [website, setWebsite] = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [websiteError, setWebsiteError] = useState('');
-  const [instagramError, setInstagramError] = useState('');
+  const [profileData, setProfileData] = useState<ProfileData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    website: '',
+    instagram: '',
+  });
+  const [isProfileValid, setIsProfileValid] = useState(true);
   const [storageLocation, setStorageLocation] = useState('');
 
   useEffect(() => {
@@ -48,11 +54,13 @@ const Settings: React.FC = () => {
           setSetupCompleted(!!res.settings.setupCompleted);
           setStorageLocation(res.settings.storageLocation || '');
           const u = (res.settings as any).userProfile || {};
-          setFirstName(u.firstName || '');
-          setLastName(u.lastName || '');
-          setEmail(u.email || '');
-          setWebsite(u.website || '');
-          setInstagram(u.instagram || '');
+          setProfileData({
+            firstName: u.firstName || '',
+            lastName: u.lastName || '',
+            email: u.email || '',
+            website: u.website || '',
+            instagram: u.instagram || '',
+          });
         }
       } catch {
         setStatus({ type: 'error', msg: 'Failed to load settings' });
@@ -70,7 +78,7 @@ const Settings: React.FC = () => {
       const response = await fetch('https://api.openai.com/v1/models', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${key}`,
+          Authorization: `Bearer ${key}`,
           'Content-Type': 'application/json',
         },
         signal: controller.signal,
@@ -82,10 +90,16 @@ const Settings: React.FC = () => {
         setStatus({ type: 'error', msg: 'Invalid API key. Please check your key and try again.' });
         return false;
       } else if (response.status === 429) {
-        setStatus({ type: 'error', msg: 'Rate limit exceeded. Your key is valid but quota may be exhausted.' });
+        setStatus({
+          type: 'error',
+          msg: 'Rate limit exceeded. Your key is valid but quota may be exhausted.',
+        });
         return true; // Key is valid even if rate limited
       } else if (!response.ok) {
-        setStatus({ type: 'error', msg: 'Unable to verify API key. Please check your internet connection.' });
+        setStatus({
+          type: 'error',
+          msg: 'Unable to verify API key. Please check your internet connection.',
+        });
         return false;
       }
 
@@ -96,14 +110,17 @@ const Settings: React.FC = () => {
     }
   };
 
-  // Validation helpers
-  const isValidEmail = (value: string) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
   const normalizeUrl = (value: string): string | null => {
     if (!value) return '';
     const v = value.trim();
     const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
-    try { return new URL(withScheme).toString(); } catch { return null; }
+    try {
+      return new URL(withScheme).toString();
+    } catch {
+      return null;
+    }
   };
+  
   const normalizeInstagram = (value: string): { ok: boolean; handle?: string; url?: string } => {
     const v = value.trim();
     if (!v) return { ok: true };
@@ -111,15 +128,16 @@ const Settings: React.FC = () => {
       const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
       if (/instagram\.com$/i.test(u.hostname)) {
         const h = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
-        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
+        if (/^[A-Za-z0-9._]{1,30}$/.test(h))
+          return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
       }
     } catch {
       // Ignore URL parsing errors
     }
-    // Require @ prefix for handle style
     if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');
-    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle: `@${handle}`, url: `https://www.instagram.com/${handle}` };
+    if (/^[A-Za-z0-9._]{1,30}$/.test(handle))
+      return { ok: true, handle: `@${handle}`, url: `https://www.instagram.com/${handle}` };
     return { ok: false };
   };
 
@@ -148,32 +166,24 @@ const Settings: React.FC = () => {
         }
       }
 
-      // Validate profile fields
-      if (!isValidEmail(email)) {
-        setEmailError('Enter a valid email');
+      // Check profile validity
+      if (!isProfileValid) {
         return;
       }
-      const nWebsite = normalizeUrl(website);
-      if (nWebsite === null) {
-        setWebsiteError('Enter a valid URL');
-        return;
-      }
-      const ig = normalizeInstagram(instagram);
-      if (!ig.ok) {
-        setInstagramError('Enter a valid handle or Instagram URL');
-        return;
-      }
+      
+      const nWebsite = normalizeUrl(profileData.website);
+      const ig = normalizeInstagram(profileData.instagram);
 
       const res = await window.electronAPI.saveSettings({
         openaiKey: openaiKey.trim() || undefined,
         storageLocation: storageLocation.trim() || undefined,
         userProfile: {
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim() ? email.trim() : undefined,
+          firstName: profileData.firstName.trim(),
+          lastName: profileData.lastName.trim(),
+          email: profileData.email.trim() ? profileData.email.trim() : undefined,
           website: nWebsite || undefined,
           instagram: ig.handle || undefined,
-        }
+        },
       } as any);
       if (res.success) {
         setMasked(!!openaiKey);
@@ -211,7 +221,10 @@ const Settings: React.FC = () => {
     setResetDialogOpen(false);
     setStatus(null);
     try {
-      setStatus({ type: 'success', msg: 'Setup reset and all recipes deleted - refreshing app...' });
+      setStatus({
+        type: 'success',
+        msg: 'Setup reset and all recipes deleted - refreshing app...',
+      });
       // Close settings after a brief delay, before the app refreshes
       setTimeout(() => {
         window.dispatchEvent(new Event('close-settings'));
@@ -222,7 +235,6 @@ const Settings: React.FC = () => {
       setStatus({ type: 'error', msg: 'Failed to reset setup' });
     }
   };
-
 
   return (
     <Container maxWidth="sm" sx={{ py: 2 }} className="no-drag">
@@ -306,37 +318,13 @@ const Settings: React.FC = () => {
       </Typography>
       <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
         <Stack spacing={1.5}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <TextField fullWidth label="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} />
-            <TextField fullWidth label="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} />
-          </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setEmailError(isValidEmail(e.target.value) ? '' : 'Enter a valid email'); }}
-              error={!!emailError}
-              helperText={emailError || 'Optional'}
-            />
-            <TextField
-              fullWidth
-              label="Website"
-              value={website}
-              onChange={e => { setWebsite(e.target.value); const ok = normalizeUrl(e.target.value); setWebsiteError(ok === null ? 'Enter a valid URL' : ''); }}
-              error={!!websiteError}
-              helperText={websiteError || 'Optional (e.g., example.com or https://example.com)'}
-            />
-          </Stack>
-          <TextField
-            fullWidth
-            label="Instagram"
-            placeholder="@yourhandle (required) or instagram.com/yourhandle"
-            value={instagram}
-            onChange={e => { setInstagram(e.target.value); const ok = normalizeInstagram(e.target.value).ok; setInstagramError(ok ? '' : 'Enter a valid handle or Instagram URL'); }}
-            error={!!instagramError}
-            helperText={instagramError || 'Optional'}
+          <ProfileEdit
+            initialData={profileData}
+            onChange={({ isValid, ...data }) => {
+              setProfileData(data);
+              setIsProfileValid(isValid);
+            }}
+            layout="stack"
           />
           <Typography variant="caption" color="text.secondary">
             These details are stored locally, attached to new recipes, and included in exports.
@@ -358,11 +346,7 @@ const Settings: React.FC = () => {
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={handleSelectStorageFolder}
-                  >
+                  <Button variant="outlined" size="small" onClick={handleSelectStorageFolder}>
                     Browse...
                   </Button>
                 </InputAdornment>
@@ -370,7 +354,8 @@ const Settings: React.FC = () => {
             }}
           />
           <Typography variant="caption" color="text.secondary">
-            This folder stores all your recipes and automatic backups. Changes take effect after saving.
+            This folder stores all your recipes and automatic backups. Changes take effect after
+            saving.
           </Typography>
         </Stack>
       </Paper>
@@ -394,7 +379,7 @@ const Settings: React.FC = () => {
               fontWeight: 600,
               px: 4,
               py: 1.5,
-              borderRadius: 2
+              borderRadius: 2,
             }}
           >
             {isValidating ? 'Verifying & Saving...' : 'Save All Settings'}
@@ -402,8 +387,13 @@ const Settings: React.FC = () => {
         </Box>
       </Box>
 
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
-        Your API key and profile details are stored locally on this device and used for AI color analysis.
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', textAlign: 'center' }}
+      >
+        Your API key and profile details are stored locally on this device and used for AI color
+        analysis.
       </Typography>
 
       <Paper elevation={1} sx={{ p: 2, borderRadius: 2, mt: 3 }}>
@@ -411,7 +401,8 @@ const Settings: React.FC = () => {
           Reset Application
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Reset the application to its initial state. This will clear all recipes and show the setup wizard again.
+          Reset the application to its initial state. This will clear all recipes and show the setup
+          wizard again.
         </Typography>
         <Button
           variant="outlined"
