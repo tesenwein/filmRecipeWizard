@@ -27,111 +27,73 @@ permissions:
   actions: write
 
 jobs:
-  # Check if we should create a release based on commit message
+  # Check if version number changed in package.json
   check-release:
     name: Check Release Needed
     runs-on: ubuntu-latest
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
-      version_bump: ${{ steps.check.outputs.version_bump }}
-      is_prerelease: ${{ steps.check.outputs.is_prerelease }}
+      new_version: ${{ steps.check.outputs.new_version }}
+      version_changed: ${{ steps.check.outputs.version_changed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - name: Check commit message for release
+      - name: Check for version changes
         id: check
         run: |
-          # Get the latest commit message
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
-
-          # Check for conventional commit patterns that should trigger releases
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Get previous version from the last commit
+          PREVIOUS_VERSION=""
+          if git show HEAD~1:package.json >/dev/null 2>&1; then
+            PREVIOUS_VERSION=$(git show HEAD~1:package.json | node -e "
+              let data = '';
+              process.stdin.on('data', chunk => data += chunk);
+              process.stdin.on('end', () => {
+                try {
+                  const pkg = JSON.parse(data);
+                  console.log(pkg.version || '');
+                } catch (e) {
+                  console.log('');
+                }
+              });
+            ")
+          fi
+          
+          echo "Previous version: $PREVIOUS_VERSION"
+          
           SHOULD_RELEASE=false
-          VERSION_BUMP="none"
-          IS_PRERELEASE=false
-
+          VERSION_CHANGED=false
+          
           # Force release if manually triggered
           if [ "${{ github.event.inputs.force_release }}" = "true" ]; then
             SHOULD_RELEASE=true
-            VERSION_BUMP="patch"
-          # Check for manual version bump commits (should create proper releases)
-          elif echo "$COMMIT_MSG" | grep -qE "^chore:.*bump version to [0-9]+\.[0-9]+\.[0-9]+"; then
+            echo "Force release triggered"
+          # Check if version changed
+          elif [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ] && [ -n "$PREVIOUS_VERSION" ]; then
             SHOULD_RELEASE=true
-            VERSION_BUMP="none"  # Version already bumped manually
-            IS_PRERELEASE=false
-          # Check for version-bumping commit types
-          elif echo "$COMMIT_MSG" | grep -qE "^(feat|fix|perf)(\(.+\))?\!?:"; then
-            SHOULD_RELEASE=true
-            if echo "$COMMIT_MSG" | grep -q "BREAKING CHANGE" || echo "$COMMIT_MSG" | grep -qE "^(feat|fix|perf)(\(.+\))\!:"; then
-              VERSION_BUMP="major"
-            elif echo "$COMMIT_MSG" | grep -qE "^feat(\(.+\))?\!?:"; then
-              VERSION_BUMP="minor"
-            elif echo "$COMMIT_MSG" | grep -qE "^(fix|perf)(\(.+\))?\!?:"; then
-              VERSION_BUMP="patch"
-            fi
-          # Check for non-versioning commits that still create builds
-          elif echo "$COMMIT_MSG" | grep -qE "^(build|ci|docs|style|refactor|test|chore)(\(.+\))?\!?:"; then
-            # Create pre-release builds for non-versioning commits
-            SHOULD_RELEASE=true
-            IS_PRERELEASE=true
-            VERSION_BUMP="prerelease"
-          fi
-
-          echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
-          echo "version_bump=$VERSION_BUMP" >> $GITHUB_OUTPUT
-          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
-          echo "Should release: $SHOULD_RELEASE (bump: $VERSION_BUMP, prerelease: $IS_PRERELEASE)"
-
-  # Prepare version for release (no actual bumping due to protected branch)
-  prepare-version:
-    name: Prepare Version
-    runs-on: ubuntu-latest
-    needs: check-release
-    if: needs.check-release.outputs.should_release == 'true'
-    outputs:
-      new_version: ${{ steps.version.outputs.new_version }}
-      version_bumped: ${{ steps.version.outputs.version_bumped }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Determine version
-        id: version
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          VERSION_BUMP="${{ needs.check-release.outputs.version_bump }}"
-          VERSION_BUMPED=false
-
-          if [ "${{ needs.check-release.outputs.is_prerelease }}" = "true" ]; then
-            # Create prerelease version with commit SHA
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            NEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
+            VERSION_CHANGED=true
+            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
           else
-            # Version already bumped manually, use current version from package.json
-            NEW_VERSION="$CURRENT_VERSION"
-            VERSION_BUMPED=false
+            echo "No version change detected"
           fi
-
-          echo "Current version: $CURRENT_VERSION"
-          echo "New version: $NEW_VERSION"
-          echo "Version will be bumped: $VERSION_BUMPED"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "version_bumped=$VERSION_BUMPED" >> $GITHUB_OUTPUT
+          
+          echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
+          echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "version_changed=$VERSION_CHANGED" >> $GITHUB_OUTPUT
+          echo "Should release: $SHOULD_RELEASE (version changed: $VERSION_CHANGED)"
 
   # Build the application for all platforms
   build:
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [check-release, prepare-version]
-    if: always() && needs.check-release.outputs.should_release == 'true'
+    needs: check-release
+    if: needs.check-release.outputs.should_release == 'true'
 
     strategy:
       fail-fast: false
@@ -163,8 +125,6 @@ jobs:
 
       - name: Build application
         run: npm run prepare:build
-
-      # Icons are copied from assets/icons to build/icons during build process
 
       # macOS builds
       - name: Build macOS app
@@ -199,15 +159,15 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [check-release, prepare-version, build]
-    if: always() && needs.check-release.outputs.should_release == 'true' && needs.build.result == 'success'
+    needs: [check-release, build]
+    if: needs.check-release.outputs.should_release == 'true' && needs.build.result == 'success'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Needed for changelog generation
-          ref: ${{ github.ref }} # Make sure we have the latest changes
+          ref: ${{ github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -227,50 +187,33 @@ jobs:
           echo "=== Looking for specific file types ==="
           find artifacts -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.AppImage" \) | sort
 
-      - name: Get version for release
-        id: version
-        run: |
-          NEW_VERSION="${{ needs.prepare-version.outputs.new_version }}"
-          VERSION_BUMPED="${{ needs.prepare-version.outputs.version_bumped }}"
-
-          echo "Using version: $NEW_VERSION"
-          echo "Version was bumped: $VERSION_BUMPED"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-          if [ "$VERSION_BUMPED" = "true" ]; then
-            echo "⚠️  Note: Version should be manually updated in package.json to $NEW_VERSION after this release"
-          fi
-
       - name: Generate changelog
         id: changelog
         run: |
+          VERSION="${{ needs.check-release.outputs.new_version }}"
+          
           # Get commits since last tag/release
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           if [ -z "$LAST_TAG" ]; then
-            COMMIT_RANGE="HEAD"
+            COMMIT_RANGE="HEAD~10..HEAD"
           else
             COMMIT_RANGE="${LAST_TAG}..HEAD"
           fi
 
-          echo "## 📋 Changes" > CHANGELOG.md
+          echo "## 📋 Changes in v${VERSION}" > CHANGELOG.md
           echo "" >> CHANGELOG.md
 
-          # Group commits by type
-          git log $COMMIT_RANGE --pretty=format:"%s" --reverse | while read line; do
-            if echo "$line" | grep -qE "^feat(\(.+\))?\!?:"; then
-              echo "### ✨ Features" >> CHANGELOG.md
-              echo "- $(echo "$line" | sed 's/^feat[^:]*: *//')" >> CHANGELOG.md
-            elif echo "$line" | grep -qE "^fix(\(.+\))?\!?:"; then
-              echo "### 🐛 Bug Fixes" >> CHANGELOG.md
-              echo "- $(echo "$line" | sed 's/^fix[^:]*: *//')" >> CHANGELOG.md
-            elif echo "$line" | grep -qE "^perf(\(.+\))?\!?:"; then
-              echo "### ⚡ Performance" >> CHANGELOG.md
-              echo "- $(echo "$line" | sed 's/^perf[^:]*: *//')" >> CHANGELOG.md
-            elif echo "$line" | grep -qE "^(build|ci|docs|style|refactor|test|chore)(\(.+\))?\!?:"; then
-              echo "### 🔧 Other Changes" >> CHANGELOG.md
-              echo "- $(echo "$line" | sed 's/^[^:]*: *//')" >> CHANGELOG.md
-            fi
-          done
+          # If version changed, highlight the version bump
+          if [ "${{ needs.check-release.outputs.version_changed }}" = "true" ]; then
+            echo "### 🚀 Version Update" >> CHANGELOG.md
+            echo "- Updated to version ${VERSION}" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          # List recent commits
+          echo "### 📝 Recent Changes" >> CHANGELOG.md
+          git log $COMMIT_RANGE --pretty=format:"- %s" --reverse >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
 
           # Add download section
           echo "" >> CHANGELOG.md
@@ -283,53 +226,12 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Film Recipe Wizard v${{ steps.version.outputs.version }}
+          tag_name: v${{ needs.check-release.outputs.new_version }}
+          name: Film Recipe Wizard v${{ needs.check-release.outputs.new_version }}
           body_path: CHANGELOG.md
-          prerelease: ${{ needs.check-release.outputs.is_prerelease == 'true' }}
+          prerelease: false
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Sync main changes back to develop to prevent conflicts
-  sync-branches:
-    name: Sync Main to Develop
-    runs-on: ubuntu-latest
-    needs: [check-release, prepare-version, build, release]
-    if: always() && needs.check-release.outputs.should_release == 'true' && needs.release.result == 'success' && needs.check-release.outputs.is_prerelease == 'false'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Sync master to develop
-        run: |
-          # Fetch latest changes
-          git fetch origin main
-          git fetch origin develop
-
-          # Checkout develop and merge main
-          git checkout develop
-          git pull origin develop
-
-          # Merge main into develop
-          if git merge origin/main --no-edit; then
-            echo "✅ Successfully merged main into develop"
-            git push origin develop
-          else
-            echo "❌ Merge conflicts detected. Manual resolution required."
-            echo "Please resolve conflicts manually and push to develop."
-            exit 1
-          fi
-
-      # Version already updated by bump-version job, no need to update again
