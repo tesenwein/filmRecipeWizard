@@ -7,12 +7,20 @@ const iconsDir = path.join(__dirname, '../build/icons');
 const sizes = [16, 32, 48, 64, 128, 256, 512, 1024];
 
 let sharp = null;
+let pngToIco = null;
 
 try {
   // Try to require sharp; it can fail on some CI/platform combinations
   sharp = require('sharp');
 } catch (err) {
   console.warn('`sharp` could not be loaded — will copy existing icons as fallback.');
+}
+
+try {
+  const pngToIcoModule = require('png-to-ico');
+  pngToIco = pngToIcoModule.default || pngToIcoModule;
+} catch (err) {
+  console.warn('`png-to-ico` could not be loaded — ICO generation will be skipped.');
 }
 
 function ensureIconsDir() {
@@ -35,6 +43,28 @@ async function generateWithSharp(svgBuffer) {
     .png()
     .toFile(path.join(iconsDir, 'icon.png'));
   console.log('Generated icon.png');
+
+  // Generate ICO file for Windows
+  if (pngToIco) {
+    try {
+      const iconSizes = [16, 32, 48, 64, 128, 256];
+      const pngBuffers = [];
+      
+      for (const size of iconSizes) {
+        const buffer = await sharp(svgBuffer)
+          .resize(size, size)
+          .png()
+          .toBuffer();
+        pngBuffers.push(buffer);
+      }
+      
+      const icoBuffer = await pngToIco(pngBuffers);
+      fs.writeFileSync(path.join(iconsDir, 'icon.ico'), icoBuffer);
+      console.log('Generated icon.ico');
+    } catch (error) {
+      console.warn('Failed to generate ICO file:', error.message);
+    }
+  }
 }
 
 // jimp removed: we prefer sharp. If sharp isn't available we copy prebuilt icons.
