@@ -29,6 +29,7 @@
     "package:all": "npm run prepare:build && electron-builder --mac --win --linux",
     "generate-icons": "node scripts/generate-icons.js",
     "validate-build": "node scripts/validate-build.js",
+    "check-env": "node scripts/check-build-env.js",
     "knip": "knip"
   },
   "keywords": [

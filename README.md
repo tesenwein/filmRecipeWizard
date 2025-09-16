@@ -51,6 +51,32 @@ When installing on macOS, you may encounter a security warning that the app "can
 
 This is a standard macOS security feature for unsigned applications. The app is safe to use and open source.
 
+## 🛠️ Development & Building
+
+### Quick Start
+```bash
+git clone https://github.com/tesenwein/filmRecipeWizard.git
+cd filmRecipeWizard
+npm install
+npm run dev  # Start development server
+```
+
+### Build Environment Check
+Check what you can build on your system:
+```bash
+npm run check-env  # Shows available build targets for your platform
+```
+
+### Building for Distribution
+```bash
+npm run prepare:build    # Clean, build, and validate
+npm run package:mac      # macOS (requires macOS)
+npm run package:win      # Windows  
+npm run package:linux    # Linux
+```
+
+📋 **For detailed build instructions, platform requirements, and troubleshooting, see [BUILD.md](BUILD.md)**
+
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
