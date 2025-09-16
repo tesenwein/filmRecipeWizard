@@ -153,16 +153,15 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
 
       {/* Main area: supports drag & drop */}
       {hasImages ? (
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <Box
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             sx={{
               width: '100%',
-              flex: 1,
-              minHeight: kind === 'target' ? 500 : 260,
-              maxHeight: kind === 'target' ? 500 : 260,
+              minHeight: kind === 'target' ? 400 : 180,
+              maxHeight: kind === 'target' ? 400 : 180,
               borderRadius: 2,
               overflow: 'hidden',
               border: isDragOver ? '2px dashed rgba(63,81,181,0.4)' : 'none',
@@ -214,8 +213,19 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
               />
             </Box>
           )}
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+          <Box 
+            sx={{ 
+              mt: 2, 
+              p: 2, 
+              backgroundColor: 'background.paper',
+              borderRadius: 2,
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', alignItems: 'center' }}>
               <Button
                 variant="outlined"
                 onClick={onSelectFiles}
@@ -227,6 +237,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
                   py: 1,
                   color: 'primary.main',
                   borderColor: 'primary.main',
+                  minWidth: 120,
                   '&:hover': { backgroundColor: 'rgba(91, 102, 112, 0.06)' },
                 }}
               >
@@ -243,6 +254,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
                     px: 3,
                     py: 1,
                     backgroundColor: 'primary.main',
+                    minWidth: 120,
                     '&:hover': { backgroundColor: 'primary.dark' },
                   }}
                 >
@@ -260,8 +272,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             sx={{
-              flex: 1,
-              minHeight: kind === 'target' ? 350 : 220,
+              minHeight: kind === 'target' ? 300 : 160,
+              maxHeight: kind === 'target' ? 300 : 160,
               border: isDragOver ? '2px dashed rgba(63,81,181,0.6)' : 'none',
               borderRadius: 2,
               display: 'flex',
@@ -284,12 +296,31 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
               <p style={{ fontSize: 13, color: '#868e96' }}>JPEG, PNG, TIFF, DNG. Up to {maxFiles} files.</p>
             </Box>
           </Box>
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Box 
+            sx={{ 
+              mt: 2, 
+              p: 2, 
+              backgroundColor: 'background.paper',
+              borderRadius: 2,
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
             <Button
               variant="contained"
               onClick={onSelectFiles}
               size="large"
-              sx={{ textTransform: 'none', fontWeight: 700, py: 1.5, px: 4, borderRadius: 2, fontSize: 16 }}
+              sx={{ 
+                textTransform: 'none', 
+                fontWeight: 700, 
+                py: 1.5, 
+                px: 4, 
+                borderRadius: 2, 
+                fontSize: 16,
+                minWidth: 200
+              }}
             >
               {defaults.emptyCta}
             </Button>

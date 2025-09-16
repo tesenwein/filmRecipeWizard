@@ -223,7 +223,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           </h2>
         </Box>
         <p style={{ fontSize: 13, color: '#5f6b74', margin: 0 }}>
-          Transform your photos with intelligent color grading
+          Create Lightroom profiles and LUTs from your reference images
         </p>
       </Paper>
 
@@ -236,7 +236,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             onSelect={(profile) => onStyleOptionsChange?.({ lightroomProfile: profile })}
           />
 
-          <Box sx={{ maxHeight: 600, display: 'flex', width: '100%' }}>
+          <Box sx={{ display: 'flex', width: '100%' }}>
             <ImagePicker
               kind="target"
               images={targetImages}
