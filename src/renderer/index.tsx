@@ -148,9 +148,9 @@ const theme = createTheme({
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid #e9ecef',
+          borderBottom: 'none',
           '&.Mui-expanded': {
-            borderBottom: '1px solid #e9ecef',
+            borderBottom: 'none',
           },
         },
         content: {

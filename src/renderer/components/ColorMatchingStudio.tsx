@@ -225,7 +225,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   }, []);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, p: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1 }}>
       {/* Header */}
       <Paper
         className="card slide-in"
@@ -255,7 +255,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         }}
       >
         {/* Left Column - Target Image and Reference Image */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
           <Box sx={{ display: 'flex', width: '100%' }}>
             <ImagePicker
               kind="target"
@@ -288,7 +288,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         </Box>
 
         {/* Right Column - All Options */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <LightroomProfileCard
             selected={styleOptions?.lightroomProfile}
             onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
