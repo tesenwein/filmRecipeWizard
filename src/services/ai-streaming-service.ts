@@ -54,6 +54,7 @@ export class AIStreamingService {
             // Use AI SDK v5 streaming with proper thinking process
             const result = await streamText({
                 model: openai(this.model),
+                system: this.getSystemPrompt(options || {}),
                 messages: [
                     {
                         role: 'user',
@@ -112,6 +113,8 @@ export class AIStreamingService {
                     // Handle tool calls
                     currentProgress = Math.min(currentProgress + 10, 80); // Jump to 80% for tool calls
 
+                    console.log('[AI STREAMING] Tool call:', part.toolName, 'with args:', JSON.stringify(part.input, null, 2));
+
                     onUpdate?.({
                         type: 'tool_call',
                         content: `Using ${part.toolName} to analyze ${this.getToolDescription(part.toolName)}`,
@@ -148,6 +151,8 @@ export class AIStreamingService {
 
             if (!finalResult) {
                 // Fallback: try to parse the result from the text
+                console.log('[AI STREAMING] No tool result found, attempting to parse from text. Full text length:', fullText.length);
+                console.log('[AI STREAMING] First 500 characters of text:', fullText.substring(0, 500));
                 finalResult = this.parseResultFromText(fullText);
             }
 
@@ -172,12 +177,6 @@ export class AIStreamingService {
         options?: StreamingOptions
     ): Promise<any[]> {
         const content: any[] = [];
-
-        // Add system prompt
-        content.push({
-            type: 'text',
-            text: this.getSystemPrompt(options || {})
-        });
 
         // Add reference images (the style we want to match)
         if (baseImageBase64) {
@@ -238,7 +237,10 @@ Call the generate_color_adjustments function with:
 2. Color grading: shadow/midtone/highlight color grading values
 3. HSL adjustments: hue/saturation/luminance for each color range
 4. Tone curves: parametric and point curve adjustments
-5. Masks: Include masks array with local adjustments (max 3 masks)` +
+5. Masks: Include masks array with local adjustments (max 3 masks)
+   - For background masks, include subCategoryId: 22 for proper Lightroom detection
+   - For subject/person masks, use type: 'subject' with referenceX/Y coordinates
+   - For sky masks, use type: 'sky' with referenceX/Y coordinates` +
             (options.preserveSkinTones ? `\n6. Preserve natural skin tones in Subject masks` : '') +
             (options.lightroomProfile
                 ? `\n\nIMPORTANT: Use "${options.lightroomProfile}" as the base camera profile in your adjustments. This profile determines the baseline color rendition and contrast.`
@@ -400,8 +402,8 @@ Provide detailed reasoning for each adjustment to help the user understand the c
                 name: z.string().optional(),
                 type: z.enum(['radial', 'linear', 'person', 'subject', 'background', 'sky']),
                 adjustments: localAdjustmentsSchema.optional(),
-                // Optional sub-category for background masks
-                subCategoryId: z.number().optional(),
+                // Optional sub-category for background masks (use 22 for general background)
+                subCategoryId: z.number().optional().describe('For background masks, use 22 for general background detection'),
                 // Radial geometry
                 top: z.number().min(0).max(1).optional(),
                 left: z.number().min(0).max(1).optional(),
@@ -455,9 +457,21 @@ Provide detailed reasoning for each adjustment to help the user understand the c
         // Try to extract structured data from the text
         // This is a fallback method
         try {
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
+            // Look for JSON-like structures in the text
+            const jsonMatches = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
+            if (jsonMatches) {
+                for (const match of jsonMatches) {
+                    try {
+                        const parsed = JSON.parse(match);
+                        // Check if it looks like a valid AIColorAdjustments object
+                        if (parsed && typeof parsed === 'object' && (parsed.preset_name || parsed.confidence !== undefined)) {
+                            return parsed as AIColorAdjustments;
+                        }
+                    } catch (parseError) {
+                        // Continue to next match
+                        continue;
+                    }
+                }
             }
         } catch (error) {
             console.warn('Could not parse result from text:', error);

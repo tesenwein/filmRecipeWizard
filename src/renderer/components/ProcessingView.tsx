@@ -250,7 +250,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           </Avatar>
           <Box>
             <Typography
-              variant="h4"
+              variant="h5"
               fontWeight={600}
               sx={{
                 color: 'text.primary',
@@ -260,7 +260,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               AI Recipe Wizard
             </Typography>
             <Typography
-              variant="h6"
+              variant="body1"
               sx={{
                 color: 'text.secondary',
                 fontWeight: 400

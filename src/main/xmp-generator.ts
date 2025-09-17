@@ -553,7 +553,7 @@ export function generateXMPContent(
               const subCat =
                 typeof (m as any)?.subCategoryId === 'number'
                   ? String((m as any).subCategoryId)
-                  : undefined;
+                  : mType === 'background' ? '22' : undefined; // Default to 22 for background masks
               maskLi = `<rdf:li
          crs:What="Mask/Image"
          crs:MaskActive="true"
