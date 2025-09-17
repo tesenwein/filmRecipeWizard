@@ -94,56 +94,23 @@ export class AIStreamingService {
                         lastThinkingLength = accumulatedThinkingText.length;
                     }
 
-                    // Update thinking content with incremental text
+                    // Update analysis step progress
                     if (thinkingStarted && !thinkingComplete) {
                         const now = Date.now();
                         const currentLength = accumulatedThinkingText.length;
-                        // Lower thresholds to make streaming feel smoother
-                        const hasSignificantNewContent = (currentLength - lastThinkingLength) > 10; // At least 10 new characters
-                        const enoughTimePassed = (now - lastThinkingUpdate) > 200; // At least 200ms between updates
+                        const hasSignificantNewContent = (currentLength - lastThinkingLength) > 50;
+                        const enoughTimePassed = (now - lastThinkingUpdate) > 1000;
 
-                        if (hasSignificantNewContent && enoughTimePassed && accumulatedThinkingText.trim().length > 20) {
-                            // Get only the new content since last update
-                            const newContent = accumulatedThinkingText.substring(lastThinkingLength);
-
-                            // Clean up the new content (remove code blocks, JSON, etc.)
-                            const cleanNewContent = newContent
-                                .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-                                .replace(/`[^`]*`/g, '') // Remove inline code
-                                .replace(/\{[^}]*\}/g, '') // Remove JSON-like structures
-                                .replace(/\[[^\]]*\]/g, '') // Remove array-like structures
-                                .replace(/function\s+\w+\s*\([^)]*\)\s*\{[^}]*\}/g, '') // Remove function definitions
-                                .replace(/const\s+\w+\s*=\s*[^;]+;/g, '') // Remove variable assignments
-                                .replace(/let\s+\w+\s*=\s*[^;]+;/g, '') // Remove let assignments
-                                .replace(/var\s+\w+\s*=\s*[^;]+;/g, '') // Remove var assignments
-                                // Strip common Markdown formatting so thinking text is plain
-                                .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Remove images
-                                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to text
-                                .replace(/^#{1,6}\s+/gm, '') // Remove headings
-                                .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
-                                .replace(/__([^_]+)__/g, '$1') // Bold underscores
-                                .replace(/\*([^*]+)\*/g, '$1') // Italic
-                                .replace(/_([^_]+)_/g, '$1') // Italic underscores
-                                .replace(/^\s*>\s?/gm, '') // Blockquotes
-                                .replace(/^\s*[-*+]\s+/gm, '') // Unordered list bullets
-                                .replace(/^\s*\d+\.\s+/gm, '') // Ordered list markers
-                                .replace(/^\s*-{3,}\s*$/gm, '') // Horizontal rules
-                                .replace(/\n\s*\n/g, '\n') // Collapse multiple blank lines into single newline
-                                .replace(/[ \t]+/g, ' ') // Normalize spaces and tabs but preserve newlines
-                                .trim();
-
-
-                            if (cleanNewContent.length > 5) {
-                                currentProgress = Math.min(currentProgress + 2, 50); // Gradual progress
-                                onUpdate?.({
-                                    type: 'thinking',
-                                    content: cleanNewContent,
-                                    step: 'reasoning',
-                                    progress: currentProgress
-                                });
-                                lastThinkingUpdate = now;
-                                lastThinkingLength = currentLength;
-                            }
+                        if (hasSignificantNewContent && enoughTimePassed) {
+                            currentProgress = Math.min(currentProgress + 5, 50);
+                            onUpdate?.({
+                                type: 'step_progress',
+                                content: '',
+                                step: 'analysis',
+                                progress: currentProgress
+                            });
+                            lastThinkingUpdate = now;
+                            lastThinkingLength = currentLength;
                         }
                     }
                 } else if (part.type === 'tool-call') {
@@ -152,14 +119,21 @@ export class AIStreamingService {
                         thinkingComplete = true;
                     }
 
-                    // Handle tool calls
-                    currentProgress = Math.min(currentProgress + 10, 80); // Jump to 80% for tool calls
+                    // Handle tool calls with step transitions
+                    currentProgress = Math.min(currentProgress + 10, 80);
 
+                    // Map tool calls to specific steps
+                    let stepName = 'tool_execution';
+                    if (part.toolName === 'generate_color_adjustments') {
+                        stepName = 'color_matching';
+                    } else if (part.toolName === 'report_global_adjustments') {
+                        stepName = 'adjustments';
+                    }
 
                     onUpdate?.({
-                        type: 'tool_call',
-                        content: `Using ${part.toolName} to analyze ${this.getToolDescription(part.toolName)}`,
-                        step: 'tool_execution',
+                        type: 'step_transition',
+                        content: '',
+                        step: stepName,
                         progress: currentProgress,
                         toolName: part.toolName,
                         toolArgs: part.input
@@ -187,11 +161,10 @@ export class AIStreamingService {
                         thinkingComplete = true;
                     }
                     currentProgress = 90;
-                    // Use a progress-type update here so UI can optionally skip it once thinking started
                     onUpdate?.({
-                        type: 'progress',
-                        content: 'Analysis complete, generating results...',
-                        step: 'reasoning',
+                        type: 'step_transition',
+                        content: '',
+                        step: 'finalization',
                         progress: currentProgress
                     });
                 }
