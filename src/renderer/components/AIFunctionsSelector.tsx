@@ -30,7 +30,7 @@ const AIFunctionsSelector: React.FC<AIFunctionsSelectorProps> = ({
   };
 
   return (
-    <Accordion defaultExpanded={false} elevation={0} sx={{ '&:before': { display: 'none' } }}>
+    <Accordion defaultExpanded={false}>
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         sx={{

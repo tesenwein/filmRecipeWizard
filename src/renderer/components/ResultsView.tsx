@@ -598,115 +598,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Box>
                           )}
 
-                        {/* Fine-tune Settings */}
-                        {processOptions &&
-                          (processOptions.warmth !== undefined ||
-                            processOptions.tint !== undefined ||
-                            processOptions.contrast !== undefined ||
-                            processOptions.vibrance !== undefined ||
-                            processOptions.moodiness !== undefined ||
-                            processOptions.saturationBias !== undefined) && (
-                            <Box>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                                Fine-tune Settings
-                              </Typography>
-                              <Box
-                                sx={{
-                                  display: 'grid',
-                                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                                  gap: 2,
-                                }}
-                              >
-                                {[
-                                  {
-                                    key: 'warmth',
-                                    label: 'Warmth',
-                                    value: processOptions.warmth,
-                                    icon: '🌡️',
-                                  },
-                                  {
-                                    key: 'tint',
-                                    label: 'Tint',
-                                    value: processOptions.tint,
-                                    icon: '🎨',
-                                  },
-                                  {
-                                    key: 'contrast',
-                                    label: 'Contrast',
-                                    value: processOptions.contrast,
-                                    icon: '⚡',
-                                  },
-                                  {
-                                    key: 'vibrance',
-                                    label: 'Vibrance',
-                                    value: processOptions.vibrance,
-                                    icon: '🌈',
-                                  },
-                                  {
-                                    key: 'moodiness',
-                                    label: 'Moodiness',
-                                    value: processOptions.moodiness,
-                                    icon: '🎭',
-                                  },
-                                  {
-                                    key: 'saturationBias',
-                                    label: 'Saturation Bias',
-                                    value: processOptions.saturationBias,
-                                    icon: '🎪',
-                                  },
-                                ].map(
-                                  setting =>
-                                    setting.value !== undefined && (
-                                      <Paper
-                                        key={setting.key}
-                                        variant="outlined"
-                                        sx={{
-                                          p: 2,
-                                          textAlign: 'center',
-                                          backgroundColor: 'grey.50',
-                                          border: '1px solid',
-                                          borderColor: 'grey.200',
-                                        }}
-                                      >
-                                        <Box
-                                          sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: 0.5,
-                                            mb: 1,
-                                          }}
-                                        >
-                                          <Typography variant="body2" sx={{ fontSize: '16px' }}>
-                                            {setting.icon}
-                                          </Typography>
-                                          <Typography
-                                            variant="body2"
-                                            sx={{ color: 'text.secondary', fontWeight: 600 }}
-                                          >
-                                            {setting.label}
-                                          </Typography>
-                                        </Box>
-                                        <Typography
-                                          variant="h6"
-                                          sx={{
-                                            fontWeight: 700,
-                                            color: 'primary.main',
-                                            fontSize: '18px',
-                                          }}
-                                        >
-                                          {setting.key === 'tint'
-                                            ? setting.value + 50
-                                            : setting.key === 'warmth'
-                                              ? (setting.value ?? 50) - 50
-                                              : setting.value}
-                                        </Typography>
-                                      </Paper>
-                                    )
-                                )}
-                              </Box>
-                            </Box>
-                          )}
 
                         {/* Options */}
                         {processOptions &&
@@ -940,7 +831,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                     {/* Processing Context */}
                     {(processPrompt || processOptions) && (
-                      <Accordion sx={{ mb: 2 }}>
+                      <Accordion>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                           <Typography variant="h6" sx={{ fontWeight: 600 }}>
                             Processing Context
@@ -1032,9 +923,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     )}
 
                     {/* Basic Adjustments */}
-                    <Accordion defaultExpanded sx={{ mb: 2 }}>
+                    <Accordion defaultExpanded>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        <Typography variant="h6">
                           Basic Adjustments
                         </Typography>
                       </AccordionSummary>
@@ -1187,9 +1078,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     </Accordion>
 
                     {/* Presence & Color */}
-                    <Accordion sx={{ mb: 2 }}>
+                    <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        <Typography variant="h6">
                           Presence & Color
                         </Typography>
                       </AccordionSummary>
@@ -1248,9 +1139,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     </Accordion>
 
                     {/* HSL Adjustments */}
-                    <Accordion sx={{ mb: 2 }}>
+                    <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        <Typography variant="h6">
                           HSL Color Adjustments
                         </Typography>
                       </AccordionSummary>
@@ -1316,7 +1207,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            <Typography variant="h6">
                               Analysis Notes
                             </Typography>
                           </AccordionSummary>

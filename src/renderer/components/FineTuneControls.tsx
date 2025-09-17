@@ -23,7 +23,7 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
 }) => {
   return (
     <Paper className="card slide-in" sx={{ p: 0, animationDelay: '0.15s' }}>
-      <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' } }}>
+      <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2.5, py: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
             <TuneIcon sx={{ color: 'primary.main', fontSize: 20 }} />

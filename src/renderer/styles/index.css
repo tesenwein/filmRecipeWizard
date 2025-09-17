@@ -6,7 +6,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background-color: #FAFBFF;
+  background-color: #f8f9fc;
   color: #333333;
   line-height: 1.6;
 }
@@ -14,10 +14,11 @@ body {
 #root {
   width: 100vw;
   height: 100vh;
-  overflow: auto; /* ensure app remains scrollable even if body is locked */
-  background: radial-gradient(1200px 800px at 80% -200px, rgba(102,126,234,0.08), transparent 60%),
-              radial-gradient(900px 600px at -200px -200px, rgba(118,75,162,0.06), transparent 60%),
-              #FAFBFF;
+  overflow: auto;
+  /* ensure app remains scrollable even if body is locked */
+  background: radial-gradient(1200px 800px at 80% -200px, rgba(102, 126, 234, 0.08), transparent 60%),
+    radial-gradient(900px 600px at -200px -200px, rgba(118, 75, 162, 0.06), transparent 60%),
+    #f8f9fc;
 }
 
 /* Base component styles */
@@ -47,12 +48,20 @@ body {
   box-shadow: none;
 }
 
+/* Make card background transparent when it contains an accordion */
+.card:has(.MuiAccordion-root) {
+  background: transparent;
+}
+
 /* Titlebar / drag region for a more native feel */
 .drag-region {
   -webkit-app-region: drag;
   height: 28px;
 }
-.no-drag { -webkit-app-region: no-drag; }
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
 
 /* Always-on top draggable strip to allow moving window even when modals are open */
 .global-drag-strip {
@@ -60,7 +69,8 @@ body {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 28px; /* match traffic light area */
+  height: 28px;
+  /* match traffic light area */
   -webkit-app-region: drag;
   /* Keep below MUI dialogs to avoid blocking inputs */
   z-index: 1000;
@@ -76,7 +86,7 @@ body {
   left: 0;
   width: 100vw;
   height: 80px;
-  background: linear-gradient(to bottom, #FAFBFF 0%, transparent 100%);
+  background: linear-gradient(to bottom, #f8f9fc 0%, transparent 100%);
   pointer-events: none;
   z-index: 5;
 }
@@ -248,15 +258,17 @@ body {
 }
 
 @media (max-width: 768px) {
-  .grid-2, .grid-3 {
+
+  .grid-2,
+  .grid-3 {
     grid-template-columns: 1fr;
   }
-  
+
   .container {
     /* Keep extra top space on smaller screens as well */
     padding: 44px 16px 16px;
   }
-  
+
   .card {
     padding: 20px;
   }
@@ -272,6 +284,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -287,6 +300,7 @@ body {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);

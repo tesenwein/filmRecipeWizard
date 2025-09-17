@@ -6,6 +6,20 @@ import './styles/index.css';
 const container = document.getElementById('root');
 const root = createRoot(container!);
 
+// Define blueish gray color variables
+const blueishGray = {
+  50: '#f8f9fc',
+  100: '#f1f3f8',
+  200: '#e9ecf2',
+  300: '#dee2eb',
+  400: '#ced4e0',
+  500: '#adb5c8',
+  600: '#868e9f',
+  700: '#495057',
+  800: '#343a40',
+  900: '#212529',
+};
+
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -22,25 +36,14 @@ const theme = createTheme({
       contrastText: '#ffffff',
     },
     background: {
-      default: '#FAFBFC',
+      default: blueishGray[50],
       paper: '#FFFFFF',
     },
     text: {
       primary: '#2c3338',
       secondary: '#5f6b74',
     },
-    grey: {
-      50: '#f8f9fa',
-      100: '#f1f3f5',
-      200: '#e9ecef',
-      300: '#dee2e6',
-      400: '#ced4da',
-      500: '#adb5bd',
-      600: '#868e96',
-      700: '#495057',
-      800: '#343a40',
-      900: '#212529',
-    },
+    grey: blueishGray,
     success: {
       main: '#6b8caf',
       light: '#8ba6c3',
@@ -108,7 +111,7 @@ const theme = createTheme({
         },
         outlined: {
           '&:hover': {
-            backgroundColor: 'rgba(91, 102, 112, 0.04)',
+            backgroundColor: `${blueishGray[100]}20`,
           },
         },
       },
@@ -126,7 +129,7 @@ const theme = createTheme({
         root: {
           '& .MuiOutlinedInput-root': {
             '&:hover fieldset': {
-              borderColor: '#7a8491',
+              borderColor: blueishGray[300],
             },
           },
         },
@@ -135,31 +138,43 @@ const theme = createTheme({
     MuiAccordion: {
       styleOverrides: {
         root: {
-          marginBottom: '12px',
-          '&:before': {
-            display: 'none', // Remove default Material-UI border
-          },
+          marginBottom: 12,
+          '&:before': { display: 'none' },
           '&.Mui-expanded': {
-            marginBottom: '12px',
-          },
-        },
-      },
+            marginBottom: 12,
+          }
+        }
+      }
     },
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
           borderBottom: 'none',
+          backgroundColor: '#ffffff !important',
           '&.Mui-expanded': {
             borderBottom: 'none',
+            backgroundColor: '#ffffff !important',
           },
+          '&:hover': {
+            backgroundColor: '#f1f3f8 !important',
+          }
         },
         content: {
           '& .MuiTypography-root': {
-            fontSize: '0.95rem', // Reduce from default h6 size to smaller
+            fontSize: '0.95rem',
             fontWeight: 600,
           },
         },
-      },
+      }
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'transparent',
+          paddingTop: '20px !important',
+          paddingBottom: '24px !important',
+        }
+      }
     },
   },
 });
