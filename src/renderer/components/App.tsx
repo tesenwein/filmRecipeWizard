@@ -130,8 +130,8 @@ const App: React.FC = () => {
   };
 
   const handleStartProcessing = async () => {
-    // Prevent concurrent runs and require at least one target image
-    if (startingRef.current || processingState.isProcessing || targetImages.length === 0) return;
+    // Prevent concurrent runs (target images are now optional)
+    if (startingRef.current || processingState.isProcessing) return;
     startingRef.current = true;
 
     // Save process to storage (converts to base64 and persists only base64 + results)

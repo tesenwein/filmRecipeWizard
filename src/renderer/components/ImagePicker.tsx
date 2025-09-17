@@ -50,8 +50,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
     if (kind === 'target') {
       return {
         title: 'Target Image',
-        description: 'The photo you want to transform',
-        chip: 'Required' as const,
+        description: 'The photo you want to transform (optional)',
+        chip: 'Optional' as const,
         icon: <PhotoCameraOutlinedIcon sx={{ color: 'primary.main', fontSize: 24 }} />,
         emptyCta: 'Select Target Images',
         changeCta: 'Change Images',

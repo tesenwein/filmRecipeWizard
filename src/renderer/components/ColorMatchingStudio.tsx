@@ -1,17 +1,16 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { Box, Paper, Typography, FormControlLabel, Switch, Stack } from '@mui/material';
+import { Box, FormControlLabel, Paper, Stack, Switch, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import ImagePicker from './ImagePicker';
-import StyleDescriptionCard from './StyleDescriptionCard';
-import FineTuneControls from './FineTuneControls';
+import { StyleOptions } from '../../shared/types';
+import { useAppStore } from '../store/appStore';
 import ArtisticStylesCard from './ArtisticStylesCard';
+import ConfirmDialog from './ConfirmDialog';
 import FilmStylesCard from './FilmStylesCard';
+import FineTuneControls from './FineTuneControls';
+import ImagePicker from './ImagePicker';
 import LightroomProfileCard from './LightroomProfileCard';
 import ProcessButton from './ProcessButton';
-import { useAppStore } from '../store/appStore';
-import { StyleOptions } from '../../shared/types';
-import ConfirmDialog from './ConfirmDialog';
-
+import StyleDescriptionCard from './StyleDescriptionCard';
 
 interface ColorMatchingStudioProps {
   onImagesSelected: (baseImages: string[], targetImages: string[]) => void;
@@ -62,9 +61,10 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
       if (result && result.length > 0) {
         // Add to existing images if any, otherwise replace
-        const next = baseImages.length > 0
-          ? Array.from(new Set([...baseImages, ...result])).slice(0, 3)
-          : result.slice(0, 3);
+        const next =
+          baseImages.length > 0
+            ? Array.from(new Set([...baseImages, ...result])).slice(0, 3)
+            : result.slice(0, 3);
         onImagesSelected(next, targetImages);
       }
     } catch (error) {
@@ -87,9 +87,10 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
       if (result && result.length > 0) {
         // Add to existing images if any, otherwise replace
-        const next = targetImages.length > 0
-          ? Array.from(new Set([...targetImages, ...result])).slice(0, 3)
-          : result.slice(0, 3);
+        const next =
+          targetImages.length > 0
+            ? Array.from(new Set([...targetImages, ...result])).slice(0, 3)
+            : result.slice(0, 3);
         onImagesSelected(baseImages, next);
       }
     } catch (error) {
@@ -97,9 +98,28 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     }
   };
 
-  // Enable processing only when targets present and not currently processing
+  // Enable processing when not currently processing and at least one option is active
   const { processingState } = useAppStore();
-  const canProcess: boolean = Boolean(targetImages.length > 0 && !processingState.isProcessing);
+
+  // Check if at least one option is active
+  const hasActiveOptions = Boolean(
+    baseImages.length > 0 || // Has reference images
+      (prompt && prompt.trim().length > 0) || // Has prompt text
+      styleOptions?.vibe || // Has vibe selected
+      styleOptions?.artistStyle || // Has artist style selected
+      styleOptions?.filmStyle || // Has film style selected
+      styleOptions?.filmGrain || // Has film grain enabled
+      styleOptions?.preserveSkinTones || // Has preserve skin tones enabled
+      styleOptions?.warmth !== undefined || // Has warmth adjustment
+      styleOptions?.tint !== undefined || // Has tint adjustment
+      styleOptions?.contrast !== undefined || // Has contrast adjustment
+      styleOptions?.vibrance !== undefined || // Has vibrance adjustment
+      styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment
+      styleOptions?.moodiness !== undefined || // Has moodiness adjustment
+      styleOptions?.lightroomProfile !== undefined // Has lightroom profile selected
+  );
+
+  const canProcess: boolean = Boolean(!processingState.isProcessing && hasActiveOptions);
 
   const handleVibeChange = (vibe: string) => {
     onStyleOptionsChange?.({ vibe });
@@ -211,12 +231,17 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     // preserveSkinTones is a per-generation option, not a persistent setting
   };
 
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, p: 1 }}>
       {/* Header */}
-      <Paper className="card slide-in" elevation={0} sx={{ borderRadius: 2, p: 2.5, textAlign: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}>
+      <Paper
+        className="card slide-in"
+        elevation={0}
+        sx={{ borderRadius: 2, p: 2.5, textAlign: 'center' }}
+      >
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}
+        >
           <AutoAwesomeIcon sx={{ fontSize: 28, color: 'primary.main' }} />
           <h2 style={{ fontSize: 24, fontWeight: 800, color: '#2c3338', margin: 0 }}>
             AI Color Matching Studio
@@ -228,12 +253,19 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       </Paper>
 
       {/* Main Content Grid */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.5fr 0.8fr' }, gap: 2.5, minHeight: 500 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1.5fr 0.8fr' },
+          gap: 2.5,
+          minHeight: 500,
+        }}
+      >
         {/* Left Column - Profile and Target Image */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
           <LightroomProfileCard
             selected={styleOptions?.lightroomProfile}
-            onSelect={(profile) => onStyleOptionsChange?.({ lightroomProfile: profile })}
+            onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
           />
 
           <Box sx={{ display: 'flex', width: '100%' }}>
@@ -243,12 +275,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
               previews={targetPreviews}
               onSelectFiles={handleTargetImagesSelect}
               onRemoveImage={handleRemoveTarget}
-              onDropFiles={(paths) => {
+              onDropFiles={paths => {
                 if (!paths || paths.length === 0) return;
                 const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
                 onImagesSelected(baseImages, next);
               }}
-              required
               maxFiles={3}
             />
           </Box>
@@ -285,21 +316,21 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             </Stack>
           </Paper>
 
-		  <StyleDescriptionCard
-			prompt={prompt}
-			onPromptChange={onPromptChange}
-			selectedVibe={styleOptions?.vibe}
-			onVibeChange={handleVibeChange}
-		  />
+          <StyleDescriptionCard
+            prompt={prompt}
+            onPromptChange={onPromptChange}
+            selectedVibe={styleOptions?.vibe}
+            onVibeChange={handleVibeChange}
+          />
 
           <ArtisticStylesCard
             selected={styleOptions?.artistStyle?.key}
-            onSelect={(s) => onStyleOptionsChange?.({ artistStyle: s })}
+            onSelect={s => onStyleOptionsChange?.({ artistStyle: s })}
           />
 
           <FilmStylesCard
             selected={styleOptions?.filmStyle?.key}
-            onSelect={(s) => onStyleOptionsChange?.({ filmStyle: s })}
+            onSelect={s => onStyleOptionsChange?.({ filmStyle: s })}
           />
 
           <ImagePicker
@@ -308,7 +339,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             previews={basePreviews}
             onSelectFiles={handleBaseImageSelect}
             onRemoveImage={handleRemoveBase}
-            onDropFiles={(paths) => {
+            onDropFiles={paths => {
               if (!paths || paths.length === 0) return;
               const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
               onImagesSelected(next, targetImages);
@@ -324,14 +355,20 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       </Box>
 
       {/* Process Button */}
-      <ProcessButton canProcess={canProcess} onStartProcessing={onStartProcessing} />
+      <ProcessButton
+        canProcess={canProcess}
+        onStartProcessing={onStartProcessing}
+        hasActiveOptions={hasActiveOptions}
+      />
 
       <ConfirmDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         title="Remove Image"
-        content={`Are you sure you want to remove this ${deleteType === 'base' ? 'recipe reference' : 'target'} image?`}
+        content={`Are you sure you want to remove this ${
+          deleteType === 'base' ? 'recipe reference' : 'target'
+        } image?`}
         confirmButtonText="Remove"
         confirmColor="error"
       />

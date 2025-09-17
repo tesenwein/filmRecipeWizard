@@ -1,7 +1,9 @@
 import { Box, LinearProgress, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import Placeholder1 from '../../../assets/placeholder-1.svg';
+import Placeholder2 from '../../../assets/placeholder-2.svg';
+import Placeholder3 from '../../../assets/placeholder-3.svg';
 import { ProcessingState } from '../../shared/types';
-import NoImagePlaceholder from './NoImagePlaceholder';
 import SingleImage from './SingleImage';
 
 interface ProcessingViewProps {
@@ -73,13 +75,14 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
 
   // Auto-advance through targets during processing for a subtle slideshow effect
   useEffect(() => {
-    if (!targetPreviews.length || targetPreviews.length < 2) return;
+    const slides = targetImages.length > 0 ? targetPreviews : [1, 2, 3]; // Use placeholder slides when no targets
+    if (!slides.length || slides.length < 2) return;
     const intervalMs = 3200;
     const t = setInterval(() => {
-      setActiveIdx(prev => (prev + 1) % targetPreviews.length);
+      setActiveIdx(prev => (prev + 1) % slides.length);
     }, intervalMs);
     return () => clearInterval(t);
-  }, [targetPreviews.length]);
+  }, [targetPreviews.length, targetImages.length]);
 
   return (
     <div className="container" style={{ maxWidth: 980, margin: '0 auto' }}>
@@ -95,71 +98,130 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
         </Typography>
       </Box>
 
-      {targetImages.length > 0 ? (
-        (() => {
-          const slides = targetPreviews.length ? targetPreviews : targetImages;
-          const intervalMs = 3200;
-          return (
-            <Box
-              sx={{
-                position: 'relative',
-                width: '100%',
-                height: { xs: 320, sm: 420, md: 520 },
-                borderRadius: 2,
-                overflow: 'hidden',
-                border: 'none',
-                boxShadow: 'none',
-                background:
-                  'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
-                  'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +
-                  '#f8fafc',
-              }}
-            >
-              {/* Crossfade stack */}
-              <Box sx={{ position: 'absolute', inset: 0 }}>
-                {slides.map((src, i) => (
-                  <Box
-                    key={i}
-                    sx={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: i === activeIdx ? 1 : 0,
-                      transform: i === activeIdx ? 'scale(1.01)' : 'scale(1.00)',
-                      transition: 'opacity 900ms ease-in-out, transform 900ms ease',
-                    }}
-                  >
-                    <SingleImage
-                      source={src}
-                      alt={`Processing ${i + 1}`}
-                      fit="contain"
-                      backgroundBlur={0}
-                      backgroundOpacity={0}
-                    />
-                  </Box>
-                ))}
-              </Box>
-
-              {/* Vertical shimmer overlay synced with fade interval */}
+      {targetImages.length > 0
+        ? (() => {
+            const slides = targetPreviews.length ? targetPreviews : targetImages;
+            const intervalMs = 3200;
+            return (
               <Box
                 sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  pointerEvents: 'none',
+                  position: 'relative',
+                  width: '100%',
+                  height: { xs: 320, sm: 420, md: 520 },
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: 'none',
+                  boxShadow: 'none',
                   background:
-                    'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.22) 14%, transparent 28%)',
-                  transform: 'translateY(-100%)',
-                  animationName: 'vshine',
-                  animationDuration: `${intervalMs}ms`,
-                  animationTimingFunction: 'linear',
-                  animationIterationCount: 'infinite',
+                    'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
+                    'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +
+                    '#f8fafc',
                 }}
-              />
-            </Box>
-          );
-        })()
-      ) : (
-        <NoImagePlaceholder label="Waiting for target" height={420} />
-      )}
+              >
+                {/* Crossfade stack */}
+                <Box sx={{ position: 'absolute', inset: 0 }}>
+                  {slides.map((src, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        opacity: i === activeIdx ? 1 : 0,
+                        transform: i === activeIdx ? 'scale(1.01)' : 'scale(1.00)',
+                        transition: 'opacity 900ms ease-in-out, transform 900ms ease',
+                      }}
+                    >
+                      <SingleImage
+                        source={src}
+                        alt={`Processing ${i + 1}`}
+                        fit="contain"
+                        backgroundBlur={0}
+                        backgroundOpacity={0}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Vertical shimmer overlay synced with fade interval */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    pointerEvents: 'none',
+                    background:
+                      'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.22) 14%, transparent 28%)',
+                    transform: 'translateY(-100%)',
+                    animationName: 'vshine',
+                    animationDuration: `${intervalMs}ms`,
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: 'infinite',
+                  }}
+                />
+              </Box>
+            );
+          })()
+        : (() => {
+            // Create placeholder animation when no target images
+            const placeholderSlides = [Placeholder1, Placeholder2, Placeholder3];
+            const intervalMs = 3200;
+            return (
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: '100%',
+                  height: { xs: 320, sm: 420, md: 520 },
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: 'none',
+                  boxShadow: 'none',
+                  background:
+                    'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
+                    'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +
+                    '#f8fafc',
+                }}
+              >
+                {/* Crossfade stack for placeholder images */}
+                <Box sx={{ position: 'absolute', inset: 0 }}>
+                  {placeholderSlides.map((src, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        opacity: i === activeIdx ? 1 : 0,
+                        transform: i === activeIdx ? 'scale(1.01)' : 'scale(1.00)',
+                        transition: 'opacity 900ms ease-in-out, transform 900ms ease',
+                      }}
+                    >
+                      <SingleImage
+                        source={src}
+                        alt={`Processing placeholder ${i + 1}`}
+                        fit="contain"
+                        backgroundBlur={0}
+                        backgroundOpacity={0}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Vertical shimmer overlay synced with fade interval */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    pointerEvents: 'none',
+                    background:
+                      'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.22) 14%, transparent 28%)',
+                    transform: 'translateY(-100%)',
+                    animationName: 'vshine',
+                    animationDuration: `${intervalMs}ms`,
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: 'infinite',
+                  }}
+                />
+              </Box>
+            );
+          })()}
 
       <style>
         {`
