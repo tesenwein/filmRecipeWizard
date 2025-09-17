@@ -125,10 +125,16 @@ export class OpenAIColorAnalyzer {
     }
 
     const message = completion.choices[0]?.message;
+    console.log('[AI] Message received:', { 
+      hasToolCalls: !!message?.tool_calls, 
+      toolCallCount: message?.tool_calls?.length || 0,
+      toolCallNames: message?.tool_calls?.map((tc: any) => tc.function?.name) || []
+    });
+    
     if (message?.tool_calls && message.tool_calls.length > 0) {
       // If model responded with a single full adjustments object, return it
       const singleFull = message.tool_calls.find(
-        (tc: any) => tc.type === 'function' && tc.function?.name === 'generate_color_adjustments'
+        (tc: any) => tc.type === 'function' && (tc.function?.name === 'generate_color_adjustments' || tc.function?.name === 'report_global_adjustments')
       );
       if (singleFull && (singleFull as any).function?.arguments) {
         const adjustments = JSON.parse(
@@ -145,7 +151,7 @@ export class OpenAIColorAnalyzer {
         const name = tc.function.name;
         try {
           const args = JSON.parse(tc.function.arguments);
-          if (name === 'generate_color_adjustments') {
+          if (name === 'generate_color_adjustments' || name === 'report_global_adjustments') {
             // This should be the main adjustments object
             console.log('[AI] Main adjustments received:', args);
             return args as AIColorAdjustments;
@@ -186,6 +192,9 @@ export class OpenAIColorAnalyzer {
       }
     }
 
+    console.error('[AI] No valid adjustments received. Message:', message);
+    console.error('[AI] Tool calls:', message?.tool_calls);
+    console.error('[AI] Content:', message?.content);
     throw new Error('No valid adjustments received from AI');
   }
 
@@ -210,7 +219,15 @@ export class OpenAIColorAnalyzer {
     };
   }): any[] {
     const tools: any[] = [];
-    const aiFunctions = options?.aiFunctions || {};
+    const aiFunctions = options?.aiFunctions || {
+      temperatureTint: true,
+      colorGrading: true,
+      hsl: true,
+      curves: true,
+      masks: true,
+      grain: false,
+      pointColor: true,
+    };
 
     // Build base properties that are always available
     const baseProperties: any = {
