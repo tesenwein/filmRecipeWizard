@@ -1,9 +1,9 @@
-import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
-import { Button, Chip, Box, Paper, Tooltip, IconButton } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
+import { Box, Button, Chip, IconButton, Paper, Tooltip } from '@mui/material';
 import React from 'react';
-import SingleImage from './SingleImage';
 import ImageGrid from './ImageGrid';
+import SingleImage from './SingleImage';
 
 interface TargetImageDisplayProps {
   targetImages: string[];
@@ -12,24 +12,15 @@ interface TargetImageDisplayProps {
   onRemoveImage?: (index: number) => void;
 }
 
-const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
-  targetImages,
-  targetPreviews,
-  onSelectImages,
-  onRemoveImage,
-}) => {
+const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({ targetImages, targetPreviews, onSelectImages, onRemoveImage }) => {
   return (
     <Paper className="card slide-in" sx={{ p: 2.5, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <PhotoCameraOutlinedIcon sx={{ color: 'primary.main', fontSize: 24 }} />
           <Box>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#2c3338', margin: 0 }}>
-              Target Image
-            </h3>
-            <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
-              The photo you want to transform
-            </p>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#2c3338', margin: 0 }}>Target Image</h3>
+            <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>The photo you want to transform</p>
           </Box>
         </Box>
         <Chip label="Required" size="small" color="primary" variant="outlined" />
@@ -38,21 +29,21 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
       {/* Large Target Image Display */}
       {targetImages.length > 0 ? (
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{
-            width: '100%',
-            flex: 1,
-            minHeight: 350,
-            borderRadius: 2,
-            overflow: 'hidden',
-            border: 'none',
-            position: 'relative',
-            boxShadow: 'none'
-          }}>
+          <Box
+            sx={{
+              width: '100%',
+              flex: 1,
+              minHeight: 350,
+              borderRadius: 2,
+              overflow: 'hidden',
+              border: 'none',
+              position: 'relative',
+              boxShadow: 'none',
+            }}
+          >
             {(() => {
               const previewPath = targetPreviews[0] || targetImages[0];
-              return (
-                <SingleImage source={previewPath} alt="Target" fit="cover" />
-              );
+              return <SingleImage source={previewPath} alt="Target" fit="cover" />;
             })()}
             {onRemoveImage && (
               <Tooltip title="Remove this image">
@@ -87,7 +78,7 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
                 background: 'primary.main',
                 color: 'white',
                 fontSize: 12,
-                fontWeight: 600
+                fontWeight: 600,
               }}
             />
           </Box>
@@ -97,14 +88,12 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
                 sources={(targetPreviews.length ? targetPreviews : targetImages).slice(1)}
                 columns={4}
                 tileHeight={80}
-                onRemove={onRemoveImage ? (i) => onRemoveImage(i + 1) : undefined}
+                onRemove={onRemoveImage ? i => onRemoveImage(i + 1) : undefined}
               />
             </Box>
           )}
           <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: '#2c3338', fontWeight: 500, marginBottom: 12 }}>
-              {targetImages[0].split('/').pop()}
-            </p>
+            <p style={{ fontSize: 13, color: '#2c3338', fontWeight: 500, marginBottom: 12 }}>{targetImages[0].split('/').pop()}</p>
             <Button
               variant="outlined"
               onClick={onSelectImages}
@@ -116,7 +105,7 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
                 py: 1,
                 color: 'primary.main',
                 borderColor: 'primary.main',
-                '&:hover': { backgroundColor: 'rgba(91, 102, 112, 0.06)' }
+                '&:hover': { backgroundColor: 'rgba(91, 102, 112, 0.06)' },
               }}
             >
               Change Images
@@ -125,20 +114,21 @@ const TargetImageDisplay: React.FC<TargetImageDisplayProps> = ({
         </Box>
       ) : (
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{
-            flex: 1,
-            minHeight: 350,
-            border: 'none',
-            borderRadius: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#f8f9fa',
-            transition: 'all 0.2s',
-            cursor: 'pointer',
-            '&:hover': { borderColor: 'primary.main', background: 'rgba(91,102,112,0.03)' }
-          }}
-          onClick={onSelectImages}
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 350,
+              border: 'none',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#f8f9fa',
+              transition: 'all 0.2s',
+              cursor: 'pointer',
+              '&:hover': { borderColor: 'primary.main', background: 'rgba(91,102,112,0.03)' },
+            }}
+            onClick={onSelectImages}
           >
             <Box sx={{ textAlign: 'center' }}>
               <PhotoCameraOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />

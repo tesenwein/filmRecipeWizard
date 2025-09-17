@@ -49,7 +49,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
       return {
         title: 'Target Image',
         description: 'The photo you want to transform (optional)',
-        chip: 'Optional' as const,
+        chip: undefined,
         icon: <PhotoCameraOutlinedIcon sx={{ color: 'primary.main', fontSize: 24 }} />,
         emptyCta: 'Select Target Images',
         changeCta: 'Change Images',
@@ -335,14 +335,12 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             <Button
               variant="contained"
               onClick={onSelectFiles}
-              size="large"
+              size="medium"
               sx={{
                 textTransform: 'none',
-                fontWeight: 700,
                 py: 1.5,
                 px: 4,
                 borderRadius: 2,
-                fontSize: 16,
                 minWidth: 200,
               }}
             >

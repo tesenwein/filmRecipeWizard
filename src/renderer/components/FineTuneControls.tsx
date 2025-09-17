@@ -1,14 +1,8 @@
+import BoltIcon from '@mui/icons-material/Bolt';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PaletteIcon from '@mui/icons-material/Palette';
 import TuneIcon from '@mui/icons-material/Tune';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Chip,
-  Paper,
-  Slider,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Slider } from '@mui/material';
 import React from 'react';
 import { StyleOptions } from '../../shared/types';
 
@@ -121,7 +115,19 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
                   mb: 0.5,
                 }}
               >
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>⚡ Contrast</span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#374151',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <BoltIcon sx={{ fontSize: 16 }} />
+                  Contrast
+                </span>
                 <span style={{ fontSize: 11, color: '#9ca3af' }}>
                   {styleOptions?.contrast ?? 50}
                 </span>
@@ -147,7 +153,19 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
                     mb: 0.5,
                   }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🎨 Tint</span>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#374151',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <PaletteIcon sx={{ fontSize: 16 }} />
+                    Tint
+                  </span>
                   <span style={{ fontSize: 11, color: '#9ca3af' }}>
                     {(styleOptions?.tint ?? 0) + 50}
                   </span>

@@ -1,23 +1,5 @@
-import {
-  DeleteOutline,
-  RestartAlt,
-  Save as SaveIcon,
-  Visibility,
-  VisibilityOff,
-} from '@mui/icons-material';
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Divider,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { DeleteOutline, RestartAlt, Save as SaveIcon, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Alert, Box, Button, Container, Divider, IconButton, InputAdornment, Paper, Stack, TextField, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import ConfirmDialog from './ConfirmDialog';
@@ -47,10 +29,7 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [settingsRes, versionRes] = await Promise.all([
-          window.electronAPI.getSettings(),
-          window.electronAPI.getAppVersion(),
-        ]);
+        const [settingsRes, versionRes] = await Promise.all([window.electronAPI.getSettings(), window.electronAPI.getAppVersion()]);
 
         if (settingsRes.success && settingsRes.settings) {
           if (settingsRes.settings.openaiKey) {
@@ -130,7 +109,7 @@ const Settings: React.FC = () => {
       return null;
     }
   };
-  
+
   const normalizeInstagram = (value: string): { ok: boolean; handle?: string; url?: string } => {
     const v = value.trim();
     if (!v) return { ok: true };
@@ -138,16 +117,14 @@ const Settings: React.FC = () => {
       const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
       if (/instagram\.com$/i.test(u.hostname)) {
         const h = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
-        if (/^[A-Za-z0-9._]{1,30}$/.test(h))
-          return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
+        if (/^[A-Za-z0-9._]{1,30}$/.test(h)) return { ok: true, handle: `@${h}`, url: `https://www.instagram.com/${h}` };
       }
     } catch {
       // Ignore URL parsing errors
     }
     if (!v.startsWith('@')) return { ok: false };
     const handle = v.replace(/^@/, '');
-    if (/^[A-Za-z0-9._]{1,30}$/.test(handle))
-      return { ok: true, handle: `@${handle}`, url: `https://www.instagram.com/${handle}` };
+    if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) return { ok: true, handle: `@${handle}`, url: `https://www.instagram.com/${handle}` };
     return { ok: false };
   };
 
@@ -180,7 +157,7 @@ const Settings: React.FC = () => {
       if (!isProfileValid) {
         return;
       }
-      
+
       const nWebsite = normalizeUrl(profileData.website);
       const ig = normalizeInstagram(profileData.instagram);
 
@@ -292,12 +269,7 @@ const Settings: React.FC = () => {
             />
           </Box>
           <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={handleClear}
-              startIcon={<DeleteOutline />}
-            >
+            <Button variant="outlined" color="error" onClick={handleClear} startIcon={<DeleteOutline />}>
               Clear API Key
             </Button>
           </Stack>
@@ -364,8 +336,7 @@ const Settings: React.FC = () => {
             }}
           />
           <Typography variant="caption" color="text.secondary">
-            This folder stores all your recipes and automatic backups. Changes take effect after
-            saving.
+            This folder stores all your recipes and automatic backups. Changes take effect after saving.
           </Typography>
         </Stack>
       </Paper>
@@ -397,13 +368,8 @@ const Settings: React.FC = () => {
         </Box>
       </Box>
 
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ display: 'block', textAlign: 'center' }}
-      >
-        Your API key and profile details are stored locally on this device and used for AI color
-        analysis.
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
+        Your API key and profile details are stored locally on this device and used for AI color analysis.
       </Typography>
 
       {/* Version Display */}
@@ -423,8 +389,7 @@ const Settings: React.FC = () => {
           Reset Application
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Reset the application to its initial state. This will clear all recipes and show the setup
-          wizard again.
+          Reset the application to its initial state. This will clear all recipes and show the setup wizard again.
         </Typography>
         <Button
           variant="outlined"

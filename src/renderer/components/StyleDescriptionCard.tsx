@@ -1,5 +1,20 @@
+import AcUnitIcon from '@mui/icons-material/AcUnit';
+import BlurOnIcon from '@mui/icons-material/BlurOn';
+import BrushIcon from '@mui/icons-material/Brush';
+import BubbleChartIcon from '@mui/icons-material/BubbleChart';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import MovieIcon from '@mui/icons-material/Movie';
+import MovieFilterIcon from '@mui/icons-material/MovieFilter';
+import NatureIcon from '@mui/icons-material/Nature';
+import NightlightIcon from '@mui/icons-material/Nightlight';
+import PaletteIcon from '@mui/icons-material/Palette';
+import StarIcon from '@mui/icons-material/Star';
 import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
-import { Button, Chip, Box, Paper, TextField } from '@mui/material';
+import WavesIcon from '@mui/icons-material/Waves';
+import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import { Box, Button, Paper, TextField } from '@mui/material';
 import React from 'react';
 
 interface StyleDescriptionCardProps {
@@ -9,28 +24,23 @@ interface StyleDescriptionCardProps {
   onVibeChange?: (vibe: string) => void;
 }
 
-const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
-  prompt,
-  onPromptChange,
-  selectedVibe,
-  onVibeChange,
-}) => {
+const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({ prompt, onPromptChange, selectedVibe, onVibeChange }) => {
   const vibeOptions = [
-    '🎬 Cinematic',
-    '🌸 Soft Pastel',
-    '🌊 Moody Ocean',
-    '📽️ Vintage',
-    '🔥 High Contrast',
-    '🌫️ Desaturated',
-    '🌇 Warm Sunset',
-    '🌌 Cool Blue Hour',
-    '🎞️ Matte Film',
-    '🎨 Punchy Pop',
-    '✨ Soft Glow',
-    '🌿 Earthy Tones',
-    '🫧 Pastel Dream',
-    '🔆 Golden Hour',
-    '🧊 Teal & Orange'
+    { icon: <MovieIcon sx={{ fontSize: 16 }} />, label: 'Cinematic' },
+    { icon: <PaletteIcon sx={{ fontSize: 16 }} />, label: 'Soft Pastel' },
+    { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Moody Ocean' },
+    { icon: <CameraAltIcon sx={{ fontSize: 16 }} />, label: 'Vintage' },
+    { icon: <WhatshotIcon sx={{ fontSize: 16 }} />, label: 'High Contrast' },
+    { icon: <BlurOnIcon sx={{ fontSize: 16 }} />, label: 'Desaturated' },
+    { icon: <WbSunnyIcon sx={{ fontSize: 16 }} />, label: 'Warm Sunset' },
+    { icon: <NightlightIcon sx={{ fontSize: 16 }} />, label: 'Cool Blue Hour' },
+    { icon: <MovieFilterIcon sx={{ fontSize: 16 }} />, label: 'Matte Film' },
+    { icon: <BrushIcon sx={{ fontSize: 16 }} />, label: 'Punchy Pop' },
+    { icon: <StarIcon sx={{ fontSize: 16 }} />, label: 'Soft Glow' },
+    { icon: <NatureIcon sx={{ fontSize: 16 }} />, label: 'Earthy Tones' },
+    { icon: <BubbleChartIcon sx={{ fontSize: 16 }} />, label: 'Pastel Dream' },
+    { icon: <LightModeIcon sx={{ fontSize: 16 }} />, label: 'Golden Hour' },
+    { icon: <AcUnitIcon sx={{ fontSize: 16 }} />, label: 'Teal & Orange' },
   ];
 
   return (
@@ -38,14 +48,9 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         <TipsAndUpdatesIcon sx={{ color: 'primary.main', fontSize: 20 }} />
         <Box sx={{ flex: 1 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>
-            Style Description
-          </h3>
-          <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
-            Describe your desired look
-          </p>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>Style Description</h3>
+          <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>Describe your desired look</p>
         </Box>
-        <Chip label="AI Powered" size="small" color="primary" variant="outlined" />
       </Box>
 
       <TextField
@@ -60,25 +65,25 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
       />
 
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
-        {vibeOptions.map(v => {
-          const value = v.split(' ').slice(1).join(' ');
-          const selected = (selectedVibe || '') === value;
+        {vibeOptions.map(option => {
+          const selected = (selectedVibe || '') === option.label;
           return (
             <Button
-              key={v}
+              key={option.label}
               size="small"
               variant={selected ? 'contained' : 'outlined'}
-              onClick={() => onVibeChange?.(value)}
+              onClick={() => onVibeChange?.(option.label)}
+              startIcon={option.icon}
               sx={{
                 textTransform: 'none',
                 fontWeight: 500,
                 borderRadius: 2,
                 fontSize: 12,
                 py: 0.5,
-                px: 1.5
+                px: 1.5,
               }}
             >
-              {v}
+              {option.label}
             </Button>
           );
         })}

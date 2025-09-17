@@ -212,9 +212,26 @@ export class ProcessingHandlers {
           }
           const optionsHint =
             optionsHintParts.length > 0 ? `\nPreferences:\n- ${optionsHintParts.join('\n- ')}` : '';
-          // Compose prompt from user text and preferences; fall back to a neutral default
-          const prompt =
-            ((basePrompt || '') + optionsHint).trim() ||
+
+          // Compose prompt from user text and preferences; create detailed prompts for artist-only cases
+          let prompt = (basePrompt || '').trim();
+
+          if (!prompt && optionsHintParts.length > 0) {
+            // No user prompt provided, but we have style preferences - create a detailed prompt
+            const hasArtist = options.artistStyle && typeof options.artistStyle.name === 'string';
+            const hasFilm = options.filmStyle && typeof options.filmStyle.name === 'string';
+
+            if (hasArtist && hasFilm) {
+              prompt = `Create a comprehensive color grading recipe that combines the distinctive visual style of ${options.artistStyle.name} with the characteristic look of ${options.filmStyle.name} film stock. Apply sophisticated adjustments including color grading, tone curves, HSL modifications, and local adjustments to achieve the desired aesthetic. Focus on the unique color palette, contrast characteristics, and mood that define this artistic combination.`;
+            } else if (hasArtist) {
+              prompt = `Create a comprehensive color grading recipe inspired by the distinctive visual style of ${options.artistStyle.name}. Apply sophisticated adjustments including color grading, tone curves, HSL modifications, and local adjustments to achieve the characteristic look, mood, and color palette associated with this artist's work. Consider their typical use of contrast, saturation, color temperature, and overall aesthetic approach.`;
+            } else if (hasFilm) {
+              prompt = `Create a comprehensive color grading recipe that emulates the characteristic look of ${options.filmStyle.name} film stock. Apply sophisticated adjustments including color grading, tone curves, HSL modifications, and local adjustments to achieve the film's distinctive color palette, contrast characteristics, grain structure, and overall aesthetic.`;
+            }
+          }
+
+          // Fall back to neutral default only if no prompt was created
+          prompt = (prompt + optionsHint).trim() ||
             'Apply natural, balanced color grading with clean contrast and faithful skin tones.';
 
           // Determine which target image to use (for processing, not storage)

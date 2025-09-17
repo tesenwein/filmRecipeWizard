@@ -13,11 +13,11 @@ export function buildUserContentForAnalysis(
   }
 
   const sharedInstructions =
-    `You are a professional photo editor. Create Lightroom/Camera Raw adjustments to achieve the target look.
+    `You are a professional photo editor. Create comprehensive Lightroom/Camera Raw adjustments to achieve the target look.
 
 Call functions to:
-1. Report global adjustments with confidence and reasoning
-2. Create masks when needed (max 3 masks)` +
+1. Report global adjustments with confidence and reasoning - include color grading, tone curves, HSL adjustments, and other sophisticated techniques
+2. Create masks when needed (max 3 masks) for local adjustments` +
     (opts?.preserveSkinTones ? `\n3. Preserve natural skin tones in Subject masks` : '') +
     (opts?.lightroomProfile
       ? `\n\nIMPORTANT: Use "${opts.lightroomProfile}" as the base camera profile in your adjustments. This profile determines the baseline color rendition and contrast.`
@@ -26,9 +26,13 @@ Call functions to:
 3. For portraits, ensure a match in skin tone and backdrop
 4. For landscapes, ensure sky/foliage mood and lighting alignment
 5. Mask modifications values should be minimal and very subtle
+6. Apply advanced color grading techniques including shadow/midtone/highlight color grading
+7. Use HSL adjustments to fine-tune specific color ranges
+8. Consider tone curve adjustments for sophisticated contrast control
 
 Include a short preset_name (2-4 words, Title Case).
-If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).`;
+If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).
+If artist or film style is mentioned, use HDL and tone curve and other adjustments to match the artist's style.`;
 
   if (baseImageB64 && targetImageB64) {
     // Both base and target images provided - normal color matching
@@ -37,9 +41,7 @@ If you select a black & white/monochrome treatment, explicitly include the Black
       {
         type: 'text' as const,
         text:
-          (bases.length === 1
-            ? `I have two images:\n\n`
-            : `I have multiple REFERENCE images and one TARGET image:\n\n`) +
+          (bases.length === 1 ? `I have two images:\n\n` : `I have multiple REFERENCE images and one TARGET image:\n\n`) +
           (bases.length === 1
             ? `1. BASE IMAGE: reference photo with the desired grading, mood, and style\n`
             : `1. BASE IMAGES (1-${bases.length}): reference photos capturing different aspects of the desired look\n`) +
@@ -53,10 +55,7 @@ If you select a black & white/monochrome treatment, explicitly include the Black
       },
       {
         type: 'text' as const,
-        text:
-          bases.length === 1
-            ? 'BASE IMAGE (reference style):'
-            : `BASE IMAGES (${bases.length}) (reference styles):`,
+        text: bases.length === 1 ? 'BASE IMAGE (reference style):' : `BASE IMAGES (${bases.length}) (reference styles):`,
       },
       ...bases.flatMap((b64, idx) => [
         { type: 'text' as const, text: bases.length > 1 ? `REFERENCE ${idx + 1}:` : 'BASE IMAGE:' },
@@ -72,12 +71,10 @@ If you select a black & white/monochrome treatment, explicitly include the Black
       {
         type: 'text' as const,
         text:
-          `I have a reference image${
-            bases.length > 1 ? 's' : ''
-          } to analyze and create adjustments for.\n\n` +
+          `I have a reference image${bases.length > 1 ? 's' : ''} to analyze and create comprehensive color grading adjustments for.\n\n` +
           `Please analyze the image${
             bases.length > 1 ? 's' : ''
-          } and create Lightroom/Camera Raw adjustments that enhance its style and mood.\n\n` +
+          } and create sophisticated Lightroom/Camera Raw adjustments including color grading, tone curves, HSL modifications, and local adjustments to enhance its style and mood. Apply advanced techniques to achieve professional-quality results.\n\n` +
           sharedInstructions,
       },
       {
@@ -94,9 +91,7 @@ If you select a black & white/monochrome treatment, explicitly include the Black
     content.push(
       {
         type: 'text' as const,
-        text:
-          `I have one image to edit. Apply adjustments to achieve the following style description.\n\n` +
-          sharedInstructions,
+        text: `I have one image to edit. Apply adjustments to achieve the following style description.\n\n` + sharedInstructions,
       },
       { type: 'text' as const, text: 'TARGET IMAGE:' },
       { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${targetImageB64}` } }

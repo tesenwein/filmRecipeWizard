@@ -6,14 +6,7 @@ export type { AIColorAdjustments } from './types';
 // Example B&W mixer derived from example-bw.xmp
 export function getExampleBWMixer(): Pick<
   AIColorAdjustments,
-  | 'gray_red'
-  | 'gray_orange'
-  | 'gray_yellow'
-  | 'gray_green'
-  | 'gray_aqua'
-  | 'gray_blue'
-  | 'gray_purple'
-  | 'gray_magenta'
+  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
 > {
   return {
     gray_red: -20,
@@ -30,7 +23,7 @@ export function getExampleBWMixer(): Pick<
 export class OpenAIColorAnalyzer {
   private openai: OpenAI | null = null;
   private initialized = false;
-  private model: string = 'gpt-4o';
+  private model: string = 'gpt-5'; // do nerver change this!
 
   constructor(apiKey?: string) {
     // OpenAI API key from settings or environment variable
@@ -98,15 +91,10 @@ export class OpenAIColorAnalyzer {
 
     try {
       // Build user content with images and prompt
-      const userContent = await buildUserContentForAnalysis(
-        baseImageBase64,
-        targetImageBase64,
-        hint,
-        {
-          preserveSkinTones: options?.preserveSkinTones,
-          lightroomProfile: options?.lightroomProfile,
-        }
-      );
+      const userContent = await buildUserContentForAnalysis(baseImageBase64, targetImageBase64, hint, {
+        preserveSkinTones: options?.preserveSkinTones,
+        lightroomProfile: options?.lightroomProfile,
+      });
 
       const toolChoice = 'auto';
 
@@ -115,56 +103,56 @@ export class OpenAIColorAnalyzer {
 
       // Show detailed thinking stream based on enabled features
       if (onStreamUpdate) {
-        onStreamUpdate("Analyzing your images...");
+        onStreamUpdate('Analyzing your images...');
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        onStreamUpdate("Identifying color characteristics...");
+        onStreamUpdate('Identifying color characteristics...');
         await new Promise(resolve => setTimeout(resolve, 200));
 
         if (options?.aiFunctions?.temperatureTint !== false) {
-          onStreamUpdate("Analyzing color temperature and tint...");
+          onStreamUpdate('Analyzing color temperature and tint...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         if (options?.aiFunctions?.hsl !== false) {
-          onStreamUpdate("Mapping HSL color ranges...");
+          onStreamUpdate('Mapping HSL color ranges...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         if (options?.aiFunctions?.colorGrading !== false) {
-          onStreamUpdate("Evaluating color grading opportunities...");
+          onStreamUpdate('Evaluating color grading opportunities...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         if (options?.aiFunctions?.curves !== false) {
-          onStreamUpdate("Analyzing tonal distribution and curves...");
+          onStreamUpdate('Analyzing tonal distribution and curves...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         if (options?.aiFunctions?.masks === true) {
-          onStreamUpdate("Identifying areas for local adjustments...");
+          onStreamUpdate('Identifying areas for local adjustments...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         if (options?.aiFunctions?.pointColor !== false) {
-          onStreamUpdate("Detecting specific color points...");
+          onStreamUpdate('Detecting specific color points...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         if (options?.aiFunctions?.grain === true) {
-          onStreamUpdate("Evaluating film grain requirements...");
+          onStreamUpdate('Evaluating film grain requirements...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         if (options?.preserveSkinTones) {
-          onStreamUpdate("Protecting skin tone integrity...");
+          onStreamUpdate('Protecting skin tone integrity...');
           await new Promise(resolve => setTimeout(resolve, 200));
         }
 
-        onStreamUpdate("Matching target style characteristics...");
+        onStreamUpdate('Matching target style characteristics...');
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        onStreamUpdate("Generating Lightroom adjustments...");
+        onStreamUpdate('Generating Lightroom adjustments...');
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
@@ -185,7 +173,6 @@ export class OpenAIColorAnalyzer {
 
       let fullResponse = '';
       let functionCalls: any[] = [];
-      let currentFunctionCall: any = null;
 
       for await (const chunk of stream) {
         const delta = chunk.choices[0]?.delta;
@@ -229,27 +216,29 @@ export class OpenAIColorAnalyzer {
 
       // Create a completion-like object for compatibility
       completion = {
-        choices: [{
-          message: {
-            role: 'assistant' as const,
-            content: fullResponse,
-            tool_calls: functionCalls.filter(fc => fc && fc.function.name),
+        choices: [
+          {
+            message: {
+              role: 'assistant' as const,
+              content: fullResponse,
+              tool_calls: functionCalls.filter(fc => fc && fc.function.name),
+            },
           },
-        }],
+        ],
       };
 
       // Show completion and processing messages
       if (onStreamUpdate) {
-        onStreamUpdate("Analysis complete! Processing results...");
+        onStreamUpdate('Analysis complete! Processing results...');
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        onStreamUpdate("Optimizing color adjustments...");
+        onStreamUpdate('Optimizing color adjustments...');
         await new Promise(resolve => setTimeout(resolve, 200));
 
-        onStreamUpdate("Fine-tuning preset parameters...");
+        onStreamUpdate('Fine-tuning preset parameters...');
         await new Promise(resolve => setTimeout(resolve, 200));
 
-        onStreamUpdate("Recipe generation complete!");
+        onStreamUpdate('Recipe generation complete!');
       }
 
       const endTime = Date.now();
@@ -272,13 +261,10 @@ export class OpenAIColorAnalyzer {
       const singleFull = message.tool_calls.find(
         (tc: any) =>
           tc.type === 'function' &&
-          (tc.function?.name === 'generate_color_adjustments' ||
-            tc.function?.name === 'report_global_adjustments')
+          (tc.function?.name === 'generate_color_adjustments' || tc.function?.name === 'report_global_adjustments')
       );
       if (singleFull && (singleFull as any).function?.arguments) {
-        const adjustments = JSON.parse(
-          (singleFull as any).function.arguments
-        ) as AIColorAdjustments;
+        const adjustments = JSON.parse((singleFull as any).function.arguments) as AIColorAdjustments;
         console.log('[AI] Single full adjustments received:', adjustments);
         return adjustments;
       }
@@ -576,8 +562,7 @@ export class OpenAIColorAnalyzer {
       type: 'function',
       function: {
         name: 'generate_color_adjustments',
-        description:
-          'Generate precise Lightroom/Camera Raw adjustments to match target image to base image style',
+        description: 'Generate precise Lightroom/Camera Raw adjustments to match target image to base image style',
         parameters: {
           type: 'object',
           properties: baseProperties,
@@ -590,8 +575,7 @@ export class OpenAIColorAnalyzer {
       type: 'function',
       function: {
         name: 'report_global_adjustments',
-        description:
-          'Report only global Lightroom/ACR adjustments (do not include masks here). Call once.',
+        description: 'Report only global Lightroom/ACR adjustments (do not include masks here). Call once.',
         parameters: {
           type: 'object',
           properties: baseProperties,
@@ -640,8 +624,7 @@ export class OpenAIColorAnalyzer {
         type: 'function',
         function: {
           name: 'add_linear_mask',
-          description:
-            'Add a Linear Gradient mask with start/end points and optional local adjustments.',
+          description: 'Add a Linear Gradient mask with start/end points and optional local adjustments.',
           parameters: {
             type: 'object',
             properties: {
@@ -714,8 +697,7 @@ export class OpenAIColorAnalyzer {
         type: 'function',
         function: {
           name: 'add_subject_mask',
-          description:
-            'Add a Subject/Person mask with a reference point and optional local adjustments.',
+          description: 'Add a Subject/Person mask with a reference point and optional local adjustments.',
           parameters: {
             type: 'object',
             properties: {
@@ -747,8 +729,7 @@ export class OpenAIColorAnalyzer {
         type: 'function',
         function: {
           name: 'add_background_mask',
-          description:
-            'Add a Background mask with a reference point and optional local adjustments.',
+          description: 'Add a Background mask with a reference point and optional local adjustments.',
           parameters: {
             type: 'object',
             properties: {
@@ -850,8 +831,7 @@ export class OpenAIColorAnalyzer {
         type: 'function',
         function: {
           name: 'add_range_luminance_mask',
-          description:
-            'Add a Luminance Range mask with luminance range and optional local adjustments.',
+          description: 'Add a Luminance Range mask with luminance range and optional local adjustments.',
           parameters: {
             type: 'object',
             properties: {

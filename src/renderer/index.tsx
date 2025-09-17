@@ -98,6 +98,7 @@ const theme = createTheme({
           textTransform: 'none',
           borderRadius: 2,
           fontWeight: 600,
+          fontSize: '0.875rem',
           padding: '10px 20px',
           boxShadow: 'none',
           '&:hover': {

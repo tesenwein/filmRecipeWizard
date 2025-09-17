@@ -4,7 +4,10 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HomeIcon from '@mui/icons-material/Home';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import MovieFilterIcon from '@mui/icons-material/MovieFilter';
 import PaletteIcon from '@mui/icons-material/Palette';
+import PersonIcon from '@mui/icons-material/Person';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -15,10 +18,8 @@ import {
   Avatar,
   Box,
   Button,
-  Checkbox,
   Chip,
   Divider,
-  FormControlLabel,
   IconButton,
   Paper,
   Slider,
@@ -44,34 +45,43 @@ const getAvailableFeatures = (adjustments: any): string[] => {
   const features: string[] = [];
 
   // Basic Adjustments
-  if (adjustments.temperature !== undefined || adjustments.tint !== undefined ||
-    adjustments.exposure !== undefined || adjustments.contrast !== undefined ||
-    adjustments.highlights !== undefined || adjustments.shadows !== undefined ||
-    adjustments.whites !== undefined || adjustments.blacks !== undefined ||
-    adjustments.clarity !== undefined || adjustments.vibrance !== undefined ||
-    adjustments.saturation !== undefined) {
+  if (
+    adjustments.temperature !== undefined ||
+    adjustments.tint !== undefined ||
+    adjustments.exposure !== undefined ||
+    adjustments.contrast !== undefined ||
+    adjustments.highlights !== undefined ||
+    adjustments.shadows !== undefined ||
+    adjustments.whites !== undefined ||
+    adjustments.blacks !== undefined ||
+    adjustments.clarity !== undefined ||
+    adjustments.vibrance !== undefined ||
+    adjustments.saturation !== undefined
+  ) {
     features.push('Basic Adjustments');
   }
 
   // HSL Adjustments
-  const hasHSL = Object.keys(adjustments).some(key =>
-    key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_')
+  const hasHSL = Object.keys(adjustments).some(
+    key => key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_')
   );
   if (hasHSL) {
     features.push('HSL Adjustments');
   }
 
   // Color Grading
-  const hasColorGrading = Object.keys(adjustments).some(key =>
-    key.startsWith('color_grade_')
-  );
+  const hasColorGrading = Object.keys(adjustments).some(key => key.startsWith('color_grade_'));
   if (hasColorGrading) {
     features.push('Color Grading');
   }
 
   // Tone Curves
-  if (adjustments.tone_curve || adjustments.tone_curve_red ||
-    adjustments.tone_curve_green || adjustments.tone_curve_blue) {
+  if (
+    adjustments.tone_curve ||
+    adjustments.tone_curve_red ||
+    adjustments.tone_curve_green ||
+    adjustments.tone_curve_blue
+  ) {
     features.push('Tone Curves');
   }
 
@@ -81,8 +91,11 @@ const getAvailableFeatures = (adjustments: any): string[] => {
   }
 
   // Film Grain
-  if (adjustments.grain_amount !== undefined || adjustments.grain_size !== undefined ||
-    adjustments.grain_frequency !== undefined) {
+  if (
+    adjustments.grain_amount !== undefined ||
+    adjustments.grain_size !== undefined ||
+    adjustments.grain_frequency !== undefined
+  ) {
     features.push('Film Grain');
   }
 
@@ -320,49 +333,24 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Generate default options based on aiFunctions
   const getDefaultOptions = () =>
-  ({
-    wbBasic: aiFunctions?.temperatureTint ?? true,
-    exposure: true, // Enable by default
-    hsl: aiFunctions?.hsl ?? true,
-    colorGrading: aiFunctions?.colorGrading ?? true,
-    curves: aiFunctions?.curves ?? true,
-    sharpenNoise: true, // Enable by default
-    vignette: true, // Enable by default
-    pointColor: aiFunctions?.pointColor ?? true,
-    grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
-    masks: aiFunctions?.masks ?? true,
-    // Start export strength at 50%
-    strength: 0.5,
-  } as const);
+    ({
+      wbBasic: aiFunctions?.temperatureTint ?? true,
+      exposure: true, // Enable by default
+      hsl: aiFunctions?.hsl ?? true,
+      colorGrading: aiFunctions?.colorGrading ?? true,
+      curves: aiFunctions?.curves ?? true,
+      sharpenNoise: true, // Enable by default
+      vignette: true, // Enable by default
+      pointColor: aiFunctions?.pointColor ?? true,
+      grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
+      masks: aiFunctions?.masks ?? true,
+      // Start export strength at 50%
+      strength: 0.5,
+    } as const);
 
   const defaultOptions = getDefaultOptions();
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
-  const toggleOption = (index: number, key: keyof ReturnType<typeof getOptions>) => {
-    setExportOptions(prev => ({
-      ...prev,
-      [index]: {
-        ...(prev[index] || defaultOptions),
-        [key]: !(prev[index]?.[key] ?? (defaultOptions as any)[key]),
-      },
-    }));
-  };
-
-  // Generate available keys based on aiFunctions
-  const getAllKeys = () => {
-    const keys: string[] = ['exposure', 'sharpenNoise', 'vignette']; // Always available
-    if (aiFunctions?.temperatureTint) keys.push('wbBasic');
-    if (aiFunctions?.hsl) keys.push('hsl');
-    if (aiFunctions?.colorGrading) keys.push('colorGrading');
-    if (aiFunctions?.curves) keys.push('curves');
-    if (aiFunctions?.pointColor) keys.push('pointColor');
-    if (aiFunctions?.grain) keys.push('grain');
-    if (aiFunctions?.masks) keys.push('masks');
-    return keys;
-  };
-
-  const allKeys = getAllKeys();
-
 
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
     const adjustments = result.metadata?.aiAdjustments;
@@ -454,7 +442,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             Processing Failed
           </Typography>
           <Typography variant="body1" sx={{ color: '#999', mb: 4 }}>
-            The AI processing failed for all images. This might be due to API issues or invalid images.
+            The AI processing failed for all images. This might be due to API issues or invalid
+            images.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button variant="outlined" onClick={onReset} startIcon={<RefreshIcon />}>
@@ -492,7 +481,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             <Tab icon={<TuneIcon />} label="Adjustments Details" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
-            {author && <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />}
+            {author && (author.firstName || author.lastName) && (
+              <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />
+            )}
           </Tabs>
 
           {/* Image Selection */}
@@ -598,7 +589,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Box>
                           )}
 
-
                         {/* Options */}
                         {processOptions &&
                           (processOptions.filmGrain !== undefined ||
@@ -634,9 +624,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                         mb: 1,
                                       }}
                                     >
-                                      <Typography variant="body2" sx={{ fontSize: '16px' }}>
-                                        🎞️
-                                      </Typography>
+                                      <MovieFilterIcon
+                                        sx={{ fontSize: '16px', color: 'text.secondary' }}
+                                      />
                                       <Typography
                                         variant="body2"
                                         sx={{ color: 'text.secondary', fontWeight: 600 }}
@@ -673,9 +663,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                         mb: 1,
                                       }}
                                     >
-                                      <Typography variant="body2" sx={{ fontSize: '16px' }}>
-                                        👤
-                                      </Typography>
+                                      <PersonIcon
+                                        sx={{ fontSize: '16px', color: 'text.secondary' }}
+                                      />
                                       <Typography
                                         variant="body2"
                                         sx={{ color: 'text.secondary', fontWeight: 600 }}
@@ -925,9 +915,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {/* Basic Adjustments */}
                     <Accordion defaultExpanded>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">
-                          Basic Adjustments
-                        </Typography>
+                        <Typography variant="h6">Basic Adjustments</Typography>
                       </AccordionSummary>
                       <AccordionDetails>
                         <Box
@@ -1080,9 +1068,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {/* Presence & Color */}
                     <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">
-                          Presence & Color
-                        </Typography>
+                        <Typography variant="h6">Presence & Color</Typography>
                       </AccordionSummary>
                       <AccordionDetails>
                         <Box
@@ -1141,9 +1127,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     {/* HSL Adjustments */}
                     <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">
-                          HSL Color Adjustments
-                        </Typography>
+                        <Typography variant="h6">HSL Color Adjustments</Typography>
                       </AccordionSummary>
                       <AccordionDetails>
                         <Box
@@ -1207,9 +1191,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography variant="h6">
-                              Analysis Notes
-                            </Typography>
+                            <Typography variant="h6">Analysis Notes</Typography>
                           </AccordionSummary>
                           <AccordionDetails>
                             <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
@@ -1232,7 +1214,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         <AccordionDetails>
                           <AIFunctionsSelector
                             styleOptions={{ aiFunctions }}
-                            onStyleOptionsChange={() => { }} // Read-only in results view
+                            onStyleOptionsChange={() => {}} // Read-only in results view
                           />
                         </AccordionDetails>
                       </Accordion>
@@ -1260,10 +1242,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           The XMP preset will include these features detected in the AI adjustments:
                         </Typography>
                         {(() => {
-                          const availableFeatures = getAvailableFeatures(result.metadata?.aiAdjustments);
+                          const availableFeatures = getAvailableFeatures(
+                            result.metadata?.aiAdjustments
+                          );
                           if (availableFeatures.length === 0) {
                             return (
-                              <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                              >
                                 No specific features detected - basic adjustments will be included
                               </Typography>
                             );
@@ -1562,8 +1549,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             color: 'info.contrastText',
                           }}
                         >
-                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                            💡 Pro Tip
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              mb: 0.5,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                            }}
+                          >
+                            <LightbulbIcon sx={{ fontSize: '16px' }} />
+                            Pro Tip
                           </Typography>
                           <Typography variant="body2">
                             33³ LUTs offer the best balance of quality and file size for most
@@ -1576,7 +1573,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 )}
 
                 {/* Tab Panel 5: Author */}
-                {author && activeTab === 4 && (
+                {author && (author.firstName || author.lastName) && activeTab === 4 && (
                   <Box>
                     <Typography
                       variant="subtitle1"

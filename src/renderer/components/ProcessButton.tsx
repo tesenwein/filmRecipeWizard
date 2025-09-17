@@ -30,12 +30,10 @@ const ProcessButton: React.FC<ProcessButtonProps> = ({
         variant="contained"
         color="primary"
         onClick={onStartProcessing}
-        size="large"
+        size="medium"
         disabled={!canProcess}
         sx={{
           textTransform: 'none',
-          fontWeight: 700,
-          fontSize: 16,
           px: 4,
           py: 1.5,
           borderRadius: 2,

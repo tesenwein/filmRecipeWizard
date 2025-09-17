@@ -3,6 +3,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
+import BoltIcon from '@mui/icons-material/Bolt';
 import {
   Button,
   Card,
@@ -63,8 +64,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const getRecipeName = (recipe: Recipe) => {
     const aiName = (recipe as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
     return recipe.name ||
-           (typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : '') ||
-           new Date(recipe.timestamp).toLocaleString();
+      (typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : '') ||
+      new Date(recipe.timestamp).toLocaleString();
   };
 
   // Build a searchable haystack of all relevant fields (excluding image blobs)
@@ -94,7 +95,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     // User options
     const uo = recipe.userOptions as any;
     if (uo) {
-      const numKeys = ['warmth','tint','contrast','vibrance','moodiness','saturationBias'] as const;
+      const numKeys = ['warmth', 'tint', 'contrast', 'vibrance', 'moodiness', 'saturationBias'] as const;
       for (const k of numKeys) if (uo[k] !== undefined) parts.push(String(uo[k]));
       if (uo.vibe) parts.push(uo.vibe);
       if (uo.lightroomProfile) parts.push(uo.lightroomProfile);
@@ -151,8 +152,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
     const basePreviews = sortedRecipes.map((recipe: Recipe) =>
       recipe?.recipeImageData &&
-      typeof recipe.recipeImageData === 'string' &&
-      recipe.recipeImageData.length > 0
+        typeof recipe.recipeImageData === 'string' &&
+        recipe.recipeImageData.length > 0
         ? `data:image/jpeg;base64,${recipe.recipeImageData}`
         : ''
     );
@@ -217,7 +218,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   if (recipesLoading) {
     return (
       <div className="container" style={{ textAlign: 'center', padding: '60px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚡</div>
+        <BoltIcon sx={{ fontSize: '48px', marginBottom: '20px', color: 'primary.main' }} />
         <h2>Loading Recipes...</h2>
       </div>
     );
@@ -358,9 +359,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         </Card>
       ) : sortedRecipes.length === 0 ? (
         <Card sx={{ p: 6, textAlign: 'center' }}>
-          <Typography variant="h3" sx={{ opacity: 0.5, mb: 2 }}>
-            🔍
-          </Typography>
+          <SearchIcon sx={{ fontSize: '48px', opacity: 0.5, mb: 2, color: 'text.secondary' }} />
           <Typography variant="h6" sx={{ mb: 1 }}>
             No recipes found
           </Typography>
@@ -446,23 +445,24 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                       <Typography variant="caption" color="text.secondary">
                         {formatDate(recipe.timestamp)}
                       </Typography>
-                      {(recipe as any)?.author && (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'text.secondary',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                            fontWeight: 400,
-                          }}
-                        >
-                          <PersonOutlineOutlinedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
-                          {[(recipe as any).author.firstName, (recipe as any).author.lastName]
-                            .filter(Boolean)
-                            .join(' ')}
-                        </Typography>
-                      )}
+                      {(recipe as any)?.author &&
+                        ((recipe as any).author.firstName || (recipe as any).author.lastName) && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.secondary',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              fontWeight: 400,
+                            }}
+                          >
+                            <PersonOutlineOutlinedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                            {[(recipe as any).author.firstName, (recipe as any).author.lastName]
+                              .filter(Boolean)
+                              .join(' ')}
+                          </Typography>
+                        )}
                     </div>
                   </CardContent>
                 </CardActionArea>

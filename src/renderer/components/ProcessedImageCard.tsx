@@ -7,7 +7,6 @@ import {
   Chip,
   Divider,
   FormControlLabel,
-  FormGroup,
   IconButton,
   Paper,
   Tooltip,
@@ -24,34 +23,43 @@ const getAvailableFeatures = (adjustments: any): string[] => {
   const features: string[] = [];
 
   // Basic Adjustments
-  if (adjustments.temperature !== undefined || adjustments.tint !== undefined ||
-    adjustments.exposure !== undefined || adjustments.contrast !== undefined ||
-    adjustments.highlights !== undefined || adjustments.shadows !== undefined ||
-    adjustments.whites !== undefined || adjustments.blacks !== undefined ||
-    adjustments.clarity !== undefined || adjustments.vibrance !== undefined ||
-    adjustments.saturation !== undefined) {
+  if (
+    adjustments.temperature !== undefined ||
+    adjustments.tint !== undefined ||
+    adjustments.exposure !== undefined ||
+    adjustments.contrast !== undefined ||
+    adjustments.highlights !== undefined ||
+    adjustments.shadows !== undefined ||
+    adjustments.whites !== undefined ||
+    adjustments.blacks !== undefined ||
+    adjustments.clarity !== undefined ||
+    adjustments.vibrance !== undefined ||
+    adjustments.saturation !== undefined
+  ) {
     features.push('Basic Adjustments');
   }
 
   // HSL Adjustments
-  const hasHSL = Object.keys(adjustments).some(key =>
-    key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_')
+  const hasHSL = Object.keys(adjustments).some(
+    key => key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_')
   );
   if (hasHSL) {
     features.push('HSL Adjustments');
   }
 
   // Color Grading
-  const hasColorGrading = Object.keys(adjustments).some(key =>
-    key.startsWith('color_grade_')
-  );
+  const hasColorGrading = Object.keys(adjustments).some(key => key.startsWith('color_grade_'));
   if (hasColorGrading) {
     features.push('Color Grading');
   }
 
   // Tone Curves
-  if (adjustments.tone_curve || adjustments.tone_curve_red ||
-    adjustments.tone_curve_green || adjustments.tone_curve_blue) {
+  if (
+    adjustments.tone_curve ||
+    adjustments.tone_curve_red ||
+    adjustments.tone_curve_green ||
+    adjustments.tone_curve_blue
+  ) {
     features.push('Tone Curves');
   }
 
@@ -61,8 +69,11 @@ const getAvailableFeatures = (adjustments: any): string[] => {
   }
 
   // Film Grain
-  if (adjustments.grain_amount !== undefined || adjustments.grain_size !== undefined ||
-    adjustments.grain_frequency !== undefined) {
+  if (
+    adjustments.grain_amount !== undefined ||
+    adjustments.grain_size !== undefined ||
+    adjustments.grain_frequency !== undefined
+  ) {
     features.push('Film Grain');
   }
 
@@ -82,10 +93,10 @@ interface ProcessedImageCardProps {
   processPrompt?: string;
   processOptions?: any;
   processId?: string;
-  exportOptions: Record<string, any>;
+  _exportOptions: Record<string, any>;
   onAttachBaseImage: () => void;
   onExportXMP: (index: number, result: ProcessingResult) => void;
-  onToggleOption: (index: number, key: string) => void;
+  _onToggleOption: (index: number, key: string) => void;
   onSetAllOptions: (index: number, value: boolean) => void;
   isAllSelected: (index: number) => boolean;
 }
@@ -98,27 +109,13 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
   processPrompt,
   processOptions,
   processId,
-  exportOptions,
+  _exportOptions,
   onAttachBaseImage,
   onExportXMP,
-  onToggleOption,
+  _onToggleOption,
   onSetAllOptions,
   isAllSelected,
 }) => {
-  const getOptions = () =>
-    exportOptions || {
-      wbBasic: true,
-      exposure: false,
-      hsl: true,
-      colorGrading: true,
-      curves: true,
-      sharpenNoise: true,
-      vignette: true,
-      pointColor: true,
-      grain: true,
-      masks: false,
-    };
-
   return (
     <Paper
       className="card slide-in"
@@ -627,7 +624,10 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
               const availableFeatures = getAvailableFeatures(result.metadata?.aiAdjustments);
               if (availableFeatures.length === 0) {
                 return (
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', mb: 2 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', fontStyle: 'italic', mb: 2 }}
+                  >
                     No specific features detected - basic adjustments will be included
                   </Typography>
                 );
