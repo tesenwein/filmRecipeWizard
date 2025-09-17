@@ -81,9 +81,7 @@ declare global {
       getProcess: (
         processId: string
       ) => Promise<{ success: boolean; process?: any; error?: string }>;
-      getImageDataUrls: (
-        processId: string
-      ) => Promise<{
+      getImageDataUrls: (processId: string) => Promise<{
         success: boolean;
         baseImageUrls: string[];
         targetImageUrls: string[];
