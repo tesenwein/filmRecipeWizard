@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
-import { MarkdownService } from '../services/markdown-service';
 
 interface ProcessingViewProps {
   processingState: ProcessingState;
@@ -67,36 +66,104 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
   // Listen for real streaming updates from the AI service
   useEffect(() => {
     const handleStreamingUpdate = (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
+      // Skip progress updates if we already have thinking steps (to avoid duplicates)
+      if (update.type === 'progress' && thinkingSteps.some(step => step.type === 'thinking')) {
+        return;
+      }
+
       const stepType = update.type as ThinkingStep['type'];
       const icon = getStepIcon(stepType);
 
-      const newThinkingStep: ThinkingStep = {
-        id: `step-${Date.now()}-${Math.random()}`,
-        type: stepType,
-        content: update.content,
-        step: update.step || getStepName(stepType),
-        progress: update.progress || 0,
-        toolName: update.toolName,
-        timestamp: Date.now(),
-        icon
-      };
+      if (stepType === 'thinking') {
+        // For thinking updates, append content to the last thinking step or create a new one
+        setThinkingSteps(prev => {
+          const lastStep = prev[prev.length - 1];
+          if (lastStep && lastStep.type === 'thinking') {
+            // Append content to existing thinking step
+            const updatedSteps = [...prev];
+            updatedSteps[updatedSteps.length - 1] = {
+              ...lastStep,
+              content: lastStep.content + update.content, // Append new content
+              progress: update.progress || lastStep.progress,
+              timestamp: Date.now()
+            };
+            return updatedSteps;
+          } else {
+            // Create new thinking step
+            const newThinkingStep: ThinkingStep = {
+              id: `step-${Date.now()}-${Math.random()}`,
+              type: stepType,
+              content: update.content,
+              step: update.step || getStepName(stepType),
+              progress: update.progress || 0,
+              timestamp: Date.now(),
+              icon
+            };
+            setNewStepIndex(prev.length);
+            return [...prev, newThinkingStep];
+          }
+        });
 
-      // Add new thinking step
-      setThinkingSteps(prev => {
-        const newSteps = [...prev, newThinkingStep];
-        setNewStepIndex(newSteps.length - 1);
-        return newSteps;
-      });
+        // Add to thinking log
+        setThinkingLog(prev => {
+          const lastLogStep = prev[prev.length - 1];
+          if (lastLogStep && lastLogStep.type === 'thinking') {
+            // Update last thinking step
+            const updatedLog = [...prev];
+            updatedLog[updatedLog.length - 1] = {
+              ...lastLogStep,
+              content: lastLogStep.content + update.content,
+              progress: update.progress || lastLogStep.progress,
+              timestamp: Date.now()
+            };
+            return updatedLog;
+          } else {
+            // Add new thinking step
+            const newThinkingStep: ThinkingStep = {
+              id: `step-${Date.now()}-${Math.random()}`,
+              type: stepType,
+              content: update.content,
+              step: update.step || getStepName(stepType),
+              progress: update.progress || 0,
+              timestamp: Date.now(),
+              icon
+            };
+            const next = [...prev, newThinkingStep];
+            return next.length > 50 ? next.slice(-50) : next;
+          }
+        });
+      } else {
+        // For non-thinking updates (tool calls, etc.), create new steps as before
+        const newThinkingStep: ThinkingStep = {
+          id: `step-${Date.now()}-${Math.random()}`,
+          type: stepType,
+          content: update.content,
+          step: update.step || getStepName(stepType),
+          progress: update.progress || 0,
+          toolName: update.toolName,
+          timestamp: Date.now(),
+          icon
+        };
 
-      // Add to thinking log
-      setThinkingLog(prev => {
-        const next = [...prev, newThinkingStep];
-        return next.length > 50 ? next.slice(-50) : next; // Keep last 50 steps
-      });
+        // Add new thinking step
+        setThinkingSteps(prev => {
+          const newSteps = [...prev, newThinkingStep];
+          setNewStepIndex(newSteps.length - 1);
+          return newSteps;
+        });
 
-      // Show typing animation for new steps
-      setIsTyping(true);
-      setTimeout(() => setIsTyping(false), 1500);
+        // Add to thinking log
+        setThinkingLog(prev => {
+          const next = [...prev, newThinkingStep];
+          return next.length > 50 ? next.slice(-50) : next; // Keep last 50 steps
+        });
+      }
+
+      // Show typing animation for thinking-only updates to reduce flicker
+      if (stepType === 'thinking') {
+        setIsTyping(true);
+        setTimeout(() => setIsTyping(false), 1200);
+      }
     };
 
     // Set up the streaming update listener
@@ -149,6 +216,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
     }
   }, [status, currentStep, progress, thinkingSteps.length]);
 
+  // Removed duplicate auto-scroll; handled by the last-step effect below
+
   // Helper functions for parsing step information
   const parseStepType = (status: string): ThinkingStep['type'] => {
     const lowerStatus = status.toLowerCase();
@@ -181,21 +250,28 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
     }
   };
 
-  // Auto-scroll to bottom when new steps are added
+  // Auto-scroll to bottom when a new step is added OR the last step grows
+  const lastContentLenRef = useRef<number>(0);
+  const lastStepIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (lastStepRef.current && stepsContainerRef.current) {
-      // Always scroll to bottom when new steps are added
-      setTimeout(() => {
-        if (lastStepRef.current) {
-          lastStepRef.current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-            inline: 'nearest',
-          });
-        }
-      }, 100); // Small delay to ensure the new step is rendered
+    const container = stepsContainerRef.current;
+    if (!container) return;
+    const last = thinkingSteps[thinkingSteps.length - 1];
+    if (!last) return;
+
+    const lastId = last.id;
+    const currentLen = last.content?.length || 0;
+
+    const isNewStep = lastStepIdRef.current !== lastId;
+    const grew = currentLen > lastContentLenRef.current;
+
+    if (isNewStep || grew) {
+      container.scrollTop = container.scrollHeight;
     }
-  }, [thinkingSteps.length]);
+
+    lastStepIdRef.current = lastId;
+    lastContentLenRef.current = currentLen;
+  }, [thinkingSteps]);
 
   // Auto-scroll the compact log to bottom on new lines
   useEffect(() => {
@@ -405,10 +481,20 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                             }}
                           />
                         </Box>
-                        <Box
-                          sx={MarkdownService.getStyles()}
-                          dangerouslySetInnerHTML={{ __html: MarkdownService.toHtml(step.content) }}
-                        />
+                        <Typography
+                          component="div"
+                          sx={{
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                            minHeight: '1.2em', // Prevent height jumping
+                            lineHeight: 1.5,
+                            fontFamily: 'inherit',
+                            fontSize: '0.95rem',
+                          }}
+                        >
+                          {step.content}
+                        </Typography>
                         {step.toolName && (
                           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                             Using tool: {step.toolName}

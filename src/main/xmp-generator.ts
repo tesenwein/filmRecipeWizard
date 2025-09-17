@@ -443,7 +443,7 @@ export function generateXMPContent(
             const adj = m?.adjustments || {};
 
             // Generate unique sync IDs (32-character hex strings)
-            const generateSyncID = (prefix: string, index: number): string => {
+            const generateSyncID = (prefix: string, _index: number): string => {
               const hex = '0123456789ABCDEF';
               let result = prefix;
               for (let j = 0; j < 8; j++) {

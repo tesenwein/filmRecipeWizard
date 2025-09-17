@@ -67,8 +67,11 @@ export class AIStreamingService {
             let fullText = '';
             let finalResult: AIColorAdjustments | null = null;
             let accumulatedThinkingText = '';
-            let lastThinkingUpdate = 0;
             let currentProgress = 10; // Start at 10%
+            let thinkingStarted = false;
+            let thinkingComplete = false;
+            let lastThinkingUpdate = 0;
+            let lastThinkingLength = 0;
 
             // Stream the response and show thinking process using AI SDK v5 stream protocol
             for await (const part of result.fullStream) {
@@ -77,43 +80,81 @@ export class AIStreamingService {
                     fullText += part.text;
                     accumulatedThinkingText += part.text;
 
-                    // Only send thinking updates for meaningful accumulated text
-                    const now = Date.now();
-                    if (accumulatedThinkingText.trim().length > 50 &&
-                        now - lastThinkingUpdate > 1000 && // At least 1 second between updates
-                        !accumulatedThinkingText.includes('```') &&
-                        !accumulatedThinkingText.includes('{') &&
-                        !accumulatedThinkingText.includes('}')) {
+                    // Start thinking display when we have meaningful text
+                    if (!thinkingStarted && accumulatedThinkingText.trim().length > 20) {
+                        thinkingStarted = true;
+                        currentProgress = 20;
+                        onUpdate?.({
+                            type: 'progress',
+                            content: 'Starting analysis...',
+                            step: 'initialization',
+                            progress: currentProgress
+                        });
+                        lastThinkingUpdate = Date.now();
+                        lastThinkingLength = accumulatedThinkingText.length;
+                    }
 
-                        // Extract a meaningful sentence or phrase
-                        const sentences = accumulatedThinkingText.split(/[.!?]+/);
-                        const lastCompleteSentence = sentences[sentences.length - 2]; // Get the last complete sentence
+                    // Update thinking content with incremental text
+                    if (thinkingStarted && !thinkingComplete) {
+                        const now = Date.now();
+                        const currentLength = accumulatedThinkingText.length;
+                        // Lower thresholds to make streaming feel smoother
+                        const hasSignificantNewContent = (currentLength - lastThinkingLength) > 10; // At least 10 new characters
+                        const enoughTimePassed = (now - lastThinkingUpdate) > 200; // At least 200ms between updates
 
-                        if (lastCompleteSentence && lastCompleteSentence.trim().length > 20) {
-                            // Filter out very short messages (less than 5 characters)
-                            const trimmedContent = lastCompleteSentence.trim();
-                            if (trimmedContent.length >= 5) {
-                                // Increment progress gradually
-                                currentProgress = Math.min(currentProgress + 5, 60); // Cap at 60% for thinking
+                        if (hasSignificantNewContent && enoughTimePassed && accumulatedThinkingText.trim().length > 20) {
+                            // Get only the new content since last update
+                            const newContent = accumulatedThinkingText.substring(lastThinkingLength);
 
+                            // Clean up the new content (remove code blocks, JSON, etc.)
+                            const cleanNewContent = newContent
+                                .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+                                .replace(/`[^`]*`/g, '') // Remove inline code
+                                .replace(/\{[^}]*\}/g, '') // Remove JSON-like structures
+                                .replace(/\[[^\]]*\]/g, '') // Remove array-like structures
+                                .replace(/function\s+\w+\s*\([^)]*\)\s*\{[^}]*\}/g, '') // Remove function definitions
+                                .replace(/const\s+\w+\s*=\s*[^;]+;/g, '') // Remove variable assignments
+                                .replace(/let\s+\w+\s*=\s*[^;]+;/g, '') // Remove let assignments
+                                .replace(/var\s+\w+\s*=\s*[^;]+;/g, '') // Remove var assignments
+                                // Strip common Markdown formatting so thinking text is plain
+                                .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Remove images
+                                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to text
+                                .replace(/^#{1,6}\s+/gm, '') // Remove headings
+                                .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
+                                .replace(/__([^_]+)__/g, '$1') // Bold underscores
+                                .replace(/\*([^*]+)\*/g, '$1') // Italic
+                                .replace(/_([^_]+)_/g, '$1') // Italic underscores
+                                .replace(/^\s*>\s?/gm, '') // Blockquotes
+                                .replace(/^\s*[-*+]\s+/gm, '') // Unordered list bullets
+                                .replace(/^\s*\d+\.\s+/gm, '') // Ordered list markers
+                                .replace(/^\s*-{3,}\s*$/gm, '') // Horizontal rules
+                                .replace(/\n\s*\n/g, '\n') // Collapse multiple blank lines into single newline
+                                .replace(/[ \t]+/g, ' ') // Normalize spaces and tabs but preserve newlines
+                                .trim();
+
+
+                            if (cleanNewContent.length > 5) {
+                                currentProgress = Math.min(currentProgress + 2, 50); // Gradual progress
                                 onUpdate?.({
                                     type: 'thinking',
-                                    content: trimmedContent,
+                                    content: cleanNewContent,
                                     step: 'reasoning',
                                     progress: currentProgress
                                 });
-
-                                // Reset for next chunk
-                                accumulatedThinkingText = '';
                                 lastThinkingUpdate = now;
+                                lastThinkingLength = currentLength;
                             }
                         }
                     }
                 } else if (part.type === 'tool-call') {
+                    // Mark thinking as complete when first tool call starts
+                    if (!thinkingComplete) {
+                        thinkingComplete = true;
+                    }
+
                     // Handle tool calls
                     currentProgress = Math.min(currentProgress + 10, 80); // Jump to 80% for tool calls
 
-                    console.log('[AI STREAMING] Tool call:', part.toolName, 'with args:', JSON.stringify(part.input, null, 2));
 
                     onUpdate?.({
                         type: 'tool_call',
@@ -130,18 +171,25 @@ export class AIStreamingService {
                     }
                 } else if (part.type === 'reasoning-start') {
                     // Handle reasoning start
-                    currentProgress = 15;
-                    onUpdate?.({
-                        type: 'thinking',
-                        content: 'Starting analysis...',
-                        step: 'reasoning',
-                        progress: currentProgress
-                    });
+                    if (!thinkingStarted) {
+                        thinkingStarted = true;
+                        currentProgress = 15;
+                        onUpdate?.({
+                            type: 'thinking',
+                            content: 'Starting analysis...',
+                            step: 'reasoning',
+                            progress: currentProgress
+                        });
+                    }
                 } else if (part.type === 'reasoning-end') {
-                    // Handle reasoning end
+                    // Handle reasoning end - mark thinking as complete
+                    if (!thinkingComplete) {
+                        thinkingComplete = true;
+                    }
                     currentProgress = 90;
+                    // Use a progress-type update here so UI can optionally skip it once thinking started
                     onUpdate?.({
-                        type: 'thinking',
+                        type: 'progress',
                         content: 'Analysis complete, generating results...',
                         step: 'reasoning',
                         progress: currentProgress
@@ -151,8 +199,6 @@ export class AIStreamingService {
 
             if (!finalResult) {
                 // Fallback: try to parse the result from the text
-                console.log('[AI STREAMING] No tool result found, attempting to parse from text. Full text length:', fullText.length);
-                console.log('[AI STREAMING] First 500 characters of text:', fullText.substring(0, 500));
                 finalResult = this.parseResultFromText(fullText);
             }
 
@@ -174,7 +220,7 @@ export class AIStreamingService {
         baseImageBase64?: string | string[],
         targetImageBase64?: string,
         hint?: string,
-        options?: StreamingOptions
+        _options?: StreamingOptions
     ): Promise<any[]> {
         const content: any[] = [];
 
@@ -185,7 +231,7 @@ export class AIStreamingService {
                 text: 'REFERENCE IMAGES (the style/look we want to achieve):'
             });
             const baseImages = Array.isArray(baseImageBase64) ? baseImageBase64 : [baseImageBase64];
-            baseImages.forEach((image, index) => {
+            baseImages.forEach((image, _index) => {
                 content.push({
                     type: 'image',
                     image: image,
@@ -227,6 +273,13 @@ IMPORTANT:
 - STYLE DESCRIPTION is a text description of the desired look/style (NOT an image)
 - Your job is to analyze the reference images and create adjustments that will make the target image look like the reference style
 - If no reference images are provided, use the STYLE DESCRIPTION to understand what look to create
+
+CRITICAL INSTRUCTIONS FOR YOUR RESPONSE:
+- Write your thinking process in plain text and markdown only
+- DO NOT generate any code, JSON, or technical syntax in your thinking text
+- Use natural language to explain your analysis
+- Focus on describing colors, tones, mood, and style characteristics
+- Explain your reasoning in conversational text
 
 Show your thinking process step by step as you analyze the images. Explain what you're looking for, what you notice about the colors, tones, and style, and how you're building the recipe.
 
@@ -467,7 +520,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
                         if (parsed && typeof parsed === 'object' && (parsed.preset_name || parsed.confidence !== undefined)) {
                             return parsed as AIColorAdjustments;
                         }
-                    } catch (parseError) {
+                    } catch {
                         // Continue to next match
                         continue;
                     }
