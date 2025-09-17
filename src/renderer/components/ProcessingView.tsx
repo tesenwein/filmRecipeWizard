@@ -240,7 +240,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           justifyContent: 'center',
           width: '100%',
           minHeight: '80vh',
-          backgroundColor: '#f8f9fc',
+          backgroundColor: 'background.default',
           p: 4,
           borderRadius: 2,
           position: 'relative',
@@ -252,7 +252,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
             sx={{
               width: 60,
               height: 60,
-              backgroundColor: '#5b6670',
+              backgroundColor: 'primary.main',
               animation: 'aiThinking 2s infinite ease-in-out',
               '@keyframes aiThinking': {
                 '0%, 100%': {
@@ -271,7 +271,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               variant="h4"
               fontWeight={600}
               sx={{
-                color: '#333333',
+                color: 'text.primary',
                 mb: 0.5
               }}
             >
@@ -280,7 +280,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
             <Typography
               variant="h6"
               sx={{
-                color: '#666666',
+                color: 'text.secondary',
                 fontWeight: 400
               }}
             >
@@ -404,9 +404,9 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                         sx={{
                           width: 40,
                           height: 40,
-                          backgroundColor: step.type === 'complete' ? '#4caf50' :
-                            step.type === 'tool_call' ? '#ff9800' :
-                              step.type === 'analysis' ? '#2196f3' : '#9c27b0',
+                          backgroundColor: step.type === 'complete' ? 'success.main' :
+                            step.type === 'tool_call' ? 'info.main' :
+                              step.type === 'analysis' ? 'primary.main' : 'secondary.main',
                           color: 'white',
                         }}
                       >
@@ -424,7 +424,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                             sx={{
                               fontSize: '0.7rem',
                               height: 20,
-                              backgroundColor: alpha('#fff', 0.8)
+                              backgroundColor: alpha('background.paper', 0.8)
                             }}
                           />
                         </Box>
