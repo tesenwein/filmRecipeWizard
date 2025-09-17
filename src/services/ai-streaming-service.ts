@@ -45,24 +45,8 @@ export class AIStreamingService {
         const { onUpdate } = options || {};
 
         try {
-            // Send initial thinking update
-            onUpdate?.({
-                type: 'thinking',
-                content: 'Starting analysis of your images...',
-                step: 'initialization',
-                progress: 5
-            });
-
             // Build the user content with images
             const userContent = await this.buildUserContent(baseImageBase64, targetImageBase64, hint, options);
-
-            // Send analysis start update
-            onUpdate?.({
-                type: 'analysis',
-                content: 'Analyzing color characteristics and style elements...',
-                step: 'color_analysis',
-                progress: 15
-            });
 
             // Create tools for the AI to use
             const tools = this.createTools(options);
@@ -102,13 +86,6 @@ export class AIStreamingService {
                     // Handle tool results
                     if (part.toolName === 'generate_color_adjustments' || part.toolName === 'report_global_adjustments') {
                         finalResult = part.output as AIColorAdjustments;
-
-                        onUpdate?.({
-                            type: 'complete',
-                            content: 'Recipe generation complete!',
-                            step: 'finalization',
-                            progress: 100
-                        });
                     }
                 }
             }
