@@ -125,16 +125,19 @@ export class OpenAIColorAnalyzer {
     }
 
     const message = completion.choices[0]?.message;
-    console.log('[AI] Message received:', { 
-      hasToolCalls: !!message?.tool_calls, 
+    console.log('[AI] Message received:', {
+      hasToolCalls: !!message?.tool_calls,
       toolCallCount: message?.tool_calls?.length || 0,
-      toolCallNames: message?.tool_calls?.map((tc: any) => tc.function?.name) || []
+      toolCallNames: message?.tool_calls?.map((tc: any) => tc.function?.name) || [],
     });
-    
+
     if (message?.tool_calls && message.tool_calls.length > 0) {
       // If model responded with a single full adjustments object, return it
       const singleFull = message.tool_calls.find(
-        (tc: any) => tc.type === 'function' && (tc.function?.name === 'generate_color_adjustments' || tc.function?.name === 'report_global_adjustments')
+        (tc: any) =>
+          tc.type === 'function' &&
+          (tc.function?.name === 'generate_color_adjustments' ||
+            tc.function?.name === 'report_global_adjustments')
       );
       if (singleFull && (singleFull as any).function?.arguments) {
         const adjustments = JSON.parse(

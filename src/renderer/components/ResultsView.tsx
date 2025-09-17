@@ -42,7 +42,15 @@ interface ResultsViewProps {
   onReset: () => void;
   processId?: string; // Optional process ID to load base64 image data
   prompt?: string; // Optional prompt provided in this session
-  aiFunctions?: { temperatureTint?: boolean; masks?: boolean; colorGrading?: boolean; hsl?: boolean; curves?: boolean; grain?: boolean; pointColor?: boolean };
+  aiFunctions?: {
+    temperatureTint?: boolean;
+    masks?: boolean;
+    colorGrading?: boolean;
+    hsl?: boolean;
+    curves?: boolean;
+    grain?: boolean;
+    pointColor?: boolean;
+  };
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({
@@ -236,20 +244,21 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // Name editing handled by RecipeNameHeader subcomponent
 
   // Generate default options based on aiFunctions
-  const getDefaultOptions = () => ({
-    wbBasic: aiFunctions?.temperatureTint ?? true,
-    exposure: false, // Always false as it's not an AI function
-    hsl: aiFunctions?.hsl ?? true,
-    colorGrading: aiFunctions?.colorGrading ?? true,
-    curves: aiFunctions?.curves ?? true,
-    sharpenNoise: false, // Always false as it's not an AI function
-    vignette: false, // Always false as it's not an AI function
-    pointColor: aiFunctions?.pointColor ?? true,
-    grain: aiFunctions?.grain ?? false,
-    masks: aiFunctions?.masks ?? true,
-    // Start export strength at 50%
-    strength: 0.5,
-  } as const);
+  const getDefaultOptions = () =>
+    ({
+      wbBasic: aiFunctions?.temperatureTint ?? true,
+      exposure: false, // Always false as it's not an AI function
+      hsl: aiFunctions?.hsl ?? true,
+      colorGrading: aiFunctions?.colorGrading ?? true,
+      curves: aiFunctions?.curves ?? true,
+      sharpenNoise: false, // Always false as it's not an AI function
+      vignette: false, // Always false as it's not an AI function
+      pointColor: aiFunctions?.pointColor ?? true,
+      grain: aiFunctions?.grain ?? false,
+      masks: aiFunctions?.masks ?? true,
+      // Start export strength at 50%
+      strength: 0.5,
+    } as const);
 
   const defaultOptions = getDefaultOptions();
 
@@ -1344,31 +1353,51 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               label: 'Exposure',
                               description: 'Basic exposure adjustments',
                             },
-                            ...(aiFunctions?.temperatureTint ? [{
-                              key: 'wbBasic',
-                              label: 'Basic Adjustments',
-                              description: 'White balance, contrast, highlights, shadows',
-                            }] : []),
-                            ...(aiFunctions?.hsl ? [{
-                              key: 'hsl',
-                              label: 'HSL Adjustments',
-                              description: 'Hue, saturation, and luminance per color',
-                            }] : []),
-                            ...(aiFunctions?.colorGrading ? [{
-                              key: 'colorGrading',
-                              label: 'Color Grading',
-                              description: 'Shadow, midtone, highlight color wheels',
-                            }] : []),
-                            ...(aiFunctions?.curves ? [{
-                              key: 'curves',
-                              label: 'Tone Curves',
-                              description: 'RGB and luminance curve adjustments',
-                            }] : []),
-                            ...(aiFunctions?.pointColor ? [{
-                              key: 'pointColor',
-                              label: 'Point Color',
-                              description: 'Targeted color adjustments',
-                            }] : []),
+                            ...(aiFunctions?.temperatureTint
+                              ? [
+                                  {
+                                    key: 'wbBasic',
+                                    label: 'Basic Adjustments',
+                                    description: 'White balance, contrast, highlights, shadows',
+                                  },
+                                ]
+                              : []),
+                            ...(aiFunctions?.hsl
+                              ? [
+                                  {
+                                    key: 'hsl',
+                                    label: 'HSL Adjustments',
+                                    description: 'Hue, saturation, and luminance per color',
+                                  },
+                                ]
+                              : []),
+                            ...(aiFunctions?.colorGrading
+                              ? [
+                                  {
+                                    key: 'colorGrading',
+                                    label: 'Color Grading',
+                                    description: 'Shadow, midtone, highlight color wheels',
+                                  },
+                                ]
+                              : []),
+                            ...(aiFunctions?.curves
+                              ? [
+                                  {
+                                    key: 'curves',
+                                    label: 'Tone Curves',
+                                    description: 'RGB and luminance curve adjustments',
+                                  },
+                                ]
+                              : []),
+                            ...(aiFunctions?.pointColor
+                              ? [
+                                  {
+                                    key: 'pointColor',
+                                    label: 'Point Color',
+                                    description: 'Targeted color adjustments',
+                                  },
+                                ]
+                              : []),
                             {
                               key: 'sharpenNoise',
                               label: 'Sharpen & Noise',
@@ -1379,16 +1408,24 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               label: 'Vignette',
                               description: 'Edge darkening effects',
                             },
-                            ...(aiFunctions?.grain ? [{
-                              key: 'grain',
-                              label: 'Film Grain',
-                              description: 'Analog film texture simulation',
-                            }] : []),
-                            ...(aiFunctions?.masks ? [{
-                              key: 'masks',
-                              label: 'Masks (Local Adjustments)',
-                              description: 'Area-specific modifications',
-                            }] : []),
+                            ...(aiFunctions?.grain
+                              ? [
+                                  {
+                                    key: 'grain',
+                                    label: 'Film Grain',
+                                    description: 'Analog film texture simulation',
+                                  },
+                                ]
+                              : []),
+                            ...(aiFunctions?.masks
+                              ? [
+                                  {
+                                    key: 'masks',
+                                    label: 'Masks (Local Adjustments)',
+                                    description: 'Area-specific modifications',
+                                  },
+                                ]
+                              : []),
                           ].map(opt => (
                             <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
                               <FormControlLabel

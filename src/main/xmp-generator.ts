@@ -24,7 +24,19 @@ export function getExampleBWMixer(): Pick<
   };
 }
 
-export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, aiFunctions?: { temperatureTint?: boolean; masks?: boolean; colorGrading?: boolean; hsl?: boolean; curves?: boolean; grain?: boolean; pointColor?: boolean }): string {
+export function generateXMPContent(
+  aiAdjustments: AIColorAdjustments,
+  include: any,
+  aiFunctions?: {
+    temperatureTint?: boolean;
+    masks?: boolean;
+    colorGrading?: boolean;
+    hsl?: boolean;
+    curves?: boolean;
+    grain?: boolean;
+    pointColor?: boolean;
+  }
+): string {
   // Generate XMP content for Lightroom based on AI adjustments
   const isBW =
     !!aiAdjustments.monochrome ||
@@ -60,8 +72,12 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   // Sanitize all inputs
   // Use D65 (6500K) as a neutral default to avoid unintended warm/yellow bias
   const withDefault = (v: any, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
-  const temp = aiFunctions?.temperatureTint ? round(clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000)) : undefined;
-  const tint = aiFunctions?.temperatureTint ? round(clamp(withDefault(aiAdjustments.tint, 0), -150, 150)) : undefined;
+  const temp = aiFunctions?.temperatureTint
+    ? round(clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000))
+    : undefined;
+  const tint = aiFunctions?.temperatureTint
+    ? round(clamp(withDefault(aiAdjustments.tint, 0), -150, 150))
+    : undefined;
   const exposure = clamp(scale(aiAdjustments.exposure as any), -5, 5);
   const contrast = round(clamp(scale(aiAdjustments.contrast as any), -100, 100));
   const highlights = round(clamp(scale(aiAdjustments.highlights as any), -100, 100));
@@ -415,55 +431,57 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // Masks block (skipped unless disabled). Emits Lightroom MaskGroupBasedCorrections.
-  const masksBlock = inc.masks && aiFunctions?.masks
-    ? (() => {
-        const masks = Array.isArray((aiAdjustments as any).masks)
-          ? ((aiAdjustments as any).masks as any[])
-          : [];
-        if (!masks.length) return '';
-        const f3 = (v: any) =>
-          typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined;
-        const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
-        // Apply reduced strength for mask adjustments to make them less strong
-        const maskStrength = strength * 0.6; // 60% of the main strength
-        const nM1_1_scaled = (v: any) =>
-          typeof v === 'number' ? Math.max(-1, Math.min(1, v * maskStrength)) : undefined;
-        const attrIf = (k: string, val?: string | number) =>
-          val === 0 || val === '0' || (val !== undefined && val !== null)
-            ? ` crs:${k}="${val}"`
-            : '';
+  const masksBlock =
+    inc.masks && aiFunctions?.masks
+      ? (() => {
+          const masks = Array.isArray((aiAdjustments as any).masks)
+            ? ((aiAdjustments as any).masks as any[])
+            : [];
+          if (!masks.length) return '';
+          const f3 = (v: any) =>
+            typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined;
+          const n0_1 = (v: any) =>
+            typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined;
+          // Apply reduced strength for mask adjustments to make them less strong
+          const maskStrength = strength * 0.6; // 60% of the main strength
+          const nM1_1_scaled = (v: any) =>
+            typeof v === 'number' ? Math.max(-1, Math.min(1, v * maskStrength)) : undefined;
+          const attrIf = (k: string, val?: string | number) =>
+            val === 0 || val === '0' || (val !== undefined && val !== null)
+              ? ` crs:${k}="${val}"`
+              : '';
 
-        const correctionLis = masks
-          .map((m, i) => {
-            const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
-            const adj = m?.adjustments || {};
-            // Build adjustment attributes using 2012 naming where applicable
-            const adjAttrs = [
-              attrIf('LocalSaturation2012', f3(nM1_1_scaled(adj.local_saturation) as any)),
-              attrIf('LocalExposure2012', f3(nM1_1_scaled(adj.local_exposure) as any)),
-              attrIf('LocalContrast2012', f3(nM1_1_scaled(adj.local_contrast) as any)),
-              attrIf('LocalHighlights2012', f3(nM1_1_scaled(adj.local_highlights) as any)),
-              attrIf('LocalShadows2012', f3(nM1_1_scaled(adj.local_shadows) as any)),
-              attrIf('LocalWhites2012', f3(nM1_1_scaled(adj.local_whites) as any)),
-              attrIf('LocalBlacks2012', f3(nM1_1_scaled(adj.local_blacks) as any)),
-              attrIf('LocalClarity2012', f3(nM1_1_scaled(adj.local_clarity) as any)),
-              attrIf('LocalDehaze', f3(nM1_1_scaled(adj.local_dehaze) as any)),
-              // Local temperature and tint removed - using gradients for coloring instead
-              attrIf('LocalTexture', f3(nM1_1_scaled(adj.local_texture) as any)),
-              attrIf('LocalCurveRefineSaturation', 100),
-            ]
-              .filter(Boolean)
-              .join('');
+          const correctionLis = masks
+            .map((m, i) => {
+              const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
+              const adj = m?.adjustments || {};
+              // Build adjustment attributes using 2012 naming where applicable
+              const adjAttrs = [
+                attrIf('LocalSaturation2012', f3(nM1_1_scaled(adj.local_saturation) as any)),
+                attrIf('LocalExposure2012', f3(nM1_1_scaled(adj.local_exposure) as any)),
+                attrIf('LocalContrast2012', f3(nM1_1_scaled(adj.local_contrast) as any)),
+                attrIf('LocalHighlights2012', f3(nM1_1_scaled(adj.local_highlights) as any)),
+                attrIf('LocalShadows2012', f3(nM1_1_scaled(adj.local_shadows) as any)),
+                attrIf('LocalWhites2012', f3(nM1_1_scaled(adj.local_whites) as any)),
+                attrIf('LocalBlacks2012', f3(nM1_1_scaled(adj.local_blacks) as any)),
+                attrIf('LocalClarity2012', f3(nM1_1_scaled(adj.local_clarity) as any)),
+                attrIf('LocalDehaze', f3(nM1_1_scaled(adj.local_dehaze) as any)),
+                // Local temperature and tint removed - using gradients for coloring instead
+                attrIf('LocalTexture', f3(nM1_1_scaled(adj.local_texture) as any)),
+                attrIf('LocalCurveRefineSaturation', 100),
+              ]
+                .filter(Boolean)
+                .join('');
 
-            // Build geometry li for mask
-            let maskLi = '';
-            const mType: any = m?.type;
-            if (mType === 'linear') {
-              const zx = f3(n0_1(m.zeroX));
-              const zy = f3(n0_1(m.zeroY));
-              const fx = f3(n0_1(m.fullX));
-              const fy = f3(n0_1(m.fullY));
-              maskLi = `<rdf:li
+              // Build geometry li for mask
+              let maskLi = '';
+              const mType: any = m?.type;
+              if (mType === 'linear') {
+                const zx = f3(n0_1(m.zeroX));
+                const zy = f3(n0_1(m.zeroY));
+                const fx = f3(n0_1(m.fullX));
+                const fy = f3(n0_1(m.fullY));
+                maskLi = `<rdf:li
          crs:What="Mask/Gradient"
          crs:MaskActive="true"
          crs:MaskName="${name}"
@@ -474,25 +492,25 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:ZeroY="${zy ?? '0.500'}"
          crs:FullX="${fx ?? '0.500'}"
          crs:FullY="${fy ?? '0.800'}"/>`;
-            } else if (mType === 'radial') {
-              const top = f3(n0_1(m.top));
-              const left = f3(n0_1(m.left));
-              const bottom = f3(n0_1(m.bottom));
-              const right = f3(n0_1(m.right));
-              const angle = f3(typeof m.angle === 'number' ? m.angle : 0);
-              const midpoint =
-                typeof m.midpoint === 'number'
-                  ? Math.round(Math.max(0, Math.min(100, m.midpoint)))
-                  : 50;
-              const roundness =
-                typeof m.roundness === 'number'
-                  ? Math.round(Math.max(-100, Math.min(100, m.roundness)))
-                  : 0;
-              const feather =
-                typeof m.feather === 'number'
-                  ? Math.round(Math.max(0, Math.min(100, m.feather)))
-                  : 75;
-              maskLi = `<rdf:li
+              } else if (mType === 'radial') {
+                const top = f3(n0_1(m.top));
+                const left = f3(n0_1(m.left));
+                const bottom = f3(n0_1(m.bottom));
+                const right = f3(n0_1(m.right));
+                const angle = f3(typeof m.angle === 'number' ? m.angle : 0);
+                const midpoint =
+                  typeof m.midpoint === 'number'
+                    ? Math.round(Math.max(0, Math.min(100, m.midpoint)))
+                    : 50;
+                const roundness =
+                  typeof m.roundness === 'number'
+                    ? Math.round(Math.max(-100, Math.min(100, m.roundness)))
+                    : 0;
+                const feather =
+                  typeof m.feather === 'number'
+                    ? Math.round(Math.max(0, Math.min(100, m.feather)))
+                    : 75;
+                maskLi = `<rdf:li
          crs:What="Mask/CircularGradient"
          crs:MaskActive="true"
          crs:MaskName="${name}"
@@ -509,21 +527,21 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:Feather="${feather}"
          crs:Flipped="${m?.flipped ? 'true' : 'false'}"
          crs:Version="2"/>`;
-            } else if (
-              mType === 'person' ||
-              mType === 'subject' ||
-              mType === 'background' ||
-              mType === 'sky'
-            ) {
-              // AI scene masks: Subject/People (1), Background (0), Sky (2)
-              const rx = f3(n0_1(m.referenceX));
-              const ry = f3(n0_1(m.referenceY));
-              const subType = mType === 'background' ? '0' : mType === 'sky' ? '2' : '1';
-              const subCat =
-                typeof (m as any)?.subCategoryId === 'number'
-                  ? String((m as any).subCategoryId)
-                  : undefined;
-              maskLi = `<rdf:li
+              } else if (
+                mType === 'person' ||
+                mType === 'subject' ||
+                mType === 'background' ||
+                mType === 'sky'
+              ) {
+                // AI scene masks: Subject/People (1), Background (0), Sky (2)
+                const rx = f3(n0_1(m.referenceX));
+                const ry = f3(n0_1(m.referenceY));
+                const subType = mType === 'background' ? '0' : mType === 'sky' ? '2' : '1';
+                const subCat =
+                  typeof (m as any)?.subCategoryId === 'number'
+                    ? String((m as any).subCategoryId)
+                    : undefined;
+                maskLi = `<rdf:li
          crs:What="Mask/Image"
          crs:MaskActive="true"
          crs:MaskName="${name}"
@@ -533,27 +551,27 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:MaskVersion="1"
          crs:MaskSubType="${subType}"${subCat ? `\n         crs:MaskSubCategoryID="${subCat}"` : ''}
          crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"/>`;
-            } else if (m?.type === 'range_color' || m?.type === 'range_luminance') {
-              // Range masks
-              const invert = m?.invert ? 'true' : 'false';
-              if (m?.type === 'range_color') {
-                const colorAmount = f3(n0_1(m.colorAmount));
-                const pointModels = Array.isArray(m?.pointModels) ? m.pointModels : [];
-                const pmLis = (pointModels as any[])
-                  .map((pm: any) =>
-                    Array.isArray(pm)
-                      ? (pm as any[])
-                          .map((v: any) => (typeof v === 'number' ? Number(v) : 0))
-                          .join(' ')
-                      : ''
-                  )
-                  .filter((s: string) => s.length > 0)
-                  .map((s: string) => `           <rdf:li>${s}</rdf:li>`)
-                  .join('\n');
-                const pointModelsBlock = pmLis
-                  ? `\n          <crs:PointModels>\n           <rdf:Seq>\n${pmLis}\n           </rdf:Seq>\n          </crs:PointModels>`
-                  : '';
-                maskLi = `<rdf:li>
+              } else if (m?.type === 'range_color' || m?.type === 'range_luminance') {
+                // Range masks
+                const invert = m?.invert ? 'true' : 'false';
+                if (m?.type === 'range_color') {
+                  const colorAmount = f3(n0_1(m.colorAmount));
+                  const pointModels = Array.isArray(m?.pointModels) ? m.pointModels : [];
+                  const pmLis = (pointModels as any[])
+                    .map((pm: any) =>
+                      Array.isArray(pm)
+                        ? (pm as any[])
+                            .map((v: any) => (typeof v === 'number' ? Number(v) : 0))
+                            .join(' ')
+                        : ''
+                    )
+                    .filter((s: string) => s.length > 0)
+                    .map((s: string) => `           <rdf:li>${s}</rdf:li>`)
+                    .join('\n');
+                  const pointModelsBlock = pmLis
+                    ? `\n          <crs:PointModels>\n           <rdf:Seq>\n${pmLis}\n           </rdf:Seq>\n          </crs:PointModels>`
+                    : '';
+                  maskLi = `<rdf:li>
          <rdf:Description
           crs:What="Mask/RangeMask"
           crs:MaskActive="true"
@@ -567,24 +585,26 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
            crs:ColorAmount="${colorAmount ?? '0.500'}"
            crs:Invert="${invert}"
            crs:SampleType="0">${pointModelsBlock}\n          </rdf:Description>\n         </crs:CorrectionRangeMask>\n         </rdf:Description>\n        </rdf:li>`;
-              } else {
-                // range_luminance
-                const lum =
-                  Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
-                const lumStr = lum
-                  ? lum
-                      .map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'))
-                      .join(' ')
-                  : '0.000000 1.000000 1.000000 1.000000';
-                const lds =
-                  Array.isArray(m?.luminanceDepthSampleInfo) &&
-                  m.luminanceDepthSampleInfo.length === 3
-                    ? m.luminanceDepthSampleInfo
-                    : [0, 0.5, 0.5];
-                const ldsStr = (lds as any[])
-                  .map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'))
-                  .join(' ');
-                maskLi = `<rdf:li>
+                } else {
+                  // range_luminance
+                  const lum =
+                    Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
+                  const lumStr = lum
+                    ? lum
+                        .map((v: any) =>
+                          typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'
+                        )
+                        .join(' ')
+                    : '0.000000 1.000000 1.000000 1.000000';
+                  const lds =
+                    Array.isArray(m?.luminanceDepthSampleInfo) &&
+                    m.luminanceDepthSampleInfo.length === 3
+                      ? m.luminanceDepthSampleInfo
+                      : [0, 0.5, 0.5];
+                  const ldsStr = (lds as any[])
+                    .map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'))
+                    .join(' ');
+                  maskLi = `<rdf:li>
          <rdf:Description
           crs:What="Mask/RangeMask"
           crs:MaskActive="true"
@@ -599,12 +619,12 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
           crs:SampleType="0"
           crs:LumRange="${lumStr}"
           crs:LuminanceDepthSampleInfo="${ldsStr}"/>\n         </rdf:Description>\n        </rdf:li>`;
-              }
-            } else {
-              // Default to subject/person if unknown
-              const rx = f3(n0_1(m?.referenceX));
-              const ry = f3(n0_1(m?.referenceY));
-              maskLi = `<rdf:li
+                }
+              } else {
+                // Default to subject/person if unknown
+                const rx = f3(n0_1(m?.referenceX));
+                const ry = f3(n0_1(m?.referenceY));
+                maskLi = `<rdf:li
          crs:What="Mask/Image"
          crs:MaskActive="true"
          crs:MaskName="${name}"
@@ -614,9 +634,9 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:MaskVersion="1"
          crs:MaskSubType="1"
          crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"/>`;
-            }
+              }
 
-            return `     <rdf:li>
+              return `     <rdf:li>
       <rdf:Description
        crs:What="Correction"
        crs:CorrectionAmount="1"
@@ -629,16 +649,16 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       </crs:CorrectionMasks>
       </rdf:Description>
      </rdf:li>`;
-          })
-          .join('\n');
+            })
+            .join('\n');
 
-        return `   <crs:MaskGroupBasedCorrections>
+          return `   <crs:MaskGroupBasedCorrections>
     <rdf:Seq>
 ${correctionLis}
     </rdf:Seq>
    </crs:MaskGroupBasedCorrections>`;
-      })()
-    : '';
+        })()
+      : '';
 
   const xmp = `<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
