@@ -87,17 +87,7 @@ export class AIStreamingService {
                 // Handle different stream parts according to AI SDK v5 protocol
                 if (part.type === 'text-delta') {
                     fullText += part.text;
-
-                    // Parse thinking updates from the stream
-                    const thinkingUpdates = this.parseThinkingUpdates(part.text, fullText);
-                    thinkingUpdates.forEach(update => {
-                        onUpdate?.({
-                            type: 'thinking',
-                            content: update,
-                            step: 'reasoning',
-                            progress: 70 + Math.random() * 20 // Progress between 70-90%
-                        });
-                    });
+                    // Text deltas are just building up the final response - no need to parse them
                 } else if (part.type === 'tool-call') {
                     // Handle tool calls
                     onUpdate?.({
@@ -459,38 +449,6 @@ Provide detailed reasoning for each adjustment to help the user understand the c
         return tools;
     }
 
-    private parseThinkingUpdates(delta: string, fullText: string): string[] {
-        const updates: string[] = [];
-
-        // Look for thinking patterns in the text
-        const thinkingPatterns = [
-            /I can see that/gi,
-            /Looking at the/gi,
-            /The image shows/gi,
-            /I notice that/gi,
-            /The color palette/gi,
-            /To achieve this look/gi,
-            /I'll adjust the/gi,
-            /This will help/gi,
-            /The key is to/gi
-        ];
-
-        thinkingPatterns.forEach(pattern => {
-            const matches = delta.match(pattern);
-            if (matches) {
-                matches.forEach(match => {
-                    // Extract the sentence containing the thinking
-                    const sentences = fullText.split(/[.!?]+/);
-                    const lastSentence = sentences[sentences.length - 1];
-                    if (lastSentence && lastSentence.trim().length > 10) {
-                        updates.push(lastSentence.trim());
-                    }
-                });
-            }
-        });
-
-        return updates;
-    }
 
     private parseResultFromText(text: string): AIColorAdjustments | null {
         // Try to extract structured data from the text
