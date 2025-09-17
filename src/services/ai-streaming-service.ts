@@ -86,7 +86,7 @@ export class AIStreamingService {
                         currentProgress = 20;
                         onUpdate?.({
                             type: 'progress',
-                            content: 'Starting analysis...',
+                            content: '',
                             step: 'initialization',
                             progress: currentProgress
                         });
@@ -176,7 +176,7 @@ export class AIStreamingService {
                         currentProgress = 15;
                         onUpdate?.({
                             type: 'thinking',
-                            content: 'Starting analysis...',
+                            content: '',
                             step: 'reasoning',
                             progress: currentProgress
                         });

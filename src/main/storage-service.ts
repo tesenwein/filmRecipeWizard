@@ -11,6 +11,7 @@ export class StorageService {
   private initialized = false;
   private settingsFile: string | null = null;
   private storageLocation: string;
+  private savingInProgress = false;
 
   private getSettingsFilePath(): string {
     if (!this.settingsFile) {
@@ -34,8 +35,17 @@ export class StorageService {
     this.backupDir = path.join(this.storageLocation, 'backups');
 
     // Ensure the new directories exist
-    await fs.mkdir(this.storageLocation, { recursive: true });
-    await fs.mkdir(this.backupDir, { recursive: true });
+    try {
+      await fs.mkdir(this.storageLocation, { recursive: true });
+      await fs.mkdir(this.backupDir, { recursive: true });
+
+      // Verify directories were created
+      await fs.access(this.storageLocation);
+      await fs.access(this.backupDir);
+    } catch (error) {
+      console.error('[STORAGE] Failed to create storage location directories:', { location, error });
+      throw new Error(`Failed to create storage location directories: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async getSettings(): Promise<AppSettings> {
@@ -79,16 +89,24 @@ export class StorageService {
       // Ensure both the main storage directory and backup directory exist
       const storageDir = path.dirname(this.storageFile);
       console.log('[STORAGE] Creating storage directory:', storageDir);
-      await fs.mkdir(storageDir, { recursive: true });
-      await fs.mkdir(this.backupDir, { recursive: true });
 
-      // Verify directories were created
+      // Create directories with explicit error handling
+      try {
+        await fs.mkdir(storageDir, { recursive: true });
+        await fs.mkdir(this.backupDir, { recursive: true });
+      } catch (mkdirError) {
+        console.error('[STORAGE] Failed to create directories:', mkdirError);
+        throw new Error(`Failed to create storage directories: ${mkdirError instanceof Error ? mkdirError.message : 'Unknown error'}`);
+      }
+
+      // Verify directories were created and are accessible
       try {
         await fs.access(storageDir);
-        console.log('[STORAGE] Storage directory verified:', storageDir);
+        await fs.access(this.backupDir);
+        console.log('[STORAGE] Storage directories verified:', { storageDir, backupDir: this.backupDir });
       } catch (error) {
-        console.error('[STORAGE] Failed to create/access storage directory:', storageDir, error);
-        throw new Error(`Failed to create storage directory: ${storageDir}`);
+        console.error('[STORAGE] Failed to access created directories:', { storageDir, backupDir: this.backupDir }, error);
+        throw new Error(`Failed to access storage directories: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
 
       // Clean up any stale temp history file from a previous interrupted save
@@ -235,19 +253,48 @@ export class StorageService {
   }
 
   async saveRecipes(history: ProcessHistory[]): Promise<void> {
+    // Prevent recursive calls
+    if (this.savingInProgress) {
+      console.log('[STORAGE] Save already in progress, skipping recursive call');
+      return;
+    }
+
+    this.savingInProgress = true;
     try {
       await this.initialize();
       await this.backupHistoryFile();
-      const data = JSON.stringify(history, null, 2);
-      // Atomic write: write to temp then rename
-      const tmp = `${this.storageFile}.tmp`;
-      await fs.writeFile(tmp, data, 'utf8');
 
-      // Ensure the target directory exists before renaming
+      // Ensure the target directory exists before any file operations
       const storageDir = path.dirname(this.storageFile);
       await fs.mkdir(storageDir, { recursive: true });
 
+      // Verify the directory was created successfully
+      try {
+        await fs.access(storageDir);
+      } catch (error) {
+        console.error('[STORAGE] Storage directory does not exist after creation:', storageDir, error);
+        throw new Error(`Failed to create storage directory: ${storageDir}`);
+      }
+
+      const data = JSON.stringify(history, null, 2);
+      // Atomic write: write to temp then rename
+      const tmp = `${this.storageFile}.tmp`;
+
+      console.log('[STORAGE] Writing temporary file:', tmp);
+      await fs.writeFile(tmp, data, 'utf8');
+
+      // Verify the temp file was created
+      try {
+        await fs.access(tmp);
+        console.log('[STORAGE] Temporary file created successfully:', tmp);
+      } catch (error) {
+        console.error('[STORAGE] Temporary file was not created:', tmp, error);
+        throw new Error(`Failed to create temporary file: ${tmp}`);
+      }
+
+      console.log('[STORAGE] Renaming temporary file to:', this.storageFile);
       await fs.rename(tmp, this.storageFile);
+      console.log('[STORAGE] File rename completed successfully');
     } catch (error) {
       console.error('[STORAGE] Failed to save history:', error);
       // Clean up temp file if it exists
@@ -257,6 +304,8 @@ export class StorageService {
         // Ignore cleanup errors
       }
       throw error;
+    } finally {
+      this.savingInProgress = false;
     }
   }
 
