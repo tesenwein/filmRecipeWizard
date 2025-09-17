@@ -1,6 +1,6 @@
 import { ExportResult, ImportResult } from '../shared/types';
 
-export {}
+export {};
 
 declare global {
   // Add CSS properties for Electron and modern browsers
@@ -19,7 +19,7 @@ declare global {
         filters: Array<{ name: string; extensions: string[] }>;
         properties: string[];
       }) => Promise<string[]>;
-      
+
       openPath: (path: string) => Promise<{ success: boolean; error?: string }>;
       openExternal: (url: string) => Promise<{ success: boolean; error?: string }>;
       processDroppedFiles: (files: { name: string; data: string }[]) => Promise<string[]>;
@@ -32,8 +32,15 @@ declare global {
         options: any;
         processId?: string;
       }) => Promise<any[]>;
-      processWithStoredImages: (data: { processId: string; targetIndex?: number; baseImageData?: string | string[]; targetImageData?: string[]; prompt?: string; styleOptions?: any }) => Promise<any>;
-      
+      processWithStoredImages: (data: {
+        processId: string;
+        targetIndex?: number;
+        baseImageData?: string | string[];
+        targetImageData?: string[];
+        prompt?: string;
+        styleOptions?: any;
+      }) => Promise<any>;
+
       processImage: (data: any) => Promise<any>;
       analyzeColors: (imagePath: string) => Promise<any>;
       analyzeColorMatch: (data: any) => Promise<any>;
@@ -41,13 +48,16 @@ declare global {
       generatePreset: (data: any) => Promise<any>;
       downloadXMP: (data: any) => Promise<any>;
       generateLUT: (data: any) => Promise<any>;
-      exportProfile: (data: { adjustments: any; recipeIndex?: number }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+      exportProfile: (data: {
+        adjustments: any;
+        recipeIndex?: number;
+      }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
 
       // Recipe import/export
       exportRecipe: (processId: string) => Promise<ExportResult>;
       exportAllRecipes: () => Promise<ExportResult>;
       importRecipe: () => Promise<ImportResult>;
-      
+
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;
       onProcessingComplete?: (callback: (results: any[]) => void) => void;
@@ -59,24 +69,111 @@ declare global {
       // Storage operations
       loadHistory: () => Promise<{ success: boolean; recipes?: any[]; error?: string }>;
       clearHistory: () => Promise<void>;
-      saveProcess: (processData: any) => Promise<{ success: boolean; process?: any; error?: string }>;
-      updateProcess: (processId: string, updates: any) => Promise<{ success: boolean; error?: string }>;
+      clearPendingRecipes: () => Promise<{ success: boolean; error?: string }>;
+      saveProcess: (
+        processData: any
+      ) => Promise<{ success: boolean; process?: any; error?: string }>;
+      updateProcess: (
+        processId: string,
+        updates: any
+      ) => Promise<{ success: boolean; error?: string }>;
       deleteProcess: (processId: string) => Promise<{ success: boolean; error?: string }>;
-      getProcess: (processId: string) => Promise<{ success: boolean; process?: any; error?: string }>;
-      getImageDataUrls: (processId: string) => Promise<{ success: boolean; baseImageUrls: string[]; targetImageUrls: string[]; error?: string }>;
-      setBaseImage: (processId: string, filePath: string) => Promise<{ success: boolean; error?: string }>;
-      addBaseImages: (processId: string, filePaths: string[]) => Promise<{ success: boolean; count?: number; error?: string }>;
-      removeBaseImage: (processId: string, index: number) => Promise<{ success: boolean; error?: string }>;
+      getProcess: (
+        processId: string
+      ) => Promise<{ success: boolean; process?: any; error?: string }>;
+      getImageDataUrls: (
+        processId: string
+      ) => Promise<{
+        success: boolean;
+        baseImageUrls: string[];
+        targetImageUrls: string[];
+        error?: string;
+      }>;
+      setBaseImage: (
+        processId: string,
+        filePath: string
+      ) => Promise<{ success: boolean; error?: string }>;
+      addBaseImages: (
+        processId: string,
+        filePaths: string[]
+      ) => Promise<{ success: boolean; count?: number; error?: string }>;
+      removeBaseImage: (
+        processId: string,
+        index: number
+      ) => Promise<{ success: boolean; error?: string }>;
 
       // Settings operations
       selectStorageFolder: () => Promise<{ success: boolean; path?: string; error?: string }>;
-      getSettings: () => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
-      saveSettings: (
-        settings: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
-      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
-      updateSettings: (
-        settings: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }
-      ) => Promise<{ success: boolean; settings?: { openaiKey?: string; setupCompleted?: boolean; storageLocation?: string; userProfile?: { firstName: string; lastName: string; email?: string; website?: string; instagram?: string } }; error?: string }>;
+      getSettings: () => Promise<{
+        success: boolean;
+        settings?: {
+          openaiKey?: string;
+          setupCompleted?: boolean;
+          storageLocation?: string;
+          userProfile?: {
+            firstName: string;
+            lastName: string;
+            email?: string;
+            website?: string;
+            instagram?: string;
+          };
+        };
+        error?: string;
+      }>;
+      saveSettings: (settings: {
+        openaiKey?: string;
+        setupCompleted?: boolean;
+        storageLocation?: string;
+        userProfile?: {
+          firstName: string;
+          lastName: string;
+          email?: string;
+          website?: string;
+          instagram?: string;
+        };
+      }) => Promise<{
+        success: boolean;
+        settings?: {
+          openaiKey?: string;
+          setupCompleted?: boolean;
+          storageLocation?: string;
+          userProfile?: {
+            firstName: string;
+            lastName: string;
+            email?: string;
+            website?: string;
+            instagram?: string;
+          };
+        };
+        error?: string;
+      }>;
+      updateSettings: (settings: {
+        openaiKey?: string;
+        setupCompleted?: boolean;
+        storageLocation?: string;
+        userProfile?: {
+          firstName: string;
+          lastName: string;
+          email?: string;
+          website?: string;
+          instagram?: string;
+        };
+      }) => Promise<{
+        success: boolean;
+        settings?: {
+          openaiKey?: string;
+          setupCompleted?: boolean;
+          storageLocation?: string;
+          userProfile?: {
+            firstName: string;
+            lastName: string;
+            email?: string;
+            website?: string;
+            instagram?: string;
+          };
+        };
+        error?: string;
+      }>;
 
       // Utility functions
       removeAllListeners: (channel: string) => void;

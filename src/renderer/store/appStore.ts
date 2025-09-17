@@ -39,6 +39,7 @@ interface AppState {
   updateRecipe: (id: string, updates: Partial<Recipe>) => void;
   removeRecipe: (id: string) => void;
   setGeneratingStatus: (id: string, isGenerating: boolean) => void;
+  clearGeneratingRecipes: () => void;
 
   // Processing actions
   setCurrentProcessId: (id: string | null) => void;
@@ -165,6 +166,18 @@ export const useAppStore = create<AppState>()(
           },
           false,
           'setGeneratingStatus'
+        ),
+
+      clearGeneratingRecipes: () =>
+        set(
+          state => ({
+            generatingRecipes: new Set(),
+            recipes: state.recipes.map(r =>
+              r.status === 'generating' ? { ...r, status: 'failed' } : r
+            ),
+          }),
+          false,
+          'clearGeneratingRecipes'
         ),
 
       // Processing actions

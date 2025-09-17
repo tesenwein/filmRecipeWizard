@@ -9,7 +9,6 @@ const electronAPI = {
   processDroppedFiles: (files: { name: string; data: string }[]) =>
     ipcRenderer.invoke('process-dropped-files', files),
 
-
   // Image processing
   processImages: (data: any) => ipcRenderer.invoke('process-images', data),
   processWithStoredImages: (data: {
@@ -64,6 +63,7 @@ const electronAPI = {
   removeBaseImage: (processId: string, index: number) =>
     ipcRenderer.invoke('remove-base-image', processId, index),
   clearHistory: () => ipcRenderer.invoke('clear-recipes'),
+  clearPendingRecipes: () => ipcRenderer.invoke('clear-pending-recipes'),
 
   // Settings operations
   selectStorageFolder: () => ipcRenderer.invoke('select-storage-folder'),

@@ -79,6 +79,17 @@ const App: React.FC = () => {
         const hasKey = !!(res.success && res.settings && res.settings.openaiKey);
         const wizardNeeded = !setupCompleted || !hasKey;
 
+        setStartupStatus({ status: 'Clearing pending recipes...', progress: 50 });
+        try {
+          await window.electronAPI.clearPendingRecipes();
+          // Clear generating recipes from store as well
+          const { clearGeneratingRecipes } = useAppStore.getState();
+          clearGeneratingRecipes();
+        } catch (error) {
+          console.warn('[APP] Failed to clear pending recipes:', error);
+        }
+        if (!mounted) return;
+
         setStartupStatus({ status: 'Loading recipes...', progress: 60 });
         const { loadRecipes } = useAppStore.getState();
         await loadRecipes();

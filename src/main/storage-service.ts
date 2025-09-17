@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { imageProcessingService } from '../services/image-processing-service';
-import { ProcessHistory, AppSettings, DEFAULT_STORAGE_FOLDER } from '../shared/types';
+import { AppSettings, DEFAULT_STORAGE_FOLDER, ProcessHistory } from '../shared/types';
 
 export class StorageService {
   private storageFile: string;
@@ -155,7 +155,6 @@ export class StorageService {
     return null;
   }
 
-
   async loadRecipes(): Promise<ProcessHistory[]> {
     try {
       await this.initialize();
@@ -284,6 +283,18 @@ export class StorageService {
     await fs.rename(temp, this.storageFile);
 
     await this.cleanupTempFiles();
+  }
+
+  async clearPendingRecipes(): Promise<void> {
+    await this.initialize();
+
+    const history = await this.loadRecipes();
+    const filteredHistory = history.filter(recipe => recipe.status !== 'generating');
+
+    if (filteredHistory.length !== history.length) {
+      console.log(`[STORAGE] Clearing ${history.length - filteredHistory.length} pending recipes`);
+      await this.saveRecipes(filteredHistory);
+    }
   }
 
   // Convert an image file to base64 JPEG data

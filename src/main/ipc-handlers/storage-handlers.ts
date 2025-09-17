@@ -2,10 +2,10 @@ import { dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STORAGE_FOLDER, AppSettings, ProcessHistory } from '../../shared/types';
-import { StorageService } from '../storage-service';
-import { SettingsService } from '../settings-service';
+import { AppSettings, DEFAULT_STORAGE_FOLDER, ProcessHistory } from '../../shared/types';
 import { ImageProcessor } from '../image-processor';
+import { SettingsService } from '../settings-service';
+import { StorageService } from '../storage-service';
 
 export class StorageHandlers {
   constructor(
@@ -20,7 +20,9 @@ export class StorageHandlers {
       try {
         const [recipes, settings] = await Promise.all([
           this.storageService.loadRecipes(),
-          this.settingsService ? this.settingsService.loadSettings() : Promise.resolve({} as AppSettings),
+          this.settingsService
+            ? this.settingsService.loadSettings()
+            : Promise.resolve({} as AppSettings),
         ]);
         const author = settings.userProfile;
         let mutated = false;
@@ -317,6 +319,17 @@ export class StorageHandlers {
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error clearing recipes:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Clear only pending/generating recipes
+    ipcMain.handle('clear-pending-recipes', async () => {
+      try {
+        await this.storageService.clearPendingRecipes();
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error clearing pending recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
