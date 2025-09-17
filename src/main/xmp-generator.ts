@@ -441,9 +441,31 @@ export function generateXMPContent(
           .map((m, i) => {
             const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
             const adj = m?.adjustments || {};
+
+            // Generate unique sync IDs (32-character hex strings)
+            const generateSyncID = (prefix: string, index: number): string => {
+              const hex = '0123456789ABCDEF';
+              let result = prefix;
+              for (let j = 0; j < 8; j++) {
+                result += hex[Math.floor(Math.random() * 16)];
+              }
+              return result;
+            };
+            const correctionSyncID = generateSyncID('1CB4D8C68C7443EFB1228D1E1100236', i);
+            const maskSyncID = generateSyncID('45504B461EFB412EB77D76F3A7B8DF8', i);
+
             // Build adjustment attributes using 2012 naming where applicable
             const adjAttrs = [
-              attrIf('LocalSaturation2012', f3(nM1_1_scaled(adj.local_saturation) as any)),
+              attrIf('CorrectionSyncID', correctionSyncID),
+              attrIf('LocalExposure', 0),
+              attrIf('LocalHue', 0),
+              attrIf('LocalSaturation', 0),
+              attrIf('LocalContrast', 0),
+              attrIf('LocalClarity', 0),
+              attrIf('LocalSharpness', 0),
+              attrIf('LocalBrightness', 0),
+              attrIf('LocalToningHue', 0),
+              attrIf('LocalToningSaturation', 0),
               attrIf('LocalExposure2012', f3(nM1_1_scaled(adj.local_exposure) as any)),
               attrIf('LocalContrast2012', f3(nM1_1_scaled(adj.local_contrast) as any)),
               attrIf('LocalHighlights2012', f3(nM1_1_scaled(adj.local_highlights) as any)),
@@ -452,8 +474,13 @@ export function generateXMPContent(
               attrIf('LocalBlacks2012', f3(nM1_1_scaled(adj.local_blacks) as any)),
               attrIf('LocalClarity2012', f3(nM1_1_scaled(adj.local_clarity) as any)),
               attrIf('LocalDehaze', f3(nM1_1_scaled(adj.local_dehaze) as any)),
-              // Local temperature and tint removed - using gradients for coloring instead
+              attrIf('LocalLuminanceNoise', 0),
+              attrIf('LocalMoire', 0),
+              attrIf('LocalDefringe', 0),
+              attrIf('LocalTemperature', 0),
+              attrIf('LocalTint', 0),
               attrIf('LocalTexture', f3(nM1_1_scaled(adj.local_texture) as any)),
+              attrIf('LocalGrain', 0),
               attrIf('LocalCurveRefineSaturation', 100),
             ]
               .filter(Boolean)
@@ -533,10 +560,12 @@ export function generateXMPContent(
          crs:MaskName="${name}"
          crs:MaskBlendMode="0"
          crs:MaskInverted="${m?.inverted ? 'true' : 'false'}"
+         crs:MaskSyncID="${maskSyncID}"
          crs:MaskValue="1"
          crs:MaskVersion="1"
          crs:MaskSubType="${subType}"${subCat ? `\n         crs:MaskSubCategoryID="${subCat}"` : ''}
-         crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"/>`;
+         crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"
+         crs:ErrorReason="0"/>`;
             } else if (m?.type === 'range_color' || m?.type === 'range_luminance') {
               // Range masks
               const invert = m?.invert ? 'true' : 'false';
@@ -616,10 +645,12 @@ export function generateXMPContent(
          crs:MaskName="${name}"
          crs:MaskBlendMode="0"
          crs:MaskInverted="${m?.inverted ? 'true' : 'false'}"
+         crs:MaskSyncID="${maskSyncID}"
          crs:MaskValue="1"
          crs:MaskVersion="1"
          crs:MaskSubType="1"
-         crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"/>`;
+         crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"
+         crs:ErrorReason="0"/>`;
             }
 
             return `     <rdf:li>

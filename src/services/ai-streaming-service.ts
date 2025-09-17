@@ -89,19 +89,23 @@ export class AIStreamingService {
                         const lastCompleteSentence = sentences[sentences.length - 2]; // Get the last complete sentence
 
                         if (lastCompleteSentence && lastCompleteSentence.trim().length > 20) {
-                            // Increment progress gradually
-                            currentProgress = Math.min(currentProgress + 5, 60); // Cap at 60% for thinking
+                            // Filter out very short messages (less than 5 characters)
+                            const trimmedContent = lastCompleteSentence.trim();
+                            if (trimmedContent.length >= 5) {
+                                // Increment progress gradually
+                                currentProgress = Math.min(currentProgress + 5, 60); // Cap at 60% for thinking
 
-                            onUpdate?.({
-                                type: 'thinking',
-                                content: lastCompleteSentence.trim(),
-                                step: 'reasoning',
-                                progress: currentProgress
-                            });
+                                onUpdate?.({
+                                    type: 'thinking',
+                                    content: trimmedContent,
+                                    step: 'reasoning',
+                                    progress: currentProgress
+                                });
 
-                            // Reset for next chunk
-                            accumulatedThinkingText = '';
-                            lastThinkingUpdate = now;
+                                // Reset for next chunk
+                                accumulatedThinkingText = '';
+                                lastThinkingUpdate = now;
+                            }
                         }
                     }
                 } else if (part.type === 'tool-call') {
@@ -175,8 +179,12 @@ export class AIStreamingService {
             text: this.getSystemPrompt(options || {})
         });
 
-        // Add base images
+        // Add reference images (the style we want to match)
         if (baseImageBase64) {
+            content.push({
+                type: 'text',
+                text: 'REFERENCE IMAGES (the style/look we want to achieve):'
+            });
             const baseImages = Array.isArray(baseImageBase64) ? baseImageBase64 : [baseImageBase64];
             baseImages.forEach((image, index) => {
                 content.push({
@@ -187,8 +195,12 @@ export class AIStreamingService {
             });
         }
 
-        // Add target image
+        // Add target image (the image to be modified)
         if (targetImageBase64) {
+            content.push({
+                type: 'text',
+                text: 'TARGET IMAGE (the image to be modified to match the reference style):'
+            });
             content.push({
                 type: 'image',
                 image: targetImageBase64,
@@ -200,7 +212,7 @@ export class AIStreamingService {
         if (hint) {
             content.push({
                 type: 'text',
-                text: `User request: ${hint}`
+                text: `STYLE DESCRIPTION (text description of the desired look/style, NOT an image): ${hint}`
             });
         }
 
@@ -210,26 +222,38 @@ export class AIStreamingService {
     private getSystemPrompt(options: StreamingOptions): string {
         return `You are a professional photo editor. Create comprehensive Lightroom/Camera Raw adjustments to achieve the target look.
 
-IMPORTANT: Show your thinking process step by step as you analyze the images. Explain what you're looking for, what you notice about the colors, tones, and style, and how you're building the recipe.
+IMPORTANT: 
+- REFERENCE IMAGES show the style/look we want to achieve
+- TARGET IMAGE is the photo that needs to be modified to match the reference style
+- STYLE DESCRIPTION is a text description of the desired look/style (NOT an image)
+- Your job is to analyze the reference images and create adjustments that will make the target image look like the reference style
+- If no reference images are provided, use the STYLE DESCRIPTION to understand what look to create
 
-Call functions to:
-1. Report global adjustments with confidence and reasoning - include color grading, tone curves, HSL adjustments, and other sophisticated techniques
-2. Create masks when needed (max 3 masks) for local adjustments` +
-            (options.preserveSkinTones ? `\n3. Preserve natural skin tones in Subject masks` : '') +
+Show your thinking process step by step as you analyze the images. Explain what you're looking for, what you notice about the colors, tones, and style, and how you're building the recipe.
+
+CRITICAL: You must call the generate_color_adjustments function with ALL adjustments including masks in a single call. Do NOT call individual mask functions - they are just for reference.
+
+Call the generate_color_adjustments function with:
+1. Global adjustments: temperature, tint, exposure, contrast, highlights, shadows, whites, blacks, clarity, vibrance, saturation
+2. Color grading: shadow/midtone/highlight color grading values
+3. HSL adjustments: hue/saturation/luminance for each color range
+4. Tone curves: parametric and point curve adjustments
+5. Masks: Include masks array with local adjustments (max 3 masks)` +
+            (options.preserveSkinTones ? `\n6. Preserve natural skin tones in Subject masks` : '') +
             (options.lightroomProfile
                 ? `\n\nIMPORTANT: Use "${options.lightroomProfile}" as the base camera profile in your adjustments. This profile determines the baseline color rendition and contrast.`
                 : '') +
             `
-3. For portraits, ensure a match in skin tone and backdrop
-4. For landscapes, ensure sky/foliage mood and lighting alignment
-5. Mask modifications values should be minimal and very subtle
-6. Apply advanced color grading techniques including shadow/midtone/highlight color grading
-7. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
-8. Consider tone curve adjustments for sophisticated contrast control
+7. For portraits, ensure a match in skin tone and backdrop
+8. For landscapes, ensure sky/foliage mood and lighting alignment
+9. Mask modifications values should be minimal and very subtle
+10. Apply advanced color grading techniques including shadow/midtone/highlight color grading
+11. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
+12. Consider tone curve adjustments for sophisticated contrast control
 
 Include a short preset_name (2-4 words, Title Case).
 If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).
-If an artist or film style is mentioned in the hint, explicitly include HSL shifts and tone curve adjustments that reflect that style's palette and contrast. Prefer calling the provided tool to report global adjustments once, including HSL fields when applicable.
+If an artist or film style is mentioned in the hint, explicitly include HSL shifts and tone curve adjustments that reflect that style's palette and contrast.
 
 When analyzing images:
 1. First, describe what you see in the images - the overall mood, color palette, lighting conditions
@@ -357,6 +381,53 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             gray_magenta: z.number().min(-100).max(100).optional(),
         });
 
+        // Add masks if enabled
+        if (aiFunctions.masks) {
+            const localAdjustmentsSchema = z.object({
+                local_exposure: z.number().min(-1).max(1).optional(),
+                local_contrast: z.number().min(-1).max(1).optional(),
+                local_highlights: z.number().min(-1).max(1).optional(),
+                local_shadows: z.number().min(-1).max(1).optional(),
+                local_whites: z.number().min(-1).max(1).optional(),
+                local_blacks: z.number().min(-1).max(1).optional(),
+                local_clarity: z.number().min(-1).max(1).optional(),
+                local_dehaze: z.number().min(-1).max(1).optional(),
+                local_texture: z.number().min(-1).max(1).optional(),
+                local_saturation: z.number().min(-1).max(1).optional(),
+            });
+
+            const maskSchema = z.object({
+                name: z.string().optional(),
+                type: z.enum(['radial', 'linear', 'person', 'subject', 'background', 'sky']),
+                adjustments: localAdjustmentsSchema.optional(),
+                // Optional sub-category for background masks
+                subCategoryId: z.number().optional(),
+                // Radial geometry
+                top: z.number().min(0).max(1).optional(),
+                left: z.number().min(0).max(1).optional(),
+                bottom: z.number().min(0).max(1).optional(),
+                right: z.number().min(0).max(1).optional(),
+                angle: z.number().optional(),
+                midpoint: z.number().min(0).max(100).optional(),
+                roundness: z.number().min(-100).max(100).optional(),
+                feather: z.number().min(0).max(100).optional(),
+                inverted: z.boolean().optional(),
+                flipped: z.boolean().optional(),
+                // Linear geometry
+                zeroX: z.number().min(0).max(1).optional(),
+                zeroY: z.number().min(0).max(1).optional(),
+                fullX: z.number().min(0).max(1).optional(),
+                fullY: z.number().min(0).max(1).optional(),
+                // Person/subject reference point
+                referenceX: z.number().min(0).max(1).optional(),
+                referenceY: z.number().min(0).max(1).optional(),
+            });
+
+            baseSchema = baseSchema.extend({
+                masks: z.array(maskSchema).max(3).optional(),
+            });
+        }
+
         // Create tools using AI SDK v5's tool function with Zod schemas
         const tools: any = {};
 
@@ -374,106 +445,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             execute: async (input) => input, // Placeholder - AI will call this
         });
 
-        // Add mask functions if enabled
-        if (aiFunctions.masks) {
-            const localAdjustmentsSchema = z.object({
-                local_exposure: z.number().min(-1).max(1).optional(),
-                local_contrast: z.number().min(-1).max(1).optional(),
-                local_highlights: z.number().min(-1).max(1).optional(),
-                local_shadows: z.number().min(-1).max(1).optional(),
-                local_whites: z.number().min(-1).max(1).optional(),
-                local_blacks: z.number().min(-1).max(1).optional(),
-                local_clarity: z.number().min(-1).max(1).optional(),
-                local_dehaze: z.number().min(-1).max(1).optional(),
-                local_texture: z.number().min(-1).max(1).optional(),
-                local_saturation: z.number().min(-1).max(1).optional(),
-            });
-
-            // Generic mask function
-            tools.add_mask = tool({
-                description: 'Add a local adjustment mask',
-                inputSchema: z.object({
-                    name: z.string(),
-                    type: z.enum(['radial', 'linear', 'person', 'subject', 'background', 'sky']),
-                    adjustments: localAdjustmentsSchema.optional(),
-                }),
-                execute: async (input) => input, // Placeholder - AI will call this
-            });
-
-            // Linear mask function
-            tools.add_linear_mask = tool({
-                description: 'Add a Linear Gradient mask with start/end points and optional local adjustments.',
-                inputSchema: z.object({
-                    name: z.string(),
-                    zeroX: z.number().min(0).max(1),
-                    zeroY: z.number().min(0).max(1),
-                    fullX: z.number().min(0).max(1),
-                    fullY: z.number().min(0).max(1),
-                    inverted: z.boolean().optional(),
-                    adjustments: localAdjustmentsSchema.optional(),
-                }),
-                execute: async (input) => input, // Placeholder - AI will call this
-            });
-
-            // Radial mask function
-            tools.add_radial_mask = tool({
-                description: 'Add a Radial Gradient mask with bounds and optional local adjustments.',
-                inputSchema: z.object({
-                    name: z.string(),
-                    top: z.number().min(0).max(1),
-                    left: z.number().min(0).max(1),
-                    bottom: z.number().min(0).max(1),
-                    right: z.number().min(0).max(1),
-                    angle: z.number().optional(),
-                    midpoint: z.number().min(0).max(100).optional(),
-                    roundness: z.number().min(-100).max(100).optional(),
-                    feather: z.number().min(0).max(100).optional(),
-                    flipped: z.boolean().optional(),
-                    inverted: z.boolean().optional(),
-                    adjustments: localAdjustmentsSchema.optional(),
-                }),
-                execute: async (input) => input, // Placeholder - AI will call this
-            });
-
-            // Subject mask function
-            tools.add_subject_mask = tool({
-                description: 'Add a Subject/Person mask with a reference point and optional local adjustments.',
-                inputSchema: z.object({
-                    name: z.string(),
-                    referenceX: z.number().min(0).max(1),
-                    referenceY: z.number().min(0).max(1),
-                    inverted: z.boolean().optional(),
-                    adjustments: localAdjustmentsSchema.optional(),
-                }),
-                execute: async (input) => input, // Placeholder - AI will call this
-            });
-
-            // Background mask function
-            tools.add_background_mask = tool({
-                description: 'Add a Background mask with a reference point and optional local adjustments.',
-                inputSchema: z.object({
-                    name: z.string(),
-                    referenceX: z.number().min(0).max(1),
-                    referenceY: z.number().min(0).max(1),
-                    inverted: z.boolean().optional(),
-                    adjustments: localAdjustmentsSchema.optional(),
-                }),
-                execute: async (input) => input, // Placeholder - AI will call this
-            });
-
-            // Sky mask function
-            tools.add_sky_mask = tool({
-                description: 'Add a Sky mask with a reference point and optional local adjustments.',
-                inputSchema: z.object({
-                    name: z.string(),
-                    referenceX: z.number().min(0).max(1),
-                    referenceY: z.number().min(0).max(1),
-                    inverted: z.boolean().optional(),
-                    adjustments: localAdjustmentsSchema.optional(),
-                }),
-                execute: async (input) => input, // Placeholder - AI will call this
-            });
-        }
+        // Note: Individual mask functions removed - masks are now included in the main generate_color_adjustments function
 
         return tools;
     }

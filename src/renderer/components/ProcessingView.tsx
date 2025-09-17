@@ -1,20 +1,9 @@
 import {
   AutoFixHigh as AutoFixHighIcon,
-  Brush as BrushIcon,
   CheckCircle as CheckCircleIcon,
-  ColorLens as ColorLensIcon,
-  GpsFixed as GpsFixedIcon,
-  Movie as MovieIcon,
-  Palette as PaletteIcon,
-  Person as PersonIcon,
   Psychology as PsychologyIcon,
   Search as SearchIcon,
   Settings as SettingsIcon,
-  ShowChart as ShowChartIcon,
-  TheaterComedy as TheaterComedyIcon,
-  Thermostat as ThermostatIcon,
-  Visibility as VisibilityIcon,
-  Tune as TuneIcon,
   AutoAwesome as AutoAwesomeIcon,
   Lightbulb as LightbulbIcon,
 } from '@mui/icons-material';
@@ -22,17 +11,9 @@ import {
   Box,
   Chip,
   LinearProgress,
-  Paper,
-  Slide,
   Typography,
-  Fade,
   Grow,
   Avatar,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
   Card,
   CardContent,
   alpha,
@@ -40,6 +21,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
+import { MarkdownService } from '../services/markdown-service';
 
 interface ProcessingViewProps {
   processingState: ProcessingState;
@@ -58,6 +40,7 @@ interface ThinkingStep {
   timestamp: number;
   icon?: React.ReactNode;
 }
+
 
 const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage, targetImages: _targetImages }) => {
   const theme = useTheme();
@@ -241,9 +224,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           justifyContent: 'center',
           width: '100%',
           minHeight: '80vh',
-          backgroundColor: '#fcfcfd',
           p: 4,
-          borderRadius: 2,
           position: 'relative',
         }}
       >
@@ -424,16 +405,10 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                             }}
                           />
                         </Box>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            lineHeight: 1.6,
-                            color: 'text.primary',
-                            wordBreak: 'break-word'
-                          }}
-                        >
-                          {step.content}
-                        </Typography>
+                        <Box
+                          sx={MarkdownService.getStyles()}
+                          dangerouslySetInnerHTML={{ __html: MarkdownService.toHtml(step.content) }}
+                        />
                         {step.toolName && (
                           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                             Using tool: {step.toolName}

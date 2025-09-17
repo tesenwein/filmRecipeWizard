@@ -72,23 +72,38 @@ export class StorageService {
   private async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // Load settings to get storage location
-    await this.getSettings();
-
-    // Ensure both the main storage directory and backup directory exist
-    const storageDir = path.dirname(this.storageFile);
-    await fs.mkdir(storageDir, { recursive: true });
-    await fs.mkdir(this.backupDir, { recursive: true });
-
-    // Clean up any stale temp history file from a previous interrupted save
     try {
-      const tmp = `${this.storageFile}.tmp`;
-      await fs.rm(tmp, { force: true });
-    } catch {
-      // Ignore errors when removing temp file
-    }
+      // Load settings to get storage location
+      await this.getSettings();
 
-    this.initialized = true;
+      // Ensure both the main storage directory and backup directory exist
+      const storageDir = path.dirname(this.storageFile);
+      console.log('[STORAGE] Creating storage directory:', storageDir);
+      await fs.mkdir(storageDir, { recursive: true });
+      await fs.mkdir(this.backupDir, { recursive: true });
+
+      // Verify directories were created
+      try {
+        await fs.access(storageDir);
+        console.log('[STORAGE] Storage directory verified:', storageDir);
+      } catch (error) {
+        console.error('[STORAGE] Failed to create/access storage directory:', storageDir, error);
+        throw new Error(`Failed to create storage directory: ${storageDir}`);
+      }
+
+      // Clean up any stale temp history file from a previous interrupted save
+      try {
+        const tmp = `${this.storageFile}.tmp`;
+        await fs.rm(tmp, { force: true });
+      } catch {
+        // Ignore errors when removing temp file
+      }
+
+      this.initialized = true;
+    } catch (error) {
+      console.error('[STORAGE] Initialization failed:', error);
+      throw error;
+    }
   }
 
   private async backupHistoryFile(): Promise<void> {
@@ -180,10 +195,10 @@ export class StorageService {
           typeof p.recipeImageData === 'string'
             ? p.recipeImageData
             : typeof p.baseImageData === 'string'
-            ? p.baseImageData
-            : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
-            ? p.baseImagesData[0]
-            : undefined,
+              ? p.baseImageData
+              : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
+                ? p.baseImagesData[0]
+                : undefined,
         status: p.status,
       }));
       // Normalize entries (backfill missing ids or timestamps)
@@ -227,9 +242,20 @@ export class StorageService {
       // Atomic write: write to temp then rename
       const tmp = `${this.storageFile}.tmp`;
       await fs.writeFile(tmp, data, 'utf8');
+
+      // Ensure the target directory exists before renaming
+      const storageDir = path.dirname(this.storageFile);
+      await fs.mkdir(storageDir, { recursive: true });
+
       await fs.rename(tmp, this.storageFile);
     } catch (error) {
       console.error('[STORAGE] Failed to save history:', error);
+      // Clean up temp file if it exists
+      try {
+        await fs.rm(`${this.storageFile}.tmp`, { force: true });
+      } catch {
+        // Ignore cleanup errors
+      }
       throw error;
     }
   }
@@ -311,8 +337,7 @@ export class StorageService {
     } catch (error) {
       console.error(`[STORAGE] Failed to convert image to base64: ${imagePath}`, error);
       throw new Error(
-        `Failed to convert image to base64: ${
-          error instanceof Error ? error.message : 'Unknown error'
+        `Failed to convert image to base64: ${error instanceof Error ? error.message : 'Unknown error'
         }`
       );
     }
