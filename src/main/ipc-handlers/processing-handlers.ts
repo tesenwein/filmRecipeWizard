@@ -60,9 +60,12 @@ export class ProcessingHandlers {
             matchSaturation: true,
             prompt,
             ...data.options,
-            onStreamUpdate: (text: string) => {
+            onStreamUpdate: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
               try {
-                mainWindow.webContents.send('processing-progress', 50, text);
+                // Send structured streaming update
+                mainWindow.webContents.send('streaming-update', update);
+                // Also send progress update for backward compatibility
+                mainWindow.webContents.send('processing-progress', update.progress || 50, update.content);
               } catch {
                 /* ignore */
               }
@@ -282,10 +285,11 @@ export class ProcessingHandlers {
               aiAdjustments: undefined,
               prompt,
               styleOptions: options,
-              onStreamUpdate: (text: string) => {
-                // Send streaming updates to the renderer
+              onStreamUpdate: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
+                // Send structured streaming updates to the renderer
                 try {
-                  mainWindow?.webContents.send('processing-progress', 50, text);
+                  mainWindow?.webContents.send('streaming-update', update);
+                  mainWindow?.webContents.send('processing-progress', update.progress || 50, update.content);
                 } catch {
                   /* Ignore IPC send errors */
                 }

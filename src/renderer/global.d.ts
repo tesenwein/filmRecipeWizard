@@ -43,7 +43,6 @@ declare global {
 
       processImage: (data: any) => Promise<any>;
       analyzeColors: (imagePath: string) => Promise<any>;
-      analyzeColorMatch: (data: any) => Promise<any>;
       matchStyle: (data: any) => Promise<any>;
       generatePreset: (data: any) => Promise<any>;
       downloadXMP: (data: any) => Promise<any>;
@@ -60,6 +59,7 @@ declare global {
 
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;
+      onStreamingUpdate?: (callback: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => void) => void;
       onProcessingComplete?: (callback: (results: any[]) => void) => void;
       onProcessUpdated?: (callback: (payload: { processId: string; updates: any }) => void) => void;
 

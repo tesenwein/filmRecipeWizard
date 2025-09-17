@@ -1,7 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { AIColorAdjustments } from '../services/types';
-import { OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
 import { AIStreamingService } from '../services/ai-streaming-service';
 import { ProcessingResult, StyleOptions } from '../shared/types';
 import { generateCameraProfileXMP } from './camera-profile-generator';
@@ -23,25 +22,15 @@ export interface StyleMatchOptions {
   targetImageBase64?: string;
   prompt?: string;
   styleOptions?: StyleOptions;
-  onStreamUpdate?: (text: string) => void;
+  onStreamUpdate?: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => void;
 }
 
 export class ImageProcessor {
-  private aiAnalyzer: OpenAIColorAnalyzer | null = null;
   private aiStreamingService: AIStreamingService | null = null;
   private settingsService = new SettingsService();
 
   constructor() { }
 
-  private async ensureAIAnalyzer(): Promise<OpenAIColorAnalyzer> {
-    if (!this.aiAnalyzer) {
-      console.log('[PROCESSOR] Creating new AI analyzer...');
-      const settings = await this.settingsService.loadSettings();
-      console.log('[PROCESSOR] Settings loaded, has API key:', !!settings.openaiKey);
-      this.aiAnalyzer = new OpenAIColorAnalyzer(settings.openaiKey);
-    }
-    return this.aiAnalyzer;
-  }
 
   private async ensureAIStreamingService(): Promise<AIStreamingService> {
     if (!this.aiStreamingService) {
@@ -74,9 +63,9 @@ export class ImageProcessor {
         data.prompt, // hint/prompt
         {
           onUpdate: (update) => {
-            // Convert streaming update to the expected format
+            // Pass the structured streaming update
             if (data.onStreamUpdate) {
-              data.onStreamUpdate(update.content);
+              data.onStreamUpdate(update);
             }
           },
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
@@ -109,52 +98,6 @@ export class ImageProcessor {
     }
   }
 
-  async analyzeColorMatch(data: {
-    baseImagePath?: string;
-    targetImagePath?: string;
-    baseImageBase64?: string;
-    targetImageBase64?: string;
-    prompt?: string;
-    styleOptions?: StyleOptions;
-  }): Promise<ProcessingResult> {
-    const analyzer = await this.ensureAIAnalyzer();
-    if (!analyzer.isAvailable()) {
-      throw new Error(
-        'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable for AI analysis.'
-      );
-    }
-
-    try {
-      const aiAdjustments = await analyzer.analyzeColorMatch(
-        data.baseImagePath,
-        data.targetImagePath || undefined,
-        data.prompt,
-        data.baseImageBase64,
-        data.targetImageBase64,
-        {
-          preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-          lightroomProfile: data.styleOptions?.lightroomProfile,
-          aiFunctions: data.styleOptions?.aiFunctions,
-        }
-      );
-
-      return {
-        success: true,
-        outputPath: data.targetImagePath,
-        metadata: {
-          aiAdjustments,
-          confidence: aiAdjustments.confidence,
-          reasoning: aiAdjustments.reasoning,
-          usedSettings: {
-            preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-          },
-        },
-      };
-    } catch (error) {
-      console.error('[PROCESSOR] AI color analysis failed:', error);
-      throw error;
-    }
-  }
 
   async generatePreview(args: {
     path?: string;
@@ -174,7 +117,6 @@ export class ImageProcessor {
   async setOpenAIKey(key: string): Promise<void> {
     await this.settingsService.saveSettings({ openaiKey: key });
     // Reset analyzer to use new key
-    this.aiAnalyzer = null;
   }
 
   async generateLightroomPreset(data: any): Promise<ProcessingResult> {

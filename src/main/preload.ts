@@ -21,7 +21,6 @@ const electronAPI = {
   }) => ipcRenderer.invoke('process-with-stored-images', data),
   processImage: (data: any) => ipcRenderer.invoke('process-image', data),
   analyzeColors: (imagePath: string) => ipcRenderer.invoke('analyze-colors', imagePath),
-  analyzeColorMatch: (data: any) => ipcRenderer.invoke('analyze-color-match', data),
   matchStyle: (data: any) => ipcRenderer.invoke('match-style', data),
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
   downloadXMP: (data: any) => ipcRenderer.invoke('download-xmp', data),
@@ -36,6 +35,9 @@ const electronAPI = {
   // Progress monitoring
   onProcessingProgress: (callback: (progress: number, status: string) => void) => {
     ipcRenderer.on('processing-progress', (_event, progress, status) => callback(progress, status));
+  },
+  onStreamingUpdate: (callback: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => void) => {
+    ipcRenderer.on('streaming-update', (_event, update) => callback(update));
   },
   onProcessingComplete: (callback: (results: any[]) => void) => {
     ipcRenderer.on('processing-complete', (_event, results) => callback(results));

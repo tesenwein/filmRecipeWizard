@@ -79,21 +79,19 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
     }
   }, [processingState.isProcessing]);
 
-  // Parse status updates to build enhanced thinking steps
+  // Listen for real streaming updates from the AI service
   useEffect(() => {
-    if (status && status !== currentStep) {
-      setCurrentStep(status);
-
-      // Parse the status to determine type and create structured step
-      const stepType = parseStepType(status);
+    const handleStreamingUpdate = (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
+      const stepType = update.type as ThinkingStep['type'];
       const icon = getStepIcon(stepType);
 
       const newThinkingStep: ThinkingStep = {
         id: `step-${Date.now()}-${Math.random()}`,
         type: stepType,
-        content: status.replace(/^AI:\s*/, '').trim(),
-        step: getStepName(stepType),
-        progress: progress || 0,
+        content: update.content,
+        step: update.step || getStepName(stepType),
+        progress: update.progress || 0,
+        toolName: update.toolName,
         timestamp: Date.now(),
         icon
       };
@@ -114,8 +112,57 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
       // Show typing animation for new steps
       setIsTyping(true);
       setTimeout(() => setIsTyping(false), 1500);
+    };
+
+    // Set up the streaming update listener
+    if (window.electronAPI?.onStreamingUpdate) {
+      window.electronAPI.onStreamingUpdate(handleStreamingUpdate);
     }
-  }, [status, currentStep, progress]);
+
+    // Cleanup function
+    return () => {
+      // Note: We can't easily remove the listener, but it's okay since it's scoped to this component
+    };
+  }, []);
+
+  // Keep the old status-based updates as fallback for backward compatibility
+  useEffect(() => {
+    if (status && status !== currentStep) {
+      setCurrentStep(status);
+      // Only add if we don't have streaming updates (fallback)
+      if (thinkingSteps.length === 0) {
+        const stepType = parseStepType(status);
+        const icon = getStepIcon(stepType);
+
+        const newThinkingStep: ThinkingStep = {
+          id: `step-${Date.now()}-${Math.random()}`,
+          type: stepType,
+          content: status.replace(/^AI:\s*/, '').trim(),
+          step: getStepName(stepType),
+          progress: progress || 0,
+          timestamp: Date.now(),
+          icon
+        };
+
+        // Add new thinking step
+        setThinkingSteps(prev => {
+          const newSteps = [...prev, newThinkingStep];
+          setNewStepIndex(newSteps.length - 1);
+          return newSteps;
+        });
+
+        // Add to thinking log
+        setThinkingLog(prev => {
+          const next = [...prev, newThinkingStep];
+          return next.length > 50 ? next.slice(-50) : next; // Keep last 50 steps
+        });
+
+        // Show typing animation for new steps
+        setIsTyping(true);
+        setTimeout(() => setIsTyping(false), 1500);
+      }
+    }
+  }, [status, currentStep, progress, thinkingSteps.length]);
 
   // Helper functions for parsing step information
   const parseStepType = (status: string): ThinkingStep['type'] => {
@@ -193,54 +240,38 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           justifyContent: 'center',
           width: '100%',
           minHeight: '80vh',
-          backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          backgroundColor: '#f8f9fc',
           p: 4,
-          borderRadius: 3,
+          borderRadius: 2,
           position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.2) 0%, transparent 50%)',
-            pointerEvents: 'none',
-          }
         }}
       >
-        {/* Header with animated AI icon */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, zIndex: 1 }}>
+        {/* Header with AI icon */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
           <Avatar
             sx={{
-              width: 80,
-              height: 80,
-              backgroundColor: alpha('#fff', 0.2),
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255,255,255,0.3)',
-              animation: 'aiThinking 3s infinite ease-in-out',
+              width: 60,
+              height: 60,
+              backgroundColor: '#5b6670',
+              animation: 'aiThinking 2s infinite ease-in-out',
               '@keyframes aiThinking': {
                 '0%, 100%': {
-                  transform: 'scale(1) rotate(0deg)',
-                  boxShadow: '0 0 20px rgba(255,255,255,0.3)',
+                  transform: 'scale(1)',
                 },
                 '50%': {
-                  transform: 'scale(1.1) rotate(5deg)',
-                  boxShadow: '0 0 30px rgba(255,255,255,0.5)',
+                  transform: 'scale(1.05)',
                 },
               },
             }}
           >
-            <AutoAwesomeIcon sx={{ fontSize: '2.5rem', color: 'white' }} />
+            <AutoAwesomeIcon sx={{ fontSize: '2rem', color: 'white' }} />
           </Avatar>
           <Box>
             <Typography
               variant="h4"
-              fontWeight={700}
+              fontWeight={600}
               sx={{
-                color: 'white',
-                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                color: '#333333',
                 mb: 0.5
               }}
             >
@@ -249,7 +280,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
             <Typography
               variant="h6"
               sx={{
-                color: alpha('#fff', 0.9),
+                color: '#666666',
                 fontWeight: 400
               }}
             >
@@ -258,13 +289,13 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           </Box>
         </Box>
 
-        {/* Enhanced Progress Bar */}
-        <Box sx={{ maxWidth: 600, width: '100%', mb: 4, zIndex: 1 }}>
+        {/* Progress Bar */}
+        <Box sx={{ maxWidth: 600, width: '100%', mb: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" sx={{ color: alpha('#fff', 0.9), fontWeight: 500 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
               Progress
             </Typography>
-            <Typography variant="body2" sx={{ color: alpha('#fff', 0.9), fontWeight: 600 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
               {Math.round(progress || 0)}%
             </Typography>
           </Box>
@@ -272,36 +303,24 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
             variant="determinate"
             value={progress || 0}
             sx={{
-              height: 16,
-              borderRadius: 8,
-              backgroundColor: alpha('#fff', 0.2),
-              backdropFilter: 'blur(10px)',
+              height: 8,
+              borderRadius: 2,
+              backgroundColor: 'grey.200',
               '& .MuiLinearProgress-bar': {
-                borderRadius: 8,
-                background: 'linear-gradient(90deg, #00f5ff 0%, #ff6b6b 50%, #4ecdc4 100%)',
-                backgroundSize: '200% 100%',
-                animation: 'progressFlow 3s infinite ease-in-out',
-                '@keyframes progressFlow': {
-                  '0%': { backgroundPosition: '200% 0' },
-                  '100%': { backgroundPosition: '-200% 0' },
-                },
-                boxShadow: '0 0 20px rgba(255,255,255,0.5)',
+                borderRadius: 2,
+                backgroundColor: 'primary.main',
               },
             }}
           />
         </Box>
 
-        {/* Enhanced Thinking Process Display */}
+        {/* AI Thinking Process Display */}
         <Card
           sx={{
             maxWidth: 800,
             width: '100%',
-            backgroundColor: alpha('#fff', 0.95),
-            backdropFilter: 'blur(20px)',
-            borderRadius: 4,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            zIndex: 1,
+            backgroundColor: 'background.paper',
+            borderRadius: 2,
             overflow: 'hidden',
           }}
         >
@@ -365,19 +384,19 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                         gap: 2,
                         p: 2,
                         borderRadius: 2,
-                        backgroundColor: step.type === 'complete' ? alpha('#4caf50', 0.1) :
-                          step.type === 'tool_call' ? alpha('#ff9800', 0.1) :
-                            step.type === 'analysis' ? alpha('#2196f3', 0.1) :
-                              alpha('#9c27b0', 0.1),
-                        border: `1px solid ${step.type === 'complete' ? alpha('#4caf50', 0.3) :
-                          step.type === 'tool_call' ? alpha('#ff9800', 0.3) :
-                            step.type === 'analysis' ? alpha('#2196f3', 0.3) :
-                              alpha('#9c27b0', 0.3)}`,
+                        backgroundColor: step.type === 'complete' ? 'success.light' :
+                          step.type === 'tool_call' ? 'info.light' :
+                            step.type === 'analysis' ? 'primary.light' :
+                              'grey.100',
+                        border: `1px solid ${step.type === 'complete' ? 'success.main' :
+                          step.type === 'tool_call' ? 'info.main' :
+                            step.type === 'analysis' ? 'primary.main' :
+                              'grey.300'}`,
                         transition: 'all 0.3s ease',
                         transform: index === newStepIndex ? 'scale(1.02)' : 'scale(1)',
                         '&:hover': {
                           transform: 'scale(1.01)',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                         },
                       }}
                     >
