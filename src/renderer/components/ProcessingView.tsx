@@ -35,7 +35,8 @@ import {
   Divider,
   Card,
   CardContent,
-  alpha
+  alpha,
+  useTheme
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
@@ -59,6 +60,7 @@ interface ThinkingStep {
 }
 
 const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage, targetImages: _targetImages }) => {
+  const theme = useTheme();
   const { status, progress } = processingState;
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [currentStep, setCurrentStep] = useState<string>('');
@@ -424,7 +426,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                             sx={{
                               fontSize: '0.7rem',
                               height: 20,
-                              backgroundColor: alpha('background.paper', 0.8)
+                              backgroundColor: alpha(theme.palette.background.paper, 0.8)
                             }}
                           />
                         </Box>
