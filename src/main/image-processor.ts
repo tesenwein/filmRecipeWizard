@@ -21,6 +21,7 @@ export interface StyleMatchOptions {
   targetImageBase64?: string;
   prompt?: string;
   styleOptions?: StyleOptions;
+  onStreamUpdate?: (text: string) => void;
 }
 
 export class ImageProcessor {
@@ -71,7 +72,8 @@ export class ImageProcessor {
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
           lightroomProfile: data.styleOptions?.lightroomProfile,
           aiFunctions: data.styleOptions?.aiFunctions,
-        }
+        },
+        data.onStreamUpdate
       );
       console.log('[PROCESSOR] AI analyzer returned:', {
         hasAdjustments: !!aiAdjustments,

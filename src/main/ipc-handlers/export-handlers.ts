@@ -9,14 +9,30 @@ export class ExportHandlers {
   constructor(
     private imageProcessor: ImageProcessor,
     private storageService: StorageService
-  ) {}
+  ) { }
 
   setupHandlers(): void {
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
       try {
+        // Always include all features - use strength slider to control intensity
+        const include = {
+          wbBasic: true,
+          hsl: true,
+          colorGrading: true,
+          curves: true,
+          pointColor: true,
+          grain: true,
+          masks: true,
+          exposure: false, // Keep exposure separate and disabled by default
+          sharpenNoise: false, // Not implemented in XMP
+          vignette: false, // Not implemented in XMP
+          strength: data?.styleOptions?.strength || 0.5, // Use strength slider (0-1, default 0.5)
+        } as any;
+
         // Generate XMP content
-        const xmpContent = generateXMPContent(data.adjustments, data.include);
+        const preserveSkinTones = data?.styleOptions?.preserveSkinTones;
+        const xmpContent = generateXMPContent(data.adjustments, include, preserveSkinTones);
 
         // Show save dialog
         // Derive a friendly filename from AI if present
@@ -126,19 +142,24 @@ export class ExportHandlers {
           results.forEach((r, idx) => {
             const adj = r?.metadata?.aiAdjustments;
             if (!adj) return;
+
+            // Always export all available features from AI adjustments
             const include = {
               wbBasic: true,
               hsl: true,
               colorGrading: true,
               curves: true,
-              sharpenNoise: true,
-              vignette: true,
               pointColor: true,
               grain: true,
-              exposure: false,
-              masks: false,
+              masks: true,
+              exposure: false, // Keep exposure separate and disabled by default
+              sharpenNoise: false, // Not implemented in XMP
+              vignette: false, // Not implemented in XMP
+              strength: 0.5, // Default strength
             } as any;
-            const xmp = generateXMPContent(adj as any, include);
+
+            const preserveSkinTones = (process as any)?.userOptions?.preserveSkinTones;
+            const xmp = generateXMPContent(adj as any, include, preserveSkinTones);
             const name = (adj as any)?.preset_name as string | undefined;
             const safePreset = (name || `Preset-${idx + 1}`)
               .replace(/[^A-Za-z0-9 _-]+/g, '')

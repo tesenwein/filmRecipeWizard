@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   Divider,
   FormControlLabel,
   FormGroup,
@@ -15,6 +16,63 @@ import {
 import React from 'react';
 import { ProcessingResult } from '../../shared/types';
 import SingleImage from './SingleImage';
+
+// Function to detect available features in AI adjustments
+const getAvailableFeatures = (adjustments: any): string[] => {
+  if (!adjustments) return [];
+
+  const features: string[] = [];
+
+  // Basic Adjustments
+  if (adjustments.temperature !== undefined || adjustments.tint !== undefined ||
+    adjustments.exposure !== undefined || adjustments.contrast !== undefined ||
+    adjustments.highlights !== undefined || adjustments.shadows !== undefined ||
+    adjustments.whites !== undefined || adjustments.blacks !== undefined ||
+    adjustments.clarity !== undefined || adjustments.vibrance !== undefined ||
+    adjustments.saturation !== undefined) {
+    features.push('Basic Adjustments');
+  }
+
+  // HSL Adjustments
+  const hasHSL = Object.keys(adjustments).some(key =>
+    key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_')
+  );
+  if (hasHSL) {
+    features.push('HSL Adjustments');
+  }
+
+  // Color Grading
+  const hasColorGrading = Object.keys(adjustments).some(key =>
+    key.startsWith('color_grade_')
+  );
+  if (hasColorGrading) {
+    features.push('Color Grading');
+  }
+
+  // Tone Curves
+  if (adjustments.tone_curve || adjustments.tone_curve_red ||
+    adjustments.tone_curve_green || adjustments.tone_curve_blue) {
+    features.push('Tone Curves');
+  }
+
+  // Point Color
+  if (adjustments.point_colors && adjustments.point_colors.length > 0) {
+    features.push('Point Color');
+  }
+
+  // Film Grain
+  if (adjustments.grain_amount !== undefined || adjustments.grain_size !== undefined ||
+    adjustments.grain_frequency !== undefined) {
+    features.push('Film Grain');
+  }
+
+  // Local Adjustments (Masks)
+  if (adjustments.masks && adjustments.masks.length > 0) {
+    features.push('Local Adjustments');
+  }
+
+  return features;
+};
 
 interface ProcessedImageCardProps {
   result: ProcessingResult;
@@ -562,41 +620,32 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                 label={<Typography variant="body2">All types & groups</Typography>}
               />
             </Box>
-            <FormGroup
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: 0.5,
-              }}
-            >
-              {(
-                [
-                  { key: 'exposure', label: 'Exposure' },
-                  { key: 'wbBasic', label: 'Basic Adjustments' },
-                  { key: 'hsl', label: 'HSL Adjustments' },
-                  { key: 'colorGrading', label: 'Color Grading' },
-                  { key: 'curves', label: 'Tone Curves' },
-                  { key: 'pointColor', label: 'Point Color' },
-                  { key: 'sharpenNoise', label: 'Sharpen & Noise' },
-                  { key: 'vignette', label: 'Vignette' },
-                  { key: 'grain', label: 'Film Grain' },
-                  { key: 'masks', label: 'Masks (Local Adjustments)' },
-                ] as const
-              ).map(opt => (
-                <FormControlLabel
-                  key={opt.key}
-                  control={
-                    <Checkbox
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+              The XMP preset will include these features detected in the AI adjustments:
+            </Typography>
+            {(() => {
+              const availableFeatures = getAvailableFeatures(result.metadata?.aiAdjustments);
+              if (availableFeatures.length === 0) {
+                return (
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', mb: 2 }}>
+                    No specific features detected - basic adjustments will be included
+                  </Typography>
+                );
+              }
+              return (
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  {availableFeatures.map((feature, idx) => (
+                    <Chip
+                      key={idx}
                       size="small"
-                      checked={getOptions()[opt.key as keyof ReturnType<typeof getOptions>] as any}
-                      onChange={() => onToggleOption(index, opt.key as any)}
-                      sx={{ py: 0.5 }}
+                      label={feature}
+                      color="primary"
+                      variant="outlined"
                     />
-                  }
-                  label={<Typography variant="body2">{opt.label}</Typography>}
-                />
-              ))}
-            </FormGroup>
+                  ))}
+                </Box>
+              );
+            })()}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
               <Button
                 variant="contained"

@@ -37,6 +37,63 @@ import ImageSelectionChips from './results/ImageSelectionChips';
 import RecipeNameHeader from './results/RecipeNameHeader';
 import SingleImage from './SingleImage';
 
+// Function to detect available features in AI adjustments
+const getAvailableFeatures = (adjustments: any): string[] => {
+  if (!adjustments) return [];
+
+  const features: string[] = [];
+
+  // Basic Adjustments
+  if (adjustments.temperature !== undefined || adjustments.tint !== undefined ||
+    adjustments.exposure !== undefined || adjustments.contrast !== undefined ||
+    adjustments.highlights !== undefined || adjustments.shadows !== undefined ||
+    adjustments.whites !== undefined || adjustments.blacks !== undefined ||
+    adjustments.clarity !== undefined || adjustments.vibrance !== undefined ||
+    adjustments.saturation !== undefined) {
+    features.push('Basic Adjustments');
+  }
+
+  // HSL Adjustments
+  const hasHSL = Object.keys(adjustments).some(key =>
+    key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_')
+  );
+  if (hasHSL) {
+    features.push('HSL Adjustments');
+  }
+
+  // Color Grading
+  const hasColorGrading = Object.keys(adjustments).some(key =>
+    key.startsWith('color_grade_')
+  );
+  if (hasColorGrading) {
+    features.push('Color Grading');
+  }
+
+  // Tone Curves
+  if (adjustments.tone_curve || adjustments.tone_curve_red ||
+    adjustments.tone_curve_green || adjustments.tone_curve_blue) {
+    features.push('Tone Curves');
+  }
+
+  // Point Color
+  if (adjustments.point_colors && adjustments.point_colors.length > 0) {
+    features.push('Point Color');
+  }
+
+  // Film Grain
+  if (adjustments.grain_amount !== undefined || adjustments.grain_size !== undefined ||
+    adjustments.grain_frequency !== undefined) {
+    features.push('Film Grain');
+  }
+
+  // Local Adjustments (Masks)
+  if (adjustments.masks && adjustments.masks.length > 0) {
+    features.push('Local Adjustments');
+  }
+
+  return features;
+};
+
 interface ResultsViewProps {
   results: ProcessingResult[];
   baseImage: string | null;
@@ -306,19 +363,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   const allKeys = getAllKeys();
 
-  const isAllSelected = (index: number) => {
-    const opts = getOptions(index) as any;
-    return allKeys.every(k => !!opts[k]);
-  };
-
-  const setAllOptions = (index: number, value: boolean) => {
-    setExportOptions(prev => ({
-      ...prev,
-      [index]: allKeys.reduce((acc, k) => ({ ...acc, [k]: value }), {
-        ...(prev[index] || defaultOptions),
-      }) as any,
-    }));
-  };
 
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
     const adjustments = result.metadata?.aiAdjustments;
@@ -1310,192 +1354,43 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   <Box>
                     <Typography
                       variant="h5"
-                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                      sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
                     >
                       <DownloadIcon color="primary" />
                       Lightroom Export
                     </Typography>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      <Paper elevation={1} sx={{ p: 4 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <Paper elevation={1} sx={{ p: 3 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                           Lightroom Preset (.xmp)
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                          Export a Lightroom preset XMP with your selected adjustments.
+                          The XMP preset will include these features detected in the AI adjustments:
                         </Typography>
-                        {/* Quick summary of selected options */}
-                        <Box sx={{ mb: 2 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                            Selected Options
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                            {(() => {
-                              const opts = getOptions(index) as any;
-                              const labels: Record<string, string> = {
-                                wbBasic: 'Basic',
-                                exposure: 'Exposure',
-                                hsl: 'HSL',
-                                colorGrading: 'Color Grading',
-                                curves: 'Tone Curves',
-                                pointColor: 'Point Color',
-                                sharpenNoise: 'Sharpen/Noise',
-                                vignette: 'Vignette',
-                                grain: 'Grain',
-                                masks: 'Masks',
-                              };
-                              const chips = Object.keys(labels)
-                                .filter(k => !!opts[k])
-                                .map(k => (
-                                  <Chip
-                                    key={k}
-                                    size="small"
-                                    label={labels[k]}
-                                    color="primary"
-                                    variant="outlined"
-                                  />
-                                ));
-                              // Strength always shown
-                              chips.push(
+                        {(() => {
+                          const availableFeatures = getAvailableFeatures(result.metadata?.aiAdjustments);
+                          if (availableFeatures.length === 0) {
+                            return (
+                              <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                                No specific features detected - basic adjustments will be included
+                              </Typography>
+                            );
+                          }
+                          return (
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              {availableFeatures.map((feature, idx) => (
                                 <Chip
-                                  key="strength"
+                                  key={idx}
                                   size="small"
-                                  label={`Strength ${Math.round((opts.strength ?? 0.5) * 100)}%`}
+                                  label={feature}
+                                  color="primary"
                                   variant="outlined"
                                 />
-                              );
-                              return chips;
-                            })()}
-                          </Box>
-                        </Box>
-                        <Box sx={{ mb: 2 }}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={isAllSelected(index)}
-                                onChange={e => setAllOptions(index, e.target.checked)}
-                              />
-                            }
-                            label={
-                              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                Select All Adjustment Types
-                              </Typography>
-                            }
-                          />
-                        </Box>
-                        <Box
-                          sx={{
-                            display: 'grid',
-                            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                            gap: 2,
-                          }}
-                        >
-                          {[
-                            {
-                              key: 'exposure',
-                              label: 'Exposure',
-                              description: 'Basic exposure adjustments',
-                            },
-                            ...(aiFunctions?.temperatureTint
-                              ? [
-                                {
-                                  key: 'wbBasic',
-                                  label: 'Basic Adjustments',
-                                  description: 'White balance, contrast, highlights, shadows',
-                                },
-                              ]
-                              : []),
-                            ...(aiFunctions?.hsl
-                              ? [
-                                {
-                                  key: 'hsl',
-                                  label: 'HSL Adjustments',
-                                  description: 'Hue, saturation, and luminance per color',
-                                },
-                              ]
-                              : []),
-                            ...(aiFunctions?.colorGrading
-                              ? [
-                                {
-                                  key: 'colorGrading',
-                                  label: 'Color Grading',
-                                  description: 'Shadow, midtone, highlight color wheels',
-                                },
-                              ]
-                              : []),
-                            ...(aiFunctions?.curves
-                              ? [
-                                {
-                                  key: 'curves',
-                                  label: 'Tone Curves',
-                                  description: 'RGB and luminance curve adjustments',
-                                },
-                              ]
-                              : []),
-                            ...(aiFunctions?.pointColor
-                              ? [
-                                {
-                                  key: 'pointColor',
-                                  label: 'Point Color',
-                                  description: 'Targeted color adjustments',
-                                },
-                              ]
-                              : []),
-                            {
-                              key: 'sharpenNoise',
-                              label: 'Sharpen & Noise',
-                              description: 'Detail enhancement settings',
-                            },
-                            {
-                              key: 'vignette',
-                              label: 'Vignette',
-                              description: 'Edge darkening effects',
-                            },
-                            ...(aiFunctions?.grain
-                              ? [
-                                {
-                                  key: 'grain',
-                                  label: 'Film Grain',
-                                  description: 'Analog film texture simulation',
-                                },
-                              ]
-                              : []),
-                            ...(aiFunctions?.masks
-                              ? [
-                                {
-                                  key: 'masks',
-                                  label: 'Masks (Local Adjustments)',
-                                  description: 'Area-specific modifications',
-                                },
-                              ]
-                              : []),
-                          ].map(opt => (
-                            <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={
-                                      getOptions(index)[
-                                      opt.key as keyof ReturnType<typeof getOptions>
-                                      ] as any
-                                    }
-                                    onChange={() => toggleOption(index, opt.key as any)}
-                                  />
-                                }
-                                label={
-                                  <Box>
-                                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                      {opt.label}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                      {opt.description}
-                                    </Typography>
-                                  </Box>
-                                }
-                              />
-                            </Paper>
-                          ))}
-                        </Box>
+                              ))}
+                            </Box>
+                          );
+                        })()}
                         {/* Export Strength and Button - 50/50 Layout */}
                         <Box sx={{ display: 'flex', gap: 3, mt: 3, alignItems: 'stretch' }}>
                           <Paper

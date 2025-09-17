@@ -9,7 +9,7 @@ export class ProcessingHandlers {
     private getMainWindow: () => BrowserWindow | null,
     private imageProcessor: ImageProcessor,
     private storageService?: StorageService
-  ) {}
+  ) { }
 
   setupHandlers(): void {
     // Generate JPEG preview for UI (handles RAW/HEIC/etc.)
@@ -44,8 +44,8 @@ export class ProcessingHandlers {
           typeof data?.hint === 'string' && data.hint.trim().length > 0
             ? data.hint.trim()
             : typeof data?.prompt === 'string' && data.prompt.trim().length > 0
-            ? data.prompt.trim()
-            : undefined;
+              ? data.prompt.trim()
+              : undefined;
 
         mainWindow.webContents.send('processing-progress', 5, 'Analyzing...');
 
@@ -186,10 +186,10 @@ export class ProcessingHandlers {
               options.lightroomProfile === 'adobe-color'
                 ? 'Adobe Color'
                 : options.lightroomProfile === 'adobe-monochrome'
-                ? 'Adobe Monochrome'
-                : options.lightroomProfile === 'flat'
-                ? 'Flat Profile'
-                : options.lightroomProfile;
+                  ? 'Adobe Monochrome'
+                  : options.lightroomProfile === 'flat'
+                    ? 'Flat Profile'
+                    : options.lightroomProfile;
             optionsHintParts.push(`Lightroom Base Profile: ${profileName}`);
           }
           if (options.artistStyle && typeof options.artistStyle.name === 'string') {
@@ -198,7 +198,7 @@ export class ProcessingHandlers {
             const blurb = String(options.artistStyle.blurb || '').trim();
             optionsHintParts.push(
               `Artist Style: ${name}${category ? ` (${category})` : ''}` +
-                (blurb ? `\nNotes: ${blurb}` : '')
+              (blurb ? `\nNotes: ${blurb}` : '')
             );
           }
           if (options.filmStyle && typeof options.filmStyle.name === 'string') {
@@ -207,7 +207,7 @@ export class ProcessingHandlers {
             const blurb = String(options.filmStyle.blurb || '').trim();
             optionsHintParts.push(
               `Film Stock: ${name}${category ? ` (${category})` : ''}` +
-                (blurb ? `\nTraits: ${blurb}` : '')
+              (blurb ? `\nTraits: ${blurb}` : '')
             );
           }
           const optionsHint =
@@ -258,6 +258,14 @@ export class ProcessingHandlers {
               aiAdjustments: undefined,
               prompt,
               styleOptions: options,
+              onStreamUpdate: (text: string) => {
+                // Send streaming updates to the renderer
+                try {
+                  mainWindow?.webContents.send('processing-progress', 50, text);
+                } catch {
+                  /* Ignore IPC send errors */
+                }
+              },
             });
             const duration = Date.now() - startTime;
             console.log(`[IPC] Image processor completed in ${duration}ms:`, {
