@@ -547,6 +547,22 @@ export class OpenAIColorAnalyzer {
       baseProperties.grain_frequency = { type: 'number', minimum: 0, maximum: 100 };
     }
 
+    // Tone curve support when curves are enabled
+    if (aiFunctions.curves) {
+      const curvePoint = {
+        type: 'object',
+        properties: {
+          input: { type: 'number' },
+          output: { type: 'number' },
+        },
+      } as const;
+      const curveArray = { type: 'array', items: curvePoint } as const;
+      baseProperties.tone_curve = curveArray;
+      baseProperties.tone_curve_red = curveArray;
+      baseProperties.tone_curve_green = curveArray;
+      baseProperties.tone_curve_blue = curveArray;
+    }
+
     // Add Black & White Mix properties if needed
     baseProperties.gray_red = { type: 'number', minimum: -100, maximum: 100 };
     baseProperties.gray_orange = { type: 'number', minimum: -100, maximum: 100 };

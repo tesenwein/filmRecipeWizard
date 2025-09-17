@@ -27,12 +27,12 @@ Call functions to:
 4. For landscapes, ensure sky/foliage mood and lighting alignment
 5. Mask modifications values should be minimal and very subtle
 6. Apply advanced color grading techniques including shadow/midtone/highlight color grading
-7. Use HSL adjustments to fine-tune specific color ranges
+7. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
 8. Consider tone curve adjustments for sophisticated contrast control
 
 Include a short preset_name (2-4 words, Title Case).
 If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).
-If artist or film style is mentioned, use HDL and tone curve and other adjustments to match the artist's style.`;
+If an artist or film style is mentioned in the hint, explicitly include HSL shifts and tone curve adjustments that reflect that style's palette and contrast. Prefer calling the provided tool to report global adjustments once, including HSL fields when applicable.`;
 
   if (baseImageB64 && targetImageB64) {
     // Both base and target images provided - normal color matching
