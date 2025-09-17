@@ -228,25 +228,30 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     loadBase64Images();
   }, [processId, prompt]);
 
+  // Reset export options when aiFunctions changes
+  useEffect(() => {
+    setExportOptions({});
+  }, [aiFunctions]);
+
   // Name editing handled by RecipeNameHeader subcomponent
 
-  const defaultOptions = {
-    wbBasic: true,
-    exposure: false,
-    hsl: true,
-    colorGrading: true,
-    curves: true,
-    sharpenNoise: true,
-    vignette: true,
-    // Enable Point Color by default in export options
-    pointColor: true,
-    // Film Grain optional export (default ON)
-    grain: true,
-    // Masks (local adjustments) optional export (default OFF)
-    masks: true,
+  // Generate default options based on aiFunctions
+  const getDefaultOptions = () => ({
+    wbBasic: aiFunctions?.temperatureTint ?? true,
+    exposure: false, // Always false as it's not an AI function
+    hsl: aiFunctions?.hsl ?? true,
+    colorGrading: aiFunctions?.colorGrading ?? true,
+    curves: aiFunctions?.curves ?? true,
+    sharpenNoise: false, // Always false as it's not an AI function
+    vignette: false, // Always false as it's not an AI function
+    pointColor: aiFunctions?.pointColor ?? true,
+    grain: aiFunctions?.grain ?? false,
+    masks: aiFunctions?.masks ?? true,
     // Start export strength at 50%
     strength: 0.5,
-  } as const;
+  } as const);
+
+  const defaultOptions = getDefaultOptions();
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
   const toggleOption = (index: number, key: keyof ReturnType<typeof getOptions>) => {
@@ -259,18 +264,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }));
   };
 
-  const allKeys = [
-    'exposure',
-    'wbBasic',
-    'hsl',
-    'colorGrading',
-    'curves',
-    'sharpenNoise',
-    'vignette',
-    'pointColor',
-    'grain',
-    'masks',
-  ] as const;
+  // Generate available keys based on aiFunctions
+  const getAllKeys = () => {
+    const keys: string[] = ['exposure', 'sharpenNoise', 'vignette']; // Always available
+    if (aiFunctions?.temperatureTint) keys.push('wbBasic');
+    if (aiFunctions?.hsl) keys.push('hsl');
+    if (aiFunctions?.colorGrading) keys.push('colorGrading');
+    if (aiFunctions?.curves) keys.push('curves');
+    if (aiFunctions?.pointColor) keys.push('pointColor');
+    if (aiFunctions?.grain) keys.push('grain');
+    if (aiFunctions?.masks) keys.push('masks');
+    return keys;
+  };
+
+  const allKeys = getAllKeys();
 
   const isAllSelected = (index: number) => {
     const opts = getOptions(index) as any;
