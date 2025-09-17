@@ -247,14 +247,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const getDefaultOptions = () =>
     ({
       wbBasic: aiFunctions?.temperatureTint ?? true,
-      exposure: false, // Always false as it's not an AI function
+      exposure: true, // Enable by default
       hsl: aiFunctions?.hsl ?? true,
       colorGrading: aiFunctions?.colorGrading ?? true,
       curves: aiFunctions?.curves ?? true,
-      sharpenNoise: false, // Always false as it's not an AI function
-      vignette: false, // Always false as it's not an AI function
+      sharpenNoise: true, // Enable by default
+      vignette: true, // Enable by default
       pointColor: aiFunctions?.pointColor ?? true,
-      grain: aiFunctions?.grain ?? false,
+      grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
       masks: aiFunctions?.masks ?? true,
       // Start export strength at 50%
       strength: 0.5,
