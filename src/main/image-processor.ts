@@ -1,6 +1,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
+import type { AIColorAdjustments } from '../services/types';
+import { OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
+import { AIStreamingService } from '../services/ai-streaming-service';
 import { ProcessingResult, StyleOptions } from '../shared/types';
 import { generateCameraProfileXMP } from './camera-profile-generator';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
@@ -26,6 +28,7 @@ export interface StyleMatchOptions {
 
 export class ImageProcessor {
   private aiAnalyzer: OpenAIColorAnalyzer | null = null;
+  private aiStreamingService: AIStreamingService | null = null;
   private settingsService = new SettingsService();
 
   constructor() { }
@@ -40,6 +43,16 @@ export class ImageProcessor {
     return this.aiAnalyzer;
   }
 
+  private async ensureAIStreamingService(): Promise<AIStreamingService> {
+    if (!this.aiStreamingService) {
+      console.log('[PROCESSOR] Creating new AI streaming service...');
+      const settings = await this.settingsService.loadSettings();
+      console.log('[PROCESSOR] Settings loaded, has API key:', !!settings.openaiKey);
+      this.aiStreamingService = new AIStreamingService(settings.openaiKey || '', 'gpt-4o');
+    }
+    return this.aiStreamingService;
+  }
+
   async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
     console.log('[PROCESSOR] Starting matchStyle with data:', {
       hasBaseImagePath: !!data.baseImagePath,
@@ -50,30 +63,26 @@ export class ImageProcessor {
       hasStyleOptions: !!data.styleOptions,
     });
 
-    const analyzer = await this.ensureAIAnalyzer();
-    console.log('[PROCESSOR] AI Analyzer available:', analyzer.isAvailable());
-
-    if (!analyzer.isAvailable()) {
-      console.error('[PROCESSOR] AI Analyzer not available - missing API key');
-      throw new Error(
-        'OpenAI API key not configured. This app requires OpenAI for color matching. Please set OPENAI_API_KEY environment variable.'
-      );
-    }
+    const streamingService = await this.ensureAIStreamingService();
+    console.log('[PROCESSOR] AI Streaming Service available');
 
     try {
-      console.log('[PROCESSOR] Calling AI analyzer...');
-      const aiAdjustments = await analyzer.analyzeColorMatch(
-        data.baseImagePath,
-        data.targetImagePath || undefined,
-        data.prompt, // hint/prompt
+      console.log('[PROCESSOR] Calling AI streaming service...');
+      const aiAdjustments = await streamingService.analyzeColorMatchWithStreaming(
         data.baseImageBase64,
         data.targetImageBase64,
+        data.prompt, // hint/prompt
         {
+          onUpdate: (update) => {
+            // Convert streaming update to the expected format
+            if (data.onStreamUpdate) {
+              data.onStreamUpdate(update.content);
+            }
+          },
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
           lightroomProfile: data.styleOptions?.lightroomProfile,
           aiFunctions: data.styleOptions?.aiFunctions,
-        },
-        data.onStreamUpdate
+        }
       );
       console.log('[PROCESSOR] AI analyzer returned:', {
         hasAdjustments: !!aiAdjustments,

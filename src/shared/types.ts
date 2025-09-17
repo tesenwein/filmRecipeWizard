@@ -1,4 +1,4 @@
-import { AIColorAdjustments } from '../services/openai-color-analyzer';
+import type { AIColorAdjustments } from '../services/types';
 
 // Default storage location for recipes
 export const DEFAULT_STORAGE_FOLDER = '.film-recipes-wizard';

@@ -60,6 +60,13 @@ export class ProcessingHandlers {
             matchSaturation: true,
             prompt,
             ...data.options,
+            onStreamUpdate: (text: string) => {
+              try {
+                mainWindow.webContents.send('processing-progress', 50, text);
+              } catch {
+                /* ignore */
+              }
+            },
           });
           mainWindow.webContents.send('processing-progress', 100, 'Completed');
         } catch (error) {

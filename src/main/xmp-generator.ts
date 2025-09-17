@@ -1,4 +1,4 @@
-import { AIColorAdjustments } from '../services/openai-color-analyzer';
+import type { AIColorAdjustments } from '../services/types';
 
 // Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
 export function getExampleBWMixer(): Pick<

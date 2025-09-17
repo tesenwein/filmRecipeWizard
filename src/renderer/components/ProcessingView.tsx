@@ -13,8 +13,30 @@ import {
   ShowChart as ShowChartIcon,
   TheaterComedy as TheaterComedyIcon,
   Thermostat as ThermostatIcon,
+  Visibility as VisibilityIcon,
+  Tune as TuneIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  Lightbulb as LightbulbIcon,
 } from '@mui/icons-material';
-import { Box, Chip, LinearProgress, Paper, Slide, Typography } from '@mui/material';
+import {
+  Box,
+  Chip,
+  LinearProgress,
+  Paper,
+  Slide,
+  Typography,
+  Fade,
+  Grow,
+  Avatar,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Card,
+  CardContent,
+  alpha
+} from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
 
@@ -25,35 +47,107 @@ interface ProcessingViewProps {
   prompt?: string;
 }
 
+interface ThinkingStep {
+  id: string;
+  type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete';
+  content: string;
+  step?: string;
+  progress?: number;
+  toolName?: string;
+  timestamp: number;
+  icon?: React.ReactNode;
+}
+
 const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage, targetImages: _targetImages }) => {
   const { status, progress } = processingState;
-  const [thinkingSteps, setThinkingSteps] = useState<string[]>([]);
+  const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [currentStep, setCurrentStep] = useState<string>('');
   const [isTyping, setIsTyping] = useState(false);
   const [newStepIndex, setNewStepIndex] = useState<number>(-1);
   const stepsContainerRef = useRef<HTMLDivElement>(null);
   const lastStepRef = useRef<HTMLDivElement>(null);
+  // Enhanced thinking log with structured data
+  const [thinkingLog, setThinkingLog] = useState<ThinkingStep[]>([]);
+  const logContainerRef = useRef<HTMLDivElement>(null);
 
-  // Parse status updates to build thinking steps
+  // Reset logs when a new processing session starts
+  useEffect(() => {
+    if (processingState.isProcessing && (processingState.progress || 0) <= 5) {
+      setThinkingSteps([]);
+      setThinkingLog([]);
+      setCurrentStep('');
+    }
+  }, [processingState.isProcessing]);
+
+  // Parse status updates to build enhanced thinking steps
   useEffect(() => {
     if (status && status !== currentStep) {
       setCurrentStep(status);
 
-      // Add new thinking step if it's not already in the list
+      // Parse the status to determine type and create structured step
+      const stepType = parseStepType(status);
+      const icon = getStepIcon(stepType);
+
+      const newThinkingStep: ThinkingStep = {
+        id: `step-${Date.now()}-${Math.random()}`,
+        type: stepType,
+        content: status.replace(/^AI:\s*/, '').trim(),
+        step: getStepName(stepType),
+        progress: progress || 0,
+        timestamp: Date.now(),
+        icon
+      };
+
+      // Add new thinking step
       setThinkingSteps(prev => {
-        if (!prev.includes(status)) {
-          const newSteps = [...prev, status];
-          setNewStepIndex(newSteps.length - 1);
-          return newSteps;
-        }
-        return prev;
+        const newSteps = [...prev, newThinkingStep];
+        setNewStepIndex(newSteps.length - 1);
+        return newSteps;
+      });
+
+      // Add to thinking log
+      setThinkingLog(prev => {
+        const next = [...prev, newThinkingStep];
+        return next.length > 50 ? next.slice(-50) : next; // Keep last 50 steps
       });
 
       // Show typing animation for new steps
       setIsTyping(true);
-      setTimeout(() => setIsTyping(false), 1500); // Increased for more natural feel
+      setTimeout(() => setIsTyping(false), 1500);
     }
-  }, [status, currentStep]);
+  }, [status, currentStep, progress]);
+
+  // Helper functions for parsing step information
+  const parseStepType = (status: string): ThinkingStep['type'] => {
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus.includes('tool') || lowerStatus.includes('function')) return 'tool_call';
+    if (lowerStatus.includes('analyzing') || lowerStatus.includes('examining')) return 'analysis';
+    if (lowerStatus.includes('complete') || lowerStatus.includes('finished')) return 'complete';
+    if (lowerStatus.includes('progress') || lowerStatus.includes('step')) return 'progress';
+    return 'thinking';
+  };
+
+  const getStepIcon = (type: ThinkingStep['type']): React.ReactNode => {
+    switch (type) {
+      case 'thinking': return <PsychologyIcon />;
+      case 'analysis': return <SearchIcon />;
+      case 'tool_call': return <SettingsIcon />;
+      case 'progress': return <AutoFixHighIcon />;
+      case 'complete': return <CheckCircleIcon />;
+      default: return <LightbulbIcon />;
+    }
+  };
+
+  const getStepName = (type: ThinkingStep['type']): string => {
+    switch (type) {
+      case 'thinking': return 'AI Reasoning';
+      case 'analysis': return 'Image Analysis';
+      case 'tool_call': return 'Tool Execution';
+      case 'progress': return 'Processing';
+      case 'complete': return 'Complete';
+      default: return 'Processing';
+    }
+  };
 
   // Auto-scroll to bottom when new steps are added (less aggressive)
   useEffect(() => {
@@ -72,6 +166,12 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
     }
   }, [thinkingSteps.length]);
 
+  // Auto-scroll the compact log to bottom on new lines
+  useEffect(() => {
+    if (!logContainerRef.current) return;
+    logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+  }, [thinkingLog.length]);
+
   // Reset new step index after animation
   useEffect(() => {
     if (newStepIndex >= 0) {
@@ -82,28 +182,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
     }
   }, [newStepIndex]);
 
-  const getStepIcon = (step: string) => {
-    if (step.includes('Analyzing')) return <SearchIcon />;
-    if (step.includes('Identifying')) return <PaletteIcon />;
-    if (step.includes('temperature') || step.includes('tint')) return <ThermostatIcon />;
-    if (step.includes('HSL') || step.includes('color ranges')) return <ColorLensIcon />;
-    if (step.includes('color grading')) return <TheaterComedyIcon />;
-    if (step.includes('tonal') || step.includes('curves')) return <ShowChartIcon />;
-    if (step.includes('local adjustments') || step.includes('areas')) return <GpsFixedIcon />;
-    if (step.includes('color points')) return <BrushIcon />;
-    if (step.includes('film grain')) return <MovieIcon />;
-    if (step.includes('skin tone')) return <PersonIcon />;
-    if (step.includes('Complete')) return <CheckCircleIcon />;
-    if (step.includes('Generating') || step.includes('Processing')) return <SettingsIcon />;
-    if (step.includes('Optimizing') || step.includes('Fine-tuning')) return <AutoFixHighIcon />;
-    return <PsychologyIcon />;
-  };
-
-  const getStepColor = (step: string, index: number) => {
-    if (step === currentStep) return 'primary';
-    if (index < thinkingSteps.length - 1) return 'success';
-    return 'default';
-  };
 
   return (
     <div className="container" style={{ maxWidth: 'none', padding: '20px' }}>
@@ -115,244 +193,277 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           justifyContent: 'center',
           width: '100%',
           minHeight: '80vh',
-          backgroundColor: '#f8fafc',
+          backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           p: 4,
           borderRadius: 3,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.2) 0%, transparent 50%)',
+            pointerEvents: 'none',
+          }
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-          <PsychologyIcon
+        {/* Header with animated AI icon */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, zIndex: 1 }}>
+          <Avatar
             sx={{
-              fontSize: '3rem',
-              color: 'primary.main',
-              animation: 'smoothPulse 3s infinite cubic-bezier(0.4, 0, 0.6, 1)',
-              '@keyframes smoothPulse': {
+              width: 80,
+              height: 80,
+              backgroundColor: alpha('#fff', 0.2),
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255,255,255,0.3)',
+              animation: 'aiThinking 3s infinite ease-in-out',
+              '@keyframes aiThinking': {
                 '0%, 100%': {
                   transform: 'scale(1) rotate(0deg)',
-                  opacity: 1,
-                  filter: 'brightness(1)',
+                  boxShadow: '0 0 20px rgba(255,255,255,0.3)',
                 },
-                '33%': {
-                  transform: 'scale(1.05) rotate(2deg)',
-                  opacity: 0.9,
-                  filter: 'brightness(1.1)',
-                },
-                '66%': {
-                  transform: 'scale(1.08) rotate(-1deg)',
-                  opacity: 0.85,
-                  filter: 'brightness(1.15)',
+                '50%': {
+                  transform: 'scale(1.1) rotate(5deg)',
+                  boxShadow: '0 0 30px rgba(255,255,255,0.5)',
                 },
               },
             }}
-          />
-          <Typography variant="h6" fontWeight={600} sx={{ textAlign: 'center' }}>
-            AI is Thinking...
-          </Typography>
+          >
+            <AutoAwesomeIcon sx={{ fontSize: '2.5rem', color: 'white' }} />
+          </Avatar>
+          <Box>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{
+                color: 'white',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                mb: 0.5
+              }}
+            >
+              AI Recipe Wizard
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                color: alpha('#fff', 0.9),
+                fontWeight: 400
+              }}
+            >
+              Crafting your perfect photo recipe...
+            </Typography>
+          </Box>
         </Box>
 
-        {/* Progress Bar */}
-        <Box sx={{ maxWidth: 600, width: '100%', mb: 4 }}>
+        {/* Enhanced Progress Bar */}
+        <Box sx={{ maxWidth: 600, width: '100%', mb: 4, zIndex: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2" sx={{ color: alpha('#fff', 0.9), fontWeight: 500 }}>
+              Progress
+            </Typography>
+            <Typography variant="body2" sx={{ color: alpha('#fff', 0.9), fontWeight: 600 }}>
+              {Math.round(progress || 0)}%
+            </Typography>
+          </Box>
           <LinearProgress
             variant="determinate"
             value={progress || 0}
             sx={{
-              height: 12,
-              borderRadius: 6,
-              backgroundColor: 'rgba(0,0,0,0.08)',
+              height: 16,
+              borderRadius: 8,
+              backgroundColor: alpha('#fff', 0.2),
+              backdropFilter: 'blur(10px)',
               '& .MuiLinearProgress-bar': {
-                borderRadius: 6,
-                transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                background: 'linear-gradient(90deg, #1976d2 0%, #42a5f5 50%, #1976d2 100%)',
+                borderRadius: 8,
+                background: 'linear-gradient(90deg, #00f5ff 0%, #ff6b6b 50%, #4ecdc4 100%)',
                 backgroundSize: '200% 100%',
-                animation: 'progressShimmer 2s infinite ease-in-out',
-                '@keyframes progressShimmer': {
+                animation: 'progressFlow 3s infinite ease-in-out',
+                '@keyframes progressFlow': {
                   '0%': { backgroundPosition: '200% 0' },
                   '100%': { backgroundPosition: '-200% 0' },
                 },
+                boxShadow: '0 0 20px rgba(255,255,255,0.5)',
               },
             }}
           />
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              mt: 1.5,
-              display: 'block',
-              textAlign: 'center',
-              fontWeight: 500,
-              transition: 'all 0.3s ease',
-            }}
-          >
-            {Math.round(progress || 0)}% Complete
-          </Typography>
         </Box>
 
-        {/* Thinking Steps */}
-        <Paper
-          elevation={1}
+        {/* Enhanced Thinking Process Display */}
+        <Card
           sx={{
-            p: 3,
-            maxWidth: 700,
+            maxWidth: 800,
             width: '100%',
-            backgroundColor: 'white',
-            borderRadius: 3,
-            position: 'relative',
+            backgroundColor: alpha('#fff', 0.95),
+            backdropFilter: 'blur(20px)',
+            borderRadius: 4,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            zIndex: 1,
             overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background:
-                'linear-gradient(90deg, transparent 0%, rgba(25, 118, 210, 0.02) 25%, rgba(25, 118, 210, 0.06) 50%, rgba(25, 118, 210, 0.02) 75%, transparent 100%)',
-              animation: 'smoothShimmer 6s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-              '@keyframes smoothShimmer': {
-                '0%': {
-                  left: '-100%',
-                  opacity: 0,
-                },
-                '10%': {
-                  opacity: 1,
-                },
-                '90%': {
-                  opacity: 1,
-                },
-                '100%': {
-                  left: '100%',
-                  opacity: 0,
-                },
-              },
-            },
           }}
         >
-          <Box
-            ref={stepsContainerRef}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1,
-              height: '400px',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              pr: 1,
-              // Smooth momentum scrolling
-              WebkitOverflowScrolling: 'touch',
-              // Hide scrollbar completely
-              '&::-webkit-scrollbar': {
-                display: 'none',
-              },
-              // For Firefox
-              scrollbarWidth: 'none',
-              // For IE and Edge
-              msOverflowStyle: 'none',
-            }}
-          >
-            {thinkingSteps.map((step, index) => (
-              <Slide
-                direction="up"
-                in={true}
-                timeout={500}
-                key={index}
-                style={{
-                  transitionDelay: index === newStepIndex ? '0ms' : `${index * 80}ms`,
-                }}
-              >
-                <Box
-                  ref={index === thinkingSteps.length - 1 ? lastStepRef : null}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: 'transparent',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: index === newStepIndex ? 'scale(1.02) translateX(4px)' : 'scale(1)',
-                    opacity: step === currentStep ? 1 : 0.85,
-                    borderLeft: step === currentStep ? '3px solid' : '3px solid transparent',
-                    borderLeftColor: step === currentStep ? 'primary.main' : 'transparent',
-                    '&:hover': {
-                      backgroundColor: 'rgba(25, 118, 210, 0.02)',
-                      transform: 'scale(1.01) translateX(2px)',
-                    },
-                  }}
-                >
-                  <Chip
-                    icon={getStepIcon(step)}
-                    label={step}
-                    color={getStepColor(step, index)}
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      fontWeight: step === currentStep ? 600 : 500,
-                      fontSize: '0.875rem',
-                      height: '32px',
-                      '& .MuiChip-icon': {
-                        fontSize: '1em',
-                      },
-                      '& .MuiChip-label': {
-                        px: 1.5,
-                        fontSize: '0.875rem',
-                      },
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <PsychologyIcon sx={{ fontSize: '2rem', color: 'primary.main' }} />
+              <Typography variant="h6" fontWeight={600} color="primary">
+                AI Thinking Process
+              </Typography>
+            </Box>
+
+            <Box
+              ref={stepsContainerRef}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                height: '400px',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                pr: 1,
+                '&::-webkit-scrollbar': { width: 6 },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'rgba(0,0,0,0.2)',
+                  borderRadius: 3
+                },
+              }}
+            >
+              {thinkingSteps.length === 0 ? (
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: 'text.secondary'
+                }}>
+                  <LightbulbIcon sx={{ fontSize: '3rem', mb: 2, opacity: 0.5 }} />
+                  <Typography variant="h6" color="text.secondary">
+                    AI is analyzing your images...
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    The thinking process will appear here as the AI works
+                  </Typography>
+                </Box>
+              ) : (
+                thinkingSteps.map((step, index) => (
+                  <Grow
+                    in={true}
+                    timeout={600}
+                    key={step.id}
+                    style={{
+                      transitionDelay: index === newStepIndex ? '0ms' : `${index * 100}ms`,
                     }}
-                  />
-                  {step === currentStep && isTyping && (
+                  >
                     <Box
+                      ref={index === thinkingSteps.length - 1 ? lastStepRef : null}
                       sx={{
                         display: 'flex',
-                        gap: 0.7,
-                        ml: 'auto',
-                        alignItems: 'center',
+                        alignItems: 'flex-start',
+                        gap: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        backgroundColor: step.type === 'complete' ? alpha('#4caf50', 0.1) :
+                          step.type === 'tool_call' ? alpha('#ff9800', 0.1) :
+                            step.type === 'analysis' ? alpha('#2196f3', 0.1) :
+                              alpha('#9c27b0', 0.1),
+                        border: `1px solid ${step.type === 'complete' ? alpha('#4caf50', 0.3) :
+                          step.type === 'tool_call' ? alpha('#ff9800', 0.3) :
+                            step.type === 'analysis' ? alpha('#2196f3', 0.3) :
+                              alpha('#9c27b0', 0.3)}`,
+                        transition: 'all 0.3s ease',
+                        transform: index === newStepIndex ? 'scale(1.02)' : 'scale(1)',
+                        '&:hover': {
+                          transform: 'scale(1.01)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        },
                       }}
                     >
-                      <Box
+                      <Avatar
                         sx={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: '50%',
-                          backgroundColor: 'primary.main',
-                          animation: 'smoothTyping 1.8s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                          '@keyframes smoothTyping': {
-                            '0%, 70%, 100%': {
-                              transform: 'translateY(0) scale(1)',
-                              opacity: 0.6,
-                            },
-                            '35%': {
-                              transform: 'translateY(-8px) scale(1.2)',
-                              opacity: 1,
-                            },
-                          },
+                          width: 40,
+                          height: 40,
+                          backgroundColor: step.type === 'complete' ? '#4caf50' :
+                            step.type === 'tool_call' ? '#ff9800' :
+                              step.type === 'analysis' ? '#2196f3' : '#9c27b0',
+                          color: 'white',
                         }}
-                      />
-                      <Box
-                        sx={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: '50%',
-                          backgroundColor: 'primary.main',
-                          animation: 'smoothTyping 1.8s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                          animationDelay: '0.3s',
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: '50%',
-                          backgroundColor: 'primary.main',
-                          animation: 'smoothTyping 1.8s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                          animationDelay: '0.6s',
-                        }}
-                      />
+                      >
+                        {step.icon}
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Typography variant="subtitle2" fontWeight={600} color="primary">
+                            {step.step}
+                          </Typography>
+                          <Chip
+                            label={step.type}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              fontSize: '0.7rem',
+                              height: 20,
+                              backgroundColor: alpha('#fff', 0.8)
+                            }}
+                          />
+                        </Box>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            lineHeight: 1.6,
+                            color: 'text.primary',
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          {step.content}
+                        </Typography>
+                        {step.toolName && (
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                            Using tool: {step.toolName}
+                          </Typography>
+                        )}
+                      </Box>
+                      {index === newStepIndex && isTyping && (
+                        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                          <Box sx={{
+                            width: 4,
+                            height: 4,
+                            borderRadius: '50%',
+                            backgroundColor: 'primary.main',
+                            animation: 'typing 1.4s infinite ease-in-out',
+                            '@keyframes typing': {
+                              '0%, 60%, 100%': { transform: 'translateY(0)', opacity: 0.4 },
+                              '30%': { transform: 'translateY(-10px)', opacity: 1 },
+                            }
+                          }} />
+                          <Box sx={{
+                            width: 4,
+                            height: 4,
+                            borderRadius: '50%',
+                            backgroundColor: 'primary.main',
+                            animation: 'typing 1.4s infinite ease-in-out',
+                            animationDelay: '0.2s'
+                          }} />
+                          <Box sx={{
+                            width: 4,
+                            height: 4,
+                            borderRadius: '50%',
+                            backgroundColor: 'primary.main',
+                            animation: 'typing 1.4s infinite ease-in-out',
+                            animationDelay: '0.4s'
+                          }} />
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                </Box>
-              </Slide>
-            ))}
-          </Box>
-        </Paper>
+                  </Grow>
+                ))
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+
       </Box>
     </div>
   );

@@ -1,4 +1,4 @@
-import { AIColorAdjustments } from '../services/openai-color-analyzer';
+import type { AIColorAdjustments } from '../services/types';
 
 export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: number = 33, format: string = 'cube'): string {
 

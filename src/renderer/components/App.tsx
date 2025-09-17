@@ -41,7 +41,6 @@ const AppContent: React.FC = () => {
   );
   const currentProcessIdRef = useRef<string | null>(null);
   const startingRef = useRef<boolean>(false);
-  const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     currentProcessIdRef.current = currentProcessId;
@@ -206,30 +205,6 @@ const AppContent: React.FC = () => {
       });
     }, 30000); // Every 30 seconds
 
-    // Set a timeout to prevent hanging (2 minutes for testing)
-    console.log('[APP] Setting processing timeout for 2 minutes');
-    processingTimeoutRef.current = setTimeout(() => {
-      if (statusIntervalRef.current) {
-        clearInterval(statusIntervalRef.current);
-        statusIntervalRef.current = null;
-      }
-      console.warn('[APP] Processing timeout triggered - showing error dialog');
-
-      // Show error dialog for timeout
-      showError(
-        'Processing took longer than expected and timed out. This might be due to API issues or network problems.',
-        { title: 'Processing Timeout' }
-      );
-
-      setProcessingState({
-        isProcessing: false,
-        progress: 0,
-        status: 'Processing timed out',
-      });
-      setCurrentStep('results');
-      startingRef.current = false;
-    }, 2 * 60 * 1000); // 2 minutes for testing
-
     // Kick off processing using stored base64 data
     if (newProcessId) {
       try {
@@ -256,11 +231,7 @@ const AppContent: React.FC = () => {
         await window.electronAPI.processWithStoredImages(processingData);
       } catch (error) {
         console.error('[APP] Processing start failed:', error);
-        // Clear timeout and interval
-        if (processingTimeoutRef.current) {
-          clearTimeout(processingTimeoutRef.current);
-          processingTimeoutRef.current = null;
-        }
+        // Clear interval
         if (statusIntervalRef.current) {
           clearInterval(statusIntervalRef.current);
           statusIntervalRef.current = null;
@@ -294,11 +265,7 @@ const AppContent: React.FC = () => {
     console.log('[RENDERER] Processing complete received:', processingResults);
     startingRef.current = false;
 
-    // Clear the timeout and interval since processing completed successfully
-    if (processingTimeoutRef.current) {
-      clearTimeout(processingTimeoutRef.current);
-      processingTimeoutRef.current = null;
-    }
+    // Clear the interval since processing completed successfully
     if (statusIntervalRef.current) {
       clearInterval(statusIntervalRef.current);
       statusIntervalRef.current = null;

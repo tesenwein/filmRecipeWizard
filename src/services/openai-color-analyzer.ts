@@ -101,60 +101,7 @@ export class OpenAIColorAnalyzer {
       // Build tools array conditionally based on options
       const tools = this.buildToolsArray(options);
 
-      // Show detailed thinking stream based on enabled features
-      if (onStreamUpdate) {
-        onStreamUpdate('Analyzing your images...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        onStreamUpdate('Identifying color characteristics...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        if (options?.aiFunctions?.temperatureTint !== false) {
-          onStreamUpdate('Analyzing color temperature and tint...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        if (options?.aiFunctions?.hsl !== false) {
-          onStreamUpdate('Mapping HSL color ranges...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        if (options?.aiFunctions?.colorGrading !== false) {
-          onStreamUpdate('Evaluating color grading opportunities...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        if (options?.aiFunctions?.curves !== false) {
-          onStreamUpdate('Analyzing tonal distribution and curves...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        if (options?.aiFunctions?.masks === true) {
-          onStreamUpdate('Identifying areas for local adjustments...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        if (options?.aiFunctions?.pointColor !== false) {
-          onStreamUpdate('Detecting specific color points...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        if (options?.aiFunctions?.grain === true) {
-          onStreamUpdate('Evaluating film grain requirements...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        if (options?.preserveSkinTones) {
-          onStreamUpdate('Protecting skin tone integrity...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        onStreamUpdate('Matching target style characteristics...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        onStreamUpdate('Generating Lightroom adjustments...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
+      // Removed artificial pre-stream status messages; rely on actual model output only
 
       // Use streaming to get real-time updates and function calls
       const stream = await this.openai.chat.completions.create({
@@ -173,6 +120,10 @@ export class OpenAIColorAnalyzer {
 
       let fullResponse = '';
       let functionCalls: any[] = [];
+      let sentenceBuffer = '';
+      const toolArgBuffers: Record<number, string> = {};
+      const toolNameAnnounced = new Set<number>();
+      const emittedArgKeys = new Set<string>();
 
       for await (const chunk of stream) {
         const delta = chunk.choices[0]?.delta;
@@ -181,9 +132,16 @@ export class OpenAIColorAnalyzer {
         // Handle streaming text content
         if (delta.content) {
           fullResponse += delta.content;
-          // Send real-time thinking updates
-          if (onStreamUpdate && delta.content.includes('.')) {
-            onStreamUpdate(`AI: ${delta.content.trim()}`);
+          // Accumulate and emit sentence-level thinking updates
+          if (onStreamUpdate) {
+            sentenceBuffer += delta.content;
+            const parts = sentenceBuffer.split(/(?<=[\.\!\?\n])/);
+            // Emit all complete sentences, keep the last (possibly incomplete) in buffer
+            for (let i = 0; i < parts.length - 1; i++) {
+              const s = parts[i].trim();
+              if (s.length > 0) onStreamUpdate(`AI: ${s}`);
+            }
+            sentenceBuffer = parts[parts.length - 1] || '';
           }
         }
 
@@ -204,14 +162,42 @@ export class OpenAIColorAnalyzer {
 
               if (toolCall.function?.name) {
                 functionCalls[toolCall.index].function.name = toolCall.function.name;
+                // Announce tool call start once
+                if (onStreamUpdate && !toolNameAnnounced.has(toolCall.index)) {
+                  toolNameAnnounced.add(toolCall.index);
+                  onStreamUpdate(`AI: calling ${toolCall.function.name}…`);
+                }
               }
 
               if (toolCall.function?.arguments) {
                 functionCalls[toolCall.index].function.arguments += toolCall.function.arguments;
+                // Stream compact insight from arguments as they build (best-effort)
+                if (onStreamUpdate) {
+                  toolArgBuffers[toolCall.index] = (toolArgBuffers[toolCall.index] || '') + toolCall.function.arguments;
+                  try {
+                    // Extract last seen JSON-like key name to show progress
+                    const matches = [...toolArgBuffers[toolCall.index].matchAll(/"([a-zA-Z0-9_]+)"\s*:/g)];
+                    if (matches.length > 0) {
+                      const lastKey = matches[matches.length - 1][1];
+                      if (lastKey && !emittedArgKeys.has(`${toolCall.index}:${lastKey}`)) {
+                        emittedArgKeys.add(`${toolCall.index}:${lastKey}`);
+                        onStreamUpdate(`AI: setting ${lastKey}…`);
+                      }
+                    }
+                  } catch {
+                    // ignore partial JSON parse issues
+                  }
+                }
               }
             }
           }
         }
+      }
+
+      // Flush any remaining buffered text as a final thinking update
+      if (onStreamUpdate && sentenceBuffer.trim().length > 0) {
+        onStreamUpdate(`AI: ${sentenceBuffer.trim()}`);
+        sentenceBuffer = '';
       }
 
       // Create a completion-like object for compatibility
@@ -227,19 +213,7 @@ export class OpenAIColorAnalyzer {
         ],
       };
 
-      // Show completion and processing messages
-      if (onStreamUpdate) {
-        onStreamUpdate('Analysis complete! Processing results...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        onStreamUpdate('Optimizing color adjustments...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        onStreamUpdate('Fine-tuning preset parameters...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        onStreamUpdate('Recipe generation complete!');
-      }
+      // Removed artificial post-stream status messages
 
       const endTime = Date.now();
       const duration = (endTime - startTime) / 1000;
