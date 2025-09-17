@@ -44,7 +44,7 @@ const AIFunctionsSelector: React.FC<AIFunctionsSelectorProps> = ({
           <Typography variant="subtitle2" sx={{ color: 'text.primary', fontWeight: 600 }}>
             AI Functions
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: 12 }}>
             Select which features the AI can use for color adjustments
           </Typography>
         </Box>

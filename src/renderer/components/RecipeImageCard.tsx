@@ -31,7 +31,6 @@ const RecipeImageCard: React.FC<RecipeImageCardProps> = ({ baseImages, basePrevi
                 Upload up to 3 reference images
               </p>
             </Box>
-            <Chip label="Optional" size="small" variant="outlined" />
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pt: 0, pb: 2.5 }}>

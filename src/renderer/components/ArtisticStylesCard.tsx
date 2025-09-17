@@ -167,10 +167,8 @@ const ArtisticStylesCard: React.FC<ArtisticStylesCardProps> = ({ selected, onSel
                 Choose a celebrated look to mimic in AI grading
               </p>
             </Box>
-            {selected ? (
+            {selected && (
               <Chip label="Applied" size="small" color="primary" variant="outlined" />
-            ) : (
-              <Chip label="Optional" size="small" variant="outlined" />
             )}
           </Box>
         </AccordionSummary>
@@ -216,8 +214,8 @@ const ArtisticStylesCard: React.FC<ArtisticStylesCardProps> = ({ selected, onSel
                           </Typography>
                           <Chip size="small" label={item.category} variant="outlined" sx={{ height: 20, fontSize: 11 }} />
                         </Box>
-                        <Typography 
-                          variant="caption" 
+                        <Typography
+                          variant="caption"
                           sx={{ color: 'text.secondary', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflow: 'hidden', mb: 0.75 }}
                         >
                           {item.blurb}

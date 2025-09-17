@@ -81,10 +81,8 @@ const FilmStylesCard: React.FC<FilmStylesCardProps> = ({ selected, onSelect }) =
                 Choose a film stock aesthetic
               </p>
             </Box>
-            {selected ? (
+            {selected && (
               <Chip label="Applied" size="small" color="primary" variant="outlined" />
-            ) : (
-              <Chip label="Optional" size="small" variant="outlined" />
             )}
           </Box>
         </AccordionSummary>

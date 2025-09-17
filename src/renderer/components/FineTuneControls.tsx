@@ -33,7 +33,6 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
               </h3>
               <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>Adjust color parameters</p>
             </Box>
-            <Chip label="Optional" size="small" variant="outlined" />
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pt: 0, pb: 2.5 }}>
