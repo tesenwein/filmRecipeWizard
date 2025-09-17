@@ -132,6 +132,35 @@ const theme = createTheme({
         },
       },
     },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          marginBottom: '12px',
+          '&:before': {
+            display: 'none', // Remove default Material-UI border
+          },
+          '&.Mui-expanded': {
+            marginBottom: '12px',
+          },
+        },
+      },
+    },
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          borderBottom: '1px solid #e9ecef',
+          '&.Mui-expanded': {
+            borderBottom: '1px solid #e9ecef',
+          },
+        },
+        content: {
+          '& .MuiTypography-root': {
+            fontSize: '0.95rem', // Reduce from default h6 size to smaller
+            fontWeight: 600,
+          },
+        },
+      },
+    },
   },
 });
 
