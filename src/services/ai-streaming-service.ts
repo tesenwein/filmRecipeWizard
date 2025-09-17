@@ -65,20 +65,54 @@ export class AIStreamingService {
 
             let fullText = '';
             let finalResult: AIColorAdjustments | null = null;
+            let accumulatedThinkingText = '';
+            let lastThinkingUpdate = 0;
+            let currentProgress = 10; // Start at 10%
 
             // Stream the response and show thinking process using AI SDK v5 stream protocol
             for await (const part of result.fullStream) {
                 // Handle different stream parts according to AI SDK v5 protocol
                 if (part.type === 'text-delta') {
                     fullText += part.text;
-                    // Text deltas are just building up the final response - no need to parse them
+                    accumulatedThinkingText += part.text;
+
+                    // Only send thinking updates for meaningful accumulated text
+                    const now = Date.now();
+                    if (accumulatedThinkingText.trim().length > 50 &&
+                        now - lastThinkingUpdate > 1000 && // At least 1 second between updates
+                        !accumulatedThinkingText.includes('```') &&
+                        !accumulatedThinkingText.includes('{') &&
+                        !accumulatedThinkingText.includes('}')) {
+
+                        // Extract a meaningful sentence or phrase
+                        const sentences = accumulatedThinkingText.split(/[.!?]+/);
+                        const lastCompleteSentence = sentences[sentences.length - 2]; // Get the last complete sentence
+
+                        if (lastCompleteSentence && lastCompleteSentence.trim().length > 20) {
+                            // Increment progress gradually
+                            currentProgress = Math.min(currentProgress + 5, 60); // Cap at 60% for thinking
+
+                            onUpdate?.({
+                                type: 'thinking',
+                                content: lastCompleteSentence.trim(),
+                                step: 'reasoning',
+                                progress: currentProgress
+                            });
+
+                            // Reset for next chunk
+                            accumulatedThinkingText = '';
+                            lastThinkingUpdate = now;
+                        }
+                    }
                 } else if (part.type === 'tool-call') {
                     // Handle tool calls
+                    currentProgress = Math.min(currentProgress + 10, 80); // Jump to 80% for tool calls
+
                     onUpdate?.({
                         type: 'tool_call',
                         content: `Using ${part.toolName} to analyze ${this.getToolDescription(part.toolName)}`,
                         step: 'tool_execution',
-                        progress: 30 + Math.random() * 40, // Progress between 30-70%
+                        progress: currentProgress,
                         toolName: part.toolName,
                         toolArgs: part.input
                     });
@@ -87,6 +121,24 @@ export class AIStreamingService {
                     if (part.toolName === 'generate_color_adjustments' || part.toolName === 'report_global_adjustments') {
                         finalResult = part.output as AIColorAdjustments;
                     }
+                } else if (part.type === 'reasoning-start') {
+                    // Handle reasoning start
+                    currentProgress = 15;
+                    onUpdate?.({
+                        type: 'thinking',
+                        content: 'Starting analysis...',
+                        step: 'reasoning',
+                        progress: currentProgress
+                    });
+                } else if (part.type === 'reasoning-end') {
+                    // Handle reasoning end
+                    currentProgress = 90;
+                    onUpdate?.({
+                        type: 'thinking',
+                        content: 'Analysis complete, generating results...',
+                        step: 'reasoning',
+                        progress: currentProgress
+                    });
                 }
             }
 

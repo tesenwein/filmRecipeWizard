@@ -198,20 +198,19 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
     }
   };
 
-  // Auto-scroll to bottom when new steps are added (less aggressive)
+  // Auto-scroll to bottom when new steps are added
   useEffect(() => {
     if (lastStepRef.current && stepsContainerRef.current) {
-      // Only scroll if we're near the bottom to avoid jumpy behavior
-      const container = stepsContainerRef.current;
-      const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
-
-      if (isNearBottom) {
-        lastStepRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-          inline: 'nearest',
-        });
-      }
+      // Always scroll to bottom when new steps are added
+      setTimeout(() => {
+        if (lastStepRef.current) {
+          lastStepRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+            inline: 'nearest',
+          });
+        }
+      }, 100); // Small delay to ensure the new step is rendered
     }
   }, [thinkingSteps.length]);
 
@@ -327,12 +326,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           }}
         >
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-              <PsychologyIcon sx={{ fontSize: '2rem', color: 'primary.main' }} />
-              <Typography variant="h6" fontWeight={600} color="primary">
-                AI Thinking Process
-              </Typography>
-            </Box>
 
             <Box
               ref={stepsContainerRef}
@@ -344,6 +337,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 pr: 1,
+                pb: 2, // Add bottom padding to prevent cut-off
                 '&::-webkit-scrollbar': { width: 6 },
                 '&::-webkit-scrollbar-thumb': {
                   backgroundColor: 'rgba(0,0,0,0.2)',
@@ -387,7 +381,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                         p: 2,
                         borderRadius: 2,
                         backgroundColor: step.type === 'complete' ? 'success.light' :
-                          step.type === 'tool_call' ? 'info.light' :
+                          step.type === 'tool_call' ? 'grey.50' :
                             step.type === 'analysis' ? 'primary.light' :
                               'grey.100',
                         border: `1px solid ${step.type === 'complete' ? 'success.main' :
