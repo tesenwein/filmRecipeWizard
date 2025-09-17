@@ -1,26 +1,20 @@
-import {
-  app,
-  BrowserWindow,
-  Menu,
-  MenuItemConstructorOptions,
-  shell,
-} from 'electron';
+import { app, BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
-import { SettingsService } from './settings-service';
-import { StorageService } from './storage-service';
 import { ExportHandlers } from './ipc-handlers/export-handlers';
 import { FileHandlers } from './ipc-handlers/file-handlers';
 import { ProcessingHandlers } from './ipc-handlers/processing-handlers';
 import { SettingsHandlers } from './ipc-handlers/settings-handlers';
 import { StorageHandlers } from './ipc-handlers/storage-handlers';
+import { SettingsService } from './settings-service';
+import { StorageService } from './storage-service';
 
 class FilmRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
   private imageProcessor: ImageProcessor;
   private storageService: StorageService;
   private settingsService: SettingsService;
-  
+
   // IPC handlers
   private fileHandlers: FileHandlers;
   private processingHandlers: ProcessingHandlers;
@@ -32,14 +26,26 @@ class FilmRecipeWizardApp {
     this.imageProcessor = new ImageProcessor();
     this.storageService = new StorageService();
     this.settingsService = new SettingsService();
-    
+
     // Initialize IPC handlers
     this.fileHandlers = new FileHandlers(() => this.mainWindow);
-    this.processingHandlers = new ProcessingHandlers(() => this.mainWindow, this.imageProcessor, this.storageService);
-    this.storageHandlers = new StorageHandlers(this.storageService, this.settingsService, this.imageProcessor);
-    this.settingsHandlers = new SettingsHandlers(this.settingsService, this.imageProcessor, this.storageService);
+    this.processingHandlers = new ProcessingHandlers(
+      () => this.mainWindow,
+      this.imageProcessor,
+      this.storageService
+    );
+    this.storageHandlers = new StorageHandlers(
+      this.storageService,
+      this.settingsService,
+      this.imageProcessor
+    );
+    this.settingsHandlers = new SettingsHandlers(
+      this.settingsService,
+      this.imageProcessor,
+      this.storageService
+    );
     this.exportHandlers = new ExportHandlers(this.imageProcessor, this.storageService);
-    
+
     this.setupApp();
     this.setupIPC();
   }
@@ -79,20 +85,30 @@ class FilmRecipeWizardApp {
       show: false,
     });
 
-    const isDev = process.env.NODE_ENV === 'development';
+    const isDev =
+      process.env.NODE_ENV === 'development' ||
+      process.env.ELECTRON_IS_DEV === '1' ||
+      !app.isPackaged;
 
     if (isDev) {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-      this.mainWindow.webContents.openDevTools();
+      console.log('[MAIN] Development mode detected, use Ctrl+Shift+I to open dev tools');
     } else {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-      
-      // Block dev tools in production
+
+      // Block dev tools in production (but allow our custom shortcut)
       this.mainWindow.webContents.on('before-input-event', (event, input) => {
-        // Block common dev tools shortcuts
-        if (input.control && input.shift && input.key.toLowerCase() === 'i') {
+        // Handle our custom dev tools shortcut
+        if ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i') {
+          if (this.mainWindow?.webContents.isDevToolsOpened()) {
+            this.mainWindow.webContents.closeDevTools();
+          } else {
+            this.mainWindow?.webContents.openDevTools();
+          }
           event.preventDefault();
+          return;
         }
+        // Block other dev tools shortcuts
         if (input.control && input.shift && input.key.toLowerCase() === 'j') {
           event.preventDefault();
         }
@@ -102,13 +118,14 @@ class FilmRecipeWizardApp {
         if (input.key === 'F12') {
           event.preventDefault();
         }
-        if (input.meta && input.alt && input.key.toLowerCase() === 'i') { // Mac
+        if (input.meta && input.alt && input.key.toLowerCase() === 'i') {
+          // Mac
           event.preventDefault();
         }
       });
 
       // Block right-click context menu in production
-      this.mainWindow.webContents.on('context-menu', (event) => {
+      this.mainWindow.webContents.on('context-menu', event => {
         event.preventDefault();
       });
 

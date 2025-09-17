@@ -1,8 +1,8 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
 import { ImageProcessor } from '../image-processor';
-import { StorageService } from '../storage-service';
 import { generateLUTContent } from '../lut-generator';
+import { StorageService } from '../storage-service';
 
 export class ProcessingHandlers {
   constructor(
@@ -21,7 +21,10 @@ export class ProcessingHandlers {
           return result;
         } catch (error) {
           console.error('[IPC] Error generating preview:', error);
-          return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
         }
       }
     );
@@ -176,9 +179,14 @@ export class ProcessingHandlers {
           if (options.filmGrain !== undefined)
             optionsHintParts.push(`Film Grain: ${options.filmGrain ? 'On' : 'Off'}`);
           if (options.lightroomProfile !== undefined) {
-            const profileName = options.lightroomProfile === 'adobe-color' ? 'Adobe Color' :
-                               options.lightroomProfile === 'adobe-monochrome' ? 'Adobe Monochrome' :
-                               options.lightroomProfile === 'flat' ? 'Flat Profile' : options.lightroomProfile;
+            const profileName =
+              options.lightroomProfile === 'adobe-color'
+                ? 'Adobe Color'
+                : options.lightroomProfile === 'adobe-monochrome'
+                ? 'Adobe Monochrome'
+                : options.lightroomProfile === 'flat'
+                ? 'Flat Profile'
+                : options.lightroomProfile;
             optionsHintParts.push(`Lightroom Base Profile: ${profileName}`);
           }
           if (options.artistStyle && typeof options.artistStyle.name === 'string') {
@@ -211,53 +219,61 @@ export class ProcessingHandlers {
           const providedTargets = data.targetImageData || [];
           const targetImageData = providedTargets[targetIndex];
 
-          // If no target image is provided, we'll create a generic profile/LUT without specific image processing
+          // If no target image is provided, we'll still do AI analysis using just the base image
           if (!targetImageData) {
-            console.log('[IPC] No target image provided, creating generic profile/LUT');
-            // For now, we'll return a success result with metadata indicating no target processing
-            try {
-              mainWindow?.webContents.send('processing-progress', 100, 'Completed');
-            } catch {
-              /* Ignore IPC send errors */
-            }
-            
-            // Return a generic result for profile/LUT generation without target image
-            return [{
-              success: true,
-              error: null,
-              metadata: {
-                aiAdjustments: {
-                  preset_name: 'Generic Profile',
-                  description: 'Profile created without target image processing'
-                },
-                processingMode: 'generic'
-              }
-            }];
+            console.log('[IPC] No target image provided, doing AI analysis with base image only');
           }
 
           // Emit initial progress
           try {
-            mainWindow?.webContents.send('processing-progress', 5, 'Starting analysis...');
+            mainWindow?.webContents.send('processing-progress', 5, 'Starting AI analysis...');
           } catch {
             /* Ignore IPC send errors */
           }
 
           // Create temporary files for processing (baseImagePath not needed when using base64)
-          const targetImageTempPath = await this.storageService.base64ToTempFile(
-            targetImageData,
-            'target.jpg'
-          );
+          const targetImageTempPath = targetImageData
+            ? await this.storageService.base64ToTempFile(targetImageData, 'target.jpg')
+            : undefined;
 
           // Process using the image processor
-          const result = await this.imageProcessor.matchStyle({
-            baseImagePath: undefined,
-            targetImagePath: targetImageTempPath,
-            baseImageBase64: baseImageData,
-            targetImageBase64: targetImageData,
-            aiAdjustments: undefined,
-            prompt,
-            styleOptions: options,
+          let result;
+          console.log('[IPC] Starting image processor with:', {
+            hasBaseImage: !!baseImageData,
+            hasTargetImage: !!targetImageData,
+            hasPrompt: !!prompt,
+            hasStyleOptions: !!options,
           });
+
+          const startTime = Date.now();
+          try {
+            result = await this.imageProcessor.matchStyle({
+              baseImagePath: undefined,
+              targetImagePath: targetImageTempPath || '', // Use empty string if no target image
+              baseImageBase64: baseImageData,
+              targetImageBase64: targetImageData,
+              aiAdjustments: undefined,
+              prompt,
+              styleOptions: options,
+            });
+            const duration = Date.now() - startTime;
+            console.log(`[IPC] Image processor completed in ${duration}ms:`, {
+              success: result.success,
+              hasMetadata: !!result.metadata,
+              hasError: !!result.error,
+            });
+          } catch (error) {
+            const duration = Date.now() - startTime;
+            console.error(`[IPC] Image processor failed after ${duration}ms:`, error);
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown processing error';
+            result = {
+              success: false,
+              error: errorMessage,
+              outputPath: targetImageTempPath || '',
+              metadata: null,
+            };
+          }
 
           try {
             mainWindow?.webContents.send('processing-progress', 100, 'Completed');
@@ -324,9 +340,10 @@ export class ProcessingHandlers {
 
           // Emit completion event
           try {
+            console.log('[IPC] Sending processing-complete event with result:', result.success);
             mainWindow?.webContents.send('processing-complete', [result]);
-          } catch {
-            /* Ignore IPC send errors */
+          } catch (error) {
+            console.error('[IPC] Failed to send processing-complete event:', error);
           }
 
           return result;

@@ -10,6 +10,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Avatar,
   Box,
   Button,
   Checkbox,
@@ -18,20 +19,19 @@ import {
   FormControlLabel,
   IconButton,
   Paper,
-  Avatar,
   Slider,
   Tab,
   Tabs,
   Typography,
 } from '@mui/material';
 // Subcomponents
-import RecipeNameHeader from './results/RecipeNameHeader';
-import ImageSelectionChips from './results/ImageSelectionChips';
 import React, { useEffect, useState } from 'react';
-import ConfirmDialog from './ConfirmDialog';
 import { ProcessingResult, UserProfile, getLightroomProfileDisplayName } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
+import ConfirmDialog from './ConfirmDialog';
+import ImageSelectionChips from './results/ImageSelectionChips';
+import RecipeNameHeader from './results/RecipeNameHeader';
 import SingleImage from './SingleImage';
 
 interface ResultsViewProps {
@@ -39,7 +39,6 @@ interface ResultsViewProps {
   baseImage: string | null;
   targetImages: string[];
   onReset: () => void;
-  onRestart?: () => void;
   processId?: string; // Optional process ID to load base64 image data
   prompt?: string; // Optional prompt provided in this session
 }
@@ -49,7 +48,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   baseImage: _baseImage,
   targetImages: _targetImages,
   onReset,
-  onRestart,
   processId,
   prompt,
 }) => {
@@ -77,7 +75,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   >({});
 
   const successfulResults = results.filter(result => result.success);
-  const failedResults = results.filter(result => !result.success);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
   const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
@@ -389,9 +386,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             <Tab icon={<TuneIcon />} label="Adjustments Details" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
-            {author && (
-              <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />
-            )}
+            {author && <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />}
           </Tabs>
 
           {/* Image Selection */}
@@ -463,7 +458,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                         {/* Style Information */}
                         {processOptions &&
-                          (processOptions.artistStyle || processOptions.filmStyle || processOptions.lightroomProfile) && (
+                          (processOptions.artistStyle ||
+                            processOptions.filmStyle ||
+                            processOptions.lightroomProfile) && (
                             <Box sx={{ mb: 3 }}>
                               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Applied Styles
@@ -471,7 +468,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                                 {processOptions.lightroomProfile && (
                                   <Chip
-                                    label={`Profile: ${getLightroomProfileDisplayName(processOptions.lightroomProfile)}`}
+                                    label={`Profile: ${getLightroomProfileDisplayName(
+                                      processOptions.lightroomProfile
+                                    )}`}
                                     variant="filled"
                                     color="primary"
                                     size="small"
@@ -901,7 +900,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     {processOptions.lightroomProfile && (
                                       <Typography variant="body1">
                                         <strong>Lightroom Profile:</strong>{' '}
-                                        {getLightroomProfileDisplayName(processOptions.lightroomProfile)}
+                                        {getLightroomProfileDisplayName(
+                                          processOptions.lightroomProfile
+                                        )}
                                       </Typography>
                                     )}
                                     {processOptions.artistStyle?.name && (
@@ -1686,7 +1687,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   <Box>
                     <Typography
                       variant="subtitle1"
-                      sx={{ mb: 3, fontWeight: 600, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}
+                      sx={{
+                        mb: 3,
+                        fontWeight: 600,
+                        color: 'text.secondary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
                     >
                       <PersonOutlineIcon color="action" />
                       Author
@@ -1694,17 +1702,46 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                     {/* Single centered card with author information */}
                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                      <Paper elevation={0} sx={{ p: 4, maxWidth: 560, width: '100%', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 4,
+                          maxWidth: 560,
+                          width: '100%',
+                          borderRadius: 3,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
                         <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: '1fr' }}>
                           {/* Avatar + Name */}
-                          <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 2, textAlign: 'left' }}>
+                          <Box
+                            sx={{
+                              mb: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              textAlign: 'left',
+                            }}
+                          >
                             <Avatar
-                              sx={{ width: 48, height: 48, bgcolor: 'grey.100', color: 'text.primary', fontWeight: 600 }}
+                              sx={{
+                                width: 48,
+                                height: 48,
+                                bgcolor: 'grey.100',
+                                color: 'text.primary',
+                                fontWeight: 600,
+                              }}
                             >
-                              {`${(author.firstName?.[0] || '').toUpperCase()}${(author.lastName?.[0] || '').toUpperCase()}`}
+                              {`${(author.firstName?.[0] || '').toUpperCase()}${(
+                                author.lastName?.[0] || ''
+                              ).toUpperCase()}`}
                             </Avatar>
                             {(author.firstName || author.lastName) && (
-                              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                              <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 600, color: 'text.primary' }}
+                              >
                                 {[author.firstName, author.lastName].filter(Boolean).join(' ')}
                               </Typography>
                             )}
@@ -1713,16 +1750,24 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           <Divider />
 
                           {/* Contact Information Grid */}
-                          <Box sx={{
-                            display: 'grid',
-                            gap: 2.5,
-                            gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(220px, 1fr))' },
-                            alignItems: 'start'
-                          }}>
+                          <Box
+                            sx={{
+                              display: 'grid',
+                              gap: 2.5,
+                              gridTemplateColumns: {
+                                xs: '1fr',
+                                sm: 'repeat(auto-fit, minmax(220px, 1fr))',
+                              },
+                              alignItems: 'start',
+                            }}
+                          >
                             {/* Email */}
                             {author.email && (
                               <Box sx={{ textAlign: 'left' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}
+                                >
                                   Email
                                 </Typography>
                                 <Typography
@@ -1733,7 +1778,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     color: 'text.primary',
                                     textDecoration: 'none',
                                     '&:hover': { textDecoration: 'underline' },
-                                    wordBreak: 'break-all'
+                                    wordBreak: 'break-all',
                                   }}
                                 >
                                   {author.email}
@@ -1744,14 +1789,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             {/* Website */}
                             {author.website && (
                               <Box sx={{ textAlign: 'left' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}
+                                >
                                   Website
                                 </Typography>
                                 <Typography
                                   variant="body2"
                                   component="a"
                                   href="#"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.preventDefault();
                                     window.open(author.website!, '_blank');
                                   }}
@@ -1759,7 +1807,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     color: 'text.primary',
                                     textDecoration: 'none',
                                     '&:hover': { textDecoration: 'underline' },
-                                    wordBreak: 'break-all'
+                                    wordBreak: 'break-all',
                                   }}
                                 >
                                   {author.website}
@@ -1770,14 +1818,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             {/* Instagram */}
                             {author.instagram && (
                               <Box sx={{ textAlign: 'left' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}
+                                >
                                   Instagram
                                 </Typography>
                                 <Typography
                                   variant="body2"
                                   component="a"
                                   href="#"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.preventDefault();
                                     let url: string;
                                     if (author.instagram!.startsWith('http')) {
@@ -1791,7 +1842,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   sx={{
                                     color: 'text.primary',
                                     textDecoration: 'none',
-                                    '&:hover': { textDecoration: 'underline' }
+                                    '&:hover': { textDecoration: 'underline' },
                                   }}
                                 >
                                   {author.instagram}
@@ -1805,75 +1856,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   </Box>
                 )}
               </Box>
-            ))}
-          </Box>
-        </Paper>
-      )}
-
-      {/* Failed Results */}
-      {failedResults.length > 0 && (
-        <Paper className="card" sx={{ mt: 4 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: '#d73027', mb: 3 }}>
-            Failed Processing ({failedResults.length} image{failedResults.length !== 1 ? 's' : ''})
-          </Typography>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {failedResults.map((result, index) => (
-              <Paper
-                key={index}
-                variant="outlined"
-                sx={{
-                  background: '#fff8f8',
-                  p: 3,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-                  <Box sx={{ fontSize: '28px', lineHeight: 1 }}>❌</Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="h6"
-                      sx={{ fontSize: '18px', fontWeight: 600, color: '#d32f2f', mb: 0.5 }}
-                    >
-                      Processing Failed
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                      Image {results.indexOf(result) + 1} of {results.length}
-                    </Typography>
-
-                    <Paper
-                      sx={{
-                        p: 2,
-                        mb: 2,
-                        fontFamily: 'monospace',
-                        fontSize: '13px',
-                        color: '#d32f2f',
-                        whiteSpace: 'pre-wrap',
-                        maxHeight: '200px',
-                        overflow: 'auto',
-                        backgroundColor: '#ffffff',
-                      }}
-                    >
-                      {result.error || 'Unknown error occurred'}
-                    </Paper>
-
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                      {onRestart && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={onRestart}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Try Again
-                        </Button>
-                      )}
-                      <Button variant="outlined" onClick={onReset} sx={{ textTransform: 'none' }}>
-                        Start Over
-                      </Button>
-                    </Box>
-                  </Box>
-                </Box>
-              </Paper>
             ))}
           </Box>
         </Paper>

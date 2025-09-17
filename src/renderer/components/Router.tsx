@@ -1,13 +1,9 @@
-import React from 'react';
 import { Typography } from '@mui/material';
-import {
-  Recipe,
-  ProcessingResult,
-  StyleOptions,
-} from '../../shared/types';
+import React from 'react';
+import { ProcessingResult, Recipe, StyleOptions } from '../../shared/types';
 import ColorMatchingStudio from './ColorMatchingStudio';
-import RecipeGallery from './RecipeGallery';
 import ProcessingView from './ProcessingView';
+import RecipeGallery from './RecipeGallery';
 import ResultsView from './ResultsView';
 import Settings from './Settings';
 import SetupWizard from './SetupWizard';
@@ -32,7 +28,6 @@ interface RouterProps {
   onPromptChange: (prompt: string) => void;
   onStyleOptionsChange: (options: Partial<StyleOptions>) => void;
   onReset: () => void;
-  onRestart: () => void;
   onNavigate: (path: string) => void;
 }
 
@@ -55,7 +50,6 @@ const Router: React.FC<RouterProps> = ({
   onPromptChange,
   onStyleOptionsChange,
   onReset,
-  onRestart,
   onNavigate,
 }) => {
   if (route === '/splash') {
@@ -115,9 +109,6 @@ const Router: React.FC<RouterProps> = ({
                 onReset();
                 onNavigate('/gallery');
               }}
-              onRestart={() => {
-                onRestart();
-              }}
             />
           </div>
         )}
@@ -139,9 +130,6 @@ const Router: React.FC<RouterProps> = ({
               onReset();
               onNavigate('/gallery');
             }}
-            onRestart={() => {
-              onRestart();
-            }}
           />
         ) : (
           <div className="card" style={{ padding: 24 }}>
@@ -157,7 +145,9 @@ const Router: React.FC<RouterProps> = ({
     return (
       <div className="fade-in">
         <div className="card" style={{ padding: 16 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>Settings</Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Settings
+          </Typography>
           <Settings />
         </div>
       </div>

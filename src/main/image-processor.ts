@@ -2,12 +2,12 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { AIColorAdjustments, OpenAIColorAnalyzer } from '../services/openai-color-analyzer';
 import { ProcessingResult, StyleOptions } from '../shared/types';
+import { generateCameraProfileXMP } from './camera-profile-generator';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
+import { generatePreviewFile } from './preview-generator';
 import { exportLightroomProfile } from './profile-exporter';
 import { SettingsService } from './settings-service';
 import { generateXMPContent as generateXMPContentImpl } from './xmp-generator';
-import { generateCameraProfileXMP } from './camera-profile-generator';
-import { generatePreviewFile } from './preview-generator';
 
 export interface StyleMatchOptions {
   baseImagePath?: string;
@@ -23,43 +23,60 @@ export interface StyleMatchOptions {
   styleOptions?: StyleOptions;
 }
 
-
 export class ImageProcessor {
   private aiAnalyzer: OpenAIColorAnalyzer | null = null;
   private settingsService = new SettingsService();
 
-  constructor() {
-  }
+  constructor() {}
 
   private async ensureAIAnalyzer(): Promise<OpenAIColorAnalyzer> {
     if (!this.aiAnalyzer) {
+      console.log('[PROCESSOR] Creating new AI analyzer...');
       const settings = await this.settingsService.loadSettings();
+      console.log('[PROCESSOR] Settings loaded, has API key:', !!settings.openaiKey);
       this.aiAnalyzer = new OpenAIColorAnalyzer(settings.openaiKey);
     }
     return this.aiAnalyzer;
   }
 
   async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
+    console.log('[PROCESSOR] Starting matchStyle with data:', {
+      hasBaseImagePath: !!data.baseImagePath,
+      hasTargetImagePath: !!data.targetImagePath,
+      hasPrompt: !!data.prompt,
+      hasBaseImageBase64: !!data.baseImageBase64,
+      hasTargetImageBase64: !!data.targetImageBase64,
+      hasStyleOptions: !!data.styleOptions,
+    });
+
     const analyzer = await this.ensureAIAnalyzer();
+    console.log('[PROCESSOR] AI Analyzer available:', analyzer.isAvailable());
+
     if (!analyzer.isAvailable()) {
+      console.error('[PROCESSOR] AI Analyzer not available - missing API key');
       throw new Error(
         'OpenAI API key not configured. This app requires OpenAI for color matching. Please set OPENAI_API_KEY environment variable.'
       );
     }
 
     try {
+      console.log('[PROCESSOR] Calling AI analyzer...');
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
-        data.targetImagePath,
+        data.targetImagePath || undefined,
         data.prompt, // hint/prompt
         data.baseImageBase64,
         data.targetImageBase64,
         {
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-          lightroomProfile: data.styleOptions?.lightroomProfile
+          lightroomProfile: data.styleOptions?.lightroomProfile,
         }
       );
-
+      console.log('[PROCESSOR] AI analyzer returned:', {
+        hasAdjustments: !!aiAdjustments,
+        presetName: aiAdjustments?.preset_name,
+        confidence: aiAdjustments?.confidence,
+      });
 
       // No longer generating processed images - just return analysis
       return {
@@ -82,13 +99,12 @@ export class ImageProcessor {
 
   async analyzeColorMatch(data: {
     baseImagePath?: string;
-    targetImagePath: string;
+    targetImagePath?: string;
     baseImageBase64?: string;
     targetImageBase64?: string;
     prompt?: string;
     styleOptions?: StyleOptions;
   }): Promise<ProcessingResult> {
-
     const analyzer = await this.ensureAIAnalyzer();
     if (!analyzer.isAvailable()) {
       throw new Error(
@@ -99,13 +115,13 @@ export class ImageProcessor {
     try {
       const aiAdjustments = await analyzer.analyzeColorMatch(
         data.baseImagePath,
-        data.targetImagePath,
+        data.targetImagePath || undefined,
         data.prompt,
         data.baseImageBase64,
         data.targetImageBase64,
         {
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-          lightroomProfile: data.styleOptions?.lightroomProfile
+          lightroomProfile: data.styleOptions?.lightroomProfile,
         }
       );
 
@@ -150,7 +166,6 @@ export class ImageProcessor {
 
   async generateLightroomPreset(data: any): Promise<ProcessingResult> {
     try {
-
       // Create presets directory
       const presetsDir = path.join(process.cwd(), 'presets');
       await fs.mkdir(presetsDir, { recursive: true });
@@ -161,7 +176,6 @@ export class ImageProcessor {
       // Generate XMP preset content
       const xmpContent = generateXMPContentImpl(data.adjustments, data.include);
       await fs.writeFile(presetPath, xmpContent, 'utf8');
-
 
       return {
         success: true,
@@ -205,7 +219,6 @@ export class ImageProcessor {
     data: any
   ): Promise<{ success: boolean; xmpContent?: string; error?: string }> {
     try {
-
       const adjustments = data?.adjustments || {};
       // Get AI-generated name directly from adjustments (same as preset export)
       const profileName = adjustments.preset_name || 'Camera Profile';
@@ -224,9 +237,6 @@ export class ImageProcessor {
     }
   }
 
-
-
-
   // Use centralized XMP generator implementation
   generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
     return generateXMPContentImpl(aiAdjustments, include);
@@ -239,8 +249,4 @@ export class ImageProcessor {
   ): string {
     return generateLUTContentImpl(aiAdjustments, size, format);
   }
-
-
-
-
 }

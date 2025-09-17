@@ -5,7 +5,7 @@
   "main": "dist/main/main.js",
   "scripts": {
     "start": "npm run build && electron .",
-    "dev": "concurrently \"npm run watch:main\" \"npm run watch:renderer\" \"wait-on dist/main/main.js && electron .\"",
+    "dev": "concurrently \"npm run watch:main\" \"npm run watch:renderer\" \"wait-on dist/main/main.js && NODE_ENV=development electron .\"",
     "build": "npm run generate-icons && npm run build:main && npm run build:renderer",
     "build:main": "tsc -p src/main/tsconfig.json",
     "build:renderer": "webpack --config webpack.renderer.js",

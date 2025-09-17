@@ -5,8 +5,16 @@ import type { AIColorAdjustments } from './types';
 export type { AIColorAdjustments } from './types';
 
 // Example B&W mixer derived from example-bw.xmp
-export function getExampleBWMixer(): Pick<AIColorAdjustments,
-  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
+export function getExampleBWMixer(): Pick<
+  AIColorAdjustments,
+  | 'gray_red'
+  | 'gray_orange'
+  | 'gray_yellow'
+  | 'gray_green'
+  | 'gray_aqua'
+  | 'gray_blue'
+  | 'gray_purple'
+  | 'gray_magenta'
 > {
   return {
     gray_red: -20,
@@ -28,31 +36,45 @@ export class OpenAIColorAnalyzer {
   constructor(apiKey?: string) {
     // OpenAI API key from settings or environment variable
     const key = apiKey || process.env.OPENAI_API_KEY;
+    console.log('[AI] OpenAI Color Analyzer constructor called with key:', !!key);
     if (key) {
       this.openai = new OpenAI({
         apiKey: key,
+        timeout: 120000, // 2 minutes timeout
+        maxRetries: 2,
       });
       this.initialized = true;
+      console.log('[AI] OpenAI client initialized successfully');
     } else {
       console.warn('[AI] OpenAI API key not provided');
     }
   }
 
-
   async analyzeColorMatch(
     baseImagePath: string | undefined,
-    targetImagePath: string,
+    targetImagePath?: string,
     hint?: string,
     baseImageBase64?: string | string[],
     targetImageBase64?: string,
     options?: { preserveSkinTones?: boolean; lightroomProfile?: string }
   ): Promise<AIColorAdjustments> {
+    console.log('[AI] analyzeColorMatch called with:', {
+      hasBaseImagePath: !!baseImagePath,
+      hasTargetImagePath: !!targetImagePath,
+      hasHint: !!hint,
+      hasBaseImageBase64: !!baseImageBase64,
+      hasTargetImageBase64: !!targetImageBase64,
+      hasOptions: !!options,
+      initialized: this.initialized,
+      hasOpenAI: !!this.openai,
+    });
+
     if (!this.initialized || !this.openai) {
+      console.error('[AI] Not initialized or missing OpenAI client');
       throw new Error(
         'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.'
       );
     }
-
 
     // Use provided base64 data first; otherwise, convert from file path if available
     const baseImageB64 = baseImageBase64
@@ -60,10 +82,14 @@ export class OpenAIColorAnalyzer {
       : baseImagePath
       ? await this.convertToBase64Jpeg(baseImagePath)
       : undefined;
-    const targetImageB64 = targetImageBase64 || (await this.convertToBase64Jpeg(targetImagePath));
+    const targetImageB64 =
+      targetImageBase64 ||
+      (targetImagePath ? await this.convertToBase64Jpeg(targetImagePath) : undefined);
 
     let completion;
+    const startTime = Date.now();
     try {
+      console.log(`[AI] Starting color analysis with model: ${this.model}`);
 
       // Build content via helper (use auto-recognition masks for humans)
       const userContent: any[] = buildUserContentForAnalysis(
@@ -76,7 +102,6 @@ export class OpenAIColorAnalyzer {
         }
       );
 
-
       const toolChoice = 'auto';
 
       completion = await this.openai.chat.completions.create({
@@ -87,6 +112,7 @@ export class OpenAIColorAnalyzer {
             content: userContent,
           },
         ],
+        max_completion_tokens: 8000, // Limit response length for faster processing
         tools: [
           // Back-compat: single-call function that returns the full object (including masks)
           {
@@ -205,14 +231,54 @@ export class OpenAIColorAnalyzer {
                     maximum: 100,
                   },
                   // Black & White Mix (GrayMixer*)
-                  gray_red: { type: 'number', description: 'B&W mix: red (-100 to 100)', minimum: -100, maximum: 100 },
-                  gray_orange: { type: 'number', description: 'B&W mix: orange (-100 to 100)', minimum: -100, maximum: 100 },
-                  gray_yellow: { type: 'number', description: 'B&W mix: yellow (-100 to 100)', minimum: -100, maximum: 100 },
-                  gray_green: { type: 'number', description: 'B&W mix: green (-100 to 100)', minimum: -100, maximum: 100 },
-                  gray_aqua: { type: 'number', description: 'B&W mix: aqua (-100 to 100)', minimum: -100, maximum: 100 },
-                  gray_blue: { type: 'number', description: 'B&W mix: blue (-100 to 100)', minimum: -100, maximum: 100 },
-                  gray_purple: { type: 'number', description: 'B&W mix: purple (-100 to 100)', minimum: -100, maximum: 100 },
-                  gray_magenta: { type: 'number', description: 'B&W mix: magenta (-100 to 100)', minimum: -100, maximum: 100 },
+                  gray_red: {
+                    type: 'number',
+                    description: 'B&W mix: red (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  gray_orange: {
+                    type: 'number',
+                    description: 'B&W mix: orange (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  gray_yellow: {
+                    type: 'number',
+                    description: 'B&W mix: yellow (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  gray_green: {
+                    type: 'number',
+                    description: 'B&W mix: green (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  gray_aqua: {
+                    type: 'number',
+                    description: 'B&W mix: aqua (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  gray_blue: {
+                    type: 'number',
+                    description: 'B&W mix: blue (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  gray_purple: {
+                    type: 'number',
+                    description: 'B&W mix: purple (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
+                  gray_magenta: {
+                    type: 'number',
+                    description: 'B&W mix: magenta (-100 to 100)',
+                    minimum: -100,
+                    maximum: 100,
+                  },
                   hue_red: {
                     type: 'number',
                     description: 'Red hue shift (-100 to +100)',
@@ -1188,8 +1254,14 @@ export class OpenAIColorAnalyzer {
         // Encourage/require tool use: when 3D Pop is emphasized, require tool calls (no plain text)
         tool_choice: toolChoice,
       });
+
+      const endTime = Date.now();
+      const duration = (endTime - startTime) / 1000;
+      console.log(`[AI] API call completed in ${duration.toFixed(2)}s`);
     } catch (error) {
-      console.error('[AI] OpenAI API call failed:', error);
+      const endTime = Date.now();
+      const duration = (endTime - startTime) / 1000;
+      console.error(`[AI] OpenAI API call failed after ${duration.toFixed(2)}s:`, error);
       throw new Error(
         `OpenAI API error: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -1280,7 +1352,6 @@ export class OpenAIColorAnalyzer {
   // No default injection of B&W mixer here; AI should provide gray_* values when using monochrome.
 
   private async convertToBase64Jpeg(imagePath: string): Promise<string> {
-
     try {
       // Use the centralized image processing service
       return await imageProcessingService.convertToBase64Jpeg(imagePath);
@@ -1292,6 +1363,16 @@ export class OpenAIColorAnalyzer {
         }`
       );
     }
+  }
+
+  // Set the model to use for API calls
+  setModel(model: string): void {
+    this.model = model;
+  }
+
+  // Get current model
+  getModel(): string {
+    return this.model;
   }
 
   isAvailable(): boolean {

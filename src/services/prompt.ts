@@ -3,7 +3,7 @@
 
 export function buildUserContentForAnalysis(
   baseImageB64: string | string[] | undefined,
-  targetImageB64: string,
+  targetImageB64?: string,
   hint?: string,
   opts?: { preserveSkinTones?: boolean; lightroomProfile?: string }
 ): any[] {
@@ -30,7 +30,8 @@ Call functions to:
 Include a short preset_name (2-4 words, Title Case).
 If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).`;
 
-  if (baseImageB64) {
+  if (baseImageB64 && targetImageB64) {
+    // Both base and target images provided - normal color matching
     const bases = Array.isArray(baseImageB64) ? baseImageB64 : [baseImageB64];
     content.push(
       {
@@ -64,7 +65,32 @@ If you select a black & white/monochrome treatment, explicitly include the Black
       { type: 'text' as const, text: 'TARGET IMAGE (to be adjusted):' },
       { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${targetImageB64}` } }
     );
-  } else {
+  } else if (baseImageB64 && !targetImageB64) {
+    // Only base image provided - analyze and create adjustments for the base image itself
+    const bases = Array.isArray(baseImageB64) ? baseImageB64 : [baseImageB64];
+    content.push(
+      {
+        type: 'text' as const,
+        text:
+          `I have a reference image${
+            bases.length > 1 ? 's' : ''
+          } to analyze and create adjustments for.\n\n` +
+          `Please analyze the image${
+            bases.length > 1 ? 's' : ''
+          } and create Lightroom/Camera Raw adjustments that enhance its style and mood.\n\n` +
+          sharedInstructions,
+      },
+      {
+        type: 'text' as const,
+        text: bases.length === 1 ? 'REFERENCE IMAGE:' : `REFERENCE IMAGES (${bases.length}):`,
+      },
+      ...bases.flatMap((b64, idx) => [
+        { type: 'text' as const, text: bases.length > 1 ? `IMAGE ${idx + 1}:` : 'IMAGE:' },
+        { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${b64}` } },
+      ])
+    );
+  } else if (!baseImageB64 && targetImageB64) {
+    // Only target image provided - apply adjustments based on hint
     content.push(
       {
         type: 'text' as const,
@@ -75,6 +101,12 @@ If you select a black & white/monochrome treatment, explicitly include the Black
       { type: 'text' as const, text: 'TARGET IMAGE:' },
       { type: 'image_url' as const, image_url: { url: `data:image/jpeg;base64,${targetImageB64}` } }
     );
+  } else {
+    // No images provided - this shouldn't happen but handle gracefully
+    content.push({
+      type: 'text' as const,
+      text: 'No images provided for analysis. Please provide at least one image.',
+    });
   }
 
   return content;

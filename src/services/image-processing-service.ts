@@ -143,9 +143,9 @@ export class ImageProcessingService {
 
   async convertToBase64Jpeg(imagePath: string): Promise<string> {
     const buffer = await this.processImageFromPath(imagePath, {
-      maxWidth: 1024,
-      maxHeight: 1024,
-      quality: 90,
+      maxWidth: 768,  // Reduced from 1024 for faster API calls
+      maxHeight: 768,
+      quality: 85,    // Reduced from 90 for smaller file size
       format: 'jpeg'
     });
     return buffer.toString('base64');

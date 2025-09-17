@@ -1,15 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Recipe,
-  ProcessingResult,
-  StyleOptions,
-  LightroomProfile,
-} from '../../shared/types';
+import { LightroomProfile, ProcessingResult, Recipe, StyleOptions } from '../../shared/types';
 import { AlertProvider } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import AppHeader from './AppHeader';
-import Router from './Router';
 import ErrorDialog from './ErrorDialog';
+import Router from './Router';
 
 const App: React.FC = () => {
   // Zustand store
@@ -47,6 +42,8 @@ const App: React.FC = () => {
   const [errorDetails, setErrorDetails] = useState('');
   const currentProcessIdRef = useRef<string | null>(null);
   const startingRef = useRef<boolean>(false);
+  const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     currentProcessIdRef.current = currentProcessId;
   }, [currentProcessId]);
@@ -59,7 +56,7 @@ const App: React.FC = () => {
     progress: number;
   }>({ status: 'Loading...', progress: 0 });
   const [styleOptions, setStyleOptions] = useState<StyleOptions>({
-    lightroomProfile: LightroomProfile.ADOBE_COLOR // Default to Adobe Color as specified
+    lightroomProfile: LightroomProfile.ADOBE_COLOR, // Default to Adobe Color as specified
   });
 
   // Force start at splash, then redirect based on setup completion (run only once)
@@ -188,16 +185,90 @@ const App: React.FC = () => {
       status: 'Starting AI analysis...',
     });
 
+    // Add periodic status logging for debugging
+    statusIntervalRef.current = setInterval(() => {
+      console.log('[APP] Processing status check:', {
+        isProcessing: processingState.isProcessing,
+        progress: processingState.progress,
+        status: processingState.status,
+        currentStep,
+        startingRef: startingRef.current,
+      });
+    }, 30000); // Every 30 seconds
+
+    // Set a timeout to prevent hanging (2 minutes for testing)
+    console.log('[APP] Setting processing timeout for 2 minutes');
+    processingTimeoutRef.current = setTimeout(() => {
+      if (statusIntervalRef.current) {
+        clearInterval(statusIntervalRef.current);
+        statusIntervalRef.current = null;
+      }
+      console.warn('[APP] Processing timeout triggered - showing error dialog');
+
+      // Show error dialog for timeout
+      setErrorMessage('Processing Timeout');
+      setErrorDetails(
+        'Processing took longer than expected and timed out. This might be due to API issues or network problems.'
+      );
+      setErrorDialogOpen(true);
+
+      setProcessingState({
+        isProcessing: false,
+        progress: 0,
+        status: 'Processing timed out',
+      });
+      setCurrentStep('results');
+      startingRef.current = false;
+    }, 2 * 60 * 1000); // 2 minutes for testing
+
     // Kick off processing using stored base64 data
     if (newProcessId) {
-      window.electronAPI.processWithStoredImages({
-        processId: newProcessId,
-        targetIndex: 0,
-        baseImageData: (returnedBase64.base || undefined) as any,
-        targetImageData: returnedBase64.targets || undefined,
-        prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
-        styleOptions: styleOptions,
-      });
+      try {
+        const processingData = {
+          processId: newProcessId,
+          targetIndex: 0,
+          baseImageData: (returnedBase64.base || undefined) as any,
+          targetImageData: returnedBase64.targets || undefined,
+          prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
+          styleOptions: styleOptions,
+        };
+        console.log('[APP] Calling processWithStoredImages with:', {
+          hasProcessId: !!processingData.processId,
+          targetIndex: processingData.targetIndex,
+          hasBaseImageData: !!processingData.baseImageData,
+          hasTargetImageData: !!processingData.targetImageData,
+          targetImageDataLength: Array.isArray(processingData.targetImageData)
+            ? processingData.targetImageData.length
+            : 'not array',
+          hasPrompt: !!processingData.prompt,
+          hasStyleOptions: !!processingData.styleOptions,
+        });
+
+        await window.electronAPI.processWithStoredImages(processingData);
+      } catch (error) {
+        console.error('[APP] Processing start failed:', error);
+        // Clear timeout and interval
+        if (processingTimeoutRef.current) {
+          clearTimeout(processingTimeoutRef.current);
+          processingTimeoutRef.current = null;
+        }
+        if (statusIntervalRef.current) {
+          clearInterval(statusIntervalRef.current);
+          statusIntervalRef.current = null;
+        }
+
+        // Show error dialog
+        setErrorMessage('Processing Start Failed');
+        setErrorDetails(error instanceof Error ? error.message : 'Unknown error occurred');
+        setErrorDialogOpen(true);
+
+        setProcessingState({
+          isProcessing: false,
+          progress: 0,
+          status: 'Processing failed to start',
+        });
+        startingRef.current = false;
+      }
     }
   };
 
@@ -210,7 +281,18 @@ const App: React.FC = () => {
   };
 
   const handleProcessingComplete = async (processingResults: any[]) => {
+    console.log('[RENDERER] Processing complete received:', processingResults);
     startingRef.current = false;
+
+    // Clear the timeout and interval since processing completed successfully
+    if (processingTimeoutRef.current) {
+      clearTimeout(processingTimeoutRef.current);
+      processingTimeoutRef.current = null;
+    }
+    if (statusIntervalRef.current) {
+      clearInterval(statusIntervalRef.current);
+      statusIntervalRef.current = null;
+    }
     // Convert the results to include inputPath for proper storage
     const inputs = targetImagesRef.current || [];
     const results: ProcessingResult[] = processingResults.map((result, index) => ({
@@ -221,31 +303,31 @@ const App: React.FC = () => {
       metadata: result.metadata,
     }));
 
-    // Check for errors and show error dialog if all processing failed
+    // Check for errors and show error dialog if any processing failed
     const anySuccess = results.some(r => r.success);
     const anyErrors = results.some(r => !r.success && r.error);
+    const failedResults = results.filter(r => !r.success && r.error);
 
-    if (!anySuccess && anyErrors) {
-      // All processing failed - show error dialog
-      const errorDetails = results
-        .filter(r => !r.success && r.error)
-        .map(r => r.error)
-        .join('\n\n');
+    if (anyErrors) {
+      // Show error dialog for any processing failures
+      const errorDetails = failedResults.map(r => r.error).join('\n\n');
 
-      setErrorMessage('AI Processing Failed');
-      setErrorDetails(errorDetails || 'All images failed to process. This might be due to API issues or invalid images.');
+      setErrorMessage(anySuccess ? 'Processing Completed with Errors' : 'AI Processing Failed');
+      setErrorDetails(
+        errorDetails || 'Processing failed. This might be due to API issues or invalid images.'
+      );
       setErrorDialogOpen(true);
 
       setProcessingState({
         isProcessing: false,
-        progress: 0,
-        status: 'Processing failed',
+        progress: anySuccess ? 100 : 0,
+        status: anySuccess ? 'Processing completed with errors' : 'Processing failed',
       });
     } else {
       setProcessingState({
         isProcessing: false,
         progress: 100,
-        status: anyErrors ? 'Processing completed with some errors' : 'Processing complete!',
+        status: 'Processing complete!',
       });
     }
 
@@ -264,6 +346,7 @@ const App: React.FC = () => {
       }
     }
 
+    console.log('[RENDERER] Transitioning to results step');
     setCurrentStep('results');
   };
 
@@ -326,9 +409,17 @@ const App: React.FC = () => {
 
       // Listen for processing completion
       const onComplete = (results: ProcessingResult[]) => {
+        console.log('[RENDERER] Processing complete callback triggered with results:', results);
         handleProcessingComplete(results);
       };
+      console.log('[RENDERER] Setting up processing complete listener');
       window.electronAPI.onProcessingComplete?.(onComplete);
+
+      // Test if the listener is working
+      console.log('[RENDERER] Testing IPC connection...');
+      setTimeout(() => {
+        console.log('[RENDERER] IPC test - listeners should be active now');
+      }, 1000);
 
       // Listen for background process updates (e.g., status flip to completed)
       const onProcessUpdated = async (payload: { processId: string; updates: any }) => {
@@ -435,7 +526,6 @@ const App: React.FC = () => {
     window.location.hash = to.startsWith('#') ? to : `#${to}`;
   };
 
-
   return (
     <AlertProvider>
       <div className={`container ${currentStep}`}>
@@ -465,10 +555,6 @@ const App: React.FC = () => {
           onPromptChange={setPrompt}
           onStyleOptionsChange={u => setStyleOptions(prev => ({ ...prev, ...u }))}
           onReset={handleReset}
-          onRestart={() => {
-            setCurrentStep('processing');
-            handleStartProcessing();
-          }}
           onNavigate={navigate}
         />
 

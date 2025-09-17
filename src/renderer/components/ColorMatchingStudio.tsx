@@ -261,13 +261,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           minHeight: 500,
         }}
       >
-        {/* Left Column - Profile and Target Image */}
+        {/* Left Column - Target Image and Reference Image */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
-          <LightroomProfileCard
-            selected={styleOptions?.lightroomProfile}
-            onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
-          />
-
           <Box sx={{ display: 'flex', width: '100%' }}>
             <ImagePicker
               kind="target"
@@ -283,10 +278,29 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
               maxFiles={3}
             />
           </Box>
+
+          <ImagePicker
+            kind="reference"
+            images={baseImages}
+            previews={basePreviews}
+            onSelectFiles={handleBaseImageSelect}
+            onRemoveImage={handleRemoveBase}
+            onDropFiles={paths => {
+              if (!paths || paths.length === 0) return;
+              const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
+              onImagesSelected(next, targetImages);
+            }}
+            maxFiles={3}
+          />
         </Box>
 
         {/* Right Column - All Options */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <LightroomProfileCard
+            selected={styleOptions?.lightroomProfile}
+            onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
+          />
+
           {/* Quick Options */}
           <Paper className="card slide-in" elevation={0} sx={{ p: 2.5 }}>
             <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
@@ -331,20 +345,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           <FilmStylesCard
             selected={styleOptions?.filmStyle?.key}
             onSelect={s => onStyleOptionsChange?.({ filmStyle: s })}
-          />
-
-          <ImagePicker
-            kind="reference"
-            images={baseImages}
-            previews={basePreviews}
-            onSelectFiles={handleBaseImageSelect}
-            onRemoveImage={handleRemoveBase}
-            onDropFiles={paths => {
-              if (!paths || paths.length === 0) return;
-              const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
-              onImagesSelected(next, targetImages);
-            }}
-            maxFiles={3}
           />
 
           <FineTuneControls

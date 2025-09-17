@@ -1,6 +1,6 @@
-import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
-import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
+import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 import { Box, Button, Chip, IconButton, Paper, Tooltip } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import ImageGrid from './ImageGrid';
@@ -22,9 +22,7 @@ interface ImagePickerProps {
 }
 
 // Supported web-safe image formats only
-const allowedExt = [
-  'jpg', 'jpeg', 'png', 'webp'
-];
+const allowedExt = ['jpg', 'jpeg', 'png', 'webp'];
 
 function isValidImagePath(path?: string) {
   if (!path) return false;
@@ -75,7 +73,9 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    try { if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; } catch {
+    try {
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    } catch {
       // Ignore dataTransfer errors in some browsers
     }
     setIsDragOver(true);
@@ -99,13 +99,13 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
       if (files.length === 0) return;
 
       // Filter valid image files
-      const validFiles = files.filter((f) => isValidImagePath(f.name));
+      const validFiles = files.filter(f => isValidImagePath(f.name));
       if (validFiles.length === 0) return;
 
       try {
         // Read files as base64
         const fileData = await Promise.all(
-          validFiles.map(async (file) => {
+          validFiles.map(async file => {
             return new Promise<{ name: string; data: string }>((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = () => {
@@ -136,16 +136,27 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const display = (previews.length ? previews : images).slice(0, maxFiles);
 
   return (
-    <Paper className="card slide-in" elevation={0} sx={{ p: 2.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <Paper
+      className="card slide-in"
+      elevation={0}
+      sx={{ p: 2.5, display: 'flex', flexDirection: 'column', width: '100%' }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {defaults.icon}
           <Box>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#2c3338', margin: 0 }}>{headerTitle}</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#2c3338', margin: 0 }}>
+              {headerTitle}
+            </h3>
             <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>{headerDescription}</p>
           </Box>
         </Box>
-        <Chip label={required ? 'Required' : defaults.chip} size="small" color={required ? 'primary' : 'default'} variant="outlined" />
+        <Chip
+          label={required ? 'Required' : defaults.chip}
+          size="small"
+          color={required ? 'primary' : 'default'}
+          variant="outlined"
+        />
       </Box>
 
       {/* Main area: supports drag & drop */}
@@ -157,8 +168,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             onDrop={handleDrop}
             sx={{
               width: '100%',
-              minHeight: kind === 'target' ? 400 : 180,
-              maxHeight: kind === 'target' ? 400 : 180,
+              minHeight: 400,
+              maxHeight: 400,
               borderRadius: 2,
               overflow: 'hidden',
               border: isDragOver ? '2px dashed rgba(63,81,181,0.4)' : 'none',
@@ -168,7 +179,11 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
               WebkitAppRegion: 'no-drag',
             }}
           >
-            <SingleImage source={display[0]} alt={kind === 'target' ? 'Target' : 'Reference'} fit="contain" />
+            <SingleImage
+              source={display[0]}
+              alt={kind === 'target' ? 'Target' : 'Reference'}
+              fit="contain"
+            />
             {onRemoveImage && (
               <Tooltip title={kind === 'target' ? 'Remove this image' : 'Remove this reference'}>
                 <IconButton
@@ -196,7 +211,15 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
               <Chip
                 label={defaults.countLabel(images.length)}
                 size="medium"
-                sx={{ position: 'absolute', top: 12, right: 12, background: 'primary.main', color: 'white', fontSize: 12, fontWeight: 600 }}
+                sx={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 12,
+                  background: 'primary.main',
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
               />
             )}
           </Box>
@@ -206,20 +229,20 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
                 sources={display.slice(1)}
                 columns={4}
                 tileHeight={80}
-                onRemove={onRemoveImage ? (i) => onRemoveImage(i + 1) : undefined}
+                onRemove={onRemoveImage ? i => onRemoveImage(i + 1) : undefined}
               />
             </Box>
           )}
-          <Box 
-            sx={{ 
-              mt: 2, 
-              p: 2, 
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
               backgroundColor: 'background.paper',
               borderRadius: 2,
               border: '1px solid rgba(0, 0, 0, 0.08)',
               display: 'flex',
               justifyContent: 'center',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', alignItems: 'center' }}>
@@ -269,8 +292,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             sx={{
-              minHeight: kind === 'target' ? 300 : 160,
-              maxHeight: kind === 'target' ? 300 : 160,
+              minHeight: 300,
+              maxHeight: 300,
               border: isDragOver ? '2px dashed rgba(63,81,181,0.6)' : 'none',
               borderRadius: 2,
               display: 'flex',
@@ -289,34 +312,38 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
               ) : (
                 <PaletteOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />
               )}
-              <h4 style={{ fontSize: 18, color: '#868e96', marginBottom: 8 }}>Drop images here or click to browse</h4>
-              <p style={{ fontSize: 13, color: '#868e96' }}>JPEG, PNG, WebP. Up to {maxFiles} files.</p>
+              <h4 style={{ fontSize: 18, color: '#868e96', marginBottom: 8 }}>
+                Drop images here or click to browse
+              </h4>
+              <p style={{ fontSize: 13, color: '#868e96' }}>
+                JPEG, PNG, WebP. Up to {maxFiles} files.
+              </p>
             </Box>
           </Box>
-          <Box 
-            sx={{ 
-              mt: 2, 
-              p: 2, 
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
               backgroundColor: 'background.paper',
               borderRadius: 2,
               border: '1px solid rgba(0, 0, 0, 0.08)',
               display: 'flex',
               justifyContent: 'center',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             <Button
               variant="contained"
               onClick={onSelectFiles}
               size="large"
-              sx={{ 
-                textTransform: 'none', 
-                fontWeight: 700, 
-                py: 1.5, 
-                px: 4, 
-                borderRadius: 2, 
+              sx={{
+                textTransform: 'none',
+                fontWeight: 700,
+                py: 1.5,
+                px: 4,
+                borderRadius: 2,
                 fontSize: 16,
-                minWidth: 200
+                minWidth: 200,
               }}
             >
               {defaults.emptyCta}
