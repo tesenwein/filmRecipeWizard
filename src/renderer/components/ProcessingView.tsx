@@ -36,6 +36,7 @@ interface ThinkingStep {
   step?: string;
   progress?: number;
   toolName?: string;
+  toolArgs?: any;
   timestamp: number;
   icon?: React.ReactNode;
 }
@@ -66,8 +67,12 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
   // Listen for real streaming updates from the AI service
   useEffect(() => {
     const handleStreamingUpdate = (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
-      // Skip progress updates if we already have thinking steps (to avoid duplicates)
-      if (update.type === 'progress' && thinkingSteps.some(step => step.type === 'thinking')) {
+      // Skip progress updates entirely - they should only update progress, not create new steps
+      if (update.type === 'progress') {
+        // Just update the current step text if provided
+        if (update.step) {
+          setCurrentStep(update.step);
+        }
         return;
       }
 
@@ -96,6 +101,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               content: update.content,
               step: update.step || getStepName(stepType),
               progress: update.progress || 0,
+              toolName: update.toolName,
+              toolArgs: update.toolArgs,
               timestamp: Date.now(),
               icon
             };
@@ -125,6 +132,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               content: update.content,
               step: update.step || getStepName(stepType),
               progress: update.progress || 0,
+              toolName: update.toolName,
+              toolArgs: update.toolArgs,
               timestamp: Date.now(),
               icon
             };
@@ -141,6 +150,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           step: update.step || getStepName(stepType),
           progress: update.progress || 0,
           toolName: update.toolName,
+          toolArgs: update.toolArgs,
           timestamp: Date.now(),
           icon
         };
@@ -182,7 +192,13 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
     if (status && status !== currentStep) {
       setCurrentStep(status);
       // Only add if we don't have streaming updates (fallback)
-      if (thinkingSteps.length === 0) {
+      // Also check if the status is not already covered by streaming content
+      const hasSimilarContent = thinkingSteps.some(step =>
+        step.content.toLowerCase().includes(status.toLowerCase()) ||
+        status.toLowerCase().includes(step.content.toLowerCase())
+      );
+
+      if (thinkingSteps.length === 0 || !hasSimilarContent) {
         const stepType = parseStepType(status);
         const icon = getStepIcon(stepType);
 
@@ -192,6 +208,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           content: status.replace(/^AI:\s*/, '').trim(),
           step: getStepName(stepType),
           progress: progress || 0,
+          toolName: undefined,
+          toolArgs: undefined,
           timestamp: Date.now(),
           icon
         };
@@ -496,9 +514,21 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                           {step.content}
                         </Typography>
                         {step.toolName && (
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                            Using tool: {step.toolName}
-                          </Typography>
+                          <Box sx={{ mt: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              Using tool: {step.toolName}
+                            </Typography>
+                            {step.toolArgs && (
+                              <Typography variant="caption" color="text.secondary" sx={{
+                                display: 'block',
+                                fontFamily: 'monospace',
+                                fontSize: '0.7rem',
+                                opacity: 0.8
+                              }}>
+                                {JSON.stringify(step.toolArgs, null, 2)}
+                              </Typography>
+                            )}
+                          </Box>
                         )}
                       </Box>
                       {index === newStepIndex && isTyping && (

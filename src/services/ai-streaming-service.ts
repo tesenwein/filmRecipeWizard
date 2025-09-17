@@ -294,7 +294,8 @@ Call the generate_color_adjustments function with:
    - For background masks, include subCategoryId: 22 for proper Lightroom detection
    - For subject/person masks, use type: 'subject' with referenceX/Y coordinates
    - For sky masks, use type: 'sky' with referenceX/Y coordinates` +
-            (options.preserveSkinTones ? `\n6. Preserve natural skin tones in Subject masks` : '') +
+            (options.aiFunctions?.pointColor ? `\n6. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
+            (options.preserveSkinTones ? `\n${options.aiFunctions?.pointColor ? '7' : '6'}. Preserve natural skin tones in Subject masks` : '') +
             (options.lightroomProfile
                 ? `\n\nIMPORTANT: Use "${options.lightroomProfile}" as the base camera profile in your adjustments. This profile determines the baseline color rendition and contrast.`
                 : '') +
@@ -421,6 +422,13 @@ Provide detailed reasoning for each adjustment to help the user understand the c
                 tone_curve_red: curveArray.optional(),
                 tone_curve_green: curveArray.optional(),
                 tone_curve_blue: curveArray.optional(),
+            });
+        }
+
+        if (aiFunctions.pointColor) {
+            baseSchema = baseSchema.extend({
+                point_colors: z.array(z.array(z.number())).optional().describe('Point color adjustments as arrays of RGB values'),
+                color_variance: z.array(z.number()).optional().describe('Color variance adjustments for point colors'),
             });
         }
 
