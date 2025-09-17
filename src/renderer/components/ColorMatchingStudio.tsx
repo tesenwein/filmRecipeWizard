@@ -288,7 +288,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         </Box>
 
         {/* Right Column - All Options */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: 'fit-content', position: 'sticky', top: 0 }}>
           <LightroomProfileCard
             selected={styleOptions?.lightroomProfile}
             onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
