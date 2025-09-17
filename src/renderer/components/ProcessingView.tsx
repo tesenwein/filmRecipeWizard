@@ -26,10 +26,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
           justifyContent: 'center',
           height: { xs: 320, sm: 420, md: 520 },
           borderRadius: 2,
-          background:
-            'radial-gradient(400px 200px at 80% -10%, rgba(102,126,234,0.08), transparent 60%), ' +
-            'radial-gradient(300px 150px at -10% -20%, rgba(118,75,162,0.06), transparent 60%), ' +
-            '#f8fafc',
+          backgroundColor: '#f8fafc',
           textAlign: 'center',
         }}
       >
