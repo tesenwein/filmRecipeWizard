@@ -157,16 +157,19 @@ export class ProcessingHandlers {
             optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
           }
           const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
-          if (options.warmth !== undefined) {
-            const w = Math.max(0, Math.min(100, Number(options.warmth)));
-            const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
-            optionsHintParts.push(
-              `White Balance Warmth Bias: ${warmthBias} (negative=cool, positive=warm)`
-            );
-          }
-          if (options.tint !== undefined) {
-            const t = Math.max(-50, Math.min(50, Number(options.tint)));
-            optionsHintParts.push(`Tint Bias: ${t} (negative=green, positive=magenta)`);
+          // Only include temperature/tint hints if the option is enabled
+          if (options.aiFunctions?.temperatureTint) {
+            if (options.warmth !== undefined) {
+              const w = Math.max(0, Math.min(100, Number(options.warmth)));
+              const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
+              optionsHintParts.push(
+                `White Balance Warmth Bias: ${warmthBias} (negative=cool, positive=warm)`
+              );
+            }
+            if (options.tint !== undefined) {
+              const t = Math.max(-50, Math.min(50, Number(options.tint)));
+              optionsHintParts.push(`Tint Bias: ${t} (negative=green, positive=magenta)`);
+            }
           }
           if (options.contrast !== undefined)
             optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);

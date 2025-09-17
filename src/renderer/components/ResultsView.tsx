@@ -29,6 +29,7 @@ import React, { useEffect, useState } from 'react';
 import { ProcessingResult, UserProfile, getLightroomProfileDisplayName } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
+import AIFunctionsSelector from './AIFunctionsSelector';
 import ConfirmDialog from './ConfirmDialog';
 import ImageSelectionChips from './results/ImageSelectionChips';
 import RecipeNameHeader from './results/RecipeNameHeader';
@@ -41,6 +42,7 @@ interface ResultsViewProps {
   onReset: () => void;
   processId?: string; // Optional process ID to load base64 image data
   prompt?: string; // Optional prompt provided in this session
+  aiFunctions?: { temperatureTint?: boolean; masks?: boolean; colorGrading?: boolean; hsl?: boolean; curves?: boolean; grain?: boolean; pointColor?: boolean };
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({
@@ -50,6 +52,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   onReset,
   processId,
   prompt,
+  aiFunctions,
 }) => {
   const { showError } = useAlert();
   // Base64 image data URLs for display
@@ -1223,6 +1226,23 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           </AccordionDetails>
                         </Accordion>
                       )}
+
+                    {/* AI Functions Used */}
+                    {aiFunctions && (
+                      <Accordion>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            AI Functions Used
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <AIFunctionsSelector
+                            styleOptions={{ aiFunctions }}
+                            onStyleOptionsChange={() => {}} // Read-only in results view
+                          />
+                        </AccordionDetails>
+                      </Accordion>
+                    )}
                   </Box>
                 )}
 
@@ -1317,31 +1337,31 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               label: 'Exposure',
                               description: 'Basic exposure adjustments',
                             },
-                            {
+                            ...(aiFunctions?.temperatureTint ? [{
                               key: 'wbBasic',
                               label: 'Basic Adjustments',
                               description: 'White balance, contrast, highlights, shadows',
-                            },
-                            {
+                            }] : []),
+                            ...(aiFunctions?.hsl ? [{
                               key: 'hsl',
                               label: 'HSL Adjustments',
                               description: 'Hue, saturation, and luminance per color',
-                            },
-                            {
+                            }] : []),
+                            ...(aiFunctions?.colorGrading ? [{
                               key: 'colorGrading',
                               label: 'Color Grading',
                               description: 'Shadow, midtone, highlight color wheels',
-                            },
-                            {
+                            }] : []),
+                            ...(aiFunctions?.curves ? [{
                               key: 'curves',
                               label: 'Tone Curves',
                               description: 'RGB and luminance curve adjustments',
-                            },
-                            {
+                            }] : []),
+                            ...(aiFunctions?.pointColor ? [{
                               key: 'pointColor',
                               label: 'Point Color',
                               description: 'Targeted color adjustments',
-                            },
+                            }] : []),
                             {
                               key: 'sharpenNoise',
                               label: 'Sharpen & Noise',
@@ -1352,16 +1372,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               label: 'Vignette',
                               description: 'Edge darkening effects',
                             },
-                            {
+                            ...(aiFunctions?.grain ? [{
                               key: 'grain',
                               label: 'Film Grain',
                               description: 'Analog film texture simulation',
-                            },
-                            {
+                            }] : []),
+                            ...(aiFunctions?.masks ? [{
                               key: 'masks',
                               label: 'Masks (Local Adjustments)',
                               description: 'Area-specific modifications',
-                            },
+                            }] : []),
                           ].map(opt => (
                             <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
                               <FormControlLabel

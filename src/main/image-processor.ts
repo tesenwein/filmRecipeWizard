@@ -70,6 +70,7 @@ export class ImageProcessor {
         {
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
           lightroomProfile: data.styleOptions?.lightroomProfile,
+          aiFunctions: data.styleOptions?.aiFunctions,
         }
       );
       console.log('[PROCESSOR] AI analyzer returned:', {
@@ -122,6 +123,7 @@ export class ImageProcessor {
         {
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
           lightroomProfile: data.styleOptions?.lightroomProfile,
+          aiFunctions: data.styleOptions?.aiFunctions,
         }
       );
 
@@ -174,7 +176,7 @@ export class ImageProcessor {
       const presetPath = path.join(presetsDir, `Film Recipe Wizard-${timestamp}.xmp`);
 
       // Generate XMP preset content
-      const xmpContent = generateXMPContentImpl(data.adjustments, data.include);
+      const xmpContent = generateXMPContentImpl(data.adjustments, data.include, data.styleOptions?.aiFunctions);
       await fs.writeFile(presetPath, xmpContent, 'utf8');
 
       return {
@@ -238,8 +240,8 @@ export class ImageProcessor {
   }
 
   // Use centralized XMP generator implementation
-  generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
-    return generateXMPContentImpl(aiAdjustments, include);
+  generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, aiFunctions?: any): string {
+    return generateXMPContentImpl(aiAdjustments, include, aiFunctions);
   }
 
   generateLUTContent(

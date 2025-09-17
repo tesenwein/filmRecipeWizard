@@ -1,8 +1,9 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { Box, FormControlLabel, Paper, Stack, Switch, Typography } from '@mui/material';
+import { Box, Paper } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { StyleOptions } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
+import AIFunctionsSelector from './AIFunctionsSelector';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import ConfirmDialog from './ConfirmDialog';
 import FilmStylesCard from './FilmStylesCard';
@@ -35,7 +36,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 }) => {
   const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
-  const [preserveSkinTones, setPreserveSkinTones] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteType, setDeleteType] = useState<'base' | 'target'>('base');
   const [deleteIndex, setDeleteIndex] = useState<number>(0);
@@ -215,8 +215,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
       try {
         const res = await window.electronAPI.getSettings();
         if (res?.success && res.settings) {
-          // preserveSkinTones is a per-generation option, not a persistent setting
-          setPreserveSkinTones(false);
+          // Settings loaded
         }
       } catch {
         // Ignore errors when loading settings
@@ -224,12 +223,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     };
     loadSettings();
   }, []);
-
-  const handleTogglePreserveSkin = async (checked: boolean) => {
-    setPreserveSkinTones(checked);
-    onStyleOptionsChange?.({ preserveSkinTones: checked });
-    // preserveSkinTones is a per-generation option, not a persistent setting
-  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, p: 1 }}>
@@ -301,34 +294,10 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
           />
 
-          {/* Quick Options */}
-          <Paper className="card slide-in" elevation={0} sx={{ p: 2.5 }}>
-            <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Options
-            </Typography>
-            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-              <FormControlLabel
-                control={
-                  <Switch
-                    size="small"
-                    checked={!!styleOptions?.filmGrain}
-                    onChange={(_, c) => onStyleOptionsChange?.({ filmGrain: c })}
-                  />
-                }
-                label="Film Grain"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    size="small"
-                    checked={preserveSkinTones}
-                    onChange={(_, c) => handleTogglePreserveSkin(c)}
-                  />
-                }
-                label="Preserve Skin Tones"
-              />
-            </Stack>
-          </Paper>
+          <AIFunctionsSelector
+            styleOptions={styleOptions}
+            onStyleOptionsChange={onStyleOptionsChange}
+          />
 
           <StyleDescriptionCard
             prompt={prompt}

@@ -6,7 +6,7 @@ export const DEFAULT_STORAGE_FOLDER = '.film-recipes-wizard';
 export enum LightroomProfile {
   ADOBE_COLOR = 'adobe-color',
   ADOBE_MONOCHROME = 'adobe-monochrome',
-  FLAT = 'flat'
+  FLAT = 'flat',
 }
 
 export const getLightroomProfileDisplayName = (profile: LightroomProfile | string): string => {
@@ -51,6 +51,16 @@ export interface StyleOptions {
   filmGrain?: boolean;
   preserveSkinTones?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
+  // AI Function Selection - user chooses what features are available to AI
+  aiFunctions?: {
+    temperatureTint?: boolean; // Enable temperature/tint adjustments
+    masks?: boolean; // Enable mask/local adjustments
+    colorGrading?: boolean; // Enable color grading (shadows/midtones/highlights)
+    hsl?: boolean; // Enable HSL adjustments
+    curves?: boolean; // Enable tone curves
+    grain?: boolean; // Enable film grain
+    pointColor?: boolean; // Enable point color adjustments
+  };
   // Optional artist and film selections
   artistStyle?: { key: string; name: string; category: string; blurb: string };
   filmStyle?: { key: string; name: string; category: string; blurb: string };
@@ -78,7 +88,6 @@ export interface Recipe {
 // Type alias for recipes in storage/persistence context
 export type ProcessHistory = Recipe;
 
-
 export interface ProcessingState {
   isProcessing: boolean;
   progress: number;
@@ -96,7 +105,7 @@ export interface AppSettings {
   openaiKey?: string;
   setupCompleted?: boolean;
   userProfile?: UserProfile;
-  storageLocation?: string;  // Path to the recipe storage folder
+  storageLocation?: string; // Path to the recipe storage folder
 }
 
 export interface ExportResult {

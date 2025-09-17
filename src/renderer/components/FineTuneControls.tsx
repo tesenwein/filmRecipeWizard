@@ -45,6 +45,42 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
             }}
           >
             {/* Essential Controls */}
+            {styleOptions?.aiFunctions?.temperatureTint && (
+              <Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 0.5,
+                  }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                    Temperature
+                  </span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                    {(styleOptions?.warmth ?? 50) - 50}
+                  </span>
+                </Box>
+                <Slider
+                  size="small"
+                  value={styleOptions?.warmth ?? 50}
+                  onChange={(_, v) => onStyleOptionsChange?.({ warmth: v as number })}
+                  min={0}
+                  max={100}
+                  marks={[{ value: 0 }, { value: 50 }, { value: 100 }]}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={v => `${(v as number) - 50}`}
+                  color="primary"
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, px: 0.5 }}>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>Cool</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>Neutral</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>Warm</span>
+                </Box>
+              </Box>
+            )}
+
             <Box>
               <Box
                 sx={{
@@ -102,29 +138,31 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
             </Box>
 
             {/* Additional Controls */}
-            <Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 0.5,
-                }}
-              >
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🎨 Tint</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                  {(styleOptions?.tint ?? 0) + 50}
-                </span>
+            {styleOptions?.aiFunctions?.temperatureTint && (
+              <Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 0.5,
+                  }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>🎨 Tint</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                    {(styleOptions?.tint ?? 0) + 50}
+                  </span>
+                </Box>
+                <Slider
+                  size="small"
+                  value={(styleOptions?.tint ?? 0) + 50}
+                  onChange={(_, v) => onStyleOptionsChange?.({ tint: (v as number) - 50 })}
+                  min={0}
+                  max={100}
+                  color="primary"
+                />
               </Box>
-              <Slider
-                size="small"
-                value={(styleOptions?.tint ?? 0) + 50}
-                onChange={(_, v) => onStyleOptionsChange?.({ tint: (v as number) - 50 })}
-                min={0}
-                max={100}
-                color="primary"
-              />
-            </Box>
+            )}
 
             <Box>
               <Box

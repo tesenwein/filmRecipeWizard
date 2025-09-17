@@ -18,8 +18,8 @@ interface RouterProps {
   baseImages: string[];
   targetImages: string[];
   prompt: string;
+  styleOptions?: StyleOptions;
   results: ProcessingResult[];
-  styleOptions: StyleOptions;
   processingState: { isProcessing: boolean; progress: number; status: string };
   onOpenRecipe: (recipe: Recipe) => Promise<void>;
   onNewProcess: () => void;
@@ -105,6 +105,7 @@ const Router: React.FC<RouterProps> = ({
               targetImages={targetImages}
               prompt={prompt}
               processId={currentProcessId || undefined}
+              aiFunctions={styleOptions?.aiFunctions}
               onReset={() => {
                 onReset();
                 onNavigate('/gallery');
@@ -126,6 +127,7 @@ const Router: React.FC<RouterProps> = ({
             targetImages={targetImages}
             prompt={prompt}
             processId={currentProcessId || undefined}
+            aiFunctions={styleOptions?.aiFunctions}
             onReset={() => {
               onReset();
               onNavigate('/gallery');

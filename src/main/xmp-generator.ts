@@ -1,8 +1,16 @@
 import { AIColorAdjustments } from '../services/openai-color-analyzer';
 
 // Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
-export function getExampleBWMixer(): Pick<AIColorAdjustments,
-  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
+export function getExampleBWMixer(): Pick<
+  AIColorAdjustments,
+  | 'gray_red'
+  | 'gray_orange'
+  | 'gray_yellow'
+  | 'gray_green'
+  | 'gray_aqua'
+  | 'gray_blue'
+  | 'gray_purple'
+  | 'gray_magenta'
 > {
   return {
     gray_red: -20,
@@ -16,16 +24,21 @@ export function getExampleBWMixer(): Pick<AIColorAdjustments,
   };
 }
 
-export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
+export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, aiFunctions?: { temperatureTint?: boolean; masks?: boolean; colorGrading?: boolean; hsl?: boolean; curves?: boolean; grain?: boolean; pointColor?: boolean }): string {
   // Generate XMP content for Lightroom based on AI adjustments
-  const isBW = !!aiAdjustments.monochrome || aiAdjustments.treatment === 'black_and_white' ||
-    (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
+  const isBW =
+    !!aiAdjustments.monochrome ||
+    aiAdjustments.treatment === 'black_and_white' ||
+    (typeof aiAdjustments.camera_profile === 'string' &&
+      /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
     (typeof aiAdjustments.saturation === 'number' && aiAdjustments.saturation <= -100);
   const cameraProfile = aiAdjustments.camera_profile || (isBW ? 'Adobe Monochrome' : 'Adobe Color');
   const profileName = cameraProfile;
-  const treatmentTag = isBW ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>' : '<crs:Treatment>Color</crs:Treatment>';
+  const treatmentTag = isBW
+    ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>'
+    : '<crs:Treatment>Color</crs:Treatment>';
   const tag = (name: string, val?: number | string) =>
-    (val === 0 || val === '0' || !!val) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
+    val === 0 || val === '0' || !!val ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
 
   // Clamp helpers to keep values within Lightroom-expected ranges
   const clamp = (v: any, min: number, max: number): number | undefined => {
@@ -37,16 +50,18 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
 
   // Apply a global strength scaling to reduce effect intensity.
   // Default to 0.5 based on feedback that presets were ~2x too strong.
-  const strength = typeof include?.strength === 'number' && Number.isFinite(include.strength)
-    ? Math.max(0, Math.min(2, include.strength))
-    : 0.5;
-  const scale = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined);
+  const strength =
+    typeof include?.strength === 'number' && Number.isFinite(include.strength)
+      ? Math.max(0, Math.min(2, include.strength))
+      : 0.5;
+  const scale = (v: any): number | undefined =>
+    typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined;
 
   // Sanitize all inputs
   // Use D65 (6500K) as a neutral default to avoid unintended warm/yellow bias
   const withDefault = (v: any, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
-  const temp = round(clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000));
-  const tint = round(clamp(withDefault(aiAdjustments.tint, 0), -150, 150));
+  const temp = aiFunctions?.temperatureTint ? round(clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000)) : undefined;
+  const tint = aiFunctions?.temperatureTint ? round(clamp(withDefault(aiAdjustments.tint, 0), -150, 150)) : undefined;
   const exposure = clamp(scale(aiAdjustments.exposure as any), -5, 5);
   const contrast = round(clamp(scale(aiAdjustments.contrast as any), -100, 100));
   const highlights = round(clamp(scale(aiAdjustments.highlights as any), -100, 100));
@@ -63,7 +78,9 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       .replace(/\s{2,}/g, ' ')
       .trim();
   const fallback = `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-  const rawPresetName = ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) || fallback;
+  const rawPresetName =
+    ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) ||
+    fallback;
   const presetName = sanitizeName(rawPresetName) || fallback;
   const groupName = 'film-recipe-wizard';
   // Inclusion flags with sane defaults (back-compat: include everything when not specified)
@@ -82,12 +99,10 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     // sharpenNoise and vignette currently not emitted in XMP (placeholders)
   } as const;
 
-
   // Build conditional blocks
   const wbBasicBlock = inc.wbBasic
     ? [
-        tag('Temperature', temp),
-        tag('Tint', tint),
+        ...(aiFunctions?.temperatureTint ? [tag('Temperature', temp), tag('Tint', tint)] : []),
         tag('Contrast2012', contrast),
         tag('Highlights2012', highlights),
         tag('Shadows2012', shadows),
@@ -99,85 +114,238 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  const shouldIncludeExposure = inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
+  const shouldIncludeExposure =
+    inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
   const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(exposure)) : '';
 
   const parametricCurvesBlock = inc.curves
     ? [
-        tag('ParametricShadows', round(clamp(scale((aiAdjustments as any).parametric_shadows), -100, 100))),
-        tag('ParametricDarks', round(clamp(scale((aiAdjustments as any).parametric_darks), -100, 100))),
-        tag('ParametricLights', round(clamp(scale((aiAdjustments as any).parametric_lights), -100, 100))),
-        tag('ParametricHighlights', round(clamp(scale((aiAdjustments as any).parametric_highlights), -100, 100))),
-        tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))),
-        tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))),
-        tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))),
+        tag(
+          'ParametricShadows',
+          round(clamp(scale((aiAdjustments as any).parametric_shadows), -100, 100))
+        ),
+        tag(
+          'ParametricDarks',
+          round(clamp(scale((aiAdjustments as any).parametric_darks), -100, 100))
+        ),
+        tag(
+          'ParametricLights',
+          round(clamp(scale((aiAdjustments as any).parametric_lights), -100, 100))
+        ),
+        tag(
+          'ParametricHighlights',
+          round(clamp(scale((aiAdjustments as any).parametric_highlights), -100, 100))
+        ),
+        tag(
+          'ParametricShadowSplit',
+          round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))
+        ),
+        tag(
+          'ParametricMidtoneSplit',
+          round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))
+        ),
+        tag(
+          'ParametricHighlightSplit',
+          round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))
+        ),
       ].join('')
     : '';
 
   const toneCurvesBlock = inc.curves
     ? [
         (aiAdjustments as any).tone_curve
-          ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n`
+          ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(
+              ((aiAdjustments as any).tone_curve as any[]) || []
+            )
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.input || 0))
+                  )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n`
           : '',
         (aiAdjustments as any).tone_curve_red
-          ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_red as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n`
+          ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(
+              ((aiAdjustments as any).tone_curve_red as any[]) || []
+            )
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.input || 0))
+                  )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n`
           : '',
         (aiAdjustments as any).tone_curve_green
-          ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_green as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n`
+          ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(
+              ((aiAdjustments as any).tone_curve_green as any[]) || []
+            )
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.input || 0))
+                  )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n`
           : '',
         (aiAdjustments as any).tone_curve_blue
-          ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_blue as any[]) || []).map(p => `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`).join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n`
+          ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(
+              ((aiAdjustments as any).tone_curve_blue as any[]) || []
+            )
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.input || 0))
+                  )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n`
           : '',
       ].join('')
     : '';
 
   // HSL only applies to color treatment; B&W uses GrayMixer tags
-  const hslBlock = inc.hsl && !isBW
-    ? [
-        tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
-        tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange),
-        tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow),
-        tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green),
-        tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua),
-        tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue),
-        tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple),
-        tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta),
-        tag('SaturationAdjustmentRed', round(clamp(scale((aiAdjustments as any).sat_red), -100, 100))),
-        tag('SaturationAdjustmentOrange', round(clamp(scale((aiAdjustments as any).sat_orange), -100, 100))),
-        tag('SaturationAdjustmentYellow', round(clamp(scale((aiAdjustments as any).sat_yellow), -100, 100))),
-        tag('SaturationAdjustmentGreen', round(clamp(scale((aiAdjustments as any).sat_green), -100, 100))),
-        tag('SaturationAdjustmentAqua', round(clamp(scale((aiAdjustments as any).sat_aqua), -100, 100))),
-        tag('SaturationAdjustmentBlue', round(clamp(scale((aiAdjustments as any).sat_blue), -100, 100))),
-        tag('SaturationAdjustmentPurple', round(clamp(scale((aiAdjustments as any).sat_purple), -100, 100))),
-        tag('SaturationAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).sat_magenta), -100, 100))),
-        tag('LuminanceAdjustmentRed', round(clamp(scale((aiAdjustments as any).lum_red), -100, 100))),
-        tag('LuminanceAdjustmentOrange', round(clamp(scale((aiAdjustments as any).lum_orange), -100, 100))),
-        tag('LuminanceAdjustmentYellow', round(clamp(scale((aiAdjustments as any).lum_yellow), -100, 100))),
-        tag('LuminanceAdjustmentGreen', round(clamp(scale((aiAdjustments as any).lum_green), -100, 100))),
-        tag('LuminanceAdjustmentAqua', round(clamp(scale((aiAdjustments as any).lum_aqua), -100, 100))),
-        tag('LuminanceAdjustmentBlue', round(clamp(scale((aiAdjustments as any).lum_blue), -100, 100))),
-        tag('LuminanceAdjustmentPurple', round(clamp(scale((aiAdjustments as any).lum_purple), -100, 100))),
-        tag('LuminanceAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).lum_magenta), -100, 100))),
-      ].join('')
-    : '';
+  const hslBlock =
+    inc.hsl && !isBW
+      ? [
+          tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
+          tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange),
+          tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow),
+          tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green),
+          tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua),
+          tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue),
+          tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple),
+          tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta),
+          tag(
+            'SaturationAdjustmentRed',
+            round(clamp(scale((aiAdjustments as any).sat_red), -100, 100))
+          ),
+          tag(
+            'SaturationAdjustmentOrange',
+            round(clamp(scale((aiAdjustments as any).sat_orange), -100, 100))
+          ),
+          tag(
+            'SaturationAdjustmentYellow',
+            round(clamp(scale((aiAdjustments as any).sat_yellow), -100, 100))
+          ),
+          tag(
+            'SaturationAdjustmentGreen',
+            round(clamp(scale((aiAdjustments as any).sat_green), -100, 100))
+          ),
+          tag(
+            'SaturationAdjustmentAqua',
+            round(clamp(scale((aiAdjustments as any).sat_aqua), -100, 100))
+          ),
+          tag(
+            'SaturationAdjustmentBlue',
+            round(clamp(scale((aiAdjustments as any).sat_blue), -100, 100))
+          ),
+          tag(
+            'SaturationAdjustmentPurple',
+            round(clamp(scale((aiAdjustments as any).sat_purple), -100, 100))
+          ),
+          tag(
+            'SaturationAdjustmentMagenta',
+            round(clamp(scale((aiAdjustments as any).sat_magenta), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentRed',
+            round(clamp(scale((aiAdjustments as any).lum_red), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentOrange',
+            round(clamp(scale((aiAdjustments as any).lum_orange), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentYellow',
+            round(clamp(scale((aiAdjustments as any).lum_yellow), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentGreen',
+            round(clamp(scale((aiAdjustments as any).lum_green), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentAqua',
+            round(clamp(scale((aiAdjustments as any).lum_aqua), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentBlue',
+            round(clamp(scale((aiAdjustments as any).lum_blue), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentPurple',
+            round(clamp(scale((aiAdjustments as any).lum_purple), -100, 100))
+          ),
+          tag(
+            'LuminanceAdjustmentMagenta',
+            round(clamp(scale((aiAdjustments as any).lum_magenta), -100, 100))
+          ),
+        ].join('')
+      : '';
 
   // Color Grading block
   const colorGradingBlock = inc.colorGrading
     ? [
-        tag('ColorGradeMidtoneHue', round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))),
-        tag('ColorGradeMidtoneSat', round(clamp(scale((aiAdjustments as any).color_grade_midtone_sat), 0, 100))),
-        tag('ColorGradeMidtoneLum', round(clamp(scale((aiAdjustments as any).color_grade_midtone_lum), -100, 100))),
-        tag('ColorGradeShadowHue', round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))),
-        tag('ColorGradeShadowSat', round(clamp(scale((aiAdjustments as any).color_grade_shadow_sat), 0, 100))),
-        tag('ColorGradeShadowLum', round(clamp(scale((aiAdjustments as any).color_grade_shadow_lum), -100, 100))),
-        tag('ColorGradeHighlightHue', round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))),
-        tag('ColorGradeHighlightSat', round(clamp(scale((aiAdjustments as any).color_grade_highlight_sat), 0, 100))),
-        tag('ColorGradeHighlightLum', round(clamp(scale((aiAdjustments as any).color_grade_highlight_lum), -100, 100))),
-        tag('ColorGradeGlobalHue', round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))),
-        tag('ColorGradeGlobalSat', round(clamp(scale((aiAdjustments as any).color_grade_global_sat), 0, 100))),
-        tag('ColorGradeGlobalLum', round(clamp(scale((aiAdjustments as any).color_grade_global_lum), -100, 100))),
-        tag('ColorGradeBlending', round(clamp(scale((aiAdjustments as any).color_grade_blending), 0, 100))),
-        tag('ColorGradeBalance', round(clamp(scale((aiAdjustments as any).color_grade_balance), -100, 100))),
+        tag(
+          'ColorGradeMidtoneHue',
+          round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))
+        ),
+        tag(
+          'ColorGradeMidtoneSat',
+          round(clamp(scale((aiAdjustments as any).color_grade_midtone_sat), 0, 100))
+        ),
+        tag(
+          'ColorGradeMidtoneLum',
+          round(clamp(scale((aiAdjustments as any).color_grade_midtone_lum), -100, 100))
+        ),
+        tag(
+          'ColorGradeShadowHue',
+          round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))
+        ),
+        tag(
+          'ColorGradeShadowSat',
+          round(clamp(scale((aiAdjustments as any).color_grade_shadow_sat), 0, 100))
+        ),
+        tag(
+          'ColorGradeShadowLum',
+          round(clamp(scale((aiAdjustments as any).color_grade_shadow_lum), -100, 100))
+        ),
+        tag(
+          'ColorGradeHighlightHue',
+          round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))
+        ),
+        tag(
+          'ColorGradeHighlightSat',
+          round(clamp(scale((aiAdjustments as any).color_grade_highlight_sat), 0, 100))
+        ),
+        tag(
+          'ColorGradeHighlightLum',
+          round(clamp(scale((aiAdjustments as any).color_grade_highlight_lum), -100, 100))
+        ),
+        tag(
+          'ColorGradeGlobalHue',
+          round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))
+        ),
+        tag(
+          'ColorGradeGlobalSat',
+          round(clamp(scale((aiAdjustments as any).color_grade_global_sat), 0, 100))
+        ),
+        tag(
+          'ColorGradeGlobalLum',
+          round(clamp(scale((aiAdjustments as any).color_grade_global_lum), -100, 100))
+        ),
+        tag(
+          'ColorGradeBlending',
+          round(clamp(scale((aiAdjustments as any).color_grade_blending), 0, 100))
+        ),
+        tag(
+          'ColorGradeBalance',
+          round(clamp(scale((aiAdjustments as any).color_grade_balance), -100, 100))
+        ),
       ].join('')
     : '';
 
@@ -188,7 +356,8 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
           if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
           return Math.max(min, Math.min(max, v));
         };
-        const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
+        const round = (v: number | undefined) =>
+          typeof v === 'number' ? Math.round(v) : undefined;
         const src = aiAdjustments as any;
         const vals = [
           src.gray_red,
@@ -200,9 +369,12 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
           src.gray_purple,
           src.gray_magenta,
         ];
-        const hasAny = vals.some((v) => typeof v === 'number' && Number.isFinite(v));
+        const hasAny = vals.some(v => typeof v === 'number' && Number.isFinite(v));
         if (!hasAny) return '';
-        const tag = (name: string, val?: number) => (val === 0 || (typeof val === 'number' && Number.isFinite(val)) ? `      <crs:${name}>${val}</crs:${name}>\n` : '');
+        const tag = (name: string, val?: number) =>
+          val === 0 || (typeof val === 'number' && Number.isFinite(val))
+            ? `      <crs:${name}>${val}</crs:${name}>\n`
+            : '';
         return [
           tag('GrayMixerRed', round(clamp(src.gray_red, -100, 100) as any)),
           tag('GrayMixerOrange', round(clamp(src.gray_orange, -100, 100) as any)),
@@ -217,17 +389,21 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // Point Color block (optional)
-  const pointColorBlock = inc.pointColor && Array.isArray((aiAdjustments as any).point_colors)
-    ? (() => {
-        const points = ((aiAdjustments as any).point_colors as number[][]).slice(0, 4);
-        if (!points.length) return '';
-        return points
-          .map((p, idx) =>
-            `<crs:PointColor${idx + 1}>${p.map(v => Math.max(-100, Math.min(100, Math.round(v)))).join(',')}</crs:PointColor${idx + 1}>\n`
-          )
-          .join('');
-      })()
-    : '';
+  const pointColorBlock =
+    inc.pointColor && Array.isArray((aiAdjustments as any).point_colors)
+      ? (() => {
+          const points = ((aiAdjustments as any).point_colors as number[][]).slice(0, 4);
+          if (!points.length) return '';
+          return points
+            .map(
+              (p, idx) =>
+                `<crs:PointColor${idx + 1}>${p
+                  .map(v => Math.max(-100, Math.min(100, Math.round(v))))
+                  .join(',')}</crs:PointColor${idx + 1}>\n`
+            )
+            .join('');
+        })()
+      : '';
 
   // Grain block
   const grainBlock = inc.grain
@@ -239,13 +415,19 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // Masks block (skipped unless disabled). Emits Lightroom MaskGroupBasedCorrections.
-  const masksBlock = inc.masks
+  const masksBlock = inc.masks && aiFunctions?.masks
     ? (() => {
-        const masks = Array.isArray((aiAdjustments as any).masks) ? ((aiAdjustments as any).masks as any[]) : [];
+        const masks = Array.isArray((aiAdjustments as any).masks)
+          ? ((aiAdjustments as any).masks as any[])
+          : [];
         if (!masks.length) return '';
-        const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
+        const f3 = (v: any) =>
+          typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined;
         const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
-        const nM1_1_scaled = (v: any) => (typeof v === 'number' ? Math.max(-1, Math.min(1, v * strength)) : undefined);
+        // Apply reduced strength for mask adjustments to make them less strong
+        const maskStrength = strength * 0.6; // 60% of the main strength
+        const nM1_1_scaled = (v: any) =>
+          typeof v === 'number' ? Math.max(-1, Math.min(1, v * maskStrength)) : undefined;
         const attrIf = (k: string, val?: string | number) =>
           val === 0 || val === '0' || (val !== undefined && val !== null)
             ? ` crs:${k}="${val}"`
@@ -266,8 +448,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
               attrIf('LocalBlacks2012', f3(nM1_1_scaled(adj.local_blacks) as any)),
               attrIf('LocalClarity2012', f3(nM1_1_scaled(adj.local_clarity) as any)),
               attrIf('LocalDehaze', f3(nM1_1_scaled(adj.local_dehaze) as any)),
-              attrIf('LocalTemperature', f3(nM1_1_scaled(adj.local_temperature) as any)),
-              attrIf('LocalTint', f3(nM1_1_scaled(adj.local_tint) as any)),
+              // Local temperature and tint removed - using gradients for coloring instead
               attrIf('LocalTexture', f3(nM1_1_scaled(adj.local_texture) as any)),
               attrIf('LocalCurveRefineSaturation', 100),
             ]
@@ -299,9 +480,18 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
               const bottom = f3(n0_1(m.bottom));
               const right = f3(n0_1(m.right));
               const angle = f3(typeof m.angle === 'number' ? m.angle : 0);
-              const midpoint = typeof m.midpoint === 'number' ? Math.round(Math.max(0, Math.min(100, m.midpoint))) : 50;
-              const roundness = typeof m.roundness === 'number' ? Math.round(Math.max(-100, Math.min(100, m.roundness))) : 0;
-              const feather = typeof m.feather === 'number' ? Math.round(Math.max(0, Math.min(100, m.feather))) : 75;
+              const midpoint =
+                typeof m.midpoint === 'number'
+                  ? Math.round(Math.max(0, Math.min(100, m.midpoint)))
+                  : 50;
+              const roundness =
+                typeof m.roundness === 'number'
+                  ? Math.round(Math.max(-100, Math.min(100, m.roundness)))
+                  : 0;
+              const feather =
+                typeof m.feather === 'number'
+                  ? Math.round(Math.max(0, Math.min(100, m.feather)))
+                  : 75;
               maskLi = `<rdf:li
          crs:What="Mask/CircularGradient"
          crs:MaskActive="true"
@@ -319,12 +509,20 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
          crs:Feather="${feather}"
          crs:Flipped="${m?.flipped ? 'true' : 'false'}"
          crs:Version="2"/>`;
-            } else if (mType === 'person' || mType === 'subject' || mType === 'background' || mType === 'sky') {
+            } else if (
+              mType === 'person' ||
+              mType === 'subject' ||
+              mType === 'background' ||
+              mType === 'sky'
+            ) {
               // AI scene masks: Subject/People (1), Background (0), Sky (2)
               const rx = f3(n0_1(m.referenceX));
               const ry = f3(n0_1(m.referenceY));
               const subType = mType === 'background' ? '0' : mType === 'sky' ? '2' : '1';
-              const subCat = typeof (m as any)?.subCategoryId === 'number' ? String((m as any).subCategoryId) : undefined;
+              const subCat =
+                typeof (m as any)?.subCategoryId === 'number'
+                  ? String((m as any).subCategoryId)
+                  : undefined;
               maskLi = `<rdf:li
          crs:What="Mask/Image"
          crs:MaskActive="true"
@@ -342,7 +540,13 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
                 const colorAmount = f3(n0_1(m.colorAmount));
                 const pointModels = Array.isArray(m?.pointModels) ? m.pointModels : [];
                 const pmLis = (pointModels as any[])
-                  .map((pm: any) => (Array.isArray(pm) ? (pm as any[]).map((v: any) => (typeof v === 'number' ? Number(v) : 0)).join(' ') : ''))
+                  .map((pm: any) =>
+                    Array.isArray(pm)
+                      ? (pm as any[])
+                          .map((v: any) => (typeof v === 'number' ? Number(v) : 0))
+                          .join(' ')
+                      : ''
+                  )
                   .filter((s: string) => s.length > 0)
                   .map((s: string) => `           <rdf:li>${s}</rdf:li>`)
                   .join('\n');
@@ -365,12 +569,21 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
            crs:SampleType="0">${pointModelsBlock}\n          </rdf:Description>\n         </crs:CorrectionRangeMask>\n         </rdf:Description>\n        </rdf:li>`;
               } else {
                 // range_luminance
-                const lum = Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
-                const lumStr = lum ? lum.map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ') : '0.000000 1.000000 1.000000 1.000000';
-                const lds = Array.isArray(m?.luminanceDepthSampleInfo) && m.luminanceDepthSampleInfo.length === 3
-                  ? m.luminanceDepthSampleInfo
-                  : [0, 0.5, 0.5];
-                const ldsStr = (lds as any[]).map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ');
+                const lum =
+                  Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
+                const lumStr = lum
+                  ? lum
+                      .map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'))
+                      .join(' ')
+                  : '0.000000 1.000000 1.000000 1.000000';
+                const lds =
+                  Array.isArray(m?.luminanceDepthSampleInfo) &&
+                  m.luminanceDepthSampleInfo.length === 3
+                    ? m.luminanceDepthSampleInfo
+                    : [0, 0.5, 0.5];
+                const ldsStr = (lds as any[])
+                  .map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'))
+                  .join(' ');
                 maskLi = `<rdf:li>
          <rdf:Description
           crs:What="Mask/RangeMask"
