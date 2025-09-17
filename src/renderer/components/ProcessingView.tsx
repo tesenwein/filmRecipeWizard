@@ -16,14 +16,13 @@ import {
   Avatar,
   Card,
   CardContent,
-  useTheme,
   Chip,
   List,
   ListItem,
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
 
 interface ProcessingViewProps {
@@ -48,10 +47,7 @@ interface RecipeStep {
 
 
 const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage, targetImages: _targetImages }) => {
-  const theme = useTheme();
-  const { status, progress } = processingState;
   const [recipeSteps, setRecipeSteps] = useState<RecipeStep[]>([]);
-  const [activeStep, setActiveStep] = useState<number>(0);
 
   // Initialize recipe steps when processing starts
   useEffect(() => {
@@ -119,7 +115,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
         }
       ];
       setRecipeSteps(initialSteps);
-      setActiveStep(1); // Start directly on analysis step, not initialization
     }
   }, [processingState.isProcessing]);
 
@@ -155,13 +150,12 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
             }
 
             // Activate target step
-            updatedSteps[targetStepIndex] = {
-              ...updatedSteps[targetStepIndex],
-              status: 'active',
+            updatedSteps[targetStepIndex] = { 
+              ...updatedSteps[targetStepIndex], 
+              status: 'active', 
               progress: Math.min(currentProgress, 100),
               toolName: update.toolName
             };
-            setActiveStep(targetStepIndex);
           }
         } else if (update.type === 'tool-result') {
           // Handle tool results - mark current step as completed
@@ -184,7 +178,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               };
             }
           });
-          setActiveStep(updatedSteps.length - 1);
         }
 
         return updatedSteps;
@@ -286,7 +279,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
             </Typography>
 
             <Box sx={{ width: '100%' }}>
-              {recipeSteps.map((step, index) => (
+              {recipeSteps.map((step, _index) => (
                 <Grow in={true} timeout={600} key={step.id}>
                   <Box
                     sx={{

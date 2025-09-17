@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { AIColorAdjustments } from './types';
 
 export interface StreamingUpdate {
-    type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete';
+    type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete' | 'step_progress' | 'step_transition';
     content: string;
     step?: string;
     progress?: number;
