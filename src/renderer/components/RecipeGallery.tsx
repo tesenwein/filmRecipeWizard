@@ -1,3 +1,4 @@
+import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -344,9 +345,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
       {recipes.length === 0 ? (
         <Card sx={{ p: 6, textAlign: 'center' }}>
-          <Typography variant="h3" sx={{ opacity: 0.5, mb: 2 }}>
-            📥
-          </Typography>
+          <AddBoxIcon sx={{ fontSize: 64, opacity: 0.5, mb: 2, color: 'primary.main' }} />
           <Typography variant="h6" sx={{ mb: 1 }}>
             No recipes yet
           </Typography>

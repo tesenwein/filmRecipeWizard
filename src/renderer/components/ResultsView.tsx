@@ -3,8 +3,10 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import HomeIcon from '@mui/icons-material/Home';
 import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
   Accordion,
@@ -63,6 +65,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   aiFunctions,
 }) => {
   const { showError } = useAlert();
+  const { deleteRecipe } = useAppStore();
   // Base64 image data URLs for display
   const [baseImageUrls, setBaseImageUrls] = useState<string[]>([]);
   const [activeBase, setActiveBase] = useState(0);
@@ -86,6 +89,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   >({});
 
   const successfulResults = results.filter(result => result.success);
+  const failedResults = results.filter(result => !result.success && result.error);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
   const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
@@ -106,6 +110,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+  };
+
+  const handleContinueAfterError = async () => {
+    if (!processId) return;
+
+    try {
+      // Delete the failed recipe
+      await deleteRecipe(processId);
+      // Navigate to home (gallery)
+      onReset();
+    } catch (error) {
+      console.error('Failed to delete recipe:', error);
+      showError('Failed to delete recipe. Please try again.');
+    }
   };
 
   const handleAddRecipeImage = async () => {
@@ -245,20 +263,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Generate default options based on aiFunctions
   const getDefaultOptions = () =>
-    ({
-      wbBasic: aiFunctions?.temperatureTint ?? true,
-      exposure: true, // Enable by default
-      hsl: aiFunctions?.hsl ?? true,
-      colorGrading: aiFunctions?.colorGrading ?? true,
-      curves: aiFunctions?.curves ?? true,
-      sharpenNoise: true, // Enable by default
-      vignette: true, // Enable by default
-      pointColor: aiFunctions?.pointColor ?? true,
-      grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
-      masks: aiFunctions?.masks ?? true,
-      // Start export strength at 50%
-      strength: 0.5,
-    } as const);
+  ({
+    wbBasic: aiFunctions?.temperatureTint ?? true,
+    exposure: true, // Enable by default
+    hsl: aiFunctions?.hsl ?? true,
+    colorGrading: aiFunctions?.colorGrading ?? true,
+    curves: aiFunctions?.curves ?? true,
+    sharpenNoise: true, // Enable by default
+    vignette: true, // Enable by default
+    pointColor: aiFunctions?.pointColor ?? true,
+    grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
+    masks: aiFunctions?.masks ?? true,
+    // Start export strength at 50%
+    strength: 0.5,
+  } as const);
 
   const defaultOptions = getDefaultOptions();
 
@@ -367,16 +385,41 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       {/* No Results Message */}
       {results.length === 0 && (
         <Paper className="card" sx={{ textAlign: 'center', py: 8 }}>
-          <Box sx={{ fontSize: '64px', mb: 3, opacity: 0.5 }}>📭</Box>
+          <Box sx={{ mb: 3, opacity: 0.5 }}>
+            <DownloadIcon sx={{ fontSize: 64, color: '#666' }} />
+          </Box>
           <Typography variant="h5" sx={{ fontWeight: 600, color: '#666', mb: 2 }}>
             No Results Available
           </Typography>
           <Typography variant="body1" sx={{ color: '#999', mb: 4 }}>
             This project doesn't have any processing results yet, or they failed to load.
           </Typography>
-          <Button variant="contained" onClick={onReset}>
-            🔄 Start New Process
+          <Button variant="contained" onClick={onReset} startIcon={<RefreshIcon />}>
+            Start New Process
           </Button>
+        </Paper>
+      )}
+
+      {/* Failed Results Message */}
+      {results.length > 0 && successfulResults.length === 0 && failedResults.length > 0 && (
+        <Paper className="card" sx={{ textAlign: 'center', py: 8 }}>
+          <Box sx={{ mb: 3, opacity: 0.5 }}>
+            <DeleteOutlineIcon sx={{ fontSize: 64, color: '#d32f2f' }} />
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: '#d32f2f', mb: 2 }}>
+            Processing Failed
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#999', mb: 4 }}>
+            The AI processing failed for all images. This might be due to API issues or invalid images.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button variant="outlined" onClick={onReset} startIcon={<RefreshIcon />}>
+              Try Again
+            </Button>
+            <Button variant="contained" onClick={handleContinueAfterError} startIcon={<HomeIcon />}>
+              Continue to Home
+            </Button>
+          </Box>
         </Paper>
       )}
 
@@ -611,8 +654,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                           {setting.key === 'tint'
                                             ? setting.value + 50
                                             : setting.key === 'warmth'
-                                            ? (setting.value ?? 50) - 50
-                                            : setting.value}
+                                              ? (setting.value ?? 50) - 50
+                                              : setting.value}
                                         </Typography>
                                       </Paper>
                                     )
@@ -1254,7 +1297,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         <AccordionDetails>
                           <AIFunctionsSelector
                             styleOptions={{ aiFunctions }}
-                            onStyleOptionsChange={() => {}} // Read-only in results view
+                            onStyleOptionsChange={() => { }} // Read-only in results view
                           />
                         </AccordionDetails>
                       </Accordion>
@@ -1355,48 +1398,48 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             },
                             ...(aiFunctions?.temperatureTint
                               ? [
-                                  {
-                                    key: 'wbBasic',
-                                    label: 'Basic Adjustments',
-                                    description: 'White balance, contrast, highlights, shadows',
-                                  },
-                                ]
+                                {
+                                  key: 'wbBasic',
+                                  label: 'Basic Adjustments',
+                                  description: 'White balance, contrast, highlights, shadows',
+                                },
+                              ]
                               : []),
                             ...(aiFunctions?.hsl
                               ? [
-                                  {
-                                    key: 'hsl',
-                                    label: 'HSL Adjustments',
-                                    description: 'Hue, saturation, and luminance per color',
-                                  },
-                                ]
+                                {
+                                  key: 'hsl',
+                                  label: 'HSL Adjustments',
+                                  description: 'Hue, saturation, and luminance per color',
+                                },
+                              ]
                               : []),
                             ...(aiFunctions?.colorGrading
                               ? [
-                                  {
-                                    key: 'colorGrading',
-                                    label: 'Color Grading',
-                                    description: 'Shadow, midtone, highlight color wheels',
-                                  },
-                                ]
+                                {
+                                  key: 'colorGrading',
+                                  label: 'Color Grading',
+                                  description: 'Shadow, midtone, highlight color wheels',
+                                },
+                              ]
                               : []),
                             ...(aiFunctions?.curves
                               ? [
-                                  {
-                                    key: 'curves',
-                                    label: 'Tone Curves',
-                                    description: 'RGB and luminance curve adjustments',
-                                  },
-                                ]
+                                {
+                                  key: 'curves',
+                                  label: 'Tone Curves',
+                                  description: 'RGB and luminance curve adjustments',
+                                },
+                              ]
                               : []),
                             ...(aiFunctions?.pointColor
                               ? [
-                                  {
-                                    key: 'pointColor',
-                                    label: 'Point Color',
-                                    description: 'Targeted color adjustments',
-                                  },
-                                ]
+                                {
+                                  key: 'pointColor',
+                                  label: 'Point Color',
+                                  description: 'Targeted color adjustments',
+                                },
+                              ]
                               : []),
                             {
                               key: 'sharpenNoise',
@@ -1410,21 +1453,21 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             },
                             ...(aiFunctions?.grain
                               ? [
-                                  {
-                                    key: 'grain',
-                                    label: 'Film Grain',
-                                    description: 'Analog film texture simulation',
-                                  },
-                                ]
+                                {
+                                  key: 'grain',
+                                  label: 'Film Grain',
+                                  description: 'Analog film texture simulation',
+                                },
+                              ]
                               : []),
                             ...(aiFunctions?.masks
                               ? [
-                                  {
-                                    key: 'masks',
-                                    label: 'Masks (Local Adjustments)',
-                                    description: 'Area-specific modifications',
-                                  },
-                                ]
+                                {
+                                  key: 'masks',
+                                  label: 'Masks (Local Adjustments)',
+                                  description: 'Area-specific modifications',
+                                },
+                              ]
                               : []),
                           ].map(opt => (
                             <Paper key={opt.key} variant="outlined" sx={{ p: 2 }}>
@@ -1433,7 +1476,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   <Checkbox
                                     checked={
                                       getOptions(index)[
-                                        opt.key as keyof ReturnType<typeof getOptions>
+                                      opt.key as keyof ReturnType<typeof getOptions>
                                       ] as any
                                     }
                                     onChange={() => toggleOption(index, opt.key as any)}

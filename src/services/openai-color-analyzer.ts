@@ -37,11 +37,21 @@ export class OpenAIColorAnalyzer {
     const key = apiKey || process.env.OPENAI_API_KEY;
     console.log('[AI] OpenAI Color Analyzer constructor called with key:', !!key);
     if (key) {
+      // Temporarily unset the environment variable to prevent SDK from using it
+      const originalOrgId = process.env.OPENAI_ORG_ID;
+      delete process.env.OPENAI_ORG_ID;
+
       this.openai = new OpenAI({
         apiKey: key,
         timeout: 120000, // 2 minutes timeout
         maxRetries: 2,
       });
+
+      // Restore the environment variable if it was set
+      if (originalOrgId) {
+        process.env.OPENAI_ORG_ID = originalOrgId;
+      }
+
       this.initialized = true;
       console.log('[AI] OpenAI client initialized successfully');
     } else {

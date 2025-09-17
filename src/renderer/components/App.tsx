@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LightroomProfile, ProcessingResult, Recipe, StyleOptions } from '../../shared/types';
-import { AlertProvider } from '../context/AlertContext';
+import { AlertProvider, useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import AppHeader from './AppHeader';
-import ErrorDialog from './ErrorDialog';
 import Router from './Router';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   // Zustand store
   const {
     currentProcessId,
@@ -17,6 +16,9 @@ const App: React.FC = () => {
     updateRecipeInStorage,
     setGeneratingStatus,
   } = useAppStore();
+  
+  // Alert context for showing error dialogs
+  const { showError } = useAlert();
 
   // Simple hash-based router with query support
   const parseHash = () => {
@@ -37,9 +39,6 @@ const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'gallery' | 'upload' | 'processing' | 'results'>(
     'gallery'
   );
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [errorDetails, setErrorDetails] = useState('');
   const currentProcessIdRef = useRef<string | null>(null);
   const startingRef = useRef<boolean>(false);
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -217,11 +216,10 @@ const App: React.FC = () => {
       console.warn('[APP] Processing timeout triggered - showing error dialog');
 
       // Show error dialog for timeout
-      setErrorMessage('Processing Timeout');
-      setErrorDetails(
-        'Processing took longer than expected and timed out. This might be due to API issues or network problems.'
+      showError(
+        'Processing took longer than expected and timed out. This might be due to API issues or network problems.',
+        { title: 'Processing Timeout' }
       );
-      setErrorDialogOpen(true);
 
       setProcessingState({
         isProcessing: false,
@@ -269,9 +267,10 @@ const App: React.FC = () => {
         }
 
         // Show error dialog
-        setErrorMessage('Processing Start Failed');
-        setErrorDetails(error instanceof Error ? error.message : 'Unknown error occurred');
-        setErrorDialogOpen(true);
+        showError(
+          error instanceof Error ? error.message : 'Unknown error occurred',
+          { title: 'Processing Start Failed' }
+        );
 
         setProcessingState({
           isProcessing: false,
@@ -323,11 +322,10 @@ const App: React.FC = () => {
       // Show error dialog for any processing failures
       const errorDetails = failedResults.map(r => r.error).join('\n\n');
 
-      setErrorMessage(anySuccess ? 'Processing Completed with Errors' : 'AI Processing Failed');
-      setErrorDetails(
-        errorDetails || 'Processing failed. This might be due to API issues or invalid images.'
+      showError(
+        errorDetails || 'Processing failed. This might be due to API issues or invalid images.',
+        { title: anySuccess ? 'Processing Completed with Errors' : 'AI Processing Failed' }
       );
-      setErrorDialogOpen(true);
 
       setProcessingState({
         isProcessing: false,
@@ -538,49 +536,43 @@ const App: React.FC = () => {
   };
 
   return (
+    <div className={`container ${currentStep}`}>
+      {/* Global drag strip at very top so window can always be moved (even over modals) */}
+      <div className="global-drag-strip" />
+      {/* Scroll fade-out effect overlay */}
+      <div className="scroll-fade-overlay" />
+
+      {route !== '/splash' && route !== '/setup' && <AppHeader onNavigate={navigate} />}
+
+      <Router
+        route={route}
+        routeQuery={routeQuery}
+        startupStatus={startupStatus}
+        currentStep={currentStep}
+        currentProcessId={currentProcessId}
+        baseImages={baseImages}
+        targetImages={targetImages}
+        prompt={prompt}
+        results={results}
+        styleOptions={styleOptions}
+        processingState={processingState}
+        onOpenRecipe={handleOpenRecipe}
+        onNewProcess={handleNewProcess}
+        onImagesSelected={handleImagesSelected}
+        onStartProcessing={handleStartProcessing}
+        onPromptChange={setPrompt}
+        onStyleOptionsChange={u => setStyleOptions(prev => ({ ...prev, ...u }))}
+        onReset={handleReset}
+        onNavigate={navigate}
+      />
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
     <AlertProvider>
-      <div className={`container ${currentStep}`}>
-        {/* Global drag strip at very top so window can always be moved (even over modals) */}
-        <div className="global-drag-strip" />
-        {/* Scroll fade-out effect overlay */}
-        <div className="scroll-fade-overlay" />
-
-        {route !== '/splash' && route !== '/setup' && <AppHeader onNavigate={navigate} />}
-
-        <Router
-          route={route}
-          routeQuery={routeQuery}
-          startupStatus={startupStatus}
-          currentStep={currentStep}
-          currentProcessId={currentProcessId}
-          baseImages={baseImages}
-          targetImages={targetImages}
-          prompt={prompt}
-          results={results}
-          styleOptions={styleOptions}
-          processingState={processingState}
-          onOpenRecipe={handleOpenRecipe}
-          onNewProcess={handleNewProcess}
-          onImagesSelected={handleImagesSelected}
-          onStartProcessing={handleStartProcessing}
-          onPromptChange={setPrompt}
-          onStyleOptionsChange={u => setStyleOptions(prev => ({ ...prev, ...u }))}
-          onReset={handleReset}
-          onNavigate={navigate}
-        />
-
-        <ErrorDialog
-          open={errorDialogOpen}
-          title="Processing Error"
-          message={errorMessage}
-          details={errorDetails}
-          onClose={() => {
-            setErrorDialogOpen(false);
-            setErrorMessage('');
-            setErrorDetails('');
-          }}
-        />
-      </div>
+      <AppContent />
     </AlertProvider>
   );
 };

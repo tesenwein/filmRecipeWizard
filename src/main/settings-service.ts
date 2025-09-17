@@ -4,16 +4,20 @@ import { app } from 'electron';
 import { AppSettings } from '../shared/types';
 
 export class SettingsService {
-  private settingsFile: string;
+  private settingsFile: string | null = null;
 
-  constructor() {
-    const userDataPath = app.getPath('userData');
-    this.settingsFile = path.join(userDataPath, 'filmRecipeWizard-settings.json');
+  private getSettingsFilePath(): string {
+    if (!this.settingsFile) {
+      const userDataPath = app.getPath('userData');
+      this.settingsFile = path.join(userDataPath, 'filmRecipeWizard-settings.json');
+    }
+    return this.settingsFile;
   }
 
   async loadSettings(): Promise<AppSettings> {
     try {
-      const data = await fs.readFile(this.settingsFile, 'utf8');
+      const settingsFilePath = this.getSettingsFilePath();
+      const data = await fs.readFile(settingsFilePath, 'utf8');
       const settings: AppSettings = JSON.parse(data);
       return settings || {};
     } catch {
@@ -24,7 +28,8 @@ export class SettingsService {
   async saveSettings(partial: Partial<AppSettings>): Promise<AppSettings> {
     const current = await this.loadSettings();
     const merged: AppSettings = { ...current, ...partial };
-    await fs.writeFile(this.settingsFile, JSON.stringify(merged, null, 2), 'utf8');
+    const settingsFilePath = this.getSettingsFilePath();
+    await fs.writeFile(settingsFilePath, JSON.stringify(merged, null, 2), 'utf8');
     return merged;
   }
 }

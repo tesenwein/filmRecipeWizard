@@ -27,7 +27,7 @@ export class ImageProcessor {
   private aiAnalyzer: OpenAIColorAnalyzer | null = null;
   private settingsService = new SettingsService();
 
-  constructor() {}
+  constructor() { }
 
   private async ensureAIAnalyzer(): Promise<OpenAIColorAnalyzer> {
     if (!this.aiAnalyzer) {

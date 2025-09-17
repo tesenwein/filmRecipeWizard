@@ -9,14 +9,18 @@ export class StorageService {
   private storageFile: string;
   private backupDir: string;
   private initialized = false;
-  private settingsFile: string;
+  private settingsFile: string | null = null;
   private storageLocation: string;
 
-  constructor() {
-    // Settings are always stored in app's userData
-    const userDataPath = app.getPath('userData');
-    this.settingsFile = path.join(userDataPath, 'settings.json');
+  private getSettingsFilePath(): string {
+    if (!this.settingsFile) {
+      const userDataPath = app.getPath('userData');
+      this.settingsFile = path.join(userDataPath, 'settings.json');
+    }
+    return this.settingsFile;
+  }
 
+  constructor() {
     // Default storage location (will be overridden by settings if configured)
     const homeDir = os.homedir();
     this.storageLocation = path.join(homeDir, DEFAULT_STORAGE_FOLDER);
@@ -36,7 +40,8 @@ export class StorageService {
 
   async getSettings(): Promise<AppSettings> {
     try {
-      const data = await fs.readFile(this.settingsFile, 'utf8');
+      const settingsFilePath = this.getSettingsFilePath();
+      const data = await fs.readFile(settingsFilePath, 'utf8');
       const settings = JSON.parse(data);
 
       // Apply storage location from settings if available
@@ -53,9 +58,10 @@ export class StorageService {
   }
 
   async saveSettings(settings: AppSettings): Promise<void> {
-    const settingsDir = path.dirname(this.settingsFile);
+    const settingsFilePath = this.getSettingsFilePath();
+    const settingsDir = path.dirname(settingsFilePath);
     await fs.mkdir(settingsDir, { recursive: true });
-    await fs.writeFile(this.settingsFile, JSON.stringify(settings, null, 2), 'utf8');
+    await fs.writeFile(settingsFilePath, JSON.stringify(settings, null, 2), 'utf8');
 
     // Apply storage location if it changed
     if (settings.storageLocation) {
