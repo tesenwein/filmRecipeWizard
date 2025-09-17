@@ -242,7 +242,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           justifyContent: 'center',
           width: '100%',
           minHeight: '80vh',
-          backgroundColor: 'background.default',
+          backgroundColor: '#fcfcfd',
           p: 4,
           borderRadius: 2,
           position: 'relative',
