@@ -9,12 +9,13 @@ body {
   background-color: #f8f9fc;
   color: #333333;
   line-height: 1.6;
+  overflow-x: hidden;
 }
 
 #root {
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
   /* ensure app remains scrollable even if body is locked */
   background: radial-gradient(1200px 800px at 80% -200px, rgba(102, 126, 234, 0.08), transparent 60%),
     radial-gradient(900px 600px at -200px -200px, rgba(118, 75, 162, 0.06), transparent 60%),
@@ -26,12 +27,13 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   /* Extra top padding to avoid macOS window controls overlap */
-  padding: 48px 20px 20px;
+  padding: 48px 32px 32px;
 }
 
-/* Results view should use full available width */
+/* Results view should use full available width but still maintain some padding */
 .container.results {
   max-width: 100%;
+  padding: 48px 24px 32px;
 }
 
 .card {
@@ -266,7 +268,11 @@ body {
 
   .container {
     /* Keep extra top space on smaller screens as well */
-    padding: 44px 16px 16px;
+    padding: 44px 20px 20px;
+  }
+
+  .container.results {
+    padding: 44px 16px 20px;
   }
 
   .card {

@@ -13,8 +13,21 @@
 
 ## 📸 Screenshots
 
-![Screenshot 1](assets/screenshots/screen1.png)
-![Screenshot 2](assets/screenshots/screen2.png)
+<div align="center">
+
+### Main Interface & Color Matching
+![Main Interface](assets/screenshots/screen1.png)
+*AI-powered color analysis and film emulation interface*
+
+### Film Presets & Processing Options  
+![Film Presets](assets/screenshots/screen2.png)
+*Comprehensive film simulation library and processing controls*
+
+### Export & Results
+![Export Results](assets/screenshots/screen3.png)
+*Lightroom XMP presets and 3D LUT export options*
+
+</div>
 
 ## 💻 Installation
 

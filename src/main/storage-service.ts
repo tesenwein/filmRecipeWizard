@@ -419,7 +419,6 @@ export class StorageService {
       await fs.rm(tmpDir, { recursive: true, force: true });
     } catch {
       // Directory might not exist, which is fine
-      console.log(`[STORAGE] Temp directory already cleaned or doesn't exist`);
     }
   }
 }

@@ -104,19 +104,19 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   // Check if at least one option is active
   const hasActiveOptions = Boolean(
     baseImages.length > 0 || // Has reference images
-      (prompt && prompt.trim().length > 0) || // Has prompt text
-      styleOptions?.vibe || // Has vibe selected
-      styleOptions?.artistStyle || // Has artist style selected
-      styleOptions?.filmStyle || // Has film style selected
-      styleOptions?.filmGrain || // Has film grain enabled
-      styleOptions?.preserveSkinTones || // Has preserve skin tones enabled
-      styleOptions?.warmth !== undefined || // Has warmth adjustment
-      styleOptions?.tint !== undefined || // Has tint adjustment
-      styleOptions?.contrast !== undefined || // Has contrast adjustment
-      styleOptions?.vibrance !== undefined || // Has vibrance adjustment
-      styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment
-      styleOptions?.moodiness !== undefined || // Has moodiness adjustment
-      styleOptions?.lightroomProfile !== undefined // Has lightroom profile selected
+    (prompt && prompt.trim().length > 0) || // Has prompt text
+    styleOptions?.vibe || // Has vibe selected
+    styleOptions?.artistStyle || // Has artist style selected
+    styleOptions?.filmStyle || // Has film style selected
+    styleOptions?.filmGrain || // Has film grain enabled
+    styleOptions?.preserveSkinTones || // Has preserve skin tones enabled
+    styleOptions?.warmth !== undefined || // Has warmth adjustment
+    styleOptions?.tint !== undefined || // Has tint adjustment
+    styleOptions?.contrast !== undefined || // Has contrast adjustment
+    styleOptions?.vibrance !== undefined || // Has vibrance adjustment
+    styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment
+    styleOptions?.moodiness !== undefined || // Has moodiness adjustment
+    styleOptions?.lightroomProfile !== undefined // Has lightroom profile selected
   );
 
   const canProcess: boolean = Boolean(!processingState.isProcessing && hasActiveOptions);
@@ -225,119 +225,134 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   }, []);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1 }}>
-      {/* Header */}
-      <Paper
-        className="card slide-in"
-        elevation={0}
-        sx={{ borderRadius: 2, p: 2.5, textAlign: 'center' }}
-      >
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}
-        >
-          <AutoAwesomeIcon sx={{ fontSize: 28, color: 'primary.main' }} />
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: '#2c3338', margin: 0 }}>
-            AI Color Matching Studio
-          </h2>
-        </Box>
-        <p style={{ fontSize: 13, color: '#5f6b74', margin: 0 }}>
-          Create Lightroom profiles and LUTs from your reference images
-        </p>
-      </Paper>
-
-      {/* Main Content Grid */}
+    <Box sx={{ display: 'flex', flexDirection: 'column', position: 'relative', width: '100%', overflow: 'hidden' }}>
+      {/* Main Content Area */}
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1.5fr 0.8fr' },
-          gap: 2.5,
-          minHeight: 500,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+          p: 1,
+          width: '100%',
+          overflow: 'hidden',
         }}
       >
-        {/* Left Column - Target Image and Reference Image */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
-          <Box sx={{ display: 'flex', width: '100%' }}>
+        {/* Header */}
+        <Paper
+          className="card slide-in"
+          elevation={0}
+          sx={{ borderRadius: 2, p: 2.5, textAlign: 'center' }}
+        >
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}
+          >
+            <AutoAwesomeIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#2c3338', margin: 0 }}>
+              AI Color Matching Studio
+            </h2>
+          </Box>
+          <p style={{ fontSize: 13, color: '#5f6b74', margin: 0 }}>
+            Create Lightroom profiles and LUTs from your reference images
+          </p>
+        </Paper>
+
+        {/* Main Content Grid */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1.5fr 0.8fr' },
+            gap: 2.5,
+            minHeight: 500,
+            width: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Left Column - Target Image and Reference Image */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%', overflow: 'hidden' }}>
+            <Box sx={{ display: 'flex', width: '100%', overflow: 'hidden' }}>
+              <ImagePicker
+                kind="target"
+                images={targetImages}
+                previews={targetPreviews}
+                onSelectFiles={handleTargetImagesSelect}
+                onRemoveImage={handleRemoveTarget}
+                onDropFiles={paths => {
+                  if (!paths || paths.length === 0) return;
+                  const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
+                  onImagesSelected(baseImages, next);
+                }}
+                maxFiles={3}
+              />
+            </Box>
+
             <ImagePicker
-              kind="target"
-              images={targetImages}
-              previews={targetPreviews}
-              onSelectFiles={handleTargetImagesSelect}
-              onRemoveImage={handleRemoveTarget}
+              kind="reference"
+              images={baseImages}
+              previews={basePreviews}
+              onSelectFiles={handleBaseImageSelect}
+              onRemoveImage={handleRemoveBase}
               onDropFiles={paths => {
                 if (!paths || paths.length === 0) return;
-                const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
-                onImagesSelected(baseImages, next);
+                const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
+                onImagesSelected(next, targetImages);
               }}
               maxFiles={3}
             />
           </Box>
 
-          <ImagePicker
-            kind="reference"
-            images={baseImages}
-            previews={basePreviews}
-            onSelectFiles={handleBaseImageSelect}
-            onRemoveImage={handleRemoveBase}
-            onDropFiles={paths => {
-              if (!paths || paths.length === 0) return;
-              const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
-              onImagesSelected(next, targetImages);
-            }}
-            maxFiles={3}
-          />
-        </Box>
+          {/* Right Column - All Options */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: 'fit-content', position: 'sticky', top: 0 }}>
+            <LightroomProfileCard
+              selected={styleOptions?.lightroomProfile}
+              onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
+            />
 
-        {/* Right Column - All Options */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: 'fit-content', position: 'sticky', top: 0 }}>
-          <LightroomProfileCard
-            selected={styleOptions?.lightroomProfile}
-            onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
-          />
+            <AIFunctionsSelector
+              styleOptions={styleOptions}
+              onStyleOptionsChange={onStyleOptionsChange}
+            />
 
-          <AIFunctionsSelector
-            styleOptions={styleOptions}
-            onStyleOptionsChange={onStyleOptionsChange}
-          />
+            <StyleDescriptionCard
+              prompt={prompt}
+              onPromptChange={onPromptChange}
+              selectedVibe={styleOptions?.vibe}
+              onVibeChange={handleVibeChange}
+            />
 
-          <StyleDescriptionCard
-            prompt={prompt}
-            onPromptChange={onPromptChange}
-            selectedVibe={styleOptions?.vibe}
-            onVibeChange={handleVibeChange}
-          />
+            <ArtisticStylesCard
+              selected={styleOptions?.artistStyle?.key}
+              onSelect={s => onStyleOptionsChange?.({ artistStyle: s })}
+            />
 
-          <ArtisticStylesCard
-            selected={styleOptions?.artistStyle?.key}
-            onSelect={s => onStyleOptionsChange?.({ artistStyle: s })}
-          />
+            <FilmStylesCard
+              selected={styleOptions?.filmStyle?.key}
+              onSelect={s => onStyleOptionsChange?.({ filmStyle: s })}
+            />
 
-          <FilmStylesCard
-            selected={styleOptions?.filmStyle?.key}
-            onSelect={s => onStyleOptionsChange?.({ filmStyle: s })}
-          />
+            <FineTuneControls
+              styleOptions={styleOptions}
+              onStyleOptionsChange={onStyleOptionsChange}
+            />
 
-          <FineTuneControls
-            styleOptions={styleOptions}
-            onStyleOptionsChange={onStyleOptionsChange}
-          />
+            {/* Process Button */}
+            <Box sx={{ mt: 2 }}>
+              <ProcessButton
+                canProcess={canProcess}
+                onStartProcessing={onStartProcessing}
+                hasActiveOptions={hasActiveOptions}
+              />
+            </Box>
+          </Box>
         </Box>
       </Box>
-
-      {/* Process Button */}
-      <ProcessButton
-        canProcess={canProcess}
-        onStartProcessing={onStartProcessing}
-        hasActiveOptions={hasActiveOptions}
-      />
 
       <ConfirmDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         title="Remove Image"
-        content={`Are you sure you want to remove this ${
-          deleteType === 'base' ? 'recipe reference' : 'target'
-        } image?`}
+        content={`Are you sure you want to remove this ${deleteType === 'base' ? 'recipe reference' : 'target'
+          } image?`}
         confirmButtonText="Remove"
         confirmColor="error"
       />

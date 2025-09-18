@@ -1,5 +1,5 @@
 import type { AIColorAdjustments } from '../services/types';
-import { getMaskConfig, getAllMaskTypes } from '../shared/mask-types';
+import { getMaskConfig, getAllMaskTypes, normalizeMaskType } from '../shared/mask-types';
 
 // Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
 export function getExampleBWMixer(): Pick<
@@ -88,17 +88,19 @@ export function generateXMPContent(
     fallback;
   const presetName = sanitizeName(rawPresetName) || fallback;
   const groupName = 'film-recipe-wizard';
-  // Always include all available features
+  // Inclusion flags with flexible defaults (back-compat: include everything when not specified)
   const inc = {
-    wbBasic: true,
-    exposure: false, // Keep exposure separate and disabled by default
-    hsl: true,
-    colorGrading: true,
-    curves: true,
-    pointColor: true,
-    grain: true,
-    masks: true,
-    // sharpenNoise and vignette currently not emitted in XMP (placeholders)
+    wbBasic: include?.wbBasic !== false,
+    exposure: !!include?.exposure, // exposure is separate and defaults to off unless explicitly enabled
+    hsl: include?.hsl !== false,
+    colorGrading: include?.colorGrading !== false,
+    curves: include?.curves !== false,
+    // Enable Point Color by default unless explicitly disabled
+    pointColor: include?.pointColor !== false,
+    // Film Grain optional export flag (default ON for back-compat)
+    grain: include?.grain !== false,
+    // Masks/local adjustments export flag (default OFF)
+    masks: !!include?.masks,
   } as const;
 
   // Build conditional blocks - always include what's available
@@ -438,22 +440,19 @@ export function generateXMPContent(
             ? ` crs:${k}="${val}"`
             : '';
 
+        // Helper to generate a 32-character uppercase hex string (Lightroom expects 32 hex chars)
+        const randomHex32 = () =>
+          Array.from({ length: 32 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)])
+            .join('');
+
         const correctionLis = masks
           .map((m, i) => {
             const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
             const adj = m?.adjustments || {};
 
-            // Generate unique sync IDs (32-character hex strings)
-            const generateSyncID = (prefix: string, _index: number): string => {
-              const hex = '0123456789ABCDEF';
-              let result = prefix;
-              for (let j = 0; j < 8; j++) {
-                result += hex[Math.floor(Math.random() * 16)];
-              }
-              return result;
-            };
-            const correctionSyncID = generateSyncID('1CB4D8C68C7443EFB1228D1E1100236', i);
-            const maskSyncID = generateSyncID('45504B461EFB412EB77D76F3A7B8DF8', i);
+            // Generate proper 32-char unique IDs per correction/mask
+            const correctionSyncID = randomHex32();
+            const maskSyncID = randomHex32();
 
             // Build adjustment attributes using 2012 naming where applicable
             const adjAttrs = [
@@ -489,7 +488,10 @@ export function generateXMPContent(
 
             // Build geometry li for mask
             let maskLi = '';
-            const mType: any = m?.type;
+            let mType: any = m?.type;
+            if (typeof mType === 'string') {
+              mType = normalizeMaskType(mType);
+            }
             if (mType === 'linear') {
               const zx = f3(n0_1(m.zeroX));
               const zy = f3(n0_1(m.zeroY));
@@ -565,10 +567,13 @@ export function generateXMPContent(
          crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"
          crs:ErrorReason="0"/>`;
               } else {
-                // Use provided subCategoryId if available, otherwise use the configured value
-                const finalSubCat = typeof (m as any)?.subCategoryId === 'number'
-                  ? String((m as any).subCategoryId)
-                  : maskConfig.subCategoryId || undefined;
+                // Prefer configured subCategoryId when defined (canonical Lightroom values).
+                // Only use provided subCategoryId when config doesn't specify one.
+                const finalSubCat = (maskConfig.subCategoryId && maskConfig.subCategoryId.length > 0)
+                  ? maskConfig.subCategoryId
+                  : (typeof (m as any)?.subCategoryId === 'number'
+                    ? String((m as any).subCategoryId)
+                    : undefined);
 
                 maskLi = `<rdf:li
          crs:What="Mask/Image"

@@ -2,7 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
 import { AIColorAdjustments } from './types';
-import { getAllMaskTypes } from '../shared/mask-types';
+import { getAllMaskTypes, getMaskTypesByCategory, MASK_TYPE_CONFIGS } from '../shared/mask-types';
 
 export interface StreamingUpdate {
     type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete' | 'step_progress' | 'step_transition';
@@ -51,9 +51,6 @@ export class AIStreamingService {
 
             // Create tools for the AI to use
             const tools = this.createTools(options);
-
-            // Simulate the analysis steps before AI processing
-            await this.simulateAnalysisSteps(onUpdate);
 
             // Use AI SDK v5 generateText for non-streaming API calls
             // Set the API key as environment variable for this call
@@ -169,6 +166,19 @@ export class AIStreamingService {
     }
 
     private getSystemPrompt(options: StreamingOptions): string {
+        // Generate mask type descriptions dynamically from configuration
+        const faceMasks = getMaskTypesByCategory('face');
+        const landscapeMasks = getMaskTypesByCategory('landscape');
+        const subjectMasks = getMaskTypesByCategory('subject');
+        const backgroundMasks = getMaskTypesByCategory('background');
+        const otherMasks = getMaskTypesByCategory('other');
+
+        const faceMaskList = faceMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
+        const landscapeMaskList = landscapeMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
+        const subjectMaskList = subjectMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
+        const backgroundMaskList = backgroundMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
+        const otherMaskList = otherMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
+
         return `You are a professional photo editor. Create comprehensive Lightroom/Camera Raw adjustments to achieve the target look.
 
 IMPORTANT: 
@@ -200,14 +210,19 @@ Call the generate_color_adjustments function with:
    - For subject/person masks, use type: 'subject' with referenceX/Y coordinates
    - For sky masks, use type: 'sky' with referenceX/Y coordinates
    - CRITICAL: For ANY facial features (skin, eyes, teeth, hair, etc.), ALWAYS use specific face masks instead of radial masks
-   - NEVER use 'radial' masks for facial features - use 'face_skin', 'eye_whites', 'iris_pupil', 'teeth', 'eyebrows', 'lips', 'hair', 'facial_hair' instead
+   - NEVER use 'radial' masks for facial features - use specific face mask types instead
    - AVOID using 'subject' or 'person' masks unless you can clearly identify a face/person in the image
    - AVOID using 'radial' masks - prefer specific mask types (face, landscape, background, sky) or 'linear' masks for gradients
    - Use 'linear' masks for gradients or directional lighting effects
    - Use 'background' masks to adjust everything except the main subject
-   - For portraits with clear faces, ALWAYS use specific face masks: 'face_skin' for facial skin, 'eye_whites' for eye sclera, 'iris_pupil' for iris and pupil, 'teeth' for teeth
-   - Additional face/body masks: 'body_skin' for body skin, 'eyebrows' for eyebrows, 'lips' for lips, 'hair' for hair, 'facial_hair' for beards/mustaches, 'clothing' for clothes
-   - Landscape masks: 'mountains' for mountain ranges, 'architecture' for buildings/structures, 'vegetation' for plants/trees, 'water' for water bodies, 'natural_ground' for natural terrain, 'artificial_ground' for man-made surfaces
+   
+   AVAILABLE MASK TYPES:
+   - Face/Body Masks: ${faceMaskList}
+   - Landscape Masks: ${landscapeMaskList}
+   - Subject Masks: ${subjectMaskList}
+   - Background Masks: ${backgroundMaskList}
+   - Other Masks: ${otherMaskList}
+   
    - Face-specific masks work best for portrait photography and require clear facial features
    - Landscape masks work best for outdoor/nature photography and require clear landscape elements` +
             (options.aiFunctions?.pointColor ? `\n6. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
@@ -488,65 +503,6 @@ Provide detailed reasoning for each adjustment to help the user understand the c
         };
     }
 
-    private async simulateAnalysisSteps(onUpdate?: (update: StreamingUpdate) => void): Promise<void> {
-        if (!onUpdate) return;
-
-        // Helper function to add delay
-        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-        // Step 1: Initialization
-        onUpdate({
-            type: 'step_transition',
-            content: 'Initializing AI analysis engine...',
-            step: 'initialization',
-            progress: 20,
-        });
-        await delay(600);
-
-        // Step 2: Analysis
-        onUpdate({
-            type: 'step_transition',
-            content: 'Analyzing reference and target images...',
-            step: 'analysis',
-            progress: 40,
-        });
-        await delay(1000);
-
-        // Step 3: Color Matching
-        onUpdate({
-            type: 'step_transition',
-            content: 'Identifying color palettes and tonal relationships...',
-            step: 'color_matching',
-            progress: 60,
-        });
-        await delay(800);
-
-        // Step 4: Adjustments
-        onUpdate({
-            type: 'step_transition',
-            content: 'Generating Lightroom/Camera Raw adjustments...',
-            step: 'adjustments',
-            progress: 80,
-        });
-        await delay(800);
-
-        // Step 5: Masks
-        onUpdate({
-            type: 'step_transition',
-            content: 'Creating local adjustments and masks...',
-            step: 'masks',
-            progress: 90,
-        });
-        await delay(600);
-
-        // Step 6: Finalization (this will be completed after AI processing)
-        onUpdate({
-            type: 'step_transition',
-            content: 'Finalizing recipe and compiling adjustments...',
-            step: 'finalization',
-            progress: 95,
-        });
-    }
 
     private getToolDescription(toolName: string): string {
         const descriptions: Record<string, string> = {

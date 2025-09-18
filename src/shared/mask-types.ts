@@ -27,17 +27,18 @@ export interface MaskTypeConfig {
  */
 export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   // Face/Skin masks (MaskSubType="3")
+  // Based on working Lightroom XMP examples from masks.xmp
   {
     type: 'face_skin',
     subType: '3',
-    subCategoryId: '2',
+    subCategoryId: '2', // Correct value from working masks.xmp
     description: 'Facial skin',
     category: 'face'
   },
   {
     type: 'iris_pupil',
     subType: '3',
-    subCategoryId: '3',
+    subCategoryId: '3', // Correct value from working masks.xmp
     description: 'Iris and pupil',
     category: 'face'
   },
@@ -72,28 +73,28 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   {
     type: 'eye_whites',
     subType: '3',
-    subCategoryId: '8',
+    subCategoryId: '8', // Correct value from working masks.xmp
     description: 'Eye whites (sclera)',
     category: 'face'
   },
   {
     type: 'hair',
-    subType: '3',
-    subCategoryId: '9',
+    subType: '1', // Hair should be subject type, not face type
+    subCategoryId: '',
     description: 'Hair',
-    category: 'face'
+    category: 'subject'
   },
   {
     type: 'clothing',
-    subType: '3',
-    subCategoryId: '10',
+    subType: '1', // Clothing should be subject type, not face type
+    subCategoryId: '',
     description: 'Clothing',
-    category: 'face'
+    category: 'subject'
   },
   {
     type: 'teeth',
     subType: '3',
-    subCategoryId: '12',
+    subCategoryId: '12', // Correct value from working masks.xmp
     description: 'Teeth',
     category: 'face'
   },
@@ -143,8 +144,8 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   },
   {
     type: 'sky',
-    subType: '0',
-    subCategoryId: '50006',
+    subType: '2', // Correct value from working mask-exmaple.xmp
+    subCategoryId: '',
     description: 'Sky',
     category: 'landscape'
   },
@@ -247,4 +248,44 @@ export function getAllMaskTypes(): string[] {
  */
 export function isMaskTypeSupported(type: string): boolean {
   return MASK_TYPE_MAP.has(type);
+}
+
+/**
+ * Normalize loosely specified mask types to our canonical supported types.
+ * Handles common synonyms coming from AI outputs to avoid falling back to generic 'subject'.
+ */
+export function normalizeMaskType(inputType: string): string {
+  if (!inputType) return 'subject';
+  const t = String(inputType).toLowerCase().trim();
+
+  // Direct pass-through if already supported
+  if (MASK_TYPE_MAP.has(t)) return t;
+
+  // Synonym mapping
+  switch (t) {
+    case 'face':
+    case 'skin':
+    case 'facial_skin':
+      return 'face_skin';
+    case 'eye':
+    case 'eyes':
+    case 'iris':
+    case 'pupil':
+      return 'iris_pupil';
+    case 'eye_white':
+    case 'eye_whites':
+    case 'sclera':
+      return 'eye_whites';
+    case 'teeth':
+    case 'tooth':
+      return 'teeth';
+    case 'people':
+    case 'person':
+      return 'subject';
+    case 'landscape':
+      // Use background as a safe general scene mask
+      return 'background';
+    default:
+      return MASK_TYPE_MAP.has(t) ? t : 'subject';
+  }
 }
