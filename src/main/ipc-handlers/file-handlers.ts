@@ -26,6 +26,17 @@ export class FileHandlers {
       }
     });
 
+    // Read file content handler
+    ipcMain.handle('read-file', async (_event, filePath: string) => {
+      try {
+        const content = await fs.readFile(filePath, 'utf8');
+        return content;
+      } catch (error) {
+        console.error('[IPC] Error reading file:', error);
+        throw error;
+      }
+    });
+
     // Open path in system file manager
     ipcMain.handle('open-path', async (_event, path) => {
       try {

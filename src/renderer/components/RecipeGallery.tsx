@@ -1,36 +1,37 @@
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import BoltIcon from '@mui/icons-material/Bolt';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SearchIcon from '@mui/icons-material/Search';
-import BoltIcon from '@mui/icons-material/Bolt';
-import {
-  Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  FormControl,
-  Grid,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
-import React, { useState, useMemo } from 'react';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import {
+    Button,
+    Card,
+    CardActionArea,
+    CardContent,
+    FormControl,
+    Grid,
+    IconButton,
+    InputAdornment,
+    InputLabel,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Select,
+    Stack,
+    TextField,
+    Typography,
+} from '@mui/material';
+import React, { useMemo, useState } from 'react';
 import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
-import SingleImage from './SingleImage';
 import ConfirmDialog from './ConfirmDialog';
 import ErrorDialog from './ErrorDialog';
+import SingleImage from './SingleImage';
+import XMPImportDialog from './XMPImportDialog';
 
 interface RecipeGalleryProps {
   onOpenRecipe: (recipe: Recipe) => void;
@@ -44,6 +45,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     generatingRecipes,
     deleteRecipe,
     importRecipes,
+    importXMP,
     exportRecipe,
     exportAllRecipes
   } = useAppStore();
@@ -56,6 +58,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDetails, setErrorDetails] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [xmpImportDialogOpen, setXmpImportDialogOpen] = useState(false);
   const { showSuccess, showError } = useAlert();
 
   // Recipes are loaded during splash screen, no need to load here
@@ -215,6 +219,55 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     return new Date(timestamp).toLocaleString();
   };
 
+  // Drag and drop handlers for XMP files
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    const xmpFiles = files.filter(file => file.name.toLowerCase().endsWith('.xmp'));
+    
+    if (xmpFiles.length > 0) {
+      try {
+        for (const file of xmpFiles) {
+          const fileContent = await file.text();
+          const res = await importXMP({ fileContent, title: file.name.replace('.xmp', '') });
+          if (res.success) {
+            showSuccess(`Successfully imported XMP preset: ${file.name}`);
+          } else {
+            setErrorMessage(`Failed to import XMP preset: ${file.name}`);
+            setErrorDetails(res.error || 'Unknown error occurred during import');
+            setErrorDialogOpen(true);
+          }
+        }
+      } catch (error) {
+        setErrorMessage('XMP import failed unexpectedly');
+        setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
+        setErrorDialogOpen(true);
+      }
+    }
+  };
+
+  const handleXMPImport = async (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => {
+    try {
+      const res = await importXMP(data);
+      if (res.success) {
+        showSuccess('Successfully imported XMP preset');
+      } else {
+        setErrorMessage('Failed to import XMP preset');
+        setErrorDetails(res.error || 'Unknown error occurred during import');
+        setErrorDialogOpen(true);
+      }
+    } catch (error) {
+      setErrorMessage('XMP import failed unexpectedly');
+      setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
+      setErrorDialogOpen(true);
+    }
+  };
+
   if (recipesLoading) {
     return (
       <div className="container" style={{ textAlign: 'center', padding: '60px' }}>
@@ -225,7 +278,12 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   }
 
   return (
-    <div className="container">
+    <div 
+      className="container"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      style={{ minHeight: '100vh' }}
+    >
       <Grid container alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, lg: 6 }}>
           <Typography variant="h5" fontWeight={700}>
@@ -315,6 +373,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
               sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
             >
               Import Recipe
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setXmpImportDialogOpen(true)}
+              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
+            >
+              Import XMP
             </Button>
             <Button
               variant="outlined"
@@ -505,6 +570,15 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           </ListItemIcon>
           <ListItemText>Export Recipe</ListItemText>
         </MenuItem>
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          setXmpImportDialogOpen(true);
+        }}>
+          <ListItemIcon>
+            <AddBoxIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Import XMP</ListItemText>
+        </MenuItem>
         <MenuItem onClick={handleDeleteRecipe} sx={{ color: 'error.main' }}>
           <ListItemIcon>
             <DeleteOutlineIcon fontSize="small" sx={{ color: 'error.main' }} />
@@ -532,6 +606,11 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           setErrorMessage('');
           setErrorDetails('');
         }}
+      />
+      <XMPImportDialog
+        open={xmpImportDialogOpen}
+        onClose={() => setXmpImportDialogOpen(false)}
+        onImport={handleXMPImport}
       />
     </div>
   );

@@ -33,6 +33,7 @@ const electronAPI = {
   importRecipe: () => ipcRenderer.invoke('import-recipe'),
   importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => 
     ipcRenderer.invoke('import-xmp', data),
+  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
 
   // Progress monitoring
   onProcessingProgress: (callback: (progress: number, status: string) => void) => {

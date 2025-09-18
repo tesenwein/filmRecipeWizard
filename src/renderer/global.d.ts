@@ -47,6 +47,7 @@ declare global {
       generatePreset: (data: any) => Promise<any>;
       downloadXMP: (data: any) => Promise<any>;
       importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => Promise<any>;
+      readFile: (filePath: string) => Promise<string>;
       generateLUT: (data: any) => Promise<any>;
       exportProfile: (data: {
         adjustments: any;

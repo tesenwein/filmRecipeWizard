@@ -55,6 +55,7 @@ interface AppState {
   updateRecipeInStorage: (processId: string, updates: any) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
   importRecipes: () => Promise<{ success: boolean; count?: number; error?: string }>;
+  importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => Promise<{ success: boolean; recipeId?: string; error?: string }>;
   exportRecipe: (id: string) => Promise<{ success: boolean; error?: string }>;
   exportAllRecipes: () => Promise<{ success: boolean; count?: number; error?: string }>;
   resetApp: () => Promise<void>;
@@ -377,6 +378,38 @@ export const useAppStore = create<AppState>()(
           return result;
         } catch (error) {
           console.error('[STORE] Error importing recipes:', error);
+          throw error;
+        }
+      },
+
+      importXMP: async (data) => {
+        try {
+          const result = await window.electronAPI.importXMP(data);
+          if (result.success) {
+            // Manually reload recipes to show the new XMP recipe
+            const loadResult = await window.electronAPI.loadHistory();
+            if (loadResult.success) {
+              const recipes = (loadResult.recipes as Recipe[]) || [];
+              const generating = new Set<string>();
+              recipes.forEach(recipe => {
+                if (recipe.status === 'generating') {
+                  generating.add(recipe.id);
+                }
+              });
+              set(
+                {
+                  recipes,
+                  generatingRecipes: generating,
+                  recipesLoading: false,
+                },
+                false,
+                'importXMP/reload'
+              );
+            }
+          }
+          return result;
+        } catch (error) {
+          console.error('[STORE] Error importing XMP:', error);
           throw error;
         }
       },

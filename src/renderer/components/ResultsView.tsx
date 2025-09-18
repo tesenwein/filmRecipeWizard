@@ -572,22 +572,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     >
                       {/* Left Column: Basic Information */}
                       <Paper elevation={1} sx={{ p: 3 }}>
-                        {/* AI Analysis */}
-                        {result.metadata?.aiAdjustments?.reasoning && (
-                          <Box sx={{ mb: 3 }}>
-                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
-                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {result.metadata.aiAdjustments.reasoning}
-                              </Typography>
-                            </Paper>
-                          </Box>
-                        )}
-
-                        {/* Recipe Description */}
+                        {/* Description */}
                         <Box sx={{ mb: 3 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                              Recipe Description
+                              Description
                             </Typography>
                             {editingDescription !== selectedResult && (
                               <IconButton 
@@ -647,6 +636,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Paper>
                           )}
                         </Box>
+
+                        {/* AI Analysis */}
+                        {result.metadata?.aiAdjustments?.reasoning && (
+                          <Box sx={{ mb: 3 }}>
+                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                {result.metadata.aiAdjustments.reasoning}
+                              </Typography>
+                            </Paper>
+                          </Box>
+                        )}
 
                         {/* User Prompt */}
                         {processPrompt && processPrompt.trim().length > 0 && (
