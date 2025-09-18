@@ -68,6 +68,7 @@ export class ImportHandlers {
                   ...existingRecipe,
                   name: recipe.name,
                   prompt: recipe.prompt,
+                  description: recipe.description,
                   userOptions: recipe.userOptions,
                   results: recipe.results,
                   recipeImageData: recipe.recipeImageData,
@@ -83,6 +84,7 @@ export class ImportHandlers {
                   timestamp: recipe.timestamp || new Date().toISOString(), // Preserve original timestamp
                   name: recipe.name,
                   prompt: recipe.prompt,
+                  description: recipe.description,
                   userOptions: recipe.userOptions,
                   results: recipe.results,
                   recipeImageData: recipe.recipeImageData,
@@ -136,6 +138,7 @@ export class ImportHandlers {
               ...existingRecipe,
               name: process.name,
               prompt: process.prompt,
+              description: process.description,
               userOptions: process.userOptions,
               results: process.results,
               recipeImageData: process.recipeImageData,
@@ -151,6 +154,7 @@ export class ImportHandlers {
               timestamp: process.timestamp || new Date().toISOString(), // Preserve original timestamp
               name: process.name,
               prompt: process.prompt,
+              description: process.description,
               userOptions: process.userOptions,
               results: process.results,
               recipeImageData: process.recipeImageData,
@@ -211,7 +215,8 @@ export class ImportHandlers {
           id: newId,
           timestamp: new Date().toISOString(),
           name: data.title || parseResult.metadata?.presetName || 'Imported XMP Preset',
-          prompt: data.description || 'Imported from XMP preset',
+          prompt: 'Imported from XMP preset',
+          description: data.description || '', // Store description as actual description, not prompt
           results: [
             {
               success: true,

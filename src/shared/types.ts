@@ -74,6 +74,8 @@ export interface Recipe {
   name?: string;
   // Optional freeform text prompt used instead of a reference image
   prompt?: string;
+  // Optional description of the recipe
+  description?: string;
   results: ProcessingResult[];
   // Recipe image (single) to show in detail view; do not persist full reference/target sets
   recipeImageData?: string; // base64 encoded image
