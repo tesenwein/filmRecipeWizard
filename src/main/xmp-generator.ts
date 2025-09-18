@@ -1,4 +1,5 @@
 import type { AIColorAdjustments } from '../services/types';
+import { getMaskConfig, getAllMaskTypes } from '../shared/mask-types';
 
 // Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
 export function getExampleBWMixer(): Pick<
@@ -565,11 +566,11 @@ export function generateXMPContent(
               // AI scene masks: Subject/People (1), Background (0), Sky (2), Face/Skin (3)
               const rx = f3(n0_1(m.referenceX));
               const ry = f3(n0_1(m.referenceY));
-              
+
               // Map mask types to Lightroom MaskSubType and MaskSubCategoryID values
               let subType: string;
               let subCat: string | undefined;
-              
+
               if (mType === 'background') {
                 subType = '0';
                 subCat = '22'; // Default background category
@@ -628,12 +629,12 @@ export function generateXMPContent(
                 subType = '1'; // Default to subject/person
                 subCat = undefined;
               }
-              
+
               // Use provided subCategoryId if available, otherwise use the mapped value
               const finalSubCat = typeof (m as any)?.subCategoryId === 'number'
                 ? String((m as any).subCategoryId)
                 : subCat;
-                
+
               maskLi = `<rdf:li
          crs:What="Mask/Image"
          crs:MaskActive="true"
