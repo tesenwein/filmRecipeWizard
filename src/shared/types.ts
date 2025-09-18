@@ -120,6 +120,7 @@ export interface ExportResult {
 export interface ImportResult {
   success: boolean;
   count?: number;
+  replaced?: number;
   error?: string;
 }
 

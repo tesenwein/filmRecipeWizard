@@ -149,13 +149,19 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               };
             }
 
-            // Activate target step
-            updatedSteps[targetStepIndex] = { 
-              ...updatedSteps[targetStepIndex], 
-              status: 'active', 
-              progress: Math.min(currentProgress, 100),
-              toolName: update.toolName
-            };
+            // Activate target step with a brief delay for visual effect
+            setTimeout(() => {
+              setRecipeSteps(prev => {
+                const updatedSteps = [...prev];
+                updatedSteps[targetStepIndex] = {
+                  ...updatedSteps[targetStepIndex],
+                  status: 'active',
+                  progress: Math.min(currentProgress, 100),
+                  toolName: update.toolName
+                };
+                return updatedSteps;
+              });
+            }, 200);
           }
         } else if (update.type === 'tool-result') {
           // Handle tool results - mark current step as completed
@@ -215,16 +221,16 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           justifyContent: 'center',
           width: '100%',
           minHeight: '80vh',
-          p: 4,
+          p: 2,
           position: 'relative',
         }}
       >
         {/* Header with AI icon */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Avatar
             sx={{
-              width: 60,
-              height: 60,
+              width: 40,
+              height: 40,
               backgroundColor: 'primary.main',
               animation: 'aiThinking 2s infinite ease-in-out',
               '@keyframes aiThinking': {
@@ -254,7 +260,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               variant="body1"
               sx={{
                 color: 'text.secondary',
-                fontWeight: 400
+                fontWeight: 400,
+                fontStyle: 'normal' // Ensure description is not italic
               }}
             >
               Crafting your perfect photo recipe...
@@ -322,7 +329,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
                       <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.25 }}>
                         {step.title}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.85rem' }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.85rem', fontStyle: 'normal' }}>
                         {step.description}
                       </Typography>
 

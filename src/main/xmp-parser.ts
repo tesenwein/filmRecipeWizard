@@ -4,6 +4,8 @@ export interface XMPParseResult {
   success: boolean;
   adjustments?: AIColorAdjustments;
   error?: string;
+  presetName?: string;
+  description?: string;
   metadata?: {
     presetName?: string;
     presetType?: string;
@@ -44,9 +46,14 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
 
     // Extract preset name
     const nameMatch = xmpContent.match(/<crs:Name>\s*<rdf:Alt>\s*<rdf:li[^>]*>([^<]*)<\/rdf:li>/);
+    const presetName = nameMatch?.[1]?.trim() || 'Imported Preset';
     if (nameMatch) {
-      adjustments.preset_name = nameMatch[1].trim();
+      adjustments.preset_name = presetName;
     }
+
+    // Extract description
+    const descMatch = xmpContent.match(/<crs:Description>\s*<rdf:Alt>\s*<rdf:li[^>]*>([^<]*)<\/rdf:li>/);
+    const description = descMatch?.[1]?.trim() || '';
 
     // Extract preset type
     const presetTypeMatch = xmpContent.match(/crs:PresetType\s*=\s*"([^"]*)"/);
@@ -62,7 +69,7 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
 
     // Parse basic adjustments
     parseBasicAdjustments(xmpContent, adjustments);
-    
+
     // Parse HSL adjustments
     if (parseHSLAdjustments(xmpContent, adjustments)) {
       metadata.hasHSL = true;
@@ -95,6 +102,8 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
     return {
       success: true,
       adjustments,
+      presetName,
+      description,
       metadata,
     };
 
@@ -287,7 +296,7 @@ function parseToneCurves(xmpContent: string, adjustments: AIColorAdjustments): b
           const coords = match.replace(/<\/?rdf:li>/g, '').split(',').map(s => parseFloat(s.trim()));
           return { input: coords[0], output: coords[1] };
         }).filter(p => !isNaN(p.input) && !isNaN(p.output));
-        
+
         if (points.length > 0) {
           (adjustments as any)[key] = points;
           hasCurves = true;
@@ -333,7 +342,7 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
 
   const maskContent = maskGroupMatch[1];
   const maskMatches = maskContent.match(/<rdf:li>\s*<rdf:Description[\s\S]*?<\/rdf:Description>\s*<\/rdf:li>/g);
-  
+
   if (!maskMatches) {
     return false;
   }
@@ -361,11 +370,11 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
         // Check for AI mask subtypes and subcategories
         const subTypeMatch = maskMatch.match(/crs:MaskSubType="([^"]*)"/);
         const subCategoryMatch = maskMatch.match(/crs:MaskSubCategoryID="([^"]*)"/);
-        
+
         if (subTypeMatch) {
           const subType = subTypeMatch[1];
           const subCategory = subCategoryMatch ? subCategoryMatch[1] : null;
-          
+
           // Map MaskSubType and MaskSubCategoryID to our mask types
           mask.type = mapMaskSubTypeToType(subType, subCategory);
           if (subCategory) {
@@ -535,59 +544,57 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
 // Map Lightroom MaskSubType and MaskSubCategoryID to our mask types
 function mapMaskSubTypeToType(subType: string, subCategory: string | null): string {
   // MaskSubType values:
-  // 0 = Background
+  // 0 = Background (including landscape elements and sky)
   // 1 = Subject/Person
-  // 2 = Sky
-  // 3+ = Other AI-detected objects
+  // 2 = Sky (legacy)
+  // 3 = Face/Skin (specific facial features)
+  // 4+ = Other AI-detected objects
   
   if (subType === '0') {
-    // Background masks
+    // Background type - check subcategory for specific landscape elements
     if (subCategory) {
       const subCat = parseInt(subCategory);
       switch (subCat) {
         case 22: return 'background'; // General background
-        case 23: return 'landscape'; // Landscape background
-        case 24: return 'water'; // Water background
-        case 25: return 'vegetation'; // Vegetation background
-        case 26: return 'mountain'; // Mountain background
-        case 27: return 'building'; // Building background
-        default: return 'background';
+        case 50001: return 'architecture'; // Architecture
+        case 50002: return 'mountains'; // Mountains
+        case 50003: return 'artificial_ground'; // Artificial ground
+        case 50004: return 'natural_ground'; // Natural ground
+        case 50005: return 'vegetation'; // Vegetation
+        case 50006: return 'sky'; // Sky
+        case 50007: return 'water'; // Water
+        default: return 'background'; // Default to background
       }
     }
-    return 'background';
+    return 'background'; // Default to background if no subcategory
   } else if (subType === '1') {
-    // Subject/Person masks
-    if (subCategory) {
-      const subCat = parseInt(subCategory);
-      switch (subCat) {
-        case 1: return 'face'; // Face
-        case 2: return 'eye'; // Eye
-        case 3: return 'skin'; // Skin
-        case 4: return 'hair'; // Hair
-        case 5: return 'clothing'; // Clothing
-        case 6: return 'person'; // Full person
-        default: return 'subject';
-      }
-    }
     return 'subject';
   } else if (subType === '2') {
-    return 'sky';
+    return 'sky'; // Legacy sky type
   } else if (subType === '3') {
-    // Object masks
+    // Map specific face mask categories based on MaskSubCategoryID
     if (subCategory) {
       const subCat = parseInt(subCategory);
       switch (subCat) {
-        case 30: return 'vehicle'; // Vehicle
-        case 31: return 'animal'; // Animal
-        case 32: return 'object'; // General object
-        default: return 'object';
+        case 2: return 'face_skin'; // Face skin
+        case 3: return 'iris_pupil'; // Iris and pupil
+        case 4: return 'eyebrows'; // Eyebrows
+        case 5: return 'lips'; // Lips
+        case 6: return 'facial_hair'; // Facial hair
+        case 7: return 'body_skin'; // Body skin
+        case 8: return 'eye_whites'; // Eye whites
+        case 9: return 'hair'; // Hair
+        case 10: return 'clothing'; // Clothing
+        case 12: return 'teeth'; // Teeth
+        default: return 'face_skin'; // Default to face_skin
       }
     }
-    return 'object';
+    return 'face_skin'; // Default to face_skin if no subcategory
+  } else if (subType === '4') {
+    return 'mountains';
   }
   
-  // Default fallback
-  return 'subject';
+  return 'subject'; // Default fallback
 }
 
 function parseGrain(xmpContent: string, adjustments: AIColorAdjustments): void {

@@ -70,43 +70,8 @@ export class AIStreamingService {
             let finalResult: AIColorAdjustments | null = null;
 
             // Handle the result from generateText (non-streaming)
-            // Simulate progress updates for UI consistency
-            onUpdate?.({
-                type: 'progress',
-                content: '',
-                step: 'initialization',
-                progress: 20,
-            });
-            onUpdate?.({
-                type: 'step_progress',
-                content: '',
-                step: 'analysis',
-                progress: 40,
-            });
-            onUpdate?.({
-                type: 'step_progress',
-                content: '',
-                step: 'color_matching',
-                progress: 60,
-            });
-            onUpdate?.({
-                type: 'step_progress',
-                content: '',
-                step: 'adjustments',
-                progress: 80,
-            });
-            onUpdate?.({
-                type: 'step_progress',
-                content: '',
-                step: 'masks',
-                progress: 90,
-            });
-            onUpdate?.({
-                type: 'step_progress',
-                content: '',
-                step: 'finalization',
-                progress: 100,
-            });
+            // Simulate progress updates for UI consistency with delays
+            await this.simulateStepProgress(onUpdate);
 
             // Extract result from tool calls
             if (result.toolResults && result.toolResults.length > 0) {
@@ -505,6 +470,75 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             vibrance: 0,
             saturation: 0
         };
+    }
+
+    private async simulateStepProgress(onUpdate?: (update: StreamingUpdate) => void): Promise<void> {
+        if (!onUpdate) return;
+
+        // Helper function to add delay
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // Step 1: Initialization
+        onUpdate({
+            type: 'step_transition',
+            content: 'Initializing AI analysis engine...',
+            step: 'initialization',
+            progress: 20,
+        });
+        await delay(800);
+
+        // Step 2: Analysis
+        onUpdate({
+            type: 'step_transition',
+            content: 'Analyzing reference and target images...',
+            step: 'analysis',
+            progress: 40,
+        });
+        await delay(1200);
+
+        // Step 3: Color Matching
+        onUpdate({
+            type: 'step_transition',
+            content: 'Identifying color palettes and tonal relationships...',
+            step: 'color_matching',
+            progress: 60,
+        });
+        await delay(1000);
+
+        // Step 4: Adjustments
+        onUpdate({
+            type: 'step_transition',
+            content: 'Generating Lightroom/Camera Raw adjustments...',
+            step: 'adjustments',
+            progress: 80,
+        });
+        await delay(1000);
+
+        // Step 5: Masks
+        onUpdate({
+            type: 'step_transition',
+            content: 'Creating local adjustments and masks...',
+            step: 'masks',
+            progress: 90,
+        });
+        await delay(800);
+
+        // Step 6: Finalization
+        onUpdate({
+            type: 'step_transition',
+            content: 'Finalizing recipe and compiling adjustments...',
+            step: 'finalization',
+            progress: 100,
+        });
+        await delay(600);
+
+        // Final completion update
+        onUpdate({
+            type: 'complete',
+            content: 'Recipe generation complete!',
+            step: 'complete',
+            progress: 100,
+        });
     }
 
     private getToolDescription(toolName: string): string {

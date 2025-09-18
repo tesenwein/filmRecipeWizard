@@ -5,7 +5,7 @@ import { StorageService } from '../storage-service';
 import { parseXMPContent } from '../xmp-parser';
 
 export class ImportHandlers {
-  constructor(private storageService: StorageService) {}
+  constructor(private storageService: StorageService) { }
 
   setupHandlers(): void {
     // Import recipe(s) from ZIP
@@ -96,7 +96,7 @@ export class ImportHandlers {
             }
           }
 
-          return { success: true, count: importedCount + replacedCount };
+          return { success: true, count: importedCount + replacedCount, replaced: replacedCount };
         } else {
           // Handle single recipe import - try both at root and in subdirectories
           let entry = zip.getEntry('recipe.json');
@@ -145,7 +145,7 @@ export class ImportHandlers {
               author: process.author,
             };
             await this.storageService.updateProcess(existingRecipe.id, updated);
-            return { success: true, count: 1 };
+            return { success: true, count: 1, replaced: 1 };
           } else {
             // Add new recipe
             const newId = this.storageService.generateProcessId();
@@ -161,7 +161,7 @@ export class ImportHandlers {
               author: process.author,
             };
             await this.storageService.addProcess(imported);
-            return { success: true, count: 1 };
+            return { success: true, count: 1, replaced: 0 };
           }
         }
       } catch (error) {
@@ -214,20 +214,19 @@ export class ImportHandlers {
         const recipe = {
           id: newId,
           timestamp: new Date().toISOString(),
-          name: data.title || parseResult.metadata?.presetName || 'Imported XMP Preset',
-          prompt: 'Imported from XMP preset',
-          description: data.description || '', // Store description as actual description, not prompt
+          name: data.title || parseResult.presetName || 'Imported XMP Preset',
+          prompt: data.description || 'Imported from XMP preset',
           results: [
             {
               success: true,
               outputPath: xmpPath,
               metadata: {
-                presetName: parseResult.metadata?.presetName || 'Imported Preset',
+                presetName: parseResult.presetName || 'Imported Preset',
                 groupFolder: 'imported-xmp',
                 aiAdjustments: parseResult.adjustments,
                 sourceType: 'xmp-import',
                 originalXmpPath: xmpPath,
-                xmpMetadata: parseResult.metadata, // Store XMP metadata
+                xmpDescription: parseResult.description, // Store XMP description in metadata
               },
             },
           ],
