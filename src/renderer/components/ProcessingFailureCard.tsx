@@ -1,4 +1,4 @@
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Box, Button, Paper, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { ProcessingResult } from '../../shared/types';
 
@@ -17,6 +17,8 @@ const ProcessingFailureCard: React.FC<ProcessingFailureCardProps> = ({
   onRestart,
   onReset,
 }) => {
+  const theme = useTheme();
+  
   return (
     <Paper
       className="card slide-in"
@@ -24,7 +26,7 @@ const ProcessingFailureCard: React.FC<ProcessingFailureCardProps> = ({
       sx={{
         borderRadius: 2,
         border: 'none',
-        background: '#fff8f8',
+        background: theme.custom.colors.errorBackground,
         p: 2.5,
         animationDelay: `${index * 0.1}s`,
       }}
@@ -37,7 +39,7 @@ const ProcessingFailureCard: React.FC<ProcessingFailureCardProps> = ({
             sx={{
               fontSize: '18px',
               fontWeight: 600,
-              color: '#d32f2f',
+              color: 'error.main',
               mb: 0.5,
             }}
           >
@@ -49,13 +51,13 @@ const ProcessingFailureCard: React.FC<ProcessingFailureCardProps> = ({
 
           <Box
             sx={{
-              background: '#ffffff',
+              background: 'background.paper',
               borderRadius: 2,
               p: 2,
               mb: 2,
               fontFamily: 'monospace',
               fontSize: '13px',
-              color: '#d32f2f',
+              color: 'error.main',
               whiteSpace: 'pre-wrap',
               maxHeight: '200px',
               overflow: 'auto',

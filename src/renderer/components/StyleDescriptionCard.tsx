@@ -1,5 +1,5 @@
 import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
-import { Button, Chip, Box, Paper, TextField } from '@mui/material';
+import { Button, Chip, Box, Paper, TextField, Typography } from '@mui/material';
 import React from 'react';
 
 interface StyleDescriptionCardProps {
@@ -38,12 +38,12 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         <TipsAndUpdatesIcon sx={{ color: 'primary.main', fontSize: 20 }} />
         <Box sx={{ flex: 1 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>
+          <Typography variant="subtitle1" sx={{ fontSize: 16, fontWeight: 700, color: 'text.primary', margin: 0 }}>
             Style Description
-          </h3>
-          <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
+          </Typography>
+          <Typography variant="caption" sx={{ fontSize: 12, color: 'text.secondary', margin: 0 }}>
             Describe your desired look
-          </p>
+          </Typography>
         </Box>
         <Chip label="AI Powered" size="small" color="primary" variant="outlined" />
       </Box>

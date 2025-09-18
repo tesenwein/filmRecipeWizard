@@ -3,6 +3,42 @@ import { createRoot } from 'react-dom/client';
 import App from './components/App';
 import './styles/index.css';
 
+// Extend the theme interface to include custom properties
+declare module '@mui/material/styles' {
+  interface Theme {
+    custom: {
+      gradients: {
+        primary: string;
+        background: string;
+        placeholder: string;
+        scrollFade: string;
+      };
+      colors: {
+        placeholderText: string;
+        errorBackground: string;
+        disabledButton: string;
+        disabledText: string;
+      };
+    };
+  }
+  interface ThemeOptions {
+    custom?: {
+      gradients?: {
+        primary?: string;
+        background?: string;
+        placeholder?: string;
+        scrollFade?: string;
+      };
+      colors?: {
+        placeholderText?: string;
+        errorBackground?: string;
+        disabledButton?: string;
+        disabledText?: string;
+      };
+    };
+  }
+}
+
 const container = document.getElementById('root');
 const root = createRoot(container!);
 
@@ -22,7 +58,7 @@ const theme = createTheme({
       contrastText: '#ffffff',
     },
     background: {
-      default: '#FAFBFC',
+      default: '#FAFBFF',
       paper: '#FFFFFF',
     },
     text: {
@@ -50,6 +86,31 @@ const theme = createTheme({
       main: '#c9a961',
       light: '#d4ba82',
       dark: '#a08843',
+    },
+    error: {
+      main: '#d32f2f',
+      light: '#ef5350',
+      dark: '#c62828',
+    },
+    warning: {
+      main: '#ed6c02',
+      light: '#ff9800',
+      dark: '#e65100',
+    },
+  },
+  // Custom theme properties for app-specific colors
+  custom: {
+    gradients: {
+      primary: 'linear-gradient(135deg, #5b6670 0%, #3d4853 100%)',
+      background: 'radial-gradient(1200px 800px at 80% -200px, rgba(102,126,234,0.08), transparent 60%), radial-gradient(900px 600px at -200px -200px, rgba(118,75,162,0.06), transparent 60%), #FAFBFF',
+      placeholder: 'radial-gradient(800px 400px at 80% -10%, rgba(102,126,234,0.10), transparent 60%), radial-gradient(600px 300px at -10% -20%, rgba(118,75,162,0.08), transparent 60%), #fafbff',
+      scrollFade: 'linear-gradient(to bottom, #FAFBFF 0%, transparent 100%)',
+    },
+    colors: {
+      placeholderText: '#7c8aa0',
+      errorBackground: '#fff8f8',
+      disabledButton: '#e0e0e0',
+      disabledText: '#999999',
     },
   },
   // Use minimal rounding (2px) across the UI for uniform look
@@ -126,14 +187,76 @@ const theme = createTheme({
         root: {
           '& .MuiOutlinedInput-root': {
             '&:hover fieldset': {
-              borderColor: '#7a8491',
+              borderColor: 'primary.light',
             },
+          },
+        },
+      },
+    },
+    // Custom component overrides for app-specific classes
+    MuiBox: {
+      styleOverrides: {
+        root: {
+          '&.card': {
+            background: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 'none',
+            border: 'none',
+            padding: 24,
+            marginBottom: 20,
+            transition: 'none',
+            '&:hover': {
+              boxShadow: 'none',
+            },
+          },
+          '&.container': {
+            maxWidth: 1200,
+            margin: '0 auto',
+            padding: '48px 20px 20px',
+            '&.results': {
+              maxWidth: '100%',
+            },
+          },
+          '&.fade-in': {
+            animation: 'fadeIn 0.3s ease-in',
+          },
+          '&.slide-in': {
+            animation: 'slideIn 0.4s ease-out',
           },
         },
       },
     },
   },
 });
+
+// Add keyframe animations to the document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 root.render(
   <ThemeProvider theme={theme}>

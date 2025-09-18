@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography } from '@mui/material';
+import { Typography, Box, Paper } from '@mui/material';
 import {
   Recipe,
   ProcessingResult,
@@ -144,10 +144,14 @@ const Router: React.FC<RouterProps> = ({
             }}
           />
         ) : (
-          <div className="card" style={{ padding: 24 }}>
-            <div style={{ marginBottom: 8, fontWeight: 600 }}>No project selected</div>
-            <div style={{ color: '#6b7280' }}>Choose one from Home → Your Projects.</div>
-          </div>
+          <Paper className="card" sx={{ p: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              No project selected
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Choose one from Home → Your Projects.
+            </Typography>
+          </Paper>
         )}
       </div>
     );
@@ -156,10 +160,10 @@ const Router: React.FC<RouterProps> = ({
   if (route === '/settings') {
     return (
       <div className="fade-in">
-        <div className="card" style={{ padding: 16 }}>
+        <Paper className="card" sx={{ p: 2 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>Settings</Typography>
           <Settings />
-        </div>
+        </Paper>
       </div>
     );
   }
