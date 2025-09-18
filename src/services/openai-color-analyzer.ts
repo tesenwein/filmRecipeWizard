@@ -4,21 +4,6 @@ import { buildUserContentForAnalysis } from './prompt';
 import type { AIColorAdjustments } from './types';
 export type { AIColorAdjustments } from './types';
 
-// Example B&W mixer derived from example-bw.xmp
-export function getExampleBWMixer(): Pick<AIColorAdjustments,
-  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
-> {
-  return {
-    gray_red: -20,
-    gray_orange: 31,
-    gray_yellow: -70,
-    gray_green: -32,
-    gray_aqua: 0,
-    gray_blue: -13,
-    gray_purple: -43,
-    gray_magenta: -32,
-  };
-}
 
 export class OpenAIColorAnalyzer {
   private openai: OpenAI | null = null;

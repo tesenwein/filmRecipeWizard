@@ -35,14 +35,12 @@ async function generateWithSharp(svgBuffer) {
       .resize(size, size)
       .png()
       .toFile(path.join(iconsDir, `${size}x${size}.png`));
-    console.log(`Generated ${size}x${size}.png`);
   }
 
   await sharp(svgBuffer)
     .resize(512, 512)
     .png()
     .toFile(path.join(iconsDir, 'icon.png'));
-  console.log('Generated icon.png');
 
   // Generate ICO file for Windows
   if (pngToIco) {
@@ -60,7 +58,6 @@ async function generateWithSharp(svgBuffer) {
 
       const icoBuffer = await pngToIco(pngBuffers);
       fs.writeFileSync(path.join(iconsDir, 'icon.ico'), icoBuffer);
-      console.log('Generated icon.ico');
     } catch (error) {
       console.warn('Failed to generate ICO file:', error.message);
     }
@@ -84,7 +81,6 @@ function copyExistingIcons() {
     const dest = path.join(iconsDir, file);
     try {
       fs.copyFileSync(src, dest);
-      console.log(`Copied existing icon: ${file}`);
     } catch (err) {
       console.warn(`Failed to copy ${file}:`, err.message);
     }
@@ -106,7 +102,6 @@ async function generateIcons() {
 
     if (sharp) {
       await generateWithSharp(svgBuffer);
-      console.log('All icons generated successfully with sharp!');
       return;
     }
 

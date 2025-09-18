@@ -1,20 +1,5 @@
 import { AIColorAdjustments } from '../services/openai-color-analyzer';
 
-// Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
-export function getExampleBWMixer(): Pick<AIColorAdjustments,
-  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
-> {
-  return {
-    gray_red: -20,
-    gray_orange: 31,
-    gray_yellow: -70,
-    gray_green: -32,
-    gray_aqua: 0,
-    gray_blue: -13,
-    gray_purple: -43,
-    gray_magenta: -32,
-  };
-}
 
 export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
   // Generate XMP content for Lightroom based on AI adjustments
@@ -79,7 +64,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     grain: include?.grain !== false,
     // Masks/local adjustments export flag (default OFF)
     masks: !!include?.masks,
-    // sharpenNoise and vignette currently not emitted in XMP (placeholders)
   } as const;
 
 

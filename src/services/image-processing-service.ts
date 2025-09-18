@@ -1,7 +1,6 @@
 import * as fs from 'fs/promises';
 import sharp from 'sharp';
 
-console.log('[IMAGE-SERVICE] Using Sharp for image processing');
 
 export interface ImageProcessingOptions {
   maxWidth?: number;
@@ -46,9 +45,6 @@ export class ImageProcessingService {
         };
       }
 
-      if (fileSizeMB > 25) {
-        console.warn(`[IMAGE-SERVICE] Large file detected (${fileSizeMB.toFixed(1)}MB), processing may take longer`);
-      }
 
       return {
         isValid: true,
