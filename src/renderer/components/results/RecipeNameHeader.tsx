@@ -99,7 +99,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
   return (
     <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
       {editing ? (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%' }}>
           <TextField
             size="small"
             fullWidth
@@ -117,12 +117,26 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
             }}
             inputProps={{ maxLength: 120 }}
           />
-          <IconButton aria-label="Save name" onClick={save} disabled={saving}>
-            <CheckIcon />
-          </IconButton>
-          <IconButton aria-label="Cancel editing" onClick={cancelEditing} disabled={saving}>
-            <CloseIcon />
-          </IconButton>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <IconButton 
+              size="small" 
+              aria-label="Save name" 
+              onClick={save} 
+              disabled={saving}
+              title="Save name"
+            >
+              <CheckIcon fontSize="small" />
+            </IconButton>
+            <IconButton 
+              size="small" 
+              aria-label="Cancel editing" 
+              onClick={cancelEditing} 
+              disabled={saving}
+              title="Cancel editing"
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </Box>
       ) : (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
