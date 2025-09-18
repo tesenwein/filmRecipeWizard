@@ -1,0 +1,30 @@
+import { AppSettings, ProcessHistory } from '../shared/types';
+export declare class StorageService {
+    private storageFile;
+    private backupDir;
+    private initialized;
+    private settingsFile;
+    private storageLocation;
+    private savingInProgress;
+    private getSettingsFilePath;
+    constructor();
+    setStorageLocation(location: string): Promise<void>;
+    getSettings(): Promise<AppSettings>;
+    saveSettings(settings: AppSettings): Promise<void>;
+    private initialize;
+    private backupHistoryFile;
+    private loadFromBackups;
+    loadRecipes(): Promise<ProcessHistory[]>;
+    saveRecipes(history: ProcessHistory[]): Promise<void>;
+    addProcess(process: ProcessHistory): Promise<void>;
+    updateProcess(processId: string, updates: Partial<ProcessHistory>): Promise<void>;
+    deleteProcess(processId: string): Promise<void>;
+    getProcess(processId: string): Promise<ProcessHistory | null>;
+    generateProcessId(): string;
+    clearRecipes(): Promise<void>;
+    clearPendingRecipes(): Promise<void>;
+    convertImageToBase64(imagePath: string): Promise<string>;
+    base64ToTempFile(base64Data: string, filename?: string): Promise<string>;
+    getImageDataUrl(base64Data: string): string;
+    cleanupTempFiles(): Promise<void>;
+}

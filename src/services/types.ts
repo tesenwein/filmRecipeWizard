@@ -1,4 +1,8 @@
 export interface AIColorAdjustments {
+  // Recipe metadata
+  preset_name?: string;
+  description?: string;
+  
   // Rendering intent / profile
   treatment?: 'color' | 'black_and_white';
   camera_profile?: string;
@@ -40,13 +44,21 @@ export interface AIColorAdjustments {
   tone_curve_red?: Array<{ input: number; output: number }>;
   tone_curve_green?: Array<{ input: number; output: number }>;
   tone_curve_blue?: Array<{ input: number; output: number }>;
+  
+  // Parametric curves
+  parametric_shadows?: number;
+  parametric_darks?: number;
+  parametric_lights?: number;
+  parametric_highlights?: number;
+  parametric_shadow_split?: number;
+  parametric_midtone_split?: number;
+  parametric_highlight_split?: number;
 
   // Confidence and explanation
   confidence?: number;
   reasoning?: string;
 
-  // Optional preset naming and point color corrections
-  preset_name?: string;
+  // Optional point color corrections
   point_colors?: number[][];
   color_variance?: number[];
 
@@ -61,13 +73,13 @@ export interface AIColorAdjustments {
     // 'background' -> Background (MaskSubType=0)
     // 'sky' -> Sky (MaskSubType=2)
     // 'range_color' and 'range_luminance' -> CorrectionRangeMask structures
-    type: 'radial' | 'linear' | 'person' | 'subject' | 'background' | 'sky' | 'range_color' | 'range_luminance';
+    type: 'radial' | 'linear' | 'person' | 'subject' | 'background' | 'sky' | 'range_color' | 'range_luminance' | 'brush' | 'face' | 'eye' | 'skin' | 'hair' | 'clothing' | 'landscape' | 'water' | 'vegetation' | 'mountain' | 'building' | 'vehicle' | 'animal' | 'object';
     adjustments?: {
       local_exposure?: number; local_contrast?: number; local_highlights?: number; local_shadows?: number;
       local_whites?: number; local_blacks?: number; local_clarity?: number; local_dehaze?: number;
       local_temperature?: number; local_tint?: number; local_texture?: number; local_saturation?: number;
     };
-    // Optional sub-category for background masks
+    // Optional sub-category for background masks and other AI masks
     subCategoryId?: number;
     // Radial geometry
     top?: number; left?: number; bottom?: number; right?: number; angle?: number; midpoint?: number; roundness?: number; feather?: number;
@@ -79,6 +91,10 @@ export interface AIColorAdjustments {
     // Range mask parameters
     colorAmount?: number; invert?: boolean; pointModels?: number[][];
     lumRange?: number[]; luminanceDepthSampleInfo?: number[];
+    // Brush mask parameters
+    brushSize?: number; brushFlow?: number; brushDensity?: number;
+    // AI mask specific parameters
+    confidence?: number; detectionQuality?: number;
   }>;
 }
 

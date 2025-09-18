@@ -1,7 +1,10 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HomeIcon from '@mui/icons-material/Home';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
@@ -12,20 +15,21 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Avatar,
-  Box,
-  Button,
-  Chip,
-  Divider,
-  IconButton,
-  Paper,
-  Slider,
-  Tab,
-  Tabs,
-  Typography,
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Avatar,
+    Box,
+    Button,
+    Chip,
+    Divider,
+    IconButton,
+    Paper,
+    Slider,
+    Tab,
+    Tabs,
+    TextField,
+    Typography,
 } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useState } from 'react';
@@ -163,6 +167,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
   const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
+  
+  // Description editing state
+  const [editingDescription, setEditingDescription] = useState<number | null>(null);
+  const [descriptionInput, setDescriptionInput] = useState<string>('');
 
   // New state for tab management
   const [activeTab, setActiveTab] = useState(0);
@@ -237,6 +245,42 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       }
     } catch (e) {
       console.error('Failed to add recipe image:', e);
+    }
+  };
+
+  // Description editing functions
+  const startEditingDescription = (resultIndex: number) => {
+    const result = successfulResults[resultIndex];
+    const currentDescription = result.metadata?.aiAdjustments?.description || '';
+    setDescriptionInput(currentDescription);
+    setEditingDescription(resultIndex);
+  };
+
+  const cancelEditingDescription = () => {
+    setEditingDescription(null);
+    setDescriptionInput('');
+  };
+
+  const saveDescription = async (resultIndex: number) => {
+    try {
+      if (!processId) return;
+      
+      const newDescription = descriptionInput.trim();
+      if (!newDescription) {
+        cancelEditingDescription();
+        return;
+      }
+
+      // Update the recipe in storage
+      await useAppStore.getState().updateRecipeInStorage(processId, { 
+        description: newDescription 
+      } as any);
+      
+      setEditingDescription(null);
+      setDescriptionInput('');
+    } catch (e) {
+      console.error('Failed to save description:', e);
+      showError('Failed to save description');
     }
   };
 
@@ -538,6 +582,71 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Paper>
                           </Box>
                         )}
+
+                        {/* Recipe Description */}
+                        <Box sx={{ mb: 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                              Recipe Description
+                            </Typography>
+                            {editingDescription !== selectedResult && (
+                              <IconButton 
+                                size="small" 
+                                onClick={() => startEditingDescription(selectedResult)}
+                                title="Edit description"
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </Box>
+                          
+                          {editingDescription === selectedResult ? (
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                              <TextField
+                                fullWidth
+                                multiline
+                                minRows={2}
+                                maxRows={4}
+                                value={descriptionInput}
+                                onChange={(e) => setDescriptionInput(e.target.value)}
+                                placeholder="Enter recipe description..."
+                                size="small"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && e.ctrlKey) {
+                                    e.preventDefault();
+                                    saveDescription(selectedResult);
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    cancelEditingDescription();
+                                  }
+                                }}
+                              />
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => saveDescription(selectedResult)}
+                                  title="Save description"
+                                >
+                                  <CheckIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={cancelEditingDescription}
+                                  title="Cancel editing"
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                          ) : (
+                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>
+                                {result.metadata?.aiAdjustments?.description || 'No description available'}
+                              </Typography>
+                            </Paper>
+                          )}
+                        </Box>
 
                         {/* User Prompt */}
                         {processPrompt && processPrompt.trim().length > 0 && (

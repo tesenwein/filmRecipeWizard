@@ -1,6 +1,6 @@
 import { ExportResult, ImportResult } from '../shared/types';
 
-export {};
+export { };
 
 declare global {
   // Add CSS properties for Electron and modern browsers
@@ -46,6 +46,7 @@ declare global {
       matchStyle: (data: any) => Promise<any>;
       generatePreset: (data: any) => Promise<any>;
       downloadXMP: (data: any) => Promise<any>;
+      importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => Promise<any>;
       generateLUT: (data: any) => Promise<any>;
       exportProfile: (data: {
         adjustments: any;

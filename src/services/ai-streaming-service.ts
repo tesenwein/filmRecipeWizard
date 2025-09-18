@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, tool } from 'ai';
+import { generateText, tool } from 'ai';
 import { z } from 'zod';
 import { AIColorAdjustments } from './types';
 
@@ -51,8 +51,11 @@ export class AIStreamingService {
             // Create tools for the AI to use
             const tools = this.createTools(options);
 
-            // Use AI SDK v5 streaming with proper thinking process
-            const result = await streamText({
+            // Use AI SDK v5 generateText for non-streaming API calls
+            // Set the API key as environment variable for this call
+            const originalApiKey = process.env.OPENAI_API_KEY;
+            process.env.OPENAI_API_KEY = this.apiKey;
+            const result = await generateText({
                 model: openai(this.model),
                 system: this.getSystemPrompt(options || {}),
                 messages: [
@@ -64,115 +67,62 @@ export class AIStreamingService {
                 tools,
             });
 
-            let fullText = '';
             let finalResult: AIColorAdjustments | null = null;
-            let accumulatedThinkingText = '';
-            let currentProgress = 10; // Start at 10%
-            let thinkingStarted = false;
-            let thinkingComplete = false;
-            let lastThinkingUpdate = 0;
-            let lastThinkingLength = 0;
 
-            // Stream the response and show thinking process using AI SDK v5 stream protocol
-            for await (const part of result.fullStream) {
-                // Handle different stream parts according to AI SDK v5 protocol
-                if (part.type === 'text-delta') {
-                    fullText += part.text;
-                    accumulatedThinkingText += part.text;
+            // Handle the result from generateText (non-streaming)
+            // Simulate progress updates for UI consistency
+            onUpdate?.({
+                type: 'progress',
+                content: '',
+                step: 'initialization',
+                progress: 20,
+            });
+            onUpdate?.({
+                type: 'step_progress',
+                content: '',
+                step: 'analysis',
+                progress: 40,
+            });
+            onUpdate?.({
+                type: 'step_progress',
+                content: '',
+                step: 'color_matching',
+                progress: 60,
+            });
+            onUpdate?.({
+                type: 'step_progress',
+                content: '',
+                step: 'adjustments',
+                progress: 80,
+            });
+            onUpdate?.({
+                type: 'step_progress',
+                content: '',
+                step: 'masks',
+                progress: 90,
+            });
+            onUpdate?.({
+                type: 'step_progress',
+                content: '',
+                step: 'finalization',
+                progress: 100,
+            });
 
-                    // Start thinking display when we have meaningful text
-                    if (!thinkingStarted && accumulatedThinkingText.trim().length > 20) {
-                        thinkingStarted = true;
-                        currentProgress = 20;
-                        onUpdate?.({
-                            type: 'progress',
-                            content: '',
-                            step: 'initialization',
-                            progress: currentProgress
-                        });
-                        lastThinkingUpdate = Date.now();
-                        lastThinkingLength = accumulatedThinkingText.length;
+            // Extract result from tool calls
+            if (result.toolResults && result.toolResults.length > 0) {
+                for (const toolResult of result.toolResults) {
+                    if (toolResult.toolName === 'generate_color_adjustments' && toolResult.output) {
+                        finalResult = toolResult.output as AIColorAdjustments;
+                        break;
                     }
-
-                    // Update analysis step progress
-                    if (thinkingStarted && !thinkingComplete) {
-                        const now = Date.now();
-                        const currentLength = accumulatedThinkingText.length;
-                        const hasSignificantNewContent = (currentLength - lastThinkingLength) > 50;
-                        const enoughTimePassed = (now - lastThinkingUpdate) > 1000;
-
-                        if (hasSignificantNewContent && enoughTimePassed) {
-                            currentProgress = Math.min(currentProgress + 5, 50);
-                            onUpdate?.({
-                                type: 'step_progress',
-                                content: '',
-                                step: 'analysis',
-                                progress: currentProgress
-                            });
-                            lastThinkingUpdate = now;
-                            lastThinkingLength = currentLength;
-                        }
-                    }
-                } else if (part.type === 'tool-call') {
-                    // Mark thinking as complete when first tool call starts
-                    if (!thinkingComplete) {
-                        thinkingComplete = true;
-                    }
-
-                    // Handle tool calls with step transitions
-                    currentProgress = Math.min(currentProgress + 10, 80);
-
-                    // Map tool calls to specific steps
-                    let stepName = 'tool_execution';
-                    if (part.toolName === 'generate_color_adjustments') {
-                        stepName = 'color_matching';
-                    } else if (part.toolName === 'report_global_adjustments') {
-                        stepName = 'adjustments';
-                    }
-
-                    onUpdate?.({
-                        type: 'step_transition',
-                        content: '',
-                        step: stepName,
-                        progress: currentProgress,
-                        toolName: part.toolName,
-                        toolArgs: part.input
-                    });
-                } else if (part.type === 'tool-result') {
-                    // Handle tool results
-                    if (part.toolName === 'generate_color_adjustments' || part.toolName === 'report_global_adjustments') {
-                        finalResult = part.output as AIColorAdjustments;
-                    }
-                } else if (part.type === 'reasoning-start') {
-                    // Handle reasoning start
-                    if (!thinkingStarted) {
-                        thinkingStarted = true;
-                        currentProgress = 15;
-                        onUpdate?.({
-                            type: 'thinking',
-                            content: '',
-                            step: 'reasoning',
-                            progress: currentProgress
-                        });
-                    }
-                } else if (part.type === 'reasoning-end') {
-                    // Handle reasoning end - mark thinking as complete
-                    if (!thinkingComplete) {
-                        thinkingComplete = true;
-                    }
-                    currentProgress = 90;
-                    onUpdate?.({
-                        type: 'step_transition',
-                        content: '',
-                        step: 'finalization',
-                        progress: currentProgress
-                    });
                 }
             }
 
+            // Removed streaming code since we're using generateText instead of streamText
+
             if (!finalResult) {
                 // Fallback: try to parse the result from the text
-                finalResult = this.parseResultFromText(fullText);
+                finalResult = this.parseResultFromText(result.text);
             }
 
             return finalResult || this.createDefaultAdjustments();
@@ -253,6 +203,7 @@ CRITICAL INSTRUCTIONS FOR YOUR RESPONSE:
 - Use natural language to explain your analysis
 - Focus on describing colors, tones, mood, and style characteristics
 - Explain your reasoning in conversational text
+- Generate a short, engaging description (1-2 sentences) that captures the style and mood
 
 Show your thinking process step by step as you analyze the images. Explain what you're looking for, what you notice about the colors, tones, and style, and how you're building the recipe.
 
@@ -266,7 +217,18 @@ Call the generate_color_adjustments function with:
 5. Masks: Include masks array with local adjustments (max 3 masks)
    - For background masks, include subCategoryId: 22 for proper Lightroom detection
    - For subject/person masks, use type: 'subject' with referenceX/Y coordinates
-   - For sky masks, use type: 'sky' with referenceX/Y coordinates` +
+   - For sky masks, use type: 'sky' with referenceX/Y coordinates
+   - CRITICAL: For ANY facial features (skin, eyes, teeth, hair, etc.), ALWAYS use specific face masks instead of radial masks
+   - NEVER use 'radial' masks for facial features - use 'face_skin', 'eye_whites', 'iris_pupil', 'teeth', 'eyebrows', 'lips', 'hair', 'facial_hair' instead
+   - AVOID using 'subject' or 'person' masks unless you can clearly identify a face/person in the image
+   - AVOID using 'radial' masks - prefer specific mask types (face, landscape, background, sky) or 'linear' masks for gradients
+   - Use 'linear' masks for gradients or directional lighting effects
+   - Use 'background' masks to adjust everything except the main subject
+   - For portraits with clear faces, ALWAYS use specific face masks: 'face_skin' for facial skin, 'eye_whites' for eye sclera, 'iris_pupil' for iris and pupil, 'teeth' for teeth
+   - Additional face/body masks: 'body_skin' for body skin, 'eyebrows' for eyebrows, 'lips' for lips, 'hair' for hair, 'facial_hair' for beards/mustaches, 'clothing' for clothes
+   - Landscape masks: 'mountains' for mountain ranges, 'architecture' for buildings/structures, 'vegetation' for plants/trees, 'water' for water bodies, 'natural_ground' for natural terrain, 'artificial_ground' for man-made surfaces
+   - Face-specific masks work best for portrait photography and require clear facial features
+   - Landscape masks work best for outdoor/nature photography and require clear landscape elements` +
             (options.aiFunctions?.pointColor ? `\n6. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
             (options.preserveSkinTones ? `\n${options.aiFunctions?.pointColor ? '7' : '6'}. Preserve natural skin tones in Subject masks` : '') +
             (options.lightroomProfile
@@ -280,7 +242,7 @@ Call the generate_color_adjustments function with:
 11. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
 12. Consider tone curve adjustments for sophisticated contrast control
 
-Include a short preset_name (2-4 words, Title Case).
+Include a short preset_name (2-4 words, Title Case) and a compelling description (1-2 sentences) that describes the visual style and mood of the recipe (e.g., "Warm, cinematic tones with rich shadows and golden highlights perfect for portrait photography" or "Cool, desaturated look with blue undertones ideal for urban landscapes").
 If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).
 If an artist or film style is mentioned in the hint, explicitly include HSL shifts and tone curve adjustments that reflect that style's palette and contrast.
 
@@ -307,6 +269,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
         // Build base schema using Zod
         let baseSchema = z.object({
             preset_name: z.string().describe('Short, friendly preset name to use for XMP and recipe title'),
+            description: z.string().describe('Short, engaging description of the recipe style and mood (1-2 sentences)'),
             treatment: z.enum(['color', 'black_and_white']).describe("Overall treatment for the target image"),
             camera_profile: z.string().optional().describe("Preferred camera profile (e.g., 'Adobe Color', 'Adobe Monochrome')"),
             monochrome: z.boolean().optional().describe('Convert to black and white'),
@@ -434,10 +397,10 @@ Provide detailed reasoning for each adjustment to help the user understand the c
 
             const maskSchema = z.object({
                 name: z.string().optional(),
-                type: z.enum(['radial', 'linear', 'person', 'subject', 'background', 'sky']),
+                type: z.enum(['radial', 'linear', 'person', 'subject', 'background', 'sky', 'range_color', 'range_luminance', 'brush', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object', 'face_skin', 'eye_whites', 'iris_pupil', 'teeth', 'eyebrows', 'lips', 'facial_hair', 'body_skin', 'architecture', 'natural_ground', 'artificial_ground']),
                 adjustments: localAdjustmentsSchema.optional(),
-                // Optional sub-category for background masks (use 22 for general background)
-                subCategoryId: z.number().optional().describe('For background masks, use 22 for general background detection'),
+                // Optional sub-category for background masks and other AI masks
+                subCategoryId: z.number().optional().describe('For background masks, use 22 for general background detection. For person masks: 1=face, 2=eye, 3=skin, 4=hair, 5=clothing, 6=person'),
                 // Radial geometry
                 top: z.number().min(0).max(1).optional(),
                 left: z.number().min(0).max(1).optional(),
@@ -457,6 +420,19 @@ Provide detailed reasoning for each adjustment to help the user understand the c
                 // Person/subject reference point
                 referenceX: z.number().min(0).max(1).optional(),
                 referenceY: z.number().min(0).max(1).optional(),
+                // Range mask parameters
+                colorAmount: z.number().min(0).max(1).optional(),
+                invert: z.boolean().optional(),
+                pointModels: z.array(z.array(z.number())).optional(),
+                lumRange: z.array(z.number()).optional(),
+                luminanceDepthSampleInfo: z.array(z.number()).optional(),
+                // Brush mask parameters
+                brushSize: z.number().min(0).max(100).optional(),
+                brushFlow: z.number().min(0).max(100).optional(),
+                brushDensity: z.number().min(0).max(100).optional(),
+                // AI mask specific parameters
+                confidence: z.number().min(0).max(1).optional(),
+                detectionQuality: z.number().min(0).max(1).optional(),
             });
 
             baseSchema = baseSchema.extend({

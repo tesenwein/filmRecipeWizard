@@ -3,6 +3,7 @@ import * as path from 'path';
 import { ImageProcessor } from './image-processor';
 import { ExportHandlers } from './ipc-handlers/export-handlers';
 import { FileHandlers } from './ipc-handlers/file-handlers';
+import { ImportHandlers } from './ipc-handlers/import-handlers';
 import { ProcessingHandlers } from './ipc-handlers/processing-handlers';
 import { SettingsHandlers } from './ipc-handlers/settings-handlers';
 import { StorageHandlers } from './ipc-handlers/storage-handlers';
@@ -21,6 +22,7 @@ class FilmRecipeWizardApp {
   private storageHandlers: StorageHandlers;
   private settingsHandlers: SettingsHandlers;
   private exportHandlers: ExportHandlers;
+  private importHandlers: ImportHandlers;
 
   constructor() {
     this.imageProcessor = new ImageProcessor();
@@ -45,6 +47,7 @@ class FilmRecipeWizardApp {
       this.storageService
     );
     this.exportHandlers = new ExportHandlers(this.imageProcessor, this.storageService);
+    this.importHandlers = new ImportHandlers(this.storageService);
 
     this.setupApp();
     this.setupIPC();
@@ -240,6 +243,7 @@ class FilmRecipeWizardApp {
     this.storageHandlers.setupHandlers();
     this.settingsHandlers.setupHandlers();
     this.exportHandlers.setupHandlers();
+    this.importHandlers.setupHandlers();
   }
 }
 
