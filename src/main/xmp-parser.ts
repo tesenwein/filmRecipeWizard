@@ -1,4 +1,5 @@
 import type { AIColorAdjustments } from '../services/types';
+import { getMaskTypeFromXMP } from '../shared/mask-types';
 
 export interface XMPParseResult {
   success: boolean;
@@ -543,58 +544,7 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
 
 // Map Lightroom MaskSubType and MaskSubCategoryID to our mask types
 function mapMaskSubTypeToType(subType: string, subCategory: string | null): string {
-  // MaskSubType values:
-  // 0 = Background (including landscape elements and sky)
-  // 1 = Subject/Person
-  // 2 = Sky (legacy)
-  // 3 = Face/Skin (specific facial features)
-  // 4+ = Other AI-detected objects
-  
-  if (subType === '0') {
-    // Background type - check subcategory for specific landscape elements
-    if (subCategory) {
-      const subCat = parseInt(subCategory);
-      switch (subCat) {
-        case 22: return 'background'; // General background
-        case 50001: return 'architecture'; // Architecture
-        case 50002: return 'mountains'; // Mountains
-        case 50003: return 'artificial_ground'; // Artificial ground
-        case 50004: return 'natural_ground'; // Natural ground
-        case 50005: return 'vegetation'; // Vegetation
-        case 50006: return 'sky'; // Sky
-        case 50007: return 'water'; // Water
-        default: return 'background'; // Default to background
-      }
-    }
-    return 'background'; // Default to background if no subcategory
-  } else if (subType === '1') {
-    return 'subject';
-  } else if (subType === '2') {
-    return 'sky'; // Legacy sky type
-  } else if (subType === '3') {
-    // Map specific face mask categories based on MaskSubCategoryID
-    if (subCategory) {
-      const subCat = parseInt(subCategory);
-      switch (subCat) {
-        case 2: return 'face_skin'; // Face skin
-        case 3: return 'iris_pupil'; // Iris and pupil
-        case 4: return 'eyebrows'; // Eyebrows
-        case 5: return 'lips'; // Lips
-        case 6: return 'facial_hair'; // Facial hair
-        case 7: return 'body_skin'; // Body skin
-        case 8: return 'eye_whites'; // Eye whites
-        case 9: return 'hair'; // Hair
-        case 10: return 'clothing'; // Clothing
-        case 12: return 'teeth'; // Teeth
-        default: return 'face_skin'; // Default to face_skin
-      }
-    }
-    return 'face_skin'; // Default to face_skin if no subcategory
-  } else if (subType === '4') {
-    return 'mountains';
-  }
-  
-  return 'subject'; // Default fallback
+  return getMaskTypeFromXMP(subType, subCategory);
 }
 
 function parseGrain(xmpContent: string, adjustments: AIColorAdjustments): void {

@@ -541,101 +541,18 @@ export function generateXMPContent(
          crs:Feather="${feather}"
          crs:Flipped="${m?.flipped ? 'true' : 'false'}"
          crs:Version="2"/>`;
-            } else if (
-              mType === 'person' ||
-              mType === 'subject' ||
-              mType === 'background' ||
-              mType === 'sky' ||
-              mType === 'face_skin' ||
-              mType === 'eye_whites' ||
-              mType === 'iris_pupil' ||
-              mType === 'teeth' ||
-              mType === 'eyebrows' ||
-              mType === 'lips' ||
-              mType === 'facial_hair' ||
-              mType === 'body_skin' ||
-              mType === 'hair' ||
-              mType === 'clothing' ||
-              mType === 'mountains' ||
-              mType === 'architecture' ||
-              mType === 'vegetation' ||
-              mType === 'water' ||
-              mType === 'natural_ground' ||
-              mType === 'artificial_ground'
-            ) {
-              // AI scene masks: Subject/People (1), Background (0), Sky (2), Face/Skin (3)
+            } else if (getAllMaskTypes().includes(mType)) {
+              // AI scene masks using configuration
               const rx = f3(n0_1(m.referenceX));
               const ry = f3(n0_1(m.referenceY));
 
-              // Map mask types to Lightroom MaskSubType and MaskSubCategoryID values
-              let subType: string;
-              let subCat: string | undefined;
-
-              if (mType === 'background') {
-                subType = '0';
-                subCat = '22'; // Default background category
-              } else if (mType === 'sky') {
-                subType = '0'; // Sky uses background type with specific subcategory
-                subCat = '50006'; // Sky category from landscape example
-              } else if (mType === 'face_skin') {
-                subType = '3';
-                subCat = '2'; // Face skin category
-              } else if (mType === 'eye_whites') {
-                subType = '3';
-                subCat = '8'; // Eye whites category
-              } else if (mType === 'iris_pupil') {
-                subType = '3';
-                subCat = '3'; // Iris and pupil category
-              } else if (mType === 'teeth') {
-                subType = '3';
-                subCat = '12'; // Teeth category
-              } else if (mType === 'eyebrows') {
-                subType = '3';
-                subCat = '4'; // Eyebrows category
-              } else if (mType === 'lips') {
-                subType = '3';
-                subCat = '5'; // Lips category
-              } else if (mType === 'facial_hair') {
-                subType = '3';
-                subCat = '6'; // Facial hair category
-              } else if (mType === 'body_skin') {
-                subType = '3';
-                subCat = '7'; // Body skin category
-              } else if (mType === 'hair') {
-                subType = '3';
-                subCat = '9'; // Hair category
-              } else if (mType === 'clothing') {
-                subType = '3';
-                subCat = '10'; // Clothing category
-              } else if (mType === 'mountains') {
-                subType = '0'; // Mountains use background type
-                subCat = '50002'; // Mountains category from landscape example
-              } else if (mType === 'architecture') {
-                subType = '0'; // Architecture uses background type
-                subCat = '50001'; // Architecture category from landscape example
-              } else if (mType === 'vegetation') {
-                subType = '0'; // Vegetation uses background type
-                subCat = '50005'; // Vegetation category from landscape example
-              } else if (mType === 'water') {
-                subType = '0'; // Water uses background type
-                subCat = '50007'; // Water category from landscape example
-              } else if (mType === 'natural_ground') {
-                subType = '0'; // Natural ground uses background type
-                subCat = '50004'; // Natural ground category from landscape example
-              } else if (mType === 'artificial_ground') {
-                subType = '0'; // Artificial ground uses background type
-                subCat = '50003'; // Artificial ground category (estimated)
-              } else {
-                subType = '1'; // Default to subject/person
-                subCat = undefined;
-              }
-
-              // Use provided subCategoryId if available, otherwise use the mapped value
-              const finalSubCat = typeof (m as any)?.subCategoryId === 'number'
-                ? String((m as any).subCategoryId)
-                : subCat;
-
-              maskLi = `<rdf:li
+              // Get mask configuration
+              const maskConfig = getMaskConfig(mType);
+              if (!maskConfig) {
+                // Fallback to subject if config not found
+                const subType = '1';
+                const subCat = undefined;
+                maskLi = `<rdf:li
          crs:What="Mask/Image"
          crs:MaskActive="true"
          crs:MaskName="${name}"
@@ -644,9 +561,28 @@ export function generateXMPContent(
          crs:MaskSyncID="${maskSyncID}"
          crs:MaskValue="1"
          crs:MaskVersion="1"
-         crs:MaskSubType="${subType}"${finalSubCat ? `\n         crs:MaskSubCategoryID="${finalSubCat}"` : ''}
+         crs:MaskSubType="${subType}"${subCat ? `\n         crs:MaskSubCategoryID="${subCat}"` : ''}
          crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"
          crs:ErrorReason="0"/>`;
+              } else {
+                // Use provided subCategoryId if available, otherwise use the configured value
+                const finalSubCat = typeof (m as any)?.subCategoryId === 'number'
+                  ? String((m as any).subCategoryId)
+                  : maskConfig.subCategoryId || undefined;
+
+                maskLi = `<rdf:li
+         crs:What="Mask/Image"
+         crs:MaskActive="true"
+         crs:MaskName="${name}"
+         crs:MaskBlendMode="0"
+         crs:MaskInverted="${m?.inverted ? 'true' : 'false'}"
+         crs:MaskSyncID="${maskSyncID}"
+         crs:MaskValue="1"
+         crs:MaskVersion="1"
+         crs:MaskSubType="${maskConfig.subType}"${finalSubCat ? `\n         crs:MaskSubCategoryID="${finalSubCat}"` : ''}
+         crs:ReferencePoint="${rx ?? '0.500'} ${ry ?? '0.500'}"
+         crs:ErrorReason="0"/>`;
+              }
             } else if (m?.type === 'range_color' || m?.type === 'range_luminance') {
               // Range masks
               const invert = m?.invert ? 'true' : 'false';

@@ -2,6 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
 import { AIColorAdjustments } from './types';
+import { getAllMaskTypes } from '../shared/mask-types';
 
 export interface StreamingUpdate {
     type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete' | 'step_progress' | 'step_transition';
@@ -51,6 +52,9 @@ export class AIStreamingService {
             // Create tools for the AI to use
             const tools = this.createTools(options);
 
+            // Simulate the analysis steps before AI processing
+            await this.simulateAnalysisSteps(onUpdate);
+
             // Use AI SDK v5 generateText for non-streaming API calls
             // Set the API key as environment variable for this call
             const originalApiKey = process.env.OPENAI_API_KEY;
@@ -69,10 +73,6 @@ export class AIStreamingService {
 
             let finalResult: AIColorAdjustments | null = null;
 
-            // Handle the result from generateText (non-streaming)
-            // Simulate progress updates for UI consistency with delays
-            await this.simulateStepProgress(onUpdate);
-
             // Extract result from tool calls
             if (result.toolResults && result.toolResults.length > 0) {
                 for (const toolResult of result.toolResults) {
@@ -89,6 +89,22 @@ export class AIStreamingService {
                 // Fallback: try to parse the result from the text
                 finalResult = this.parseResultFromText(result.text);
             }
+
+            // Complete the finalization step
+            onUpdate?.({
+                type: 'step_progress',
+                content: 'Recipe generation complete!',
+                step: 'finalization',
+                progress: 100,
+            });
+
+            // Send completion update
+            onUpdate?.({
+                type: 'complete',
+                content: 'Recipe generation complete!',
+                step: 'complete',
+                progress: 100,
+            });
 
             return finalResult || this.createDefaultAdjustments();
 
@@ -362,7 +378,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
 
             const maskSchema = z.object({
                 name: z.string().optional(),
-                type: z.enum(['radial', 'linear', 'person', 'subject', 'background', 'sky', 'range_color', 'range_luminance', 'brush', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object', 'face_skin', 'eye_whites', 'iris_pupil', 'teeth', 'eyebrows', 'lips', 'facial_hair', 'body_skin', 'architecture', 'natural_ground', 'artificial_ground']),
+                type: z.enum(getAllMaskTypes() as [string, ...string[]]),
                 adjustments: localAdjustmentsSchema.optional(),
                 // Optional sub-category for background masks and other AI masks
                 subCategoryId: z.number().optional().describe('For background masks, use 22 for general background detection. For person masks: 1=face, 2=eye, 3=skin, 4=hair, 5=clothing, 6=person'),
@@ -472,7 +488,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
         };
     }
 
-    private async simulateStepProgress(onUpdate?: (update: StreamingUpdate) => void): Promise<void> {
+    private async simulateAnalysisSteps(onUpdate?: (update: StreamingUpdate) => void): Promise<void> {
         if (!onUpdate) return;
 
         // Helper function to add delay
@@ -485,7 +501,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             step: 'initialization',
             progress: 20,
         });
-        await delay(800);
+        await delay(600);
 
         // Step 2: Analysis
         onUpdate({
@@ -494,7 +510,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             step: 'analysis',
             progress: 40,
         });
-        await delay(1200);
+        await delay(1000);
 
         // Step 3: Color Matching
         onUpdate({
@@ -503,7 +519,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             step: 'color_matching',
             progress: 60,
         });
-        await delay(1000);
+        await delay(800);
 
         // Step 4: Adjustments
         onUpdate({
@@ -512,7 +528,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             step: 'adjustments',
             progress: 80,
         });
-        await delay(1000);
+        await delay(800);
 
         // Step 5: Masks
         onUpdate({
@@ -521,23 +537,14 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             step: 'masks',
             progress: 90,
         });
-        await delay(800);
+        await delay(600);
 
-        // Step 6: Finalization
+        // Step 6: Finalization (this will be completed after AI processing)
         onUpdate({
             type: 'step_transition',
             content: 'Finalizing recipe and compiling adjustments...',
             step: 'finalization',
-            progress: 100,
-        });
-        await delay(600);
-
-        // Final completion update
-        onUpdate({
-            type: 'complete',
-            content: 'Recipe generation complete!',
-            step: 'complete',
-            progress: 100,
+            progress: 95,
         });
     }
 

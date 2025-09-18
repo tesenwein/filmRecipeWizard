@@ -149,19 +149,13 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               };
             }
 
-            // Activate target step with a brief delay for visual effect
-            setTimeout(() => {
-              setRecipeSteps(prev => {
-                const updatedSteps = [...prev];
-                updatedSteps[targetStepIndex] = {
-                  ...updatedSteps[targetStepIndex],
-                  status: 'active',
-                  progress: Math.min(currentProgress, 100),
-                  toolName: update.toolName
-                };
-                return updatedSteps;
-              });
-            }, 200);
+            // Activate target step immediately
+            updatedSteps[targetStepIndex] = {
+              ...updatedSteps[targetStepIndex],
+              status: 'active',
+              progress: Math.min(currentProgress, 100),
+              toolName: update.toolName
+            };
           }
         } else if (update.type === 'tool-result') {
           // Handle tool results - mark current step as completed
@@ -243,7 +237,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               },
             }}
           >
-            <AutoAwesomeIcon sx={{ fontSize: '2rem', color: 'white' }} />
+            <AutoAwesomeIcon sx={{ fontSize: '1.5rem', color: 'white' }} />
           </Avatar>
           <Box>
             <Typography
