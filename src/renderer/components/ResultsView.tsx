@@ -142,7 +142,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   aiFunctions,
 }) => {
   const { showError } = useAlert();
-  const { deleteRecipe } = useAppStore();
+  const { deleteRecipe, setGeneratingStatus, } = useAppStore();
+  // Access settings via hook (safe inside component)
+  const { settings } = useAppStore();
   // Base64 image data URLs for display
   const [baseImageUrls, setBaseImageUrls] = useState<string[]>([]);
   const [activeBase, setActiveBase] = useState(0);
@@ -178,6 +180,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // New state for tab management
   const [activeTab, setActiveTab] = useState(0);
   const [selectedResult, setSelectedResult] = useState(0);
+  const [isReprocessing, setIsReprocessing] = useState(false);
 
   // LUT export state
   const [lutSize, setLutSize] = useState<'17' | '33' | '65'>('33');
@@ -394,6 +397,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     loadBase64Images();
   }, [processId, prompt]);
 
+  // Clear reprocessing indicator when recipe status flips away from 'generating'
+  const { recipes } = useAppStore();
+  useEffect(() => {
+    if (!isReprocessing || !processId) return;
+    const rec = recipes.find(r => r.id === processId);
+    if (rec && rec.status && rec.status !== 'generating') {
+      setIsReprocessing(false);
+    }
+  }, [recipes, isReprocessing, processId]);
+
   // Reset export options when aiFunctions changes
   useEffect(() => {
     setExportOptions({});
@@ -455,8 +468,94 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
 
+  // Create effective adjustments by applying chat modifications to original aiAdjustments
+  const getEffectiveAdjustments = (result: ProcessingResult) => {
+    const originalAdjustments = result.metadata?.aiAdjustments;
+    if (!originalAdjustments) return null;
+
+    // Start with a copy of the original adjustments
+    const effectiveAdjustments = { ...originalAdjustments };
+
+    // Apply userOptions modifications if they exist
+    if (processOptions) {
+      // Map userOptions to aiAdjustments properties
+      if (typeof processOptions.warmth === 'number') {
+        // Convert warmth (-100 to 100) to temperature (2000K to 50000K)
+        // warmth 0 = 6500K (neutral), warmth 100 = warmer (lower K), warmth -100 = cooler (higher K)
+        const baseTemp = 6500;
+        const tempRange = 3500; // Allow ±3500K range
+        effectiveAdjustments.temperature = Math.round(baseTemp - (processOptions.warmth * tempRange / 100));
+      }
+
+      if (typeof processOptions.tint === 'number') {
+        // Convert tint (-100 to 100) to tint (-150 to 150)
+        effectiveAdjustments.tint = Math.round(processOptions.tint * 1.5);
+      }
+
+      if (typeof processOptions.contrast === 'number') {
+        effectiveAdjustments.contrast = processOptions.contrast;
+      }
+
+      if (typeof processOptions.vibrance === 'number') {
+        effectiveAdjustments.vibrance = processOptions.vibrance;
+      }
+
+      if (typeof processOptions.saturationBias === 'number') {
+        effectiveAdjustments.saturation = processOptions.saturationBias;
+      }
+
+      if (typeof processOptions.filmGrain === 'boolean') {
+        (effectiveAdjustments as any).grain = processOptions.filmGrain;
+      }
+    }
+
+    // Apply mask overrides if they exist
+    if (Array.isArray(maskOverrides) && maskOverrides.length > 0) {
+      const idOf = (m: any) =>
+        m?.id ||
+        (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '').toString().slice(0, 4)}`);
+      const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
+
+      let masks = Array.isArray(effectiveAdjustments.masks) ? [...effectiveAdjustments.masks] : [];
+      const ops = maskOverrides;
+
+      for (const op of ops) {
+        const operation = op.op || 'add';
+        if (operation === 'remove_all' || operation === 'clear') {
+          masks = [];
+          continue;
+        }
+        const idx = indexOf(masks, op);
+        if (operation === 'remove') {
+          if (idx >= 0) masks.splice(idx, 1);
+          continue;
+        }
+        if (operation === 'update') {
+          if (idx >= 0) {
+            const prev = masks[idx] || {};
+            masks[idx] = { ...prev, ...op, id: (prev as any).id || (op as any).id, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+          } else {
+            masks.push({ ...op, id: (op as any).id || idOf(op) });
+          }
+          continue;
+        }
+        // default add
+        if (idx >= 0) {
+          const prev = masks[idx] || {};
+          masks[idx] = { ...prev, ...op, id: (prev as any).id || (op as any).id || idOf(op), adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+        } else {
+          masks.push({ ...op, id: (op as any).id || idOf(op) });
+        }
+      }
+
+      effectiveAdjustments.masks = masks;
+    }
+
+    return effectiveAdjustments;
+  };
+
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
-    const adjustments = result.metadata?.aiAdjustments;
+    const adjustments = getEffectiveAdjustments(result);
     if (!adjustments) return;
     try {
       const res = await window.electronAPI.downloadXMP({
@@ -473,7 +572,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   };
 
   const handleExportLUT = async (result: ProcessingResult) => {
-    const adjustments = result.metadata?.aiAdjustments;
+    const adjustments = getEffectiveAdjustments(result);
     if (!adjustments) return;
 
     try {
@@ -496,7 +595,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     setProfileExportStatus(null);
     try {
       // Extract adjustments same way as preset export
-      const adjustments = result.metadata?.aiAdjustments;
+      const adjustments = getEffectiveAdjustments(result);
       if (!adjustments) return;
 
       // Generate and export camera profile from current adjustments
@@ -946,6 +1045,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           results: successfulResults,
                           timestamp: new Date().toISOString(),
                         }}
+                        isReprocessing={isReprocessing}
                         onRecipeModification={async (modifications) => {
                           if (!processId) return;
                           try {
@@ -1017,9 +1117,62 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             console.error('[RESULTS] Failed to apply recipe modifications', e);
                           }
                         }}
-                        onAcceptChanges={() => {
-                          // Handle accepting changes
-                          // No-op here; state was already updated in onRecipeModification
+                        onAcceptChanges={async () => {
+                          // Handle accepting changes - trigger AI re-processing
+                          if (!processId) return;
+
+                          try {
+                            // Get the stored process data to access base64 images
+                            const processResponse = await window.electronAPI.getProcess(processId);
+                            if (!processResponse.success || !processResponse.process) {
+                              console.error('[RESULTS] Failed to get process data for re-processing');
+                              return;
+                            }
+
+                            const storedProcess = processResponse.process;
+
+                            // Prepare processing data with updated parameters
+                            const processingData = {
+                              processId: processId,
+                              targetIndex: 0,
+                              baseImageData: (storedProcess as any).recipeImageData ? [(storedProcess as any).recipeImageData] : undefined,
+                              targetImageData: undefined, // No target images for re-processing
+                              prompt: processPrompt || storedProcess.prompt,
+                              // Always use the latest persisted options to avoid stale state
+                              styleOptions: (storedProcess as any).userOptions,
+                            };
+
+                            console.log('[RESULTS] Triggering AI re-processing with updated parameters:', {
+                              hasProcessId: !!processingData.processId,
+                              hasBaseImageData: !!processingData.baseImageData,
+                              hasPrompt: !!processingData.prompt,
+                              hasStyleOptions: !!processingData.styleOptions,
+                            });
+
+                            // Optionally show generating state in gallery
+                            try {
+                              if (settings?.reprocessShowsGenerating !== false) {
+                                setGeneratingStatus(processId, true);
+                              }
+                              // Always show local reprocessing indicator in this view
+                              setIsReprocessing(true);
+                            } catch { /* ignore */ }
+
+                            // Trigger re-processing
+                            await window.electronAPI.processWithStoredImages(processingData);
+
+                            console.log('[RESULTS] AI re-processing triggered successfully');
+
+                            // The processing will complete and update the process in storage
+                            // The App component will handle the results update via onProcessingComplete
+                            console.log('[RESULTS] Re-processing initiated - results will be updated automatically');
+
+                          } catch (error) {
+                            console.error('[RESULTS] Failed to trigger AI re-processing:', error);
+                            try { if (processId) setGeneratingStatus(processId, false); } catch { /* ignore */ }
+                            try { setIsReprocessing(false); } catch { /* ignore */ }
+                            showError('Failed to re-process with updated parameters');
+                          }
                         }}
                         onRejectChanges={() => {
                           // Handle rejecting changes

@@ -84,6 +84,8 @@ export interface AppSettings {
   setupCompleted?: boolean;
   userProfile?: UserProfile;
   storageLocation?: string; // Path to the recipe storage folder
+  // Optional UX: show generating spinner during reprocessing after Accept
+  reprocessShowsGenerating?: boolean;
 }
 
 export interface ExportResult {

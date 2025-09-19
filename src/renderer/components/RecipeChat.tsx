@@ -12,7 +12,8 @@ import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
 
 interface RecipeChatProps {
     recipe: Recipe;
-    onRecipeModification: (modifiedRecipe: Partial<Recipe>) => void;
+    isReprocessing?: boolean;
+    onRecipeModification: (modifiedRecipe: Partial<Recipe>) => void | Promise<void>;
     onAcceptChanges: () => void;
     onRejectChanges: () => void;
 }
@@ -20,6 +21,7 @@ interface RecipeChatProps {
 
 const RecipeChat: React.FC<RecipeChatProps> = ({
     recipe,
+    isReprocessing,
     onRecipeModification,
     onAcceptChanges,
     onRejectChanges,
@@ -101,9 +103,10 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         }
     };
 
-    const handleAcceptModifications = () => {
+    const handleAcceptModifications = async () => {
         if (pendingModifications) {
-            onRecipeModification(pendingModifications);
+            // Ensure upstream storage/state updates complete before triggering re-processing
+            await Promise.resolve(onRecipeModification(pendingModifications));
             onAcceptChanges();
             setPendingModifications(null);
         }
@@ -206,7 +209,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                             </Box>
                         ))}
 
-                        {isProcessing && (
+                        {(isProcessing || isReprocessing) && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                                 <Avatar sx={{ bgcolor: '#6c757d', width: 32, height: 32 }}>
                                     <BotIcon />
@@ -215,7 +218,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <CircularProgress size={16} />
                                         <Typography variant="body2" sx={{ fontSize: 13, color: '#6c757d' }}>
-                                            AI is thinking...
+                                            {isReprocessing ? 'Applying changes with AI…' : 'AI is thinking...'}
                                         </Typography>
                                     </Box>
                                 </Paper>
@@ -260,17 +263,17 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
-                                            if (input.trim() && !isProcessing) {
+                                            if (input.trim() && !isProcessing && !isReprocessing) {
                                                 handleSendMessage(e);
                                             }
                                         }
                                     }}
                                     placeholder="Ask me to modify your recipe... (e.g., 'Make it warmer and more cinematic')"
-                                    disabled={isProcessing}
+                                    disabled={isProcessing || !!isReprocessing}
                                     size="small"
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: 13 } }}
                                 />
-                                <IconButton type="submit" disabled={!input.trim() || isProcessing} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
+                                <IconButton type="submit" disabled={!input.trim() || isProcessing || !!isReprocessing} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
                                     {isProcessing ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
                                 </IconButton>
                             </Box>
