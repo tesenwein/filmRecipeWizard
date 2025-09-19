@@ -278,7 +278,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             camera_profile: z.string().optional().describe("Preferred camera profile (e.g., 'Adobe Color', 'Adobe Monochrome')"),
             monochrome: z.boolean().optional().describe('Convert to black and white'),
             confidence: z.number().min(0).max(1).describe('Confidence in the analysis (0.0 to 1.0)'),
-            reasoning: z.string().describe('Brief explanation of the adjustments made'),
+
             exposure: z.number().min(-5).max(5).optional().describe('Exposure adjustment in stops (-5.0 to +5.0)'),
             highlights: z.number().min(-100).max(100).optional().describe('Highlights recovery (-100 to +100)'),
             shadows: z.number().min(-100).max(100).optional().describe('Shadows lift (-100 to +100)'),
@@ -534,7 +534,6 @@ Provide detailed reasoning for each adjustment to help the user understand the c
         return {
             preset_name: 'Default Recipe',
             confidence: 0.5,
-            reasoning: 'Default adjustments applied due to analysis error',
             camera_profile: 'Adobe Color',
             temperature: 0,
             tint: 0,

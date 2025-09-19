@@ -35,7 +35,7 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
     const adjustments: AIColorAdjustments = {
       preset_name: 'Imported Preset',
       confidence: 0.8,
-      reasoning: 'Imported from XMP preset',
+
     };
 
     const metadata: XMPParseResult['metadata'] = {

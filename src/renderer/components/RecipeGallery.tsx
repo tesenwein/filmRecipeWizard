@@ -100,7 +100,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           const m: any = r.metadata;
           if (m.presetName) parts.push(m.presetName);
           if (m.groupFolder) parts.push(m.groupFolder);
-          if (m.reasoning) parts.push(m.reasoning);
+
           if (m.aiAdjustments) parts.push(JSON.stringify(m.aiAdjustments));
         }
       }

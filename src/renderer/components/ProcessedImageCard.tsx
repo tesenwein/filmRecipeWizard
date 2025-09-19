@@ -560,28 +560,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                 </Box>
               </Box>
             </Box>
-            {typeof result.metadata.aiAdjustments.reasoning === 'string' &&
-              result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
-                <>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#444' }}>
-                    AI Notes
-                  </Typography>
-                  <Box
-                    sx={{
-                      mt: 0.5,
-                      fontSize: 12,
-                      color: '#374151',
-                      background: '#ffffff',
-                      borderRadius: 2,
-                      p: 1.25,
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {result.metadata.aiAdjustments.reasoning}
-                  </Box>
-                </>
-              )}
+
           </Paper>
 
           {/* Export options */}

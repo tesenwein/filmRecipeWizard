@@ -84,7 +84,6 @@ export class ImageProcessor {
         metadata: {
           aiAdjustments,
           confidence: aiAdjustments.confidence,
-          reasoning: aiAdjustments.reasoning,
           usedSettings: undefined,
         },
       };

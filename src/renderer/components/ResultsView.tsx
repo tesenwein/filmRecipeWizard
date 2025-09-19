@@ -916,22 +916,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         showOnlyCurrent
                       />
                     </Paper>
-                    {/* AI Notes */}
-                    {typeof result.metadata.aiAdjustments.reasoning === 'string' &&
-                      result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
-                        <Accordion>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography variant="h6">Analysis Notes</Typography>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
-                              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {result.metadata.aiAdjustments.reasoning}
-                              </Typography>
-                            </Paper>
-                          </AccordionDetails>
-                        </Accordion>
-                      )}
+
 
                     {/* AI Functions Used */}
                     {aiFunctions && (

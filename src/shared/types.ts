@@ -12,7 +12,6 @@ export interface ProcessingResult {
   metadata?: {
     aiAdjustments?: AIColorAdjustments;
     processingTime?: number;
-    reasoning?: string;
     confidence?: number;
     presetName?: string;
     groupFolder?: string;

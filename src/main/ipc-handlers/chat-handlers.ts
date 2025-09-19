@@ -44,7 +44,7 @@ export class ChatHandlers {
                     op: z.enum(['add', 'update', 'remove']).optional(),
                     name: z.string().optional(),
                     type: z.enum([
-                        'radial','linear','person','subject','background','sky','range_color','range_luminance','brush','face','eye','skin','hair','clothing','landscape','water','vegetation','mountain','building','vehicle','animal','object'
+                        'radial', 'linear', 'person', 'subject', 'background', 'sky', 'range_color', 'range_luminance', 'brush', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object'
                     ]).optional(),
                     subCategoryId: z.number().optional(),
                     adjustments: maskAdjustmentsSchema.optional(),
@@ -121,8 +121,7 @@ The user has a recipe with the following details:
  4. Recipe description (short human-friendly summary)
 
 CRITICAL RESPONSE FORMAT:
-- Always explain your reasoning in natural language for the user.
-- When suggesting changes, CALL modify_recipe exactly once with fields:
+ - When suggesting changes, CALL modify_recipe exactly once with fields:
   - message: a concise summary of the changes and why
   - modifications: { userOptions?, prompt?, name?, description?, masks? }
   This function result will be used by the UI to apply changes.

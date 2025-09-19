@@ -2,7 +2,7 @@ export interface AIColorAdjustments {
   // Recipe metadata
   preset_name?: string;
   description?: string;
-  
+
   // Rendering intent / profile
   treatment?: 'color' | 'black_and_white';
   camera_profile?: string;
@@ -44,7 +44,7 @@ export interface AIColorAdjustments {
   tone_curve_red?: Array<{ input: number; output: number }>;
   tone_curve_green?: Array<{ input: number; output: number }>;
   tone_curve_blue?: Array<{ input: number; output: number }>;
-  
+
   // Parametric curves
   parametric_shadows?: number;
   parametric_darks?: number;
@@ -54,9 +54,8 @@ export interface AIColorAdjustments {
   parametric_midtone_split?: number;
   parametric_highlight_split?: number;
 
-  // Confidence and explanation
+  // Confidence
   confidence?: number;
-  reasoning?: string;
 
   // Optional point color corrections
   point_colors?: number[][];
