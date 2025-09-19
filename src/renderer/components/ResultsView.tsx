@@ -1018,7 +1018,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           <RecipeAdjustmentsPanel
                             recipe={{
                               id: processId || '',
-                              name: processName || successfulResults[selectedResult]?.metadata?.aiAdjustments?.preset_name || 'Unnamed Recipe',
+                              name: processName || 'Unnamed Recipe',
                               prompt: processPrompt || '',
                               description: processDescription,
                               userOptions: processOptions,
@@ -1054,9 +1054,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       <RecipeChat
                         recipe={{
                           id: processId || '',
-                          name: processName || successfulResults[selectedResult]?.metadata?.aiAdjustments?.preset_name || 'Unnamed Recipe',
+                          name: processName || 'Unnamed Recipe',
                           prompt: processPrompt || '',
-                          description: processDescription || successfulResults[selectedResult]?.metadata?.aiAdjustments?.description,
+                          description: processDescription,
                           userOptions: processOptions,
                           maskOverrides: maskOverrides,
                           results: successfulResults,
