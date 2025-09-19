@@ -3,24 +3,6 @@ import type { AIColorAdjustments } from '../services/types';
 // Default storage location for recipes
 export const DEFAULT_STORAGE_FOLDER = '.film-recipes-wizard';
 
-export enum LightroomProfile {
-  ADOBE_COLOR = 'adobe-color',
-  ADOBE_MONOCHROME = 'adobe-monochrome',
-  FLAT = 'flat',
-}
-
-export const getLightroomProfileDisplayName = (profile: LightroomProfile | string): string => {
-  switch (profile) {
-    case LightroomProfile.ADOBE_COLOR:
-      return 'Adobe Color';
-    case LightroomProfile.ADOBE_MONOCHROME:
-      return 'Adobe Monochrome';
-    case LightroomProfile.FLAT:
-      return 'Flat Profile';
-    default:
-      return profile;
-  }
-};
 
 export interface ProcessingResult {
   inputPath?: string;
@@ -64,8 +46,6 @@ export interface StyleOptions {
   // Optional artist and film selections
   artistStyle?: { key: string; name: string; category: string; blurb: string };
   filmStyle?: { key: string; name: string; category: string; blurb: string };
-  // Lightroom base profile selection
-  lightroomProfile?: LightroomProfile;
 }
 
 export interface Recipe {

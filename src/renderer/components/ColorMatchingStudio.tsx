@@ -9,7 +9,6 @@ import ConfirmDialog from './ConfirmDialog';
 import FilmStylesCard from './FilmStylesCard';
 import FineTuneControls from './FineTuneControls';
 import ImagePicker from './ImagePicker';
-import LightroomProfileCard from './LightroomProfileCard';
 import ProcessButton from './ProcessButton';
 import StyleDescriptionCard from './StyleDescriptionCard';
 
@@ -115,8 +114,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     styleOptions?.contrast !== undefined || // Has contrast adjustment
     styleOptions?.vibrance !== undefined || // Has vibrance adjustment
     styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment
-    styleOptions?.moodiness !== undefined || // Has moodiness adjustment
-    styleOptions?.lightroomProfile !== undefined // Has lightroom profile selected
+    styleOptions?.moodiness !== undefined // Has moodiness adjustment
   );
 
   const canProcess: boolean = Boolean(!processingState.isProcessing && hasActiveOptions);
@@ -302,10 +300,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
           {/* Right Column - All Options */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: 'fit-content', position: 'sticky', top: 0 }}>
-            <LightroomProfileCard
-              selected={styleOptions?.lightroomProfile}
-              onSelect={profile => onStyleOptionsChange?.({ lightroomProfile: profile })}
-            />
 
             <AIFunctionsSelector
               styleOptions={styleOptions}

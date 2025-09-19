@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { AIColorAdjustments } from '../services/types';
 import { AIStreamingService } from '../services/ai-streaming-service';
+import type { AIColorAdjustments } from '../services/types';
 import { ProcessingResult, StyleOptions } from '../shared/types';
 import { generateCameraProfileXMP } from './camera-profile-generator';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
@@ -69,7 +69,6 @@ export class ImageProcessor {
             }
           },
           preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-          lightroomProfile: data.styleOptions?.lightroomProfile,
           aiFunctions: data.styleOptions?.aiFunctions,
         }
       );

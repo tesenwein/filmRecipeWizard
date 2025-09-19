@@ -102,7 +102,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       const numKeys = ['warmth', 'tint', 'contrast', 'vibrance', 'moodiness', 'saturationBias'] as const;
       for (const k of numKeys) if (uo[k] !== undefined) parts.push(String(uo[k]));
       if (uo.vibe) parts.push(uo.vibe);
-      if (uo.lightroomProfile) parts.push(uo.lightroomProfile);
       if (uo.filmGrain !== undefined) parts.push(uo.filmGrain ? 'film grain' : 'no film grain');
       if (uo.preserveSkinTones !== undefined) parts.push(uo.preserveSkinTones ? 'preserve skin tones' : 'no skin tone preserve');
       if (uo.artistStyle) parts.push(uo.artistStyle.name, uo.artistStyle.category, uo.artistStyle.blurb, uo.artistStyle.key);

@@ -33,7 +33,7 @@ import {
 } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useState } from 'react';
-import { ProcessingResult, UserProfile, getLightroomProfileDisplayName } from '../../shared/types';
+import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import AIFunctionsSelector from './AIFunctionsSelector';
@@ -665,23 +665,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         {/* Style Information */}
                         {processOptions &&
                           (processOptions.artistStyle ||
-                            processOptions.filmStyle ||
-                            processOptions.lightroomProfile) && (
+                            processOptions.filmStyle) && (
                             <Box sx={{ mb: 3 }}>
                               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Applied Styles
                               </Typography>
                               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                {processOptions.lightroomProfile && (
-                                  <Chip
-                                    label={`Profile: ${getLightroomProfileDisplayName(
-                                      processOptions.lightroomProfile
-                                    )}`}
-                                    variant="filled"
-                                    color="primary"
-                                    size="small"
-                                  />
-                                )}
                                 {processOptions.artistStyle?.name && (
                                   <Chip
                                     label={`Artist: ${processOptions.artistStyle.name}`}
@@ -993,14 +982,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                       <strong>Preserve Skin Tones:</strong>{' '}
                                       {processOptions.preserveSkinTones ? 'On' : 'Off'}
                                     </Typography>
-                                    {processOptions.lightroomProfile && (
-                                      <Typography variant="body1">
-                                        <strong>Lightroom Profile:</strong>{' '}
-                                        {getLightroomProfileDisplayName(
-                                          processOptions.lightroomProfile
-                                        )}
-                                      </Typography>
-                                    )}
                                     {processOptions.artistStyle?.name && (
                                       <Typography variant="body1">
                                         <strong>Artist Style:</strong>{' '}

@@ -1,8 +1,8 @@
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
+import { getAllMaskTypes, getMaskTypesByCategory } from '../shared/mask-types';
 import { AIColorAdjustments } from './types';
-import { getAllMaskTypes, getMaskTypesByCategory, MASK_TYPE_CONFIGS } from '../shared/mask-types';
 
 export interface StreamingUpdate {
     type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete' | 'step_progress' | 'step_transition';
@@ -16,7 +16,6 @@ export interface StreamingUpdate {
 export interface StreamingOptions {
     onUpdate?: (update: StreamingUpdate) => void;
     preserveSkinTones?: boolean;
-    lightroomProfile?: string;
     aiFunctions?: {
         temperatureTint?: boolean;
         masks?: boolean;
@@ -227,9 +226,6 @@ Call the generate_color_adjustments function with:
    - Landscape masks work best for outdoor/nature photography and require clear landscape elements` +
             (options.aiFunctions?.pointColor ? `\n6. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
             (options.preserveSkinTones ? `\n${options.aiFunctions?.pointColor ? '7' : '6'}. Preserve natural skin tones in Subject masks` : '') +
-            (options.lightroomProfile
-                ? `\n\nIMPORTANT: Use "${options.lightroomProfile}" as the base camera profile in your adjustments. This profile determines the baseline color rendition and contrast.`
-                : '') +
             `
 7. For portraits, ensure a match in skin tone and backdrop
 8. For landscapes, ensure sky/foliage mood and lighting alignment

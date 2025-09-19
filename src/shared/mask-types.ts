@@ -45,14 +45,14 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   {
     type: 'eyebrows',
     subType: '3',
-    subCategoryId: '4',
+    subCategoryId: '9', // Correct value from working portrait-masks.xmp
     description: 'Eyebrows',
     category: 'face'
   },
   {
     type: 'lips',
     subType: '3',
-    subCategoryId: '5',
+    subCategoryId: '10', // Using available ID for lips
     description: 'Lips',
     category: 'face'
   },
@@ -79,17 +79,17 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   },
   {
     type: 'hair',
-    subType: '1', // Hair should be subject type, not face type
-    subCategoryId: '',
+    subType: '3', // Hair should be face type based on working portrait-masks.xmp
+    subCategoryId: '5', // Correct value from working portrait-masks.xmp
     description: 'Hair',
-    category: 'subject'
+    category: 'face'
   },
   {
     type: 'clothing',
-    subType: '1', // Clothing should be subject type, not face type
-    subCategoryId: '',
+    subType: '3', // Clothing should be face type based on working portrait-masks.xmp
+    subCategoryId: '11', // Correct value from working portrait-masks.xmp
     description: 'Clothing',
-    category: 'subject'
+    category: 'face'
   },
   {
     type: 'teeth',
@@ -266,6 +266,7 @@ export function normalizeMaskType(inputType: string): string {
     case 'face':
     case 'skin':
     case 'facial_skin':
+    case 'face skin':
       return 'face_skin';
     case 'eye':
     case 'eyes':
@@ -279,6 +280,12 @@ export function normalizeMaskType(inputType: string): string {
     case 'teeth':
     case 'tooth':
       return 'teeth';
+    case 'hair':
+      return 'hair';
+    case 'clothing':
+      return 'clothing';
+    case 'eyebrows':
+      return 'eyebrows';
     case 'people':
     case 'person':
       return 'subject';

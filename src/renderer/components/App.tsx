@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LightroomProfile, ProcessingResult, Recipe, StyleOptions } from '../../shared/types';
+import { ProcessingResult, Recipe, StyleOptions } from '../../shared/types';
 import { AlertProvider, useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import AppHeader from './AppHeader';
@@ -53,9 +53,7 @@ const AppContent: React.FC = () => {
     status: string;
     progress: number;
   }>({ status: 'Loading...', progress: 0 });
-  const [styleOptions, setStyleOptions] = useState<StyleOptions>({
-    lightroomProfile: LightroomProfile.ADOBE_COLOR, // Default to Adobe Color as specified
-  });
+  const [styleOptions, setStyleOptions] = useState<StyleOptions>({});
 
   // Force start at splash, then redirect based on setup completion (run only once)
   useEffect(() => {

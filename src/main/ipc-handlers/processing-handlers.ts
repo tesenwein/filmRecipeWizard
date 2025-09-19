@@ -191,17 +191,6 @@ export class ProcessingHandlers {
             optionsHintParts.push(`Saturation Bias: ${pct(options.saturationBias)}`);
           if (options.filmGrain !== undefined)
             optionsHintParts.push(`Film Grain: ${options.filmGrain ? 'On' : 'Off'}`);
-          if (options.lightroomProfile !== undefined) {
-            const profileName =
-              options.lightroomProfile === 'adobe-color'
-                ? 'Adobe Color'
-                : options.lightroomProfile === 'adobe-monochrome'
-                  ? 'Adobe Monochrome'
-                  : options.lightroomProfile === 'flat'
-                    ? 'Flat Profile'
-                    : options.lightroomProfile;
-            optionsHintParts.push(`Lightroom Base Profile: ${profileName}`);
-          }
           if (options.artistStyle && typeof options.artistStyle.name === 'string') {
             const name = String(options.artistStyle.name).trim();
             const category = String(options.artistStyle.category || '').trim();
