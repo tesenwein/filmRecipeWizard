@@ -59,6 +59,17 @@ declare global {
       exportAllRecipes: () => Promise<ExportResult>;
       importRecipe: () => Promise<ImportResult>;
 
+      // Chat operations
+      chatRecipe: (data: { messages: Array<{ role: string; content: string }>; recipe: any }) => Promise<{
+        success: boolean;
+        // Backward compatibility: content holds message text if present
+        content?: string;
+        // New structured chat result fields
+        message?: string;
+        modifications?: any;
+        error?: string;
+      }>;
+
       // Progress monitoring
       onProcessingProgress?: (callback: (progress: number, status: string) => void) => void;
       onStreamingUpdate?: (callback: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => void) => void;

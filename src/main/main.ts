@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
+import { ChatHandlers } from './ipc-handlers/chat-handlers';
 import { ExportHandlers } from './ipc-handlers/export-handlers';
 import { FileHandlers } from './ipc-handlers/file-handlers';
 import { ImportHandlers } from './ipc-handlers/import-handlers';
@@ -23,6 +24,7 @@ class FilmRecipeWizardApp {
   private settingsHandlers: SettingsHandlers;
   private exportHandlers: ExportHandlers;
   private importHandlers: ImportHandlers;
+  private chatHandlers: ChatHandlers;
 
   constructor() {
     this.imageProcessor = new ImageProcessor();
@@ -48,6 +50,7 @@ class FilmRecipeWizardApp {
     );
     this.exportHandlers = new ExportHandlers(this.imageProcessor, this.storageService);
     this.importHandlers = new ImportHandlers(this.storageService);
+    this.chatHandlers = new ChatHandlers();
 
     this.setupApp();
     this.setupIPC();
@@ -244,6 +247,7 @@ class FilmRecipeWizardApp {
     this.settingsHandlers.setupHandlers();
     this.exportHandlers.setupHandlers();
     this.importHandlers.setupHandlers();
+    this.chatHandlers.setupHandlers();
   }
 }
 

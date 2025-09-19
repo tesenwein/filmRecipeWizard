@@ -1,4 +1,4 @@
-import { dialog, ipcMain } from 'electron';
+import { dialog, ipcMain, BrowserWindow } from 'electron';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
@@ -148,8 +148,10 @@ export class StorageHandlers {
           await this.storageService.updateProcess(processId, updates);
           // Notify renderer that a process has been updated (useful for background updates)
           try {
-            // Note: We don't have direct access to mainWindow here, but the calling code should handle this
-            // This is handled in the processing handlers when they call this
+            const payload = { processId, updates };
+            for (const win of BrowserWindow.getAllWindows()) {
+              try { win.webContents.send('process-updated', payload); } catch {}
+            }
           } catch {
             // Ignore IPC send errors
           }

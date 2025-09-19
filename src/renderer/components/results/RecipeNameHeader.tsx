@@ -12,6 +12,7 @@ interface RecipeNameHeaderProps {
   successfulResults: ProcessingResult[];
   selectedResult: number;
   processOptions?: any;
+  displayNameOverride?: string;
 }
 
 const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
@@ -19,6 +20,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
   successfulResults,
   selectedResult,
   processOptions,
+  displayNameOverride,
 }) => {
   const { showError } = useAlert();
   const [savedName, setSavedName] = useState<string | undefined>(undefined);
@@ -50,6 +52,8 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
     };
   }, [processId]);
 
+  // (Name updates are driven via displayNameOverride to avoid global listener conflicts.)
+
   const computedDefaultName = useMemo(() => {
     const current = successfulResults[selectedResult];
     const aiName = current?.metadata?.aiAdjustments && (current.metadata.aiAdjustments as any).preset_name;
@@ -64,7 +68,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
     return `Recipe ${selectedResult + 1}`;
   }, [successfulResults, selectedResult, processOptions]);
 
-  const displayedName = savedName || computedDefaultName;
+  const displayedName = displayNameOverride || savedName || computedDefaultName;
 
   const startEditing = () => {
     setInput(displayedName || '');
@@ -163,4 +167,3 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
 };
 
 export default RecipeNameHeader;
-

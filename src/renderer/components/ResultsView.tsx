@@ -1,5 +1,6 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import CheckIcon from '@mui/icons-material/Check';
+import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -39,6 +40,7 @@ import { useAppStore } from '../store/appStore';
 import AIFunctionsSelector from './AIFunctionsSelector';
 import ConfirmDialog from './ConfirmDialog';
 import ImageSelectionChips from './results/ImageSelectionChips';
+import RecipeChat from './RecipeChat';
 import RecipeNameHeader from './results/RecipeNameHeader';
 import SingleImage from './SingleImage';
 
@@ -326,6 +328,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
+  const [processName, setProcessName] = useState<string | undefined>(undefined);
+
   // Load base64 image data when processId is provided
   useEffect(() => {
     const loadBase64Images = async () => {
@@ -358,11 +362,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setProcessPrompt(processResponse.process.prompt);
           setProcessOptions(processResponse.process.userOptions);
           setAuthor((processResponse.process as any).author);
+          const nm = (processResponse.process as any).name;
+          setProcessName(typeof nm === 'string' && nm.trim().length > 0 ? nm : undefined);
           // name is handled in header component
         } else {
           console.warn('[RESULTS] Process not found or failed to load:', processResponse.error);
           setProcessPrompt(prompt);
           setProcessOptions(undefined);
+          setProcessName(undefined);
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
@@ -515,6 +522,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             successfulResults={successfulResults}
             selectedResult={selectedResult}
             processOptions={processOptions}
+            displayNameOverride={processName}
           />
 
           <Tabs
@@ -530,6 +538,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           >
             <Tab icon={<CompareArrowsIcon />} label="Overview" iconPosition="start" />
             <Tab icon={<TuneIcon />} label="Adjustments Details" iconPosition="start" />
+            <Tab icon={<ChatIcon />} label="AI Chat" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
             {author && (author.firstName || author.lastName) && (
@@ -1324,6 +1333,66 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   <Box>
                     <Typography
                       variant="h5"
+                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+                    >
+                      <ChatIcon color="primary" />
+                      AI Chat
+                    </Typography>
+                    <Box sx={{ height: '600px' }}>
+                      <RecipeChat
+                        recipe={{
+                          id: processId || '',
+                          name: successfulResults[selectedResult]?.metadata?.presetName || 'Unnamed Recipe',
+                          prompt: processPrompt || '',
+                          userOptions: processOptions,
+                          results: successfulResults,
+                          timestamp: new Date().toISOString(),
+                        }}
+                        onRecipeModification={async (modifications) => {
+                          if (!processId) return;
+                          try {
+                            const updates: any = {};
+                            if (modifications.userOptions) {
+                              const merged = { ...(processOptions || {}), ...modifications.userOptions } as any;
+                              // merge nested aiFunctions if present
+                              if ((processOptions as any)?.aiFunctions || (modifications.userOptions as any).aiFunctions) {
+                                merged.aiFunctions = { ...(processOptions as any)?.aiFunctions, ...(modifications.userOptions as any).aiFunctions };
+                              }
+                              updates.userOptions = merged;
+                              setProcessOptions(merged);
+                            }
+                            if (typeof modifications.prompt === 'string') {
+                              updates.prompt = modifications.prompt;
+                              setProcessPrompt(modifications.prompt);
+                            }
+                            if (typeof modifications.name === 'string') {
+                              updates.name = modifications.name;
+                              setProcessName(modifications.name);
+                            }
+                            if (Object.keys(updates).length > 0) {
+                              await window.electronAPI.updateProcess(processId, updates);
+                            }
+                          } catch (e) {
+                            console.error('[RESULTS] Failed to apply recipe modifications', e);
+                          }
+                        }}
+                        onAcceptChanges={() => {
+                          // Handle accepting changes
+                          // No-op here; state was already updated in onRecipeModification
+                        }}
+                        onRejectChanges={() => {
+                          // Handle rejecting changes
+                          console.log('Changes rejected');
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                )}
+
+                {activeTab === 4 && (
+                  <Box>
+                    <Typography
+                      variant="h5"
                       sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
                     >
                       <DownloadIcon color="primary" />
@@ -1471,8 +1540,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   </Box>
                 )}
 
-                {/* Tab Panel 4: LUT Export */}
-                {activeTab === 3 && (
+                {/* Tab Panel 5: LUT Export */}
+                {activeTab === 5 && (
                   <Box>
                     <Typography
                       variant="h5"
@@ -1669,8 +1738,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   </Box>
                 )}
 
-                {/* Tab Panel 5: Author */}
-                {author && (author.firstName || author.lastName) && activeTab === 4 && (
+                {/* Tab Panel 6: Author */}
+                {author && (author.firstName || author.lastName) && activeTab === 6 && (
                   <Box>
                     <Typography
                       variant="subtitle1"
