@@ -355,5 +355,6 @@ ${maskCorrections}
       <!-- Local adjustment masks are not supported in camera profiles; omitted intentionally -->
     </rdf:Description>
   </rdf:RDF>
-</x:xmpmeta>`;
+</x:xmpmeta>
+<?xpacket end="w"?>`;
 }

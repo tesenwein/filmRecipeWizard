@@ -109,16 +109,17 @@ export function generateXMPContent(
   const vibrance = round(clamp(scale(aiAdjustments.vibrance as any), -100, 100));
   const saturation = round(clamp(scale(aiAdjustments.saturation as any), -100, 100));
 
-  const sanitizeName = (n: string) =>
-    n
-      .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
+  const sanitizeName = (n: string) => {
+    const sanitized = n
+      .replace(/\b(image\s*match|imagematch|match|target|base)\b/gi, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
-  const fallback = `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-  const rawPresetName =
-    ((aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim()) ||
-    fallback;
-  const presetName = sanitizeName(rawPresetName) || fallback;
+    // If sanitization removed everything, return the original name
+    return sanitized.length > 0 ? sanitized : n.trim();
+  };
+
+  const rawPresetName = (aiAdjustments as any).preset_name && String((aiAdjustments as any).preset_name).trim();
+  const presetName = rawPresetName ? sanitizeName(rawPresetName) : 'Custom Recipe';
   const groupName = 'film-recipe-wizard';
   // Inclusion flags with flexible defaults (back-compat: include everything when not specified)
   const inc = {
@@ -768,6 +769,7 @@ ${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBl
       
     </rdf:Description>
   </rdf:RDF>
-</x:xmpmeta>`;
+</x:xmpmeta>
+<?xpacket end="w"?>`;
   return xmp;
 }

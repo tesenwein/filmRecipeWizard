@@ -57,16 +57,15 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
   const computedDefaultName = useMemo(() => {
     const current = successfulResults[selectedResult];
     const aiName = current?.metadata?.aiAdjustments && (current.metadata.aiAdjustments as any).preset_name;
+
+    // Use AI-generated name if available
     if (typeof aiName === 'string' && aiName.trim().length > 0) {
-      const extras: string[] = [];
-      const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
-      const film = (processOptions as any)?.filmStyle?.name as string | undefined;
-      if (artist && artist.trim().length > 0) extras.push(artist.trim());
-      if (film && film.trim().length > 0) extras.push(film.trim());
-      return extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
+      return aiName;
     }
-    return `Recipe ${selectedResult + 1}`;
-  }, [successfulResults, selectedResult, processOptions]);
+
+    // No fallback - let AI handle naming
+    return 'Untitled Recipe';
+  }, [successfulResults, selectedResult]);
 
   const displayedName = displayNameOverride || savedName || computedDefaultName;
 
@@ -122,19 +121,19 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
             inputProps={{ maxLength: 120 }}
           />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <IconButton 
-              size="small" 
-              aria-label="Save name" 
-              onClick={save} 
+            <IconButton
+              size="small"
+              aria-label="Save name"
+              onClick={save}
               disabled={saving}
               title="Save name"
             >
               <CheckIcon fontSize="small" />
             </IconButton>
-            <IconButton 
-              size="small" 
-              aria-label="Cancel editing" 
-              onClick={cancelEditing} 
+            <IconButton
+              size="small"
+              aria-label="Cancel editing"
+              onClick={cancelEditing}
               disabled={saving}
               title="Cancel editing"
             >

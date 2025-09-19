@@ -35,17 +35,16 @@ export class ExportHandlers {
 
         // Show save dialog
         // Derive a friendly filename from AI if present
-        const sanitizeName = (n: string) =>
-          n
-            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
+        const sanitizeName = (n: string) => {
+          const sanitized = n
+            .replace(/\b(image\s*match|imagematch|match|target|base)\b/gi, '')
             .replace(/\s{2,}/g, ' ')
             .trim();
-        const rawName =
-          (data?.adjustments?.preset_name as string | undefined) ||
-          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const clean =
-          sanitizeName(rawName) ||
-          `Preset-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+          // If sanitization removed everything, return the original name
+          return sanitized.length > 0 ? sanitized : n.trim();
+        };
+        const rawName = (data?.adjustments?.preset_name as string | undefined) || 'Custom Recipe';
+        const clean = sanitizeName(rawName);
         const baseName = clean
           .replace(/[^A-Za-z0-9 _-]+/g, '')
           .replace(/\s+/g, ' ')
@@ -159,13 +158,13 @@ export class ExportHandlers {
 
             const xmp = generateXMPContent(adj as any, include);
             const name = (adj as any)?.preset_name as string | undefined;
-            const safePreset = (name || `Preset-${idx + 1}`)
+            const safePreset = (name || 'Custom Recipe')
               .replace(/[^A-Za-z0-9 _-]+/g, '')
               .replace(/\s+/g, ' ')
               .trim()
               .replace(/\s/g, '-');
             zip.addFile(
-              `presets/${safePreset || `Preset-${idx + 1}`}.xmp`,
+              `presets/${safePreset || 'Custom-Recipe'}.xmp`,
               Buffer.from(xmp, 'utf8')
             );
           });
@@ -261,13 +260,13 @@ export class ExportHandlers {
               } as any;
               const xmp = generateXMPContent(adj as any, include);
               const name = (adj as any)?.preset_name as string | undefined;
-              const safePreset = (name || `Preset-${idx + 1}`)
+              const safePreset = (name || 'Custom Recipe')
                 .replace(/[^A-Za-z0-9 _-]+/g, '')
                 .replace(/\s+/g, ' ')
                 .trim()
                 .replace(/\s/g, '-');
               zip.addFile(
-                `${recipeDir}/presets/${safePreset || `Preset-${idx + 1}`}.xmp`,
+                `${recipeDir}/presets/${safePreset || 'Custom-Recipe'}.xmp`,
                 Buffer.from(xmp, 'utf8')
               );
             });

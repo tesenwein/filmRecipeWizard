@@ -125,6 +125,12 @@ export class AIStreamingService {
                 finalResult.description = 'A professional color grading recipe with carefully balanced tones and contrast.';
             }
 
+            // Ensure preset name is always present
+            if (!finalResult.preset_name || finalResult.preset_name.trim().length === 0) {
+                console.log('[AI] No preset name found, applying fallback name');
+                finalResult.preset_name = 'Custom Recipe';
+            }
+
             const ensuredProfile = this.normalizeCameraProfileName(finalResult.camera_profile) || this.autoSelectProfileFromResult(finalResult);
             finalResult.camera_profile = ensuredProfile;
 
@@ -267,7 +273,7 @@ Call the generate_color_adjustments function with:
 11. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
 12. Consider tone curve adjustments for sophisticated contrast control
 
-Include a short preset_name (2-4 words, Title Case) and a compelling description (1-2 sentences) that describes the visual style and mood of the recipe (e.g., "Warm, cinematic tones with rich shadows and golden highlights perfect for portrait photography" or "Cool, desaturated look with blue undertones ideal for urban landscapes").
+CRITICAL: You MUST always include a preset_name (2-4 words, Title Case) that describes the visual style and mood of the recipe. This is REQUIRED and cannot be empty. Examples: "Warm Portrait", "Cool Landscape", "Cinematic Shadows", "Vintage Film", "Golden Hour", "Moody B&W". Also include a compelling description (1-2 sentences) that describes the visual style and mood of the recipe (e.g., "Warm, cinematic tones with rich shadows and golden highlights perfect for portrait photography" or "Cool, desaturated look with blue undertones ideal for urban landscapes").
 If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).
 If an artist or film style is mentioned in the hint, explicitly include HSL shifts and tone curve adjustments that reflect that style's palette and contrast.
 
@@ -383,7 +389,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
 
     private createDefaultAdjustments(): AIColorAdjustments {
         return {
-            preset_name: 'Default Recipe',
+            preset_name: 'Custom Recipe',
             description: 'A balanced color grading recipe with natural tones and clean contrast.',
             confidence: 0.5,
             camera_profile: 'Adobe Color',

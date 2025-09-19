@@ -7,24 +7,6 @@ import { ImageProcessor } from '../image-processor';
 import { SettingsService } from '../settings-service';
 import { StorageService } from '../storage-service';
 
-// Constants
-const MAX_TARGET_IMAGES = 3;
-const MAX_BASE_IMAGES = 3;
-
-// Type guards and interfaces
-interface ProcessDataInput {
-  name?: string;
-  prompt?: string;
-  userOptions?: any;
-  results?: any[];
-  baseImages?: string[];
-  targetImages?: string[];
-}
-
-interface ProcessWithAny extends ProcessHistory {
-  [key: string]: any;
-}
-
 export class StorageHandlers {
   constructor(
     private storageService: StorageService,
@@ -35,51 +17,6 @@ export class StorageHandlers {
   // Helper method to validate process ID format
   private isValidProcessId(processId: string): boolean {
     return typeof processId === 'string' && processId.length > 0 && processId.trim().length > 0;
-  }
-
-
-  // Convert images to base64 with fallback
-  private async convertImagesToBase64(filePaths: string[], processId: string, subdir: string): Promise<string[]> {
-    const converted: string[] = [];
-
-    for (const filePath of filePaths.slice(0, MAX_TARGET_IMAGES)) {
-      try {
-        const b64 = await this.storageService.convertImageToBase64(filePath);
-        converted.push(b64);
-      } catch (error) {
-        // Fallback: generate preview and convert to base64
-        try {
-          if (this.imageProcessor) {
-            const previewPath = await this.imageProcessor.generatePreview({
-              path: filePath,
-              processId,
-              subdir,
-            } as any);
-            const buf = await fs.readFile(previewPath);
-            converted.push(buf.toString('base64'));
-          } else {
-            console.warn(`[IPC] Failed to convert image ${filePath}: No image processor available`);
-          }
-        } catch (fallbackError) {
-          console.warn(`[IPC] Failed to convert image ${filePath}:`, fallbackError);
-        }
-      }
-    }
-
-    return converted;
-  }
-
-  // Validate process data input
-  private validateProcessData(processData: any): { isValid: boolean; error?: string } {
-    if (!processData || typeof processData !== 'object') {
-      return { isValid: false, error: 'Invalid process data: must be an object' };
-    }
-
-    if (processData.results && !Array.isArray(processData.results)) {
-      return { isValid: false, error: 'Invalid process data: results must be an array' };
-    }
-
-    return { isValid: true };
   }
 
   setupHandlers(): void {
@@ -96,13 +33,38 @@ export class StorageHandlers {
         let mutated = false;
         const normalized = recipes.map(r => {
           let out: ProcessHistory = r as ProcessHistory;
-
           // Attach author if missing
           if (!out.author && author) {
             mutated = true;
             out = { ...out, author } as ProcessHistory;
           }
-
+          // Ensure a single canonical name: if missing, derive from first result's preset_name
+          try {
+            const hasName = typeof (out as any).name === 'string' && (out as any).name.trim().length > 0;
+            if (!hasName) {
+              const first = Array.isArray((out as any).results) ? (out as any).results[0] : undefined;
+              const aiName = first?.metadata?.aiAdjustments?.preset_name as string | undefined;
+              if (aiName && aiName.trim().length > 0) {
+                out = { ...out, name: aiName.trim() } as ProcessHistory;
+                mutated = true;
+              }
+            }
+          } catch { /* ignore */ }
+          // Migrate legacy warmth -> temperatureK once
+          try {
+            const uo: any = (out as any).userOptions;
+            if (uo && uo.warmth !== undefined && uo.temperatureK === undefined) {
+              const w = Math.max(-100, Math.min(100, Number(uo.warmth)));
+              const baseTemp = 6500;
+              const tempRange = 3500; // +/- range
+              const k = Math.round(baseTemp - (w * tempRange / 100));
+              const nextUo = { ...uo };
+              delete nextUo.warmth;
+              nextUo.temperatureK = Math.max(2000, Math.min(50000, k));
+              out = { ...out, userOptions: nextUo } as ProcessHistory;
+              mutated = true;
+            }
+          } catch { /* ignore */ }
           return out;
         });
         if (mutated && this.settingsService) {
@@ -124,12 +86,6 @@ export class StorageHandlers {
       'save-process',
       async (_event, processData: Omit<ProcessHistory, 'id' | 'timestamp'> & any) => {
         try {
-          // Validate input data
-          const validation = this.validateProcessData(processData);
-          if (!validation.isValid) {
-            return { success: false, error: validation.error };
-          }
-
           const processId = this.storageService.generateProcessId();
 
           // If a reference image (base) was provided, convert the first one to base64 (no fallback)
@@ -147,15 +103,36 @@ export class StorageHandlers {
           }
 
           // Prepare target images as base64 for immediate processing only (do not persist)
+          let targetImageDataEphemeral: string[] = [];
           const targetImages: string[] | undefined = Array.isArray(
-            (processData as ProcessDataInput).targetImages
+            (processData as any).targetImages
           )
-            ? (processData as ProcessDataInput).targetImages
+            ? (processData as any).targetImages
             : undefined;
-
-          const targetImageDataEphemeral = targetImages && targetImages.length > 0
-            ? await this.convertImagesToBase64(targetImages, processId, 'target')
-            : [];
+          if (targetImages && targetImages.length > 0) {
+            for (const t of targetImages.slice(0, 3)) {
+              try {
+                const b64 = await this.storageService.convertImageToBase64(t);
+                targetImageDataEphemeral.push(b64);
+                continue;
+              } catch {
+                // Fallback only for targets: generate a JPEG preview and base64 it
+              }
+              try {
+                if (this.imageProcessor) {
+                  const previewPath = await this.imageProcessor.generatePreview({
+                    path: t,
+                    processId,
+                    subdir: 'target',
+                  } as any);
+                  const buf = await fs.readFile(previewPath);
+                  targetImageDataEphemeral.push(buf.toString('base64'));
+                }
+              } catch {
+                console.warn('[IPC] save-process: failed to prepare target image');
+              }
+            }
+          }
 
           // Load author profile from settings, if available
           let authorProfile: AppSettings['userProfile'] | undefined = undefined;
@@ -168,14 +145,13 @@ export class StorageHandlers {
             // Ignore settings load errors
           }
 
-          const processDataTyped = processData as ProcessDataInput;
           const process: ProcessHistory = {
             id: processId,
             timestamp: new Date().toISOString(),
-            name: processDataTyped?.name,
-            prompt: processDataTyped?.prompt,
-            userOptions: processDataTyped?.userOptions,
-            results: Array.isArray(processDataTyped.results) ? processDataTyped.results : [],
+            name: (processData as any)?.name,
+            prompt: (processData as any)?.prompt,
+            userOptions: (processData as any)?.userOptions,
+            results: Array.isArray(processData.results) ? processData.results : [],
             recipeImageData,
             status: 'generating',
             author: authorProfile,
@@ -198,14 +174,6 @@ export class StorageHandlers {
       'update-process',
       async (_event, processId: string, updates: Partial<ProcessHistory>) => {
         try {
-          if (!this.isValidProcessId(processId)) {
-            return { success: false, error: 'Invalid process ID format' };
-          }
-
-          if (!updates || typeof updates !== 'object') {
-            return { success: false, error: 'Invalid updates: must be an object' };
-          }
-
           await this.storageService.updateProcess(processId, updates);
           // Notify renderer that a process has been updated (useful for background updates)
           try {
@@ -230,10 +198,6 @@ export class StorageHandlers {
     // Delete a process
     ipcMain.handle('delete-process', async (_event, processId: string) => {
       try {
-        if (!this.isValidProcessId(processId)) {
-          return { success: false, error: 'Invalid process ID format' };
-        }
-
         await this.storageService.deleteProcess(processId);
         return { success: true };
       } catch (error) {
@@ -245,16 +209,6 @@ export class StorageHandlers {
     // Delete multiple processes
     ipcMain.handle('delete-multiple-processes', async (_event, processIds: string[]) => {
       try {
-        if (!Array.isArray(processIds)) {
-          return { success: false, error: 'Process IDs must be an array' };
-        }
-
-        // Validate all process IDs
-        const invalidIds = processIds.filter(id => !this.isValidProcessId(id));
-        if (invalidIds.length > 0) {
-          return { success: false, error: `Invalid process ID format: ${invalidIds.join(', ')}` };
-        }
-
         await this.storageService.deleteMultipleProcesses(processIds);
         return { success: true };
       } catch (error) {
@@ -295,14 +249,37 @@ export class StorageHandlers {
     // Get a specific process
     ipcMain.handle('get-process', async (_event, processId: string) => {
       try {
-        if (!this.isValidProcessId(processId)) {
-          return { success: false, error: 'Invalid process ID format' };
-        }
-
         const process = await this.storageService.getProcess(processId);
         if (!process) {
           return { success: false, error: 'Process not found' };
         }
+        // On-the-fly migration for legacy warmth -> temperatureK
+        try {
+          const uo: any = (process as any).userOptions;
+          if (uo && uo.warmth !== undefined && uo.temperatureK === undefined) {
+            const w = Math.max(-100, Math.min(100, Number(uo.warmth)));
+            const baseTemp = 6500;
+            const tempRange = 3500;
+            const k = Math.round(baseTemp - (w * tempRange / 100));
+            const nextUo = { ...uo };
+            delete nextUo.warmth;
+            nextUo.temperatureK = Math.max(2000, Math.min(50000, k));
+            (process as any).userOptions = nextUo;
+            try { await this.storageService.updateProcess(processId, { userOptions: nextUo } as any); } catch { }
+          }
+        } catch { /* ignore */ }
+        // Ensure canonical name exists: set from AI preset_name if absent
+        try {
+          const hasName = typeof (process as any).name === 'string' && (process as any).name.trim().length > 0;
+          if (!hasName) {
+            const first = Array.isArray((process as any).results) ? (process as any).results[0] : undefined;
+            const aiName = first?.metadata?.aiAdjustments?.preset_name as string | undefined;
+            if (aiName && aiName.trim().length > 0) {
+              (process as any).name = aiName.trim();
+              try { await this.storageService.updateProcess(processId, { name: aiName.trim() } as any); } catch { }
+            }
+          }
+        } catch { /* ignore */ }
         return { success: true, process };
       } catch (error) {
         console.error('[IPC] Error getting process:', error);
@@ -313,8 +290,8 @@ export class StorageHandlers {
     // Get image data URLs for UI display from stored base64 data
     ipcMain.handle('get-image-data-urls', async (_event, processId: string) => {
       try {
-        if (!this.isValidProcessId(processId)) {
-          return { success: false, error: 'Invalid process ID format' };
+        if (!processId) {
+          return { success: false, error: 'Process ID is required' };
         }
 
         const process = await this.storageService.getProcess(processId);
@@ -333,10 +310,10 @@ export class StorageHandlers {
           targetImageUrls: [],
         };
 
-        if (process.recipeImageData) {
+        if ((process as any).recipeImageData) {
           try {
             result.baseImageUrls = [
-              this.storageService.getImageDataUrl(process.recipeImageData),
+              this.storageService.getImageDataUrl((process as any).recipeImageData as string),
             ];
           } catch (imageError) {
             console.warn(`[IPC] Error processing image data for process ${processId}:`, imageError);
@@ -357,13 +334,7 @@ export class StorageHandlers {
     // Set or replace the base image of an existing process (converts to base64 and persists)
     ipcMain.handle('set-base-image', async (_event, processId: string, filePath: string) => {
       try {
-        if (!this.isValidProcessId(processId)) {
-          return { success: false, error: 'Invalid process ID format' };
-        }
-
-        if (!filePath || typeof filePath !== 'string') {
-          return { success: false, error: 'Invalid file path' };
-        }
+        if (!processId || !filePath) throw new Error('Invalid arguments');
         let baseImageData: string | undefined;
         try {
           baseImageData = await this.storageService.convertImageToBase64(filePath);
@@ -398,20 +369,23 @@ export class StorageHandlers {
     // Add multiple base/reference images (appends and limits to 3)
     ipcMain.handle('add-base-images', async (_event, processId: string, filePaths: string[]) => {
       try {
-        if (!this.isValidProcessId(processId)) {
-          return { success: false, error: 'Invalid process ID format' };
-        }
-
-        if (!Array.isArray(filePaths)) {
-          return { success: false, error: 'File paths must be an array' };
-        }
+        if (!processId || !Array.isArray(filePaths)) throw new Error('Invalid arguments');
         const process = await this.storageService.getProcess(processId);
         if (!process) {
           console.warn(`[IPC] Process not found for ID: ${processId}`);
           return { success: false, error: 'Process not found' };
         }
-        const converted = await this.convertImagesToBase64(filePaths, processId, 'base');
-        const merged = converted.slice(0, MAX_BASE_IMAGES);
+        const existing: string[] = [];
+        const converted: string[] = [];
+        for (const fp of filePaths.slice(0, 3)) {
+          try {
+            const b64 = await this.storageService.convertImageToBase64(fp);
+            converted.push(b64);
+          } catch (e) {
+            console.warn('[IPC] add-base-images: convert failed for', fp, e);
+          }
+        }
+        const merged = [...existing, ...converted].slice(0, 3);
         await this.storageService.updateProcess(processId, { recipeImageData: merged[0] } as any);
         return { success: true, count: merged.length };
       } catch (error) {
@@ -423,20 +397,14 @@ export class StorageHandlers {
     // Remove a base/reference image by index
     ipcMain.handle('remove-base-image', async (_event, processId: string, index: number) => {
       try {
-        if (!this.isValidProcessId(processId)) {
-          return { success: false, error: 'Invalid process ID format' };
-        }
-
-        if (typeof index !== 'number' || index < 0) {
-          return { success: false, error: 'Invalid index: must be a non-negative number' };
-        }
+        if (!processId || typeof index !== 'number') throw new Error('Invalid arguments');
         const process = await this.storageService.getProcess(processId);
         if (!process) {
           console.warn(`[IPC] Process not found for ID: ${processId}`);
           return { success: false, error: 'Process not found' };
         }
-        const existing: string[] = process.recipeImageData
-          ? [process.recipeImageData]
+        const existing: string[] = (process as any).recipeImageData
+          ? [(process as any).recipeImageData as string]
           : [];
         if (index < 0 || index >= existing.length) throw new Error('Index out of range');
         const next = existing.filter((_, i) => i !== index);
