@@ -73,6 +73,11 @@ export class AIStreamingService {
                 for (const toolResult of result.toolResults) {
                     if (toolResult.toolName === 'generate_color_adjustments' && toolResult.output) {
                         finalResult = toolResult.output as AIColorAdjustments;
+                        console.log('[AI] Tool result received:', {
+                            hasDescription: !!finalResult.description,
+                            description: finalResult.description,
+                            presetName: finalResult.preset_name
+                        });
                         break;
                     }
                 }
@@ -82,7 +87,15 @@ export class AIStreamingService {
 
             if (!finalResult) {
                 // Fallback: try to parse the result from the text
+                console.log('[AI] No tool results found, attempting to parse from text');
                 finalResult = this.parseResultFromText(result.text);
+                if (finalResult) {
+                    console.log('[AI] Parsed result from text:', {
+                        hasDescription: !!finalResult.description,
+                        description: finalResult.description,
+                        presetName: finalResult.preset_name
+                    });
+                }
             }
 
             // Complete the finalization step
@@ -105,6 +118,13 @@ export class AIStreamingService {
             if (!finalResult) {
                 finalResult = this.createDefaultAdjustments();
             }
+
+            // Ensure description is always present
+            if (!finalResult.description || finalResult.description.trim().length === 0) {
+                console.log('[AI] No description found, applying fallback description');
+                finalResult.description = 'A professional color grading recipe with carefully balanced tones and contrast.';
+            }
+
             const ensuredProfile = this.normalizeCameraProfileName(finalResult.camera_profile) || this.autoSelectProfileFromResult(finalResult);
             finalResult.camera_profile = ensuredProfile;
 
@@ -364,6 +384,7 @@ Provide detailed reasoning for each adjustment to help the user understand the c
     private createDefaultAdjustments(): AIColorAdjustments {
         return {
             preset_name: 'Default Recipe',
+            description: 'A balanced color grading recipe with natural tones and clean contrast.',
             confidence: 0.5,
             camera_profile: 'Adobe Color',
             temperature: 0,
