@@ -313,7 +313,7 @@ export class ProcessingHandlers {
               const aiName = (result as any)?.metadata?.aiAdjustments?.preset_name as
                 | string
                 | undefined;
-              
+
               if (aiName && typeof aiName === 'string' && aiName.trim().length > 0) {
                 derivedName = aiName;
               }
