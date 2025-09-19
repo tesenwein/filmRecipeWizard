@@ -118,22 +118,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         onRejectChanges();
     };
 
-    const formatRecipeForDisplay = (recipe: Recipe) => {
-        const options = recipe.userOptions as any;
-        return {
-            name: recipe.name || 'Unnamed Recipe',
-            prompt: recipe.prompt || 'No prompt',
-            temperatureK: options?.temperatureK ? `${options.temperatureK} K` : '—',
-            tint: options?.tint ?? '—',
-            contrast: options?.contrast ?? '—',
-            vibrance: options?.vibrance ?? '—',
-            saturationBias: options?.saturationBias ?? '—',
-            vibe: options?.vibe || '—',
-            filmGrain: options?.filmGrain ? 'On' : 'Off',
-            artistStyle: options?.artistStyle?.name || '—',
-            filmStyle: options?.filmStyle?.name || '—',
-        };
-    };
+    // Note: formatRecipeForDisplay function removed as it was unused
 
     // Note: recipeData removed as it was unused
     const latestAdjustments = (() => {

@@ -2,7 +2,7 @@ import { ipcMain } from 'electron';
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
-import { getDefaultAIFunctionToggles, maskAdjustmentsSchemaChat, maskEditSchemaChat } from '../../services/ai-shared';
+import { getDefaultAIFunctionToggles, maskEditSchemaChat } from '../../services/ai-shared';
 import { SettingsService } from '../settings-service';
 
 export class ChatHandlers {
