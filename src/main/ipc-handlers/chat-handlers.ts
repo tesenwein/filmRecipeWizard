@@ -81,7 +81,7 @@ The user has a recipe with the following details:
 - Results: ${JSON.stringify(recipe.results, null, 2)}
 
  You can help modify this recipe by suggesting changes to:
- 1. User options (warmth, tint, contrast, vibrance, saturationBias, filmGrain, vibe, artistStyle, filmStyle, aiFunctions, masks, colorGrading, hsl, curves, grain, pointColor)
+ 1. User options (temperatureK, tint, contrast, vibrance, saturationBias, filmGrain, vibe, artistStyle, filmStyle, aiFunctions, masks, colorGrading, hsl, curves, grain, pointColor)
  2. The prompt text
  3. Recipe name
  4. Recipe description (short human-friendly summary)
@@ -95,8 +95,7 @@ CRITICAL RESPONSE FORMAT:
 \n+Mask editing guidance:\n+- Prefer including a stable id for any mask you add; reuse that id when updating or removing.\n+- If id is omitted, removal/update will match by name when present, otherwise by type + subCategoryId + referenceX/referenceY.\n+- To clear all pending mask overrides, use op: 'remove_all' or 'clear' with no other fields.
 
 Available user options:
-- temperatureK: 2000 to 50000 (Kelvin). Use this when the user specifies a value like "7500K".
-- warmth: -100 to 100 (temperature bias; positive=warmer i.e., lower Kelvin, negative=cooler)
+- temperatureK: 2000 to 50000 (Kelvin). Use this when the user specifies a value like "7500K". Prefer temperatureK and avoid using 'warmth' to reduce confusion.
 - tint: -100 to 100 (tint adjustment) 
 - contrast: -100 to 100 (contrast adjustment)
 - vibrance: -100 to 100 (vibrance adjustment)

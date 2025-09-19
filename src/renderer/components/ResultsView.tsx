@@ -1025,22 +1025,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     </Paper>
 
 
-                    {/* AI Functions Used */}
-                    {aiFunctions && (
-                      <Accordion>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            AI Functions Used
-                          </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <AIFunctionsSelector
-                            styleOptions={{ aiFunctions }}
-                            onStyleOptionsChange={() => { }} // Read-only in results view
-                          />
-                        </AccordionDetails>
-                      </Accordion>
-                    )}
+                    {/* Intentionally hide AI Functions toggles in adjustments panel */}
                   </Box>
                 )}
 
