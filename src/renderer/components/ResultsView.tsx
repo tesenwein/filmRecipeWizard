@@ -1146,6 +1146,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               hasStyleOptions: !!processingData.styleOptions,
                             });
 
+                            // Optimistically flip status to generating in storage for reliable UI updates
+                            try {
+                              await window.electronAPI.updateProcess(processId, { status: 'generating' } as any);
+                            } catch { /* ignore */ }
+
                             // Optionally show generating state in gallery
                             try {
                               const showGen = settings?.reprocessShowsGenerating !== false;
@@ -1293,7 +1298,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           variant="body2"
                           sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}
                         >
-                          AND/OR
+                          OR
                         </Typography>
                         <Divider sx={{ flex: 1 }} />
                       </Box>
