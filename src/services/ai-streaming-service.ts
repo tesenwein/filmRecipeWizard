@@ -1,7 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
-import { getAllMaskTypes, getMaskTypesByCategory } from '../shared/mask-types';
+import { getAllMaskTypes, getMaskTypesByCategory, normalizeMaskType, getMaskConfig } from '../shared/mask-types';
 import { AIColorAdjustments } from './types';
 
 export interface StreamingUpdate {
@@ -102,7 +102,14 @@ export class AIStreamingService {
                 progress: 100,
             });
 
-            return finalResult || this.createDefaultAdjustments();
+            // Ensure an Adobe camera profile is always set on the result
+            if (!finalResult) {
+                finalResult = this.createDefaultAdjustments();
+            }
+            const ensuredProfile = this.normalizeCameraProfileName(finalResult.camera_profile) || this.autoSelectProfileFromResult(finalResult);
+            finalResult.camera_profile = ensuredProfile;
+
+            return finalResult;
 
         } catch (error) {
             console.error('AI Streaming Service Error:', error);
@@ -488,11 +495,49 @@ Provide detailed reasoning for each adjustment to help the user understand the c
         return null;
     }
 
+    // Normalize any free-form profile name to Adobe's canonical set
+    private normalizeCameraProfileName(name?: string): string | undefined {
+        if (!name) return undefined;
+        const n = String(name).toLowerCase();
+        if (/mono|black\s*&?\s*white|b\s*&\s*w/.test(n)) return 'Adobe Monochrome';
+        if (/portrait|people|skin/.test(n)) return 'Adobe Portrait';
+        if (/landscape|sky|mountain|nature/.test(n)) return 'Adobe Landscape';
+        if (/color|standard|default|auto/.test(n)) return 'Adobe Color';
+        return 'Adobe Color';
+    }
+
+    // Pick an Adobe profile using the adjustments and mask hints
+    private autoSelectProfileFromResult(adjustments: AIColorAdjustments): string {
+        const isBW =
+            !!adjustments.monochrome ||
+            adjustments.treatment === 'black_and_white' ||
+            (typeof adjustments.saturation === 'number' && adjustments.saturation <= -100);
+        if (isBW) return 'Adobe Monochrome';
+
+        const masks = Array.isArray((adjustments as any).masks) ? ((adjustments as any).masks as any[]) : [];
+        let faceCount = 0;
+        let landscapeLike = 0;
+        let hasSky = false;
+        for (const m of masks) {
+            let t: any = m?.type;
+            if (typeof t === 'string') t = normalizeMaskType(t);
+            const cfg = typeof t === 'string' ? getMaskConfig(t) : undefined;
+            const cat = cfg?.category;
+            if (cat === 'face' || t === 'subject' || t === 'person') faceCount++;
+            if (cat === 'landscape' || cat === 'background') landscapeLike++;
+            if (t === 'sky') hasSky = true;
+        }
+        if (faceCount > 0) return 'Adobe Portrait';
+        if (hasSky || landscapeLike > 0) return 'Adobe Landscape';
+        return 'Adobe Color';
+    }
+
     private createDefaultAdjustments(): AIColorAdjustments {
         return {
             preset_name: 'Default Recipe',
             confidence: 0.5,
             reasoning: 'Default adjustments applied due to analysis error',
+            camera_profile: 'Adobe Color',
             temperature: 0,
             tint: 0,
             exposure: 0,
