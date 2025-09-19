@@ -169,10 +169,11 @@ export class ImageProcessor {
   ): Promise<{ success: boolean; xmpContent?: string; error?: string }> {
     try {
       const adjustments = data?.adjustments || {};
+      const profileNameOverride = (data?.recipeName as string | undefined)?.toString().trim();
 
       // Generate a proper camera profile XMP (not a preset)
       // Camera profiles use Look preset type and focus on color space transformation
-      const xmpContent = generateCameraProfileXMP(adjustments.preset_name || 'Camera Profile', adjustments);
+      const xmpContent = generateCameraProfileXMP(profileNameOverride || adjustments.preset_name || 'Camera Profile', adjustments);
 
       return {
         success: true,

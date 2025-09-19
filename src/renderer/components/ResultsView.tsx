@@ -581,8 +581,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
 
     try {
+      const adjForExport = { ...adjustments } as any;
+      if (processName) adjForExport.preset_name = processName;
+      if (processDescription) adjForExport.description = processDescription;
       const res = await window.electronAPI.downloadXMP({
-        adjustments,
+        adjustments: adjForExport,
         include: getOptions(index),
         recipeName: processName,
       });
@@ -623,8 +626,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (!adjustments) return;
 
       // Generate and export camera profile from current adjustments
+      const adjForExport = { ...adjustments } as any;
+      if (processName) adjForExport.preset_name = processName;
+      if (processDescription) adjForExport.description = processDescription;
       const res = await (window.electronAPI as any).exportProfile({
-        adjustments,
+        adjustments: adjForExport,
         recipeIndex: index,
         recipeName: processName,
       });

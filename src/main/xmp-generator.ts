@@ -118,7 +118,8 @@ export function generateXMPContent(
     return sanitized.length > 0 ? sanitized : n.trim();
   };
 
-  const presetName = (aiAdjustments as any).preset_name || 'Custom Recipe';
+  // Prefer a renderer-provided recipeName override to avoid AI vs recipe name mismatches
+  const presetName = (include?.recipeName as string) || (aiAdjustments as any).preset_name || 'Custom Recipe';
   const groupName = 'film-recipe-wizard';
   // Inclusion flags with flexible defaults (back-compat: include everything when not specified)
   const inc = {

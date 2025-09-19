@@ -87,23 +87,30 @@ export class ProcessingHandlers {
 
         try {
           if (data?.processId && this.storageService) {
+            // Sanitize AI adjustments: move name/description to top-level, avoid persisting duplicates
+            const aiAdjRaw = (result?.metadata as any)?.aiAdjustments || null;
+            const aiNameRaw = aiAdjRaw?.preset_name as string | undefined;
+            const aiDescRaw = aiAdjRaw?.description as string | undefined;
+            const aiAdjClean = aiAdjRaw ? { ...aiAdjRaw } : null;
+            if (aiAdjClean) { delete (aiAdjClean as any).preset_name; delete (aiAdjClean as any).description; }
             const persistedResults = [
               {
                 success: !!result.success,
                 error: result.error,
-                metadata: result.metadata,
+                metadata: { ...(result.metadata || {}), ...(aiAdjClean ? { aiAdjustments: aiAdjClean } : {}) },
               },
             ];
             let name: string | undefined;
             try {
-              name = result?.metadata?.aiAdjustments?.preset_name;
+              name = aiNameRaw;
             } catch {
               // Ignore preset name extraction errors
             }
             await this.storageService.updateProcess(data.processId, {
               results: persistedResults as any,
               status: persistedResults.some(r => r.success) ? 'completed' : 'failed',
-              ...(name ? { name } : {}),
+              ...(name && !(stored as any)?.name ? { name } : {}),
+              ...(!((stored as any)?.description) && aiDescRaw ? { description: aiDescRaw } : {}),
             });
             try {
               mainWindow?.webContents.send('process-updated', {
@@ -111,7 +118,7 @@ export class ProcessingHandlers {
                 updates: {
                   results: persistedResults,
                   status: persistedResults.some(r => r.success) ? 'completed' : 'failed',
-                  ...(name ? { name } : {}),
+                  ...(name && !(stored as any)?.name ? { name } : {}),
                 },
               });
             } catch {
@@ -307,19 +314,23 @@ export class ProcessingHandlers {
           // Persist result (without absolute paths)
           try {
             const firstBase = Array.isArray(baseImageData) ? baseImageData[0] : baseImageData;
-            // Use AI-generated name if available
+            // Extract name/description from AI adjustments (do not persist duplicates)
             let derivedName: string | undefined;
+            let derivedDescription: string | undefined;
+            let cleanedMetadata = result.metadata;
             try {
-              const aiName = (result as any)?.metadata?.aiAdjustments?.preset_name as
-                | string
-                | undefined;
-
-              if (aiName && typeof aiName === 'string' && aiName.trim().length > 0) {
-                derivedName = aiName;
+              const aiAdjRaw = (result as any)?.metadata?.aiAdjustments || null;
+              if (aiAdjRaw) {
+                const aiName = aiAdjRaw?.preset_name as string | undefined;
+                const aiDesc = aiAdjRaw?.description as string | undefined;
+                if (aiName && aiName.trim().length > 0) derivedName = aiName.trim();
+                if (aiDesc && aiDesc.trim().length > 0) derivedDescription = aiDesc.trim();
+                const clean = { ...aiAdjRaw };
+                delete (clean as any).preset_name;
+                delete (clean as any).description;
+                cleanedMetadata = { ...(result.metadata || {}), aiAdjustments: clean } as any;
               }
-            } catch {
-              // Ignore name derivation errors
-            }
+            } catch { /* ignore */ }
             // Preserve an existing user-defined name if present
             const existingName = (stored as any)?.name;
             const shouldSetName = !(
@@ -331,12 +342,13 @@ export class ProcessingHandlers {
                 {
                   success: !!result.success,
                   error: result.error,
-                  metadata: result.metadata,
+                  metadata: cleanedMetadata,
                 },
               ],
               status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
               ...(shouldSetName && derivedName ? { name: derivedName } : {}),
+              ...(!((stored as any)?.description) && derivedDescription ? { description: derivedDescription } : {}),
             } as any);
             try {
               mainWindow?.webContents.send('process-updated', {
@@ -348,7 +360,7 @@ export class ProcessingHandlers {
                       outputPath: result.outputPath,
                       success: !!result.success,
                       error: result.error,
-                      metadata: result.metadata,
+                      metadata: cleanedMetadata,
                     },
                   ],
                   status: result.success ? 'completed' : 'failed',

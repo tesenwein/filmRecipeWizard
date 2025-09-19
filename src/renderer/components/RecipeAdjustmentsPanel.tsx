@@ -110,15 +110,15 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
       <Section title="Name & Description">
         <Row
           label="Name"
-          cur={<ValueChip label={str(recipe.name || (aiAdjustments as any)?.preset_name)} />}
-          next={<ValueChip label={str(pendingModifications?.name ?? recipe.name ?? (aiAdjustments as any)?.preset_name)} color={nameChange ? 'warning' : 'default'} />}
+          cur={<ValueChip label={str(recipe.name)} />}
+          next={<ValueChip label={str(pendingModifications?.name ?? recipe.name)} color={nameChange ? 'warning' : 'default'} />}
           isChanged={nameChange}
         />
         <Divider sx={{ my: 1 }} />
         <Row
           label="Description"
-          cur={<LongValue text={(aiAdjustments as any)?.description || (recipe as any).description} />}
-          next={<LongValue text={(pendingModifications as any)?.description ?? (aiAdjustments as any)?.description ?? (recipe as any).description} highlight={descriptionChange} />}
+          cur={<LongValue text={(recipe as any).description} />}
+          next={<LongValue text={(pendingModifications as any)?.description ?? (recipe as any).description} highlight={descriptionChange} />}
           isChanged={descriptionChange}
         />
       </Section>

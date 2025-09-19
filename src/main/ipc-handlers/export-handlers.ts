@@ -31,6 +31,8 @@ export class ExportHandlers {
         } as any;
 
         // Generate XMP content
+        // Carry through recipeName so internal XMP uses canonical name
+        if (data?.recipeName) (include as any).recipeName = String(data.recipeName);
         const xmpContent = generateXMPContent(data.adjustments, include);
 
         // Show save dialog
@@ -148,6 +150,8 @@ export class ExportHandlers {
               strength: 1.0, // Default strength
             } as any;
 
+            // Ensure internal XMP uses the recipe's canonical name (with index suffix when multiple)
+            (include as any).recipeName = `${process.name || 'Recipe'}${results.length > 1 ? `-${idx + 1}` : ''}`;
             const xmp = generateXMPContent(adj as any, include);
             const baseName = (process.name || 'Recipe') + (results.length > 1 ? `-${idx + 1}` : '');
             const safePreset = baseName
@@ -250,6 +254,8 @@ export class ExportHandlers {
                 exposure: false,
                 masks: false,
               } as any;
+              // Ensure internal XMP uses the recipe's canonical name (with index suffix when multiple)
+              (include as any).recipeName = `${recipe.name || 'Recipe'}${results.length > 1 ? `-${idx + 1}` : ''}`;
               const xmp = generateXMPContent(adj as any, include);
               const baseName = (recipe.name || 'Recipe') + (results.length > 1 ? `-${idx + 1}` : '');
               const safePreset = baseName
