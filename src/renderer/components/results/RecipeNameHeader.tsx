@@ -55,17 +55,9 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
   // (Name updates are driven via displayNameOverride to avoid global listener conflicts.)
 
   const computedDefaultName = useMemo(() => {
-    const current = successfulResults[selectedResult];
-    const aiName = current?.metadata?.aiAdjustments && (current.metadata.aiAdjustments as any).preset_name;
-
-    // Use AI-generated name if available
-    if (typeof aiName === 'string' && aiName.trim().length > 0) {
-      return aiName;
-    }
-
-    // No fallback - let AI handle naming
+    // Do not use AI preset_name for display; fallback to generic title
     return 'Untitled Recipe';
-  }, [successfulResults, selectedResult]);
+  }, []);
 
   const displayedName = displayNameOverride || savedName || computedDefaultName;
 
