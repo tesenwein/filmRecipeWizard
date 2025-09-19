@@ -29,8 +29,8 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
   const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
 
-  // Extract and scale color adjustments (only include exposure if it's actually set)
-  const exposure = adjustments.exposure !== undefined ? clamp(scale(adjustments.exposure), -5, 5) : undefined;
+  // Extract and scale color adjustments (only include exposure if it's actually set and non-zero)
+  const exposure = adjustments.exposure !== undefined && adjustments.exposure !== 0 ? clamp(scale(adjustments.exposure), -5, 5) : undefined;
   const contrast = round(clamp(scale(adjustments.contrast), -100, 100));
   const highlights = round(clamp(scale(adjustments.highlights), -100, 100));
   const shadows = round(clamp(scale(adjustments.shadows), -100, 100));
@@ -43,6 +43,34 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   // Temperature and tint
   const temp = round(clamp(adjustments.temperature || 6500, 2000, 50000));
   const tint = round(clamp(adjustments.tint || 0, -150, 150));
+
+  // Normalize/select camera profile same way as preset generator
+  const normalizeCameraProfile = (name?: string): string | undefined => {
+    if (!name) return undefined;
+    const n = String(name).toLowerCase();
+    if (/mono|black\s*&?\s*white|b\s*&\s*w/.test(n)) return 'Adobe Monochrome';
+    if (/portrait|people|skin/.test(n)) return 'Adobe Portrait';
+    if (/landscape|sky|mountain|nature/.test(n)) return 'Adobe Landscape';
+    if (/color|standard|default|auto/.test(n)) return 'Adobe Color';
+    return 'Adobe Color';
+  };
+  const autoSelectCameraProfile = (): string => {
+    if (isBW) return 'Adobe Monochrome';
+    const masks = Array.isArray((adjustments as any).masks) ? ((adjustments as any).masks as any[]) : [];
+    let faceCount = 0;
+    let landscapeLike = 0;
+    let hasSky = false;
+    for (const m of masks) {
+      const t = String(m?.type || '').toLowerCase();
+      if (t === 'subject' || t === 'person' || t === 'face') faceCount++;
+      if (t === 'background' || t === 'landscape') landscapeLike++;
+      if (t === 'sky') hasSky = true;
+    }
+    if (faceCount > 0) return 'Adobe Portrait';
+    if (hasSky || landscapeLike > 0) return 'Adobe Landscape';
+    return 'Adobe Color';
+  };
+  const cameraProfileName = normalizeCameraProfile((adjustments as any)?.camera_profile) || autoSelectCameraProfile();
 
   // Color grading (use proper field names from AI adjustments)
   const shadowsHue = round(clamp(adjustments.color_grade_shadow_hue, 0, 360));
@@ -166,7 +194,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
         </rdf:Seq>
       </crs:ToneCurvePV2012>`);
     }
-    
+
     // Red tone curve
     if (Array.isArray(adjustments.tone_curve_red) && adjustments.tone_curve_red.length > 0) {
       const points = adjustments.tone_curve_red
@@ -178,7 +206,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
         </rdf:Seq>
       </crs:ToneCurvePV2012Red>`);
     }
-    
+
     // Green tone curve
     if (Array.isArray(adjustments.tone_curve_green) && adjustments.tone_curve_green.length > 0) {
       const points = adjustments.tone_curve_green
@@ -190,7 +218,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
         </rdf:Seq>
       </crs:ToneCurvePV2012Green>`);
     }
-    
+
     // Blue tone curve
     if (Array.isArray(adjustments.tone_curve_blue) && adjustments.tone_curve_blue.length > 0) {
       const points = adjustments.tone_curve_blue
@@ -213,37 +241,83 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     tag('GrainFrequency', round(clamp(adjustments.grain_frequency, 0, 100))),
   ].join('');
 
-  // Generate comprehensive XMP for camera profile
+  // Masks block (local adjustments)
+  const masksBlock = Array.isArray(adjustments.masks) && adjustments.masks.length > 0 ? (() => {
+    const maskCorrections = adjustments.masks.map((mask: any, index: number) => {
+      const maskName = mask.name || `Mask ${index + 1}`;
+      const maskType = mask.type || 'radial';
+      const adjustments = mask.adjustments || {};
+
+      // Generate mask correction XML
+      return `     <rdf:li>
+      <rdf:Description
+       crs:What="Correction"
+       crs:CorrectionAmount="1"
+       crs:CorrectionActive="true"
+       crs:CorrectionName="${maskName}" crs:CorrectionSyncID="${generateUUID()}" 
+       ${adjustments.local_exposure !== undefined ? `crs:LocalExposure2012="${(adjustments.local_exposure / 100).toFixed(3)}"` : ''}
+       ${adjustments.local_contrast !== undefined ? `crs:LocalContrast2012="${(adjustments.local_contrast / 100).toFixed(3)}"` : ''}
+       ${adjustments.local_highlights !== undefined ? `crs:LocalHighlights2012="${(adjustments.local_highlights / 100).toFixed(3)}"` : ''}
+       ${adjustments.local_shadows !== undefined ? `crs:LocalShadows2012="${(adjustments.local_shadows / 100).toFixed(3)}"` : ''}
+       ${adjustments.local_whites !== undefined ? `crs:LocalWhites2012="${(adjustments.local_whites / 100).toFixed(3)}"` : ''}
+       ${adjustments.local_blacks !== undefined ? `crs:LocalBlacks2012="${(adjustments.local_blacks / 100).toFixed(3)}"` : ''}
+       ${adjustments.local_clarity !== undefined ? `crs:LocalClarity2012="${(adjustments.local_clarity / 100).toFixed(3)}"` : ''}
+       ${adjustments.local_temperature !== undefined ? `crs:LocalTemperature="${adjustments.local_temperature}"` : ''}
+       ${adjustments.local_tint !== undefined ? `crs:LocalTint="${adjustments.local_tint}"` : ''}
+       ${adjustments.local_saturation !== undefined ? `crs:LocalSaturation="${adjustments.local_saturation}"` : ''}
+       crs:LocalCurveRefineSaturation="100">
+      <crs:CorrectionMasks>
+       <rdf:Seq>
+        <rdf:li
+         crs:What="Mask/Image"
+         crs:MaskActive="true"
+         crs:MaskName="${maskName}"
+         crs:MaskBlendMode="0"
+         crs:MaskInverted="false"
+         crs:MaskSyncID="${generateUUID()}"
+         crs:MaskValue="1"
+         crs:MaskVersion="1"
+         crs:MaskSubType="${maskType === 'background' ? '0' : maskType === 'subject' ? '1' : maskType === 'sky' ? '2' : '0'}"
+         ${mask.subCategoryId ? `crs:MaskSubCategoryID="${mask.subCategoryId}"` : ''}
+         ${mask.referenceX !== undefined && mask.referenceY !== undefined ? `crs:ReferencePoint="${mask.referenceX.toFixed(3)} ${mask.referenceY.toFixed(3)}"` : ''}
+         crs:ErrorReason="0"/>
+       </rdf:Seq>
+      </crs:CorrectionMasks>
+      </rdf:Description>
+     </rdf:li>`;
+    }).join('\n');
+
+    return `   <crs:MaskGroupBasedCorrections>
+    <rdf:Seq>
+${maskCorrections}
+    </rdf:Seq>
+   </crs:MaskGroupBasedCorrections>`;
+  })() : '';
+
+  // Generate proper camera profile XMP (Look type, not Normal preset)
   return `<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about=""
         xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
-        crs:PresetType="Look"
-        crs:Cluster=""
-        crs:UUID="${generateUUID()}"
-        crs:SupportsAmount="true"
-        crs:SupportsColor="true"
-        crs:SupportsMonochrome="true"
-        crs:SupportsHighDynamicRange="true"
-        crs:SupportsNormalDynamicRange="true"
-        crs:SupportsSceneReferred="true"
-        crs:SupportsOutputReferred="true"
-        crs:CameraModelRestriction=""
-        crs:Copyright=""
-        crs:ContactInfo=""
-        crs:Version="16.5"
+        crs:Version="17.5"
         crs:ProcessVersion="15.4"
-        crs:HasSettings="true">
+        crs:ProfileName="${cameraProfileName}"
+        crs:Look=""
+        crs:HasSettings="True"
+        crs:PresetType="Look"
+        crs:Cluster="film-recipe-wizard"
+        crs:ClusterGroup="film-recipe-wizard"
+        crs:PresetSubtype="Look"
+        crs:SupportsAmount="True"
+        crs:SupportsAmount2="True"
+        crs:SupportsColor="True"
+        crs:SupportsMonochrome="True"
+        crs:Name="${profileName}">
       <crs:Name>
         <rdf:Alt>
           <rdf:li xml:lang="x-default">${profileName}</rdf:li>
         </rdf:Alt>
       </crs:Name>
-      <crs:ShortName>
-        <rdf:Alt>
-          <rdf:li xml:lang="x-default">${profileName}</rdf:li>
-        </rdf:Alt>
-      </crs:ShortName>
       <crs:Group>
         <rdf:Alt>
           <rdf:li xml:lang="x-default">Film Recipe Wizard</rdf:li>
@@ -254,9 +328,14 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
           <rdf:li xml:lang="x-default">${adjustments.description || 'Camera profile generated from Film Recipe Wizard'}</rdf:li>
         </rdf:Alt>
       </crs:Description>
+      ${tag('Treatment', isBW ? 'Black & White' : 'Color')}
       ${tag('Temperature', temp)}
       ${tag('Tint', tint)}
-      ${exposure !== undefined ? tag('Exposure2012', fixed2(exposure)) : ''}
+      ${(() => {
+        // Match preset generator behavior: exclude Exposure by default unless explicitly requested
+        const includeExposure = !!((adjustments as any)?.include?.exposure || (adjustments as any)?.includeExposure);
+        return includeExposure && exposure !== undefined ? tag('Exposure2012', fixed2(exposure)) : '';
+      })()}
       ${tag('Contrast2012', contrast)}
       ${tag('Highlights2012', highlights)}
       ${tag('Shadows2012', shadows)}
@@ -265,7 +344,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
       ${tag('Clarity2012', clarity)}
       ${tag('Vibrance', vibrance)}
       ${tag('Saturation', saturation)}
-      ${isBW ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>\n' : '<crs:Treatment>Color</crs:Treatment>\n'}
+      ${isBW ? '<crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>\n' : ''}
       ${toneCurvesBlock}
       ${hslBlock}
       ${colorGradingBlock}
@@ -273,8 +352,8 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
       ${bwMixerBlock}
       ${pointColorBlock}
       ${grainBlock}
+      ${masksBlock}
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;
 }
-

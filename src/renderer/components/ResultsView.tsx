@@ -1173,7 +1173,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
                             size="large"
                           >
-                            Create Camera Profile (.xmp)
+                            Export Profile (.xmp)
                           </Button>
                         </Box>
                       </Paper>

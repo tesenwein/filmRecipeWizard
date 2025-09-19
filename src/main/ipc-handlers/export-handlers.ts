@@ -316,8 +316,8 @@ export class ExportHandlers {
           .replace(/\s/g, '-');
 
         const result = await dialog.showSaveDialog({
-          title: 'Save Camera Profile',
-          defaultPath: `${safeName}.xmp`,
+          title: 'Export Profile',
+          defaultPath: `${safeName}-Profile.xmp`,
           filters: [
             { name: 'Camera Profile', extensions: ['xmp'] },
             { name: 'All Files', extensions: ['*'] },

@@ -3,6 +3,7 @@ import * as path from 'path';
 import { AIStreamingService } from '../services/ai-streaming-service';
 import type { AIColorAdjustments } from '../services/types';
 import { ProcessingResult, StyleOptions } from '../shared/types';
+import { generateCameraProfileXMP } from './camera-profile-generator';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
 import { generatePreviewFile } from './preview-generator';
 import { exportLightroomProfile } from './profile-exporter';
@@ -169,23 +170,9 @@ export class ImageProcessor {
     try {
       const adjustments = data?.adjustments || {};
 
-      // Use the same include options as preset export to ensure consistency
-      const include = {
-        wbBasic: true,
-        hsl: true,
-        colorGrading: true,
-        curves: true,
-        pointColor: true,
-        grain: true,
-        masks: true,
-        exposure: false, // Keep exposure separate and disabled by default (same as preset)
-        sharpenNoise: false, // Not implemented in XMP
-        vignette: false, // Not implemented in XMP
-        strength: 0.5, // Use same default strength as preset export
-      } as any;
-
-      // Generate XMP content using the same logic as preset export
-      const xmpContent = generateXMPContentImpl(adjustments, include);
+      // Generate a proper camera profile XMP (not a preset)
+      // Camera profiles use Look preset type and focus on color space transformation
+      const xmpContent = generateCameraProfileXMP(adjustments.preset_name || 'Camera Profile', adjustments);
 
       return {
         success: true,
