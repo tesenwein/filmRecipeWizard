@@ -3,7 +3,6 @@ import * as path from 'path';
 import { AIStreamingService } from '../services/ai-streaming-service';
 import type { AIColorAdjustments } from '../services/types';
 import { ProcessingResult, StyleOptions } from '../shared/types';
-import { generateCameraProfileXMP } from './camera-profile-generator';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
 import { generatePreviewFile } from './preview-generator';
 import { exportLightroomProfile } from './profile-exporter';
@@ -169,12 +168,24 @@ export class ImageProcessor {
   ): Promise<{ success: boolean; xmpContent?: string; error?: string }> {
     try {
       const adjustments = data?.adjustments || {};
-      // Get AI-generated name directly from adjustments (same as preset export)
-      const profileName = adjustments.preset_name || 'Camera Profile';
 
-      // Generate a simple camera profile XMP
-      // Camera profiles use lookup tables and tone curves for color grading
-      const xmpContent = generateCameraProfileXMP(profileName, adjustments);
+      // Use the same include options as preset export to ensure consistency
+      const include = {
+        wbBasic: true,
+        hsl: true,
+        colorGrading: true,
+        curves: true,
+        pointColor: true,
+        grain: true,
+        masks: true,
+        exposure: false, // Keep exposure separate and disabled by default (same as preset)
+        sharpenNoise: false, // Not implemented in XMP
+        vignette: false, // Not implemented in XMP
+        strength: 0.5, // Use same default strength as preset export
+      } as any;
+
+      // Generate XMP content using the same logic as preset export
+      const xmpContent = generateXMPContentImpl(adjustments, include);
 
       return {
         success: true,
@@ -187,7 +198,7 @@ export class ImageProcessor {
   }
 
   // Use centralized XMP generator implementation
-  generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, aiFunctions?: any): string {
+  generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, _aiFunctions?: any): string {
     return generateXMPContentImpl(aiAdjustments, include);
   }
 
