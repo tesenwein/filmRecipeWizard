@@ -205,9 +205,12 @@ export class StorageService {
         timestamp: p.timestamp,
         name: p.name,
         prompt: p.prompt,
+        description: p.description,
         userOptions: p.userOptions,
         results: Array.isArray(p.results) ? p.results : [],
         author: p.author,
+        // Persisted mask overrides from chat edits
+        maskOverrides: Array.isArray(p.maskOverrides) ? p.maskOverrides : undefined,
         // Persisted recipe image (single) — maintain backward compatibility
         recipeImageData:
           typeof p.recipeImageData === 'string'

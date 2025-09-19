@@ -1031,7 +1031,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               let next = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
                               const idOf = (m: any) =>
                                 m?.id ||
-                                (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0,4)}:${(m?.referenceY ?? '').toString().slice(0,4)}`);
+                                (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '').toString().slice(0, 4)}`);
                               const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
                               for (const op of ops) {
                                 const operation = op.op || 'add';

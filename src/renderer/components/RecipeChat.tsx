@@ -281,8 +281,19 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
 
                 {/* Adjustments Column */}
           <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', borderRadius: 2, border: '1px solid #e9ecef', p: 2, gap: 2, minHeight: 0 }}>
-                    <RecipeAdjustmentsPanel recipe={recipe} pendingModifications={pendingModifications as any} aiAdjustments={latestAdjustments as any} />
-                </Paper>
+            {(() => {
+              const cleanRecipe = { ...recipe } as any;
+              // Avoid duplicate mask sections by not passing overrides to the panel (we already merged them)
+              if ('maskOverrides' in cleanRecipe) delete cleanRecipe.maskOverrides;
+              return (
+                <RecipeAdjustmentsPanel
+                  recipe={cleanRecipe}
+                  pendingModifications={pendingModifications as any}
+                  aiAdjustments={effectiveAdjustments as any}
+                />
+              );
+            })()}
+          </Paper>
             </Box>
         </Box>
     );

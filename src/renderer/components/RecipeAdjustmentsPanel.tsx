@@ -264,8 +264,8 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         </Section>
       )}
 
-      {/* Accepted mask overrides on the recipe (persisted) */}
-      {Array.isArray((recipe as any).maskOverrides) && (recipe as any).maskOverrides.length > 0 && (
+      {/* Accepted mask overrides on the recipe (persisted). Hidden in current-only mode to avoid duplication with effective masks. */}
+      {!showOnlyCurrent && Array.isArray((recipe as any).maskOverrides) && (recipe as any).maskOverrides.length > 0 && (
         <Section title="Recipe Mask Overrides">
           <Box>
             {(recipe as any).maskOverrides.map((m: any, idx: number) => {
