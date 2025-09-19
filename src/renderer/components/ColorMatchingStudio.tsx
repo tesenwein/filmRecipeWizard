@@ -112,8 +112,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     styleOptions?.tint !== undefined || // Has tint adjustment
     styleOptions?.contrast !== undefined || // Has contrast adjustment
     styleOptions?.vibrance !== undefined || // Has vibrance adjustment
-    styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment
-    styleOptions?.moodiness !== undefined // Has moodiness adjustment
+    styleOptions?.saturationBias !== undefined // Has saturation bias adjustment
   );
 
   const canProcess: boolean = Boolean(!processingState.isProcessing && hasActiveOptions);

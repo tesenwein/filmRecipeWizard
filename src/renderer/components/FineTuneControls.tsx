@@ -205,31 +205,6 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
               />
             </Box>
 
-            <Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 0.5,
-                }}
-              >
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
-                  🌙 Moodiness
-                </span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                  {styleOptions?.moodiness ?? 50}
-                </span>
-              </Box>
-              <Slider
-                size="small"
-                value={styleOptions?.moodiness ?? 50}
-                onChange={(_, v) => onStyleOptionsChange?.({ moodiness: v as number })}
-                min={0}
-                max={100}
-                color="primary"
-              />
-            </Box>
 
             <Box>
               <Box

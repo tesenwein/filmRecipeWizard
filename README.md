@@ -99,7 +99,6 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 - **Contrast** (0-100): Shadow and highlight separation
 - **Tint** (-50 to +50): Magenta to green color cast
 - **Vibrance** (0-100): Smart saturation enhancement
-- **Moodiness** (0-100): Overall tonal curve adjustment
 - **Saturation** (0-100): Global color intensity
 
 ### 🔧 **Processing Options**

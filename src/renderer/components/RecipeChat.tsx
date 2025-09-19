@@ -123,7 +123,6 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
             tint: options?.tint ?? '—',
             contrast: options?.contrast ?? '—',
             vibrance: options?.vibrance ?? '—',
-            moodiness: options?.moodiness ?? '—',
             saturationBias: options?.saturationBias ?? '—',
             vibe: options?.vibe || '—',
             filmGrain: options?.filmGrain ? 'On' : 'Off',
@@ -149,7 +148,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         const overrides = (recipe as any)?.maskOverrides as any[] | undefined;
         const idOf = (m: any) =>
             m?.id ||
-            (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0,4)}:${(m?.referenceY ?? '').toString().slice(0,4)}`);
+            (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '').toString().slice(0, 4)}`);
         const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
         let masks = Array.isArray(aiAdj.masks) ? [...aiAdj.masks] : [];
         const ops = Array.isArray(overrides) ? overrides : [];
@@ -191,7 +190,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
             <Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 1.5, minHeight: 0, flex: 1 }}>
                 {/* Chat Column */}
                 <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 2, border: '1px solid #e9ecef' }}>
-            <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', p: 2 }}>
+                    <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', p: 2 }}>
                         {messages.map((message) => (
                             <Box key={message.id} sx={{ display: 'flex', mb: 2, justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, maxWidth: '80%', flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>
@@ -280,20 +279,20 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                 </Paper>
 
                 {/* Adjustments Column */}
-          <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', borderRadius: 2, border: '1px solid #e9ecef', p: 2, gap: 2, minHeight: 0 }}>
-            {(() => {
-              const cleanRecipe = { ...recipe } as any;
-              // Avoid duplicate mask sections by not passing overrides to the panel (we already merged them)
-              if ('maskOverrides' in cleanRecipe) delete cleanRecipe.maskOverrides;
-              return (
-                <RecipeAdjustmentsPanel
-                  recipe={cleanRecipe}
-                  pendingModifications={pendingModifications as any}
-                  aiAdjustments={effectiveAdjustments as any}
-                />
-              );
-            })()}
-          </Paper>
+                <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', borderRadius: 2, border: '1px solid #e9ecef', p: 2, gap: 2, minHeight: 0 }}>
+                    {(() => {
+                        const cleanRecipe = { ...recipe } as any;
+                        // Avoid duplicate mask sections by not passing overrides to the panel (we already merged them)
+                        if ('maskOverrides' in cleanRecipe) delete cleanRecipe.maskOverrides;
+                        return (
+                            <RecipeAdjustmentsPanel
+                                recipe={cleanRecipe}
+                                pendingModifications={pendingModifications as any}
+                                aiAdjustments={effectiveAdjustments as any}
+                            />
+                        );
+                    })()}
+                </Paper>
             </Box>
         </Box>
     );

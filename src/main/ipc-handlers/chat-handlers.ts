@@ -40,7 +40,6 @@ export class ChatHandlers {
                                     tint: z.number().min(-100).max(100).optional(),
                                     contrast: z.number().min(-100).max(100).optional(),
                                     vibrance: z.number().min(-100).max(100).optional(),
-                                    moodiness: z.number().min(-100).max(100).optional(),
                                     saturationBias: z.number().min(-100).max(100).optional(),
                                     filmGrain: z.boolean().optional(),
                                     vibe: z.string().optional(),
@@ -80,7 +79,7 @@ The user has a recipe with the following details:
 - Results: ${JSON.stringify(recipe.results, null, 2)}
 
  You can help modify this recipe by suggesting changes to:
- 1. User options (warmth, tint, contrast, vibrance, moodiness, saturationBias, filmGrain, vibe, artistStyle, filmStyle, aiFunctions, masks, colorGrading, hsl, curves, grain, pointColor)
+ 1. User options (warmth, tint, contrast, vibrance, saturationBias, filmGrain, vibe, artistStyle, filmStyle, aiFunctions, masks, colorGrading, hsl, curves, grain, pointColor)
  2. The prompt text
  3. Recipe name
  4. Recipe description (short human-friendly summary)
@@ -98,7 +97,6 @@ Available user options:
 - tint: -100 to 100 (tint adjustment) 
 - contrast: -100 to 100 (contrast adjustment)
 - vibrance: -100 to 100 (vibrance adjustment)
-- moodiness: -100 to 100 (moodiness adjustment)
 - saturationBias: -100 to 100 (saturation bias)
  - filmGrain: true/false (enable film grain)
 - vibe: string (vibe description)

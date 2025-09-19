@@ -902,7 +902,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                       <strong>Vibrance:</strong> {processOptions.vibrance ?? '—'}
                                     </Typography>
                                     <Typography variant="body1">
-                                      <strong>Moodiness:</strong> {processOptions.moodiness ?? '—'}
                                     </Typography>
                                     <Typography variant="body1">
                                       <strong>Saturation Bias:</strong>{' '}

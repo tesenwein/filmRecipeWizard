@@ -24,7 +24,6 @@ export interface StyleOptions {
   tint?: number; // -50..50 where 0 is neutral; UI can map 0-100
   contrast?: number;
   vibrance?: number;
-  moodiness?: number; // overall curve mood
   saturationBias?: number;
   filmGrain?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel

@@ -185,8 +185,6 @@ export class ProcessingHandlers {
             optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);
           if (options.vibrance !== undefined)
             optionsHintParts.push(`Vibrance: ${pct(options.vibrance)}`);
-          if (options.moodiness !== undefined)
-            optionsHintParts.push(`Moodiness: ${pct(options.moodiness)}`);
           if (options.saturationBias !== undefined)
             optionsHintParts.push(`Saturation Bias: ${pct(options.saturationBias)}`);
           if (options.filmGrain !== undefined)
