@@ -1,5 +1,6 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
+import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material';
 import React from 'react';
 
@@ -8,10 +9,11 @@ interface RecipeContextMenuProps {
   open: boolean;
   onClose: () => void;
   onExport: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 }
 
-const RecipeContextMenu: React.FC<RecipeContextMenuProps> = ({ anchorEl, open, onClose, onExport, onDelete }) => {
+const RecipeContextMenu: React.FC<RecipeContextMenuProps> = ({ anchorEl, open, onClose, onExport, onDuplicate, onDelete }) => {
   return (
     <Menu
       anchorEl={anchorEl}
@@ -25,6 +27,12 @@ const RecipeContextMenu: React.FC<RecipeContextMenuProps> = ({ anchorEl, open, o
           <DownloadIcon fontSize="small" />
         </ListItemIcon>
         <ListItemText>Export Recipe</ListItemText>
+      </MenuItem>
+      <MenuItem onClick={onDuplicate}>
+        <ListItemIcon>
+          <FileCopyIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText>Duplicate</ListItemText>
       </MenuItem>
       <MenuItem onClick={onDelete} sx={{ color: 'error.main' }}>
         <ListItemIcon>

@@ -60,6 +60,7 @@ const electronAPI = {
     ipcRenderer.invoke('update-process', processId, updates),
   deleteProcess: (processId: string) => ipcRenderer.invoke('delete-process', processId),
   deleteMultipleProcesses: (processIds: string[]) => ipcRenderer.invoke('delete-multiple-processes', processIds),
+  duplicateProcess: (processId: string) => ipcRenderer.invoke('duplicate-process', processId),
   getProcess: (processId: string) => ipcRenderer.invoke('get-process', processId),
   getImageDataUrls: (processId: string) => ipcRenderer.invoke('get-image-data-urls', processId),
   setBaseImage: (processId: string, filePath: string) =>

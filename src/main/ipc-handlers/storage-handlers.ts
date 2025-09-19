@@ -150,7 +150,7 @@ export class StorageHandlers {
           try {
             const payload = { processId, updates };
             for (const win of BrowserWindow.getAllWindows()) {
-              try { win.webContents.send('process-updated', payload); } catch {}
+              try { win.webContents.send('process-updated', payload); } catch { }
             }
           } catch {
             // Ignore IPC send errors
@@ -184,6 +184,35 @@ export class StorageHandlers {
         return { success: true };
       } catch (error) {
         console.error('[IPC] Error deleting multiple processes:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    // Duplicate a process
+    ipcMain.handle('duplicate-process', async (_event, processId: string) => {
+      try {
+        if (!this.isValidProcessId(processId)) {
+          return { success: false, error: 'Invalid process ID' };
+        }
+
+        const originalProcess = await this.storageService.getProcess(processId);
+        if (!originalProcess) {
+          return { success: false, error: 'Process not found' };
+        }
+
+        // Create a duplicate with new ID and timestamp
+        const newId = this.storageService.generateProcessId();
+        const duplicatedProcess: ProcessHistory = {
+          ...originalProcess,
+          id: newId,
+          timestamp: new Date().toISOString(),
+          name: originalProcess.name ? `${originalProcess.name} (Copy)` : undefined,
+        };
+
+        await this.storageService.addProcess(duplicatedProcess);
+        return { success: true, process: duplicatedProcess };
+      } catch (error) {
+        console.error('[IPC] Error duplicating process:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });

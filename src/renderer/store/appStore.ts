@@ -55,6 +55,7 @@ interface AppState {
   updateRecipeInStorage: (processId: string, updates: any) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
   deleteMultipleRecipes: (ids: string[]) => Promise<void>;
+  duplicateRecipe: (id: string) => Promise<{ success: boolean; recipeId?: string; error?: string }>;
   importRecipes: () => Promise<{ success: boolean; count?: number; error?: string }>;
   importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => Promise<{ success: boolean; recipeId?: string; error?: string }>;
   exportRecipe: (id: string) => Promise<{ success: boolean; error?: string }>;
@@ -363,6 +364,25 @@ export const useAppStore = create<AppState>()(
         } catch (error) {
           console.error('[STORE] Error deleting multiple recipes:', error);
           throw error;
+        }
+      },
+
+      duplicateRecipe: async id => {
+        try {
+          const result = await window.electronAPI.duplicateProcess(id);
+          if (result.success && result.process) {
+            const recipe = result.process as Recipe;
+            get().addRecipe(recipe);
+            return { success: true, recipeId: recipe.id };
+          } else {
+            return { success: false, error: result.error || 'Failed to duplicate recipe' };
+          }
+        } catch (error) {
+          console.error('[STORE] Error duplicating recipe:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
         }
       },
 

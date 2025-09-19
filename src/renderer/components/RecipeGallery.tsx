@@ -26,6 +26,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     generatingRecipes,
     deleteRecipe,
     deleteMultipleRecipes,
+    duplicateRecipe,
     importRecipes,
     importXMP,
     exportRecipe,
@@ -248,6 +249,21 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     }
   };
 
+  const handleDuplicateRecipe = async () => {
+    if (!selectedRecipeId) return;
+    handleMenuClose();
+    try {
+      const res = await duplicateRecipe(selectedRecipeId);
+      if (res.success) {
+        showSuccess('Recipe duplicated successfully');
+      } else {
+        showError(`Failed to duplicate recipe: ${res.error}`);
+      }
+    } catch {
+      showError('Failed to duplicate recipe');
+    }
+  };
+
   // Drag and drop handlers for XMP files
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -412,6 +428,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         onExport={handleExportRecipe}
+        onDuplicate={handleDuplicateRecipe}
         onDelete={handleDeleteRecipe}
       />
       <ConfirmDialog
