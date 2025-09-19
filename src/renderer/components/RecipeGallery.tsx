@@ -1,42 +1,18 @@
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import BoltIcon from '@mui/icons-material/Bolt';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import DownloadIcon from '@mui/icons-material/Download';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import SearchIcon from '@mui/icons-material/Search';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import {
-  Box,
-  Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  Checkbox,
-  FormControl,
-  Grid,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Toolbar,
-  Typography,
-} from '@mui/material';
+import { Box, Card, Typography, Button } from '@mui/material';
 import React, { useMemo, useState } from 'react';
 import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import ConfirmDialog from './ConfirmDialog';
 import ErrorDialog from './ErrorDialog';
-import SingleImage from './SingleImage';
 import XMPImportDialog from './XMPImportDialog';
+import GalleryHeader from './recipes/GalleryHeader';
+import BulkActionsToolbar from './recipes/BulkActionsToolbar';
+import RecipeGrid from './recipes/RecipeGrid';
+import RecipeContextMenu from './recipes/RecipeContextMenu';
 
 interface RecipeGalleryProps {
   onOpenRecipe: (recipe: Recipe) => void;
@@ -68,7 +44,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [xmpImportDialogOpen, setXmpImportDialogOpen] = useState(false);
   const [selectedRecipes, setSelectedRecipes] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
-  const [actionsMenuAnchor, setActionsMenuAnchor] = useState<null | HTMLElement>(null);
   const { showSuccess, showError } = useAlert();
 
   // Recipes are loaded during splash screen, no need to load here
@@ -259,14 +234,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   };
 
   // Actions menu handlers
-  const handleActionsMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setActionsMenuAnchor(event.currentTarget);
-  };
-
-  const handleActionsMenuClose = () => {
-    setActionsMenuAnchor(null);
-  };
-
   const handleExportRecipe = async () => {
     if (!selectedRecipeId) return;
     handleMenuClose();
@@ -280,10 +247,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     } catch {
       showError('Export failed');
     }
-  };
-
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
   };
 
   // Drag and drop handlers for XMP files
@@ -352,149 +315,58 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       style={{ minHeight: '100vh' }}
     >
       <Box sx={{ mb: 3 }}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          sx={{
-            backgroundColor: 'background.paper',
-            borderRadius: 2,
-            p: 2.5,
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          }}
-        >
-          {/* Search and Sort Section */}
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flex: { sm: '1 1 auto' } }}>
-            <TextField
-              size="small"
-              placeholder="Search recipes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                minWidth: 200,
-                flex: '1 1 200px',
-
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Sort by</InputLabel>
-              <Select
-                value={sortBy}
-                label="Sort by"
-                onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
-                sx={{
-                }}
-              >
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="newest">Newest</MenuItem>
-                <MenuItem value="oldest">Oldest</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          {/* Divider */}
-          <Box
-            sx={{
-              width: '1px',
-              height: '50px',
-              backgroundColor: 'divider',
-              opacity: 0.5,
-              mx: 1,
-            }}
-          />
-
-          {/* Action Buttons Section */}
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Button
-              variant={selectionMode ? "contained" : "outlined"}
-              size="small"
-              onClick={handleToggleSelectionMode}
-            >
-              {selectionMode ? 'Cancel' : 'Select'}
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={onNewProcess}
-            >
-              New Recipe
-            </Button>
-          </Box>
-
-          {/* Three Dots Menu - Far Right */}
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              size="small"
-              onClick={handleActionsMenuOpen}
-              sx={{
-                border: '1px solid',
-                borderColor: 'divider',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
+        <GalleryHeader
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={(v) => setSortBy(v)}
+          selectionMode={selectionMode}
+          onToggleSelectionMode={handleToggleSelectionMode}
+          onNewProcess={onNewProcess}
+          onImportRecipes={async () => {
+            try {
+              const res = await importRecipes();
+              if (res.success) {
+                if (res.count && res.count > 1) {
+                  showSuccess(`Successfully imported ${res.count} recipes`);
+                } else if (res.count === 1) {
+                  showSuccess('Successfully imported 1 recipe');
+                } else {
+                  showSuccess('Import completed');
                 }
-              }}
-            >
-              <MoreVertIcon />
-            </IconButton>
-          </Box>
-        </Stack>
+              } else {
+                setErrorMessage('Failed to import recipes');
+                setErrorDetails(res.error || 'Unknown error occurred during import');
+                setErrorDialogOpen(true);
+              }
+            } catch (error) {
+              setErrorMessage('Import failed unexpectedly');
+              setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
+              setErrorDialogOpen(true);
+            }
+          }}
+          onOpenXMPImport={() => setXmpImportDialogOpen(true)}
+          onExportAll={async () => {
+            try {
+              const res = await exportAllRecipes();
+              if (res.success && res.count) {
+                showSuccess(`Successfully exported ${res.count} recipes`);
+              }
+            } catch {
+              showError('Export failed');
+            }
+          }}
+          exportAllDisabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}
+        />
       </Box>
 
-      {/* Bulk Action Toolbar */}
       {selectionMode && selectedRecipes.size > 0 && (
-        <Toolbar
-          sx={{
-            backgroundColor: 'primary.main',
-            color: 'primary.contrastText',
-            borderRadius: 1,
-            mb: 2,
-            minHeight: '48px !important',
-            px: 3,
-            py: 1,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-            <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
-              {selectedRecipes.size} recipe{selectedRecipes.size !== 1 ? 's' : ''} selected
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleSelectAll}
-              sx={{
-                color: 'primary.contrastText',
-                borderColor: 'primary.contrastText',
-                '&:hover': {
-                  borderColor: 'primary.contrastText',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                }
-              }}
-            >
-              {selectedRecipes.size === sortedRecipes.length ? 'Deselect All' : 'Select All'}
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleMultiDelete}
-              sx={{
-                backgroundColor: 'error.main',
-                '&:hover': {
-                  backgroundColor: 'error.dark',
-                }
-              }}
-              startIcon={<DeleteOutlineIcon />}
-            >
-              Delete Selected
-            </Button>
-          </Box>
-        </Toolbar>
+        <BulkActionsToolbar
+          selectedCount={selectedRecipes.size}
+          totalCount={sortedRecipes.length}
+          onSelectAll={handleSelectAll}
+          onDeleteSelected={handleMultiDelete}
+        />
       )}
 
       {recipes.length === 0 ? (
@@ -524,257 +396,25 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           </Button>
         </Card>
       ) : (
-        <Grid container spacing={2}>
-          {sortedRecipes.map((recipe, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={recipe.id}>
-              <Card
-                elevation={2}
-                sx={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'transform 0.2s ease-in-out',
-                  ...(selectionMode && selectedRecipes.has(recipe.id) && {
-                    border: '1px solid',
-                    borderColor: 'primary.main',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                    }
-                  })
-                }}
-              >
-                {/* Selection checkbox (top-left) */}
-                {selectionMode && (
-                  <Checkbox
-                    checked={selectedRecipes.has(recipe.id)}
-                    onChange={() => handleSelectRecipe(recipe.id)}
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      left: 8,
-                      zIndex: 3,
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      borderRadius: 1,
-                      '&:hover': {
-                        backgroundColor: 'rgba(255, 255, 255, 1)',
-                      },
-                    }}
-                  />
-                )}
-                {/* Menu button (top-right) */}
-                {!selectionMode && (
-                  <IconButton
-                    aria-label="Options"
-                    size="small"
-                    onClick={e => handleMenuOpen(e, recipe.id)}
-                    title="Options"
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      zIndex: 2,
-                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                      backdropFilter: 'blur(10px)',
-                      WebkitBackdropFilter: 'blur(10px)',
-                      border: 'none',
-                      boxShadow: 'none',
-                      '&:hover': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                        backdropFilter: 'blur(10px)',
-                        WebkitBackdropFilter: 'blur(10px)',
-                      },
-                    }}
-                  >
-                    <MoreVertIcon fontSize="small" sx={{ color: '#666' }} />
-                  </IconButton>
-                )}
-                <CardActionArea
-                  onClick={() => {
-                    if (selectionMode) {
-                      handleSelectRecipe(recipe.id);
-                    } else if (!generatingRecipes.has(recipe.id)) {
-                      onOpenRecipe(recipe);
-                    }
-                  }}
-                  sx={{
-                    ...(generatingRecipes.has(recipe.id) && {
-                      pointerEvents: 'none',
-                      opacity: 0.7,
-                    }),
-                    ...(selectionMode && {
-                      cursor: 'pointer',
-                    }),
-                  }}
-                >
-                  <div style={{ height: 240, borderRadius: 2, overflow: 'hidden' }}>
-                    <SingleImage
-                      source={basePreviews[index] || undefined}
-                      alt={`Recipe ${index + 1}`}
-                      fit="contain"
-                      isGenerating={generatingRecipes.has(recipe.id)}
-                    />
-                  </div>
-                  <CardContent sx={{ pb: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ mb: 1 }}>
-                      {(() => {
-                        const aiName = (recipe as any)?.results?.[0]?.metadata?.aiAdjustments
-                          ?.preset_name as string | undefined;
-                        const name =
-                          recipe.name ||
-                          (typeof aiName === 'string' && aiName.trim().length > 0
-                            ? aiName
-                            : undefined);
-                        if (name && name.trim().length > 0) return name;
-                        // Fallback: human-friendly timestamp label
-                        try {
-                          return new Date(recipe.timestamp).toLocaleString();
-                        } catch {
-                          return `Recipe ${recipe.id}`;
-                        }
-                      })()}
-                    </Typography>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(recipe.timestamp)}
-                      </Typography>
-                      {(recipe as any)?.author &&
-                        ((recipe as any).author.firstName || (recipe as any).author.lastName) && (
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'text.secondary',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                              fontWeight: 400,
-                            }}
-                          >
-                            <PersonOutlineOutlinedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
-                            {[(recipe as any).author.firstName, (recipe as any).author.lastName]
-                              .filter(Boolean)
-                              .join(' ')}
-                          </Typography>
-                        )}
-                    </div>
-                  </CardContent>
-                </CardActionArea>
-                <CardContent sx={{ pt: 0 }}>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    disabled={generatingRecipes.has(recipe.id) || selectionMode}
-                    onClick={e => {
-                      e.stopPropagation();
-                      if (!selectionMode) {
-                        onOpenRecipe(recipe);
-                      }
-                    }}
-                  >
-                    {generatingRecipes.has(recipe.id) ? 'Generating...' : 'Open'}
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <RecipeGrid
+          recipes={sortedRecipes}
+          basePreviews={basePreviews}
+          generatingRecipes={generatingRecipes}
+          selectionMode={selectionMode}
+          selectedRecipes={selectedRecipes}
+          onOpenRecipe={onOpenRecipe}
+          onToggleSelect={handleSelectRecipe}
+          onOpenMenu={handleMenuOpen}
+        />
       )}
 
-      {/* Context Menu */}
-      <Menu
+      <RecipeContextMenu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <MenuItem onClick={handleExportRecipe}>
-          <ListItemIcon>
-            <DownloadIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Export Recipe</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleDeleteRecipe} sx={{ color: 'error.main' }}>
-          <ListItemIcon>
-            <DeleteOutlineIcon fontSize="small" sx={{ color: 'error.main' }} />
-          </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      {/* Actions Menu */}
-      <Menu
-        anchorEl={actionsMenuAnchor}
-        open={Boolean(actionsMenuAnchor)}
-        onClose={handleActionsMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <MenuItem onClick={async () => {
-          handleActionsMenuClose();
-          try {
-            const res = await importRecipes();
-            if (res.success) {
-              if (res.count && res.count > 1) {
-                showSuccess(`Successfully imported ${res.count} recipes`);
-              } else if (res.count === 1) {
-                showSuccess('Successfully imported 1 recipe');
-              } else {
-                showSuccess('Import completed');
-              }
-            } else {
-              setErrorMessage('Failed to import recipes');
-              setErrorDetails(res.error || 'Unknown error occurred during import');
-              setErrorDialogOpen(true);
-            }
-          } catch (error) {
-            setErrorMessage('Import failed unexpectedly');
-            setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
-            setErrorDialogOpen(true);
-          }
-        }}>
-          <ListItemIcon>
-            <FileUploadIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Import Recipes</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => {
-          handleActionsMenuClose();
-          setXmpImportDialogOpen(true);
-        }}>
-          <ListItemIcon>
-            <UploadFileIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Import XMP Preset</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={async () => {
-          handleActionsMenuClose();
-          try {
-            const res = await exportAllRecipes();
-            if (res.success && res.count) {
-              showSuccess(`Successfully exported ${res.count} recipes`);
-            }
-          } catch {
-            showError('Export failed');
-          }
-        }} disabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}>
-          <ListItemIcon>
-            <DownloadIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Export All</ListItemText>
-        </MenuItem>
-      </Menu>
+        onExport={handleExportRecipe}
+        onDelete={handleDeleteRecipe}
+      />
       <ConfirmDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}
