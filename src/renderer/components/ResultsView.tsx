@@ -259,7 +259,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // Description editing functions
   const startEditingDescription = (resultIndex: number) => {
     const result = successfulResults[resultIndex];
-    const currentDescription = (processDescription ?? result.metadata?.aiAdjustments?.description) || '';
+    const currentDescription = processDescription || '';
     setDescriptionInput(currentDescription);
     setEditingDescription(resultIndex);
   };
@@ -378,13 +378,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           const desc = (processResponse.process as any).description;
           setProcessDescription(typeof desc === 'string' && desc.trim().length > 0 ? desc : undefined);
 
-          // If no description in process data, try to get it from AI adjustments
-          if (!desc || desc.trim().length === 0) {
-            const aiDesc = successfulResults[0]?.metadata?.aiAdjustments?.description;
-            if (typeof aiDesc === 'string' && aiDesc.trim().length > 0) {
-              setProcessDescription(aiDesc);
-            }
-          }
+          // Do not source description from AI adjustments; keep top-level only
           const masks = (processResponse.process as any).maskOverrides;
           setMaskOverrides(Array.isArray(masks) ? masks : undefined);
           // name is handled in header component
@@ -807,7 +801,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           ) : (
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontStyle: 'italic', flex: 1 }}>
-                                {(processDescription ?? result.metadata?.aiAdjustments?.description) || 'No description available'}
+                                {processDescription || 'No description available'}
                               </Typography>
                               <IconButton
                                 size="small"

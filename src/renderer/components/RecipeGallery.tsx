@@ -375,7 +375,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         />
       </Box>
 
-      {selectionMode && selectedRecipes.size > 0 && (
+      {selectionMode && (
         <BulkActionsToolbar
           selectedCount={selectedRecipes.size}
           totalCount={sortedRecipes.length}

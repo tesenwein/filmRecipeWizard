@@ -74,6 +74,10 @@ const GalleryHeader: React.FC<GalleryHeaderProps> = ({
             value={sortBy}
             label="Sort by"
             onChange={(e) => onSortChange(e.target.value as SortBy)}
+            MenuProps={{
+              transitionDuration: 0,
+              disableAutoFocusItem: true,
+            }}
           >
             <MenuItem value="name">Name</MenuItem>
             <MenuItem value="newest">Newest</MenuItem>
@@ -122,6 +126,7 @@ const GalleryHeader: React.FC<GalleryHeaderProps> = ({
         onClose={handleActionsMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transitionDuration={0}
       >
         <MenuItem onClick={() => { handleActionsMenuClose(); onImportRecipes(); }}>
           <ListItemIcon><FileUploadIcon fontSize="small" /></ListItemIcon>

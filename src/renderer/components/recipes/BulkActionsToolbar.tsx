@@ -10,7 +10,6 @@ interface BulkActionsToolbarProps {
 }
 
 const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({ selectedCount, totalCount, onSelectAll, onDeleteSelected }) => {
-  if (selectedCount <= 0) return null;
   return (
     <Toolbar
       sx={{
@@ -25,7 +24,10 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({ selectedCount, 
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
         <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
-          {selectedCount} recipe{selectedCount !== 1 ? 's' : ''} selected
+          {selectedCount > 0
+            ? `${selectedCount} recipe${selectedCount !== 1 ? 's' : ''} selected`
+            : 'Select recipes to perform bulk actions'
+          }
         </Typography>
         <Button
           variant="outlined"
@@ -46,7 +48,17 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({ selectedCount, 
           variant="contained"
           size="small"
           onClick={onDeleteSelected}
-          sx={{ backgroundColor: 'error.main', '&:hover': { backgroundColor: 'error.dark' } }}
+          disabled={selectedCount === 0}
+          sx={{
+            backgroundColor: selectedCount > 0 ? 'error.main' : 'rgba(255, 255, 255, 0.3)',
+            '&:hover': {
+              backgroundColor: selectedCount > 0 ? 'error.dark' : 'rgba(255, 255, 255, 0.3)'
+            },
+            '&.Mui-disabled': {
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              color: 'rgba(255, 255, 255, 0.6)',
+            }
+          }}
           startIcon={<DeleteOutlineIcon />}
         >
           Delete Selected

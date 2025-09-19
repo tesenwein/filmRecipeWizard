@@ -245,12 +245,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
           wordBreak: 'break-word',
         }}
       >
-        {(() => {
-          const aiName =
-            result?.metadata?.aiAdjustments && (result.metadata.aiAdjustments as any).preset_name;
-          const fallback = result.outputPath?.split('/').pop() || `Image ${index + 1}`;
-          return typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : fallback;
-        })()}
+        {result.outputPath?.split('/').pop() || `Image ${index + 1}`}
       </Typography>
 
       {/* Project Details and Export (inline) */}

@@ -21,6 +21,7 @@ const RecipeContextMenu: React.FC<RecipeContextMenuProps> = ({ anchorEl, open, o
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      transitionDuration={0}
     >
       <MenuItem onClick={onExport}>
         <ListItemIcon>

@@ -100,19 +100,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         </div>
         <CardContent sx={{ pb: 1 }}>
           <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ mb: 1 }}>
-            {(() => {
-              // Use saved name if available
-              if (recipe.name && recipe.name.trim().length > 0) return recipe.name;
-
-              // Use AI-generated name if available
-              const aiName = (recipe as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
-              if (typeof aiName === 'string' && aiName.trim().length > 0) {
-                return aiName;
-              }
-
-              // No fallback - let AI handle naming
-              return 'Untitled Recipe';
-            })()}
+            {(recipe.name && recipe.name.trim().length > 0) ? recipe.name : 'Untitled Recipe'}
           </Typography>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -149,4 +137,3 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 };
 
 export default RecipeCard;
-

@@ -21,19 +21,8 @@ const ImageSelectionChips: React.FC<ImageSelectionChipsProps> = ({
         Select Image:
       </Typography>
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        {successfulResults.map((result, index) => {
-          const aiName = result?.metadata?.aiAdjustments && (result.metadata.aiAdjustments as any).preset_name;
-          let name: string;
-          if (typeof aiName === 'string' && aiName.trim().length > 0) {
-            const extras: string[] = [];
-            const artist = (processOptions as any)?.artistStyle?.name as string | undefined;
-            const film = (processOptions as any)?.filmStyle?.name as string | undefined;
-            if (artist && artist.trim().length > 0) extras.push(artist.trim());
-            if (film && film.trim().length > 0) extras.push(film.trim());
-            name = extras.length > 0 ? `${aiName} — ${extras.join(' · ')}` : aiName;
-          } else {
-            name = `Image ${index + 1}`;
-          }
+        {successfulResults.map((_result, index) => {
+          const name = `Image ${index + 1}`;
           return (
             <Chip
               key={index}
@@ -51,4 +40,3 @@ const ImageSelectionChips: React.FC<ImageSelectionChipsProps> = ({
 };
 
 export default ImageSelectionChips;
-
