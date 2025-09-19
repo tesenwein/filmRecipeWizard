@@ -143,6 +143,47 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         }
     })();
 
+    // Merge recipe.maskOverrides into latest adjustments for a single, effective masks view
+    const effectiveAdjustments = (() => {
+        const aiAdj = (latestAdjustments as any) || {};
+        const overrides = (recipe as any)?.maskOverrides as any[] | undefined;
+        const idOf = (m: any) =>
+            m?.id ||
+            (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0,4)}:${(m?.referenceY ?? '').toString().slice(0,4)}`);
+        const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
+        let masks = Array.isArray(aiAdj.masks) ? [...aiAdj.masks] : [];
+        const ops = Array.isArray(overrides) ? overrides : [];
+        for (const op of ops) {
+            const operation = op.op || 'add';
+            if (operation === 'remove_all' || operation === 'clear') {
+                masks = [];
+                continue;
+            }
+            const idx = indexOf(masks, op);
+            if (operation === 'remove') {
+                if (idx >= 0) masks.splice(idx, 1);
+                continue;
+            }
+            if (operation === 'update') {
+                if (idx >= 0) {
+                    const prev = masks[idx] || {};
+                    masks[idx] = { ...prev, ...op, id: prev.id || op.id, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+                } else {
+                    masks.push({ ...op, id: op.id || idOf(op) });
+                }
+                continue;
+            }
+            // default add
+            if (idx >= 0) {
+                const prev = masks[idx] || {};
+                masks[idx] = { ...prev, ...op, id: prev.id || op.id || idOf(op), adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+            } else {
+                masks.push({ ...op, id: op.id || idOf(op) });
+            }
+        }
+        return { ...aiAdj, masks } as any;
+    })();
+
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
 

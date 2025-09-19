@@ -158,7 +158,8 @@ export const maskAdjustmentsSchemaChat = z.object({
 
 // Chat-specific mask edit schema
 export const maskEditSchemaChat = z.object({
-    op: z.enum(['add', 'update', 'remove']).optional(),
+    id: z.string().optional(),
+    op: z.enum(['add', 'update', 'remove', 'remove_all', 'clear']).optional(),
     name: z.string().optional(),
     type: z.enum([
         'radial', 'linear', 'person', 'subject', 'background', 'sky', 'range_color', 'range_luminance', 'brush', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object'
@@ -228,5 +229,4 @@ export function createStreamingMaskSchema() {
         detectionQuality: z.number().min(0).max(1).optional(),
     });
 }
-
 

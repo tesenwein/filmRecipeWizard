@@ -72,7 +72,8 @@ declare global {
           name?: string;
           description?: string;
           masks?: Array<{
-            op?: 'add' | 'update' | 'remove';
+            id?: string;
+            op?: 'add' | 'update' | 'remove' | 'remove_all' | 'clear';
             name?: string;
             type?: string;
             subCategoryId?: number;

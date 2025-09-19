@@ -401,6 +401,39 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Name editing handled by RecipeNameHeader subcomponent
 
+  // Compute effective masks by applying overrides (add/update/remove) to AI masks
+  const getEffectiveMasks = (aiMasks: any[] | undefined, overrides: any[] | undefined) => {
+    const baseMasks = Array.isArray(aiMasks) ? [...aiMasks] : [];
+    const ops = Array.isArray(overrides) ? overrides : [];
+    const idOf = (m: any) => (m?.name && typeof m.name === 'string' ? m.name : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}`);
+    const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
+    for (const op of ops) {
+      const idx = indexOf(baseMasks, op);
+      const kind = (op?.op || 'add') as string;
+      if (kind === 'remove') {
+        if (idx >= 0) baseMasks.splice(idx, 1);
+        continue;
+      }
+      if (kind === 'update') {
+        if (idx >= 0) {
+          const prev = baseMasks[idx] || {};
+          baseMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+        } else {
+          baseMasks.push(op);
+        }
+        continue;
+      }
+      // default add
+      if (idx >= 0) {
+        const prev = baseMasks[idx] || {};
+        baseMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+      } else {
+        baseMasks.push(op);
+      }
+    }
+    return baseMasks;
+  };
+
   // Generate default options based on aiFunctions
   const getDefaultOptions = () =>
   ({
@@ -901,20 +934,29 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
 
                     <Paper sx={{ p: 2 }}>
-                      <RecipeAdjustmentsPanel
-                        recipe={{
-                          id: processId || '',
-                          name: successfulResults[selectedResult]?.metadata?.presetName || 'Unnamed Recipe',
-                          prompt: processPrompt || '',
-                          description: processDescription,
-                          userOptions: processOptions,
-                          results: successfulResults,
-                          timestamp: new Date().toISOString(),
-                        }}
-                        pendingModifications={null}
-                        aiAdjustments={result.metadata.aiAdjustments as any}
-                        showOnlyCurrent
-                      />
+                      {(() => {
+                        const aiAdj = (result.metadata.aiAdjustments as any) || {};
+                        const effectiveMasks = getEffectiveMasks(aiAdj.masks, maskOverrides);
+                        const effective = { ...aiAdj, masks: effectiveMasks } as any;
+                        return (
+                          <RecipeAdjustmentsPanel
+                            recipe={{
+                              id: processId || '',
+                              name: successfulResults[selectedResult]?.metadata?.presetName || 'Unnamed Recipe',
+                              prompt: processPrompt || '',
+                              description: processDescription,
+                              userOptions: processOptions,
+                              results: successfulResults,
+                              timestamp: new Date().toISOString(),
+                              // expose overrides for panel sections
+                              ...(maskOverrides ? { maskOverrides } : {}),
+                            } as any}
+                            pendingModifications={null}
+                            aiAdjustments={effective}
+                            showOnlyCurrent
+                          />
+                        );
+                      })()}
                     </Paper>
 
 
@@ -983,38 +1025,44 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               updates.description = (modifications as any).description;
                               setProcessDescription((modifications as any).description);
                             }
-                            // Apply mask overrides even when they are the only change
+                            // Apply mask overrides even when they are the only change (store operations)
                             if (Array.isArray((modifications as any).masks)) {
                               const ops = (modifications as any).masks as any[];
-                              const currentMasks = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
-                              const idOf = (m: any) => (m?.name && typeof m.name === 'string' ? m.name : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}`);
+                              let next = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
+                              const idOf = (m: any) =>
+                                m?.id ||
+                                (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0,4)}:${(m?.referenceY ?? '').toString().slice(0,4)}`);
                               const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
                               for (const op of ops) {
-                                const idx = indexOf(currentMasks, op);
-                                if ((op.op || 'add') === 'remove') {
-                                  if (idx >= 0) currentMasks.splice(idx, 1);
+                                const operation = op.op || 'add';
+                                if (operation === 'remove_all' || operation === 'clear') {
+                                  next = [];
                                   continue;
                                 }
-                                if ((op.op || 'add') === 'update') {
+                                const idx = indexOf(next, op);
+                                if (operation === 'remove') {
+                                  if (idx >= 0) next.splice(idx, 1);
+                                  continue;
+                                }
+                                if (operation === 'update') {
                                   if (idx >= 0) {
-                                    const prev = currentMasks[idx] || {};
-                                    currentMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+                                    const prev = next[idx] || {};
+                                    next[idx] = { ...prev, ...op, id: prev.id || op.id, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
                                   } else {
-                                    currentMasks.push(op);
+                                    next.push({ ...op, id: op.id || idOf(op) });
                                   }
                                   continue;
                                 }
                                 // default add
                                 if (idx >= 0) {
-                                  // merge
-                                  const prev = currentMasks[idx] || {};
-                                  currentMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+                                  const prev = next[idx] || {};
+                                  next[idx] = { ...prev, ...op, id: prev.id || op.id || idOf(op), adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
                                 } else {
-                                  currentMasks.push(op);
+                                  next.push({ ...op, id: op.id || idOf(op) });
                                 }
                               }
-                              updates.maskOverrides = currentMasks;
-                              setMaskOverrides(currentMasks);
+                              updates.maskOverrides = next;
+                              setMaskOverrides(next);
                             }
                             if (Object.keys(updates).length > 0) {
                               await window.electronAPI.updateProcess(processId, updates);
