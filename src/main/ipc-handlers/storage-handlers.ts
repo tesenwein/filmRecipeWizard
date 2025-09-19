@@ -31,21 +31,38 @@ export class StorageHandlers {
         ]);
         const author = settings.userProfile;
         let mutated = false;
-        const withAuthors = recipes.map(r => {
-          if (!r.author && author) {
+        const normalized = recipes.map(r => {
+          let out: ProcessHistory = r as ProcessHistory;
+          // Attach author if missing
+          if (!out.author && author) {
             mutated = true;
-            return { ...r, author } as ProcessHistory;
+            out = { ...out, author } as ProcessHistory;
           }
-          return r;
+          // Migrate legacy warmth -> temperatureK once
+          try {
+            const uo: any = (out as any).userOptions;
+            if (uo && uo.warmth !== undefined && uo.temperatureK === undefined) {
+              const w = Math.max(-100, Math.min(100, Number(uo.warmth)));
+              const baseTemp = 6500;
+              const tempRange = 3500; // +/- range
+              const k = Math.round(baseTemp - (w * tempRange / 100));
+              const nextUo = { ...uo };
+              delete nextUo.warmth;
+              nextUo.temperatureK = Math.max(2000, Math.min(50000, k));
+              out = { ...out, userOptions: nextUo } as ProcessHistory;
+              mutated = true;
+            }
+          } catch { /* ignore */ }
+          return out;
         });
         if (mutated && this.settingsService) {
           try {
-            await this.storageService.saveRecipes(withAuthors);
+            await this.storageService.saveRecipes(normalized);
           } catch {
             // Ignore save errors
           }
         }
-        return { success: true, recipes: withAuthors };
+        return { success: true, recipes: normalized };
       } catch (error) {
         console.error('[IPC] Error loading recipes:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -224,6 +241,21 @@ export class StorageHandlers {
         if (!process) {
           return { success: false, error: 'Process not found' };
         }
+        // On-the-fly migration for legacy warmth -> temperatureK
+        try {
+          const uo: any = (process as any).userOptions;
+          if (uo && uo.warmth !== undefined && uo.temperatureK === undefined) {
+            const w = Math.max(-100, Math.min(100, Number(uo.warmth)));
+            const baseTemp = 6500;
+            const tempRange = 3500;
+            const k = Math.round(baseTemp - (w * tempRange / 100));
+            const nextUo = { ...uo };
+            delete nextUo.warmth;
+            nextUo.temperatureK = Math.max(2000, Math.min(50000, k));
+            (process as any).userOptions = nextUo;
+            try { await this.storageService.updateProcess(processId, { userOptions: nextUo } as any); } catch { }
+          }
+        } catch { /* ignore */ }
         return { success: true, process };
       } catch (error) {
         console.error('[IPC] Error getting process:', error);

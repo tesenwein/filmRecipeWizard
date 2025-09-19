@@ -123,7 +123,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         return {
             name: recipe.name || 'Unnamed Recipe',
             prompt: recipe.prompt || 'No prompt',
-            warmth: options?.warmth ?? '—',
+            temperatureK: options?.temperatureK ? `${options.temperatureK} K` : '—',
             tint: options?.tint ?? '—',
             contrast: options?.contrast ?? '—',
             vibrance: options?.vibrance ?? '—',

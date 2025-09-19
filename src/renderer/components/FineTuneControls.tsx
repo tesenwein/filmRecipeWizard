@@ -40,71 +40,30 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
             {/* Essential Controls */}
             {styleOptions?.aiFunctions?.temperatureTint && (
               <Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 0.5,
-                  }}
-                >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
-                    Temperature
-                  </span>
-                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                    {(styleOptions?.warmth ?? 50) - 50}
-                  </span>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Temperature (K)</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>{styleOptions?.temperatureK ?? 6500} K</span>
                 </Box>
                 <Slider
                   size="small"
-                  value={styleOptions?.warmth ?? 50}
-                  onChange={(_, v) => onStyleOptionsChange?.({ warmth: v as number })}
-                  min={0}
-                  max={100}
-                  marks={[{ value: 0 }, { value: 50 }, { value: 100 }]}
+                  value={styleOptions?.temperatureK ?? 6500}
+                  onChange={(_, v) => onStyleOptionsChange?.({ temperatureK: v as number })}
+                  min={2000}
+                  max={50000}
+                  step={100}
                   valueLabelDisplay="auto"
-                  valueLabelFormat={v => `${(v as number) - 50}`}
+                  valueLabelFormat={v => `${v} K`}
                   color="primary"
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, px: 0.5 }}>
-                  <span style={{ fontSize: 11, color: '#9ca3af' }}>Cool</span>
-                  <span style={{ fontSize: 11, color: '#9ca3af' }}>Neutral</span>
-                  <span style={{ fontSize: 11, color: '#9ca3af' }}>Warm</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>2000K</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>6500K</span>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>50000K</span>
                 </Box>
               </Box>
             )}
 
-            <Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 0.5,
-                }}
-              >
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Temperature</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                  {(styleOptions?.warmth ?? 50) - 50}
-                </span>
-              </Box>
-              <Slider
-                size="small"
-                value={styleOptions?.warmth ?? 50}
-                onChange={(_, v) => onStyleOptionsChange?.({ warmth: v as number })}
-                min={0}
-                max={100}
-                marks={[{ value: 0 }, { value: 50 }, { value: 100 }]}
-                valueLabelDisplay="auto"
-                valueLabelFormat={v => `${(v as number) - 50}`}
-                color="primary"
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, px: 0.5 }}>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>Cool</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>Neutral</span>
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>Warm</span>
-              </Box>
-            </Box>
+            {/* Kelvin temperature appears only once above when Temperature/Tint is enabled */}
 
             <Box>
               <Box

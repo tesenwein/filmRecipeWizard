@@ -497,14 +497,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (typeof (processOptions as any).temperatureK === 'number') {
         const k = Math.max(2000, Math.min(50000, Number((processOptions as any).temperatureK)));
         (effectiveAdjustments as any).temperature = Math.round(k);
-      } else if (typeof processOptions.warmth === 'number') {
-      if (typeof processOptions.warmth === 'number') {
-        // Convert warmth (-100 to 100) to temperature (2000K to 50000K)
-        // warmth 0 = 6500K (neutral), warmth 100 = warmer (lower K), warmth -100 = cooler (higher K)
-        const baseTemp = 6500;
-        const tempRange = 3500; // Allow ±3500K range
-        effectiveAdjustments.temperature = Math.round(baseTemp - (processOptions.warmth * tempRange / 100));
-      }
       }
 
       if (typeof processOptions.tint === 'number') {
