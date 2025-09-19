@@ -1141,7 +1141,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           variant="body2"
                           sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}
                         >
-                          OR
+                          AND/OR
                         </Typography>
                         <Divider sx={{ flex: 1 }} />
                       </Box>
