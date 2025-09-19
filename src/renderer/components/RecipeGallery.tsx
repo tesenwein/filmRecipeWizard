@@ -2,9 +2,11 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import BoltIcon from '@mui/icons-material/Bolt';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import SearchIcon from '@mui/icons-material/Search';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {
   Box,
   Button,
@@ -66,6 +68,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [xmpImportDialogOpen, setXmpImportDialogOpen] = useState(false);
   const [selectedRecipes, setSelectedRecipes] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
+  const [actionsMenuAnchor, setActionsMenuAnchor] = useState<null | HTMLElement>(null);
   const { showSuccess, showError } = useAlert();
 
   // Recipes are loaded during splash screen, no need to load here
@@ -255,6 +258,15 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     setMultiDeleteDialogOpen(false);
   };
 
+  // Actions menu handlers
+  const handleActionsMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setActionsMenuAnchor(event.currentTarget);
+  };
+
+  const handleActionsMenuClose = () => {
+    setActionsMenuAnchor(null);
+  };
+
   const handleExportRecipe = async () => {
     if (!selectedRecipeId) return;
     handleMenuClose();
@@ -325,7 +337,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
   if (recipesLoading) {
     return (
-      <div className="container" style={{ textAlign: 'center', padding: '60px' }}>
+      <div className="container" style={{ textAlign: 'center', padding: '50px' }}>
         <BoltIcon sx={{ fontSize: '48px', marginBottom: '20px', color: 'primary.main' }} />
         <h2>Loading Recipes...</h2>
       </div>
@@ -346,11 +358,9 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           alignItems={{ xs: 'stretch', sm: 'center' }}
           sx={{
             backgroundColor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
             borderRadius: 2,
-            p: 2,
-            boxShadow: 1,
+            p: 2.5,
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
           }}
         >
           {/* Search and Sort Section */}
@@ -370,6 +380,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
               sx={{
                 minWidth: 200,
                 flex: '1 1 200px',
+
               }}
             />
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -378,6 +389,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                 value={sortBy}
                 label="Sort by"
                 onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
+                sx={{
+                }}
               >
                 <MenuItem value="name">Name</MenuItem>
                 <MenuItem value="newest">Newest</MenuItem>
@@ -386,60 +399,19 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             </FormControl>
           </Box>
 
+          {/* Divider */}
+          <Box
+            sx={{
+              width: '1px',
+              height: '50px',
+              backgroundColor: 'divider',
+              opacity: 0.5,
+              mx: 1,
+            }}
+          />
+
           {/* Action Buttons Section */}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={async () => {
-                try {
-                  const res = await importRecipes();
-                  if (res.success) {
-                    if (res.count && res.count > 1) {
-                      showSuccess(`Successfully imported ${res.count} recipes`);
-                    } else if (res.count === 1) {
-                      showSuccess('Successfully imported 1 recipe');
-                    } else {
-                      showSuccess('Import completed');
-                    }
-                  } else {
-                    setErrorMessage('Failed to import recipes');
-                    setErrorDetails(res.error || 'Unknown error occurred during import');
-                    setErrorDialogOpen(true);
-                  }
-                } catch (error) {
-                  setErrorMessage('Import failed unexpectedly');
-                  setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
-                  setErrorDialogOpen(true);
-                }
-              }}
-            >
-              Import
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setXmpImportDialogOpen(true)}
-            >
-              Import XMP
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={async () => {
-                try {
-                  const res = await exportAllRecipes();
-                  if (res.success && res.count) {
-                    showSuccess(`Successfully exported ${res.count} recipes`);
-                  }
-                } catch {
-                  showError('Export failed');
-                }
-              }}
-              disabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}
-            >
-              Export All
-            </Button>
             <Button
               variant={selectionMode ? "contained" : "outlined"}
               size="small"
@@ -454,6 +426,23 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             >
               New Recipe
             </Button>
+          </Box>
+
+          {/* Three Dots Menu - Far Right */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              size="small"
+              onClick={handleActionsMenuOpen}
+              sx={{
+                border: '1px solid',
+                borderColor: 'divider',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                }
+              }}
+            >
+              <MoreVertIcon />
+            </IconButton>
           </Box>
         </Stack>
       </Box>
@@ -715,6 +704,75 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             <DeleteOutlineIcon fontSize="small" sx={{ color: 'error.main' }} />
           </ListItemIcon>
           <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={actionsMenuAnchor}
+        open={Boolean(actionsMenuAnchor)}
+        onClose={handleActionsMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={async () => {
+          handleActionsMenuClose();
+          try {
+            const res = await importRecipes();
+            if (res.success) {
+              if (res.count && res.count > 1) {
+                showSuccess(`Successfully imported ${res.count} recipes`);
+              } else if (res.count === 1) {
+                showSuccess('Successfully imported 1 recipe');
+              } else {
+                showSuccess('Import completed');
+              }
+            } else {
+              setErrorMessage('Failed to import recipes');
+              setErrorDetails(res.error || 'Unknown error occurred during import');
+              setErrorDialogOpen(true);
+            }
+          } catch (error) {
+            setErrorMessage('Import failed unexpectedly');
+            setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
+            setErrorDialogOpen(true);
+          }
+        }}>
+          <ListItemIcon>
+            <FileUploadIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Import Recipes</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          handleActionsMenuClose();
+          setXmpImportDialogOpen(true);
+        }}>
+          <ListItemIcon>
+            <UploadFileIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Import XMP Preset</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={async () => {
+          handleActionsMenuClose();
+          try {
+            const res = await exportAllRecipes();
+            if (res.success && res.count) {
+              showSuccess(`Successfully exported ${res.count} recipes`);
+            }
+          } catch {
+            showError('Export failed');
+          }
+        }} disabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}>
+          <ListItemIcon>
+            <DownloadIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Export All</ListItemText>
         </MenuItem>
       </Menu>
       <ConfirmDialog
