@@ -41,6 +41,7 @@ import AIFunctionsSelector from './AIFunctionsSelector';
 import ConfirmDialog from './ConfirmDialog';
 import ImageSelectionChips from './results/ImageSelectionChips';
 import RecipeChat from './RecipeChat';
+import RecipeAdjustmentsPanel from './RecipeAdjustmentsPanel';
 import RecipeNameHeader from './results/RecipeNameHeader';
 import SingleImage from './SingleImage';
 
@@ -329,6 +330,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   };
 
   const [processName, setProcessName] = useState<string | undefined>(undefined);
+  const [maskOverrides, setMaskOverrides] = useState<any[] | undefined>(undefined);
+  const [processDescription, setProcessDescription] = useState<string | undefined>(undefined);
 
   // Load base64 image data when processId is provided
   useEffect(() => {
@@ -364,12 +367,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setAuthor((processResponse.process as any).author);
           const nm = (processResponse.process as any).name;
           setProcessName(typeof nm === 'string' && nm.trim().length > 0 ? nm : undefined);
+          const desc = (processResponse.process as any).description;
+          setProcessDescription(typeof desc === 'string' && desc.trim().length > 0 ? desc : undefined);
+          const masks = (processResponse.process as any).maskOverrides;
+          setMaskOverrides(Array.isArray(masks) ? masks : undefined);
           // name is handled in header component
         } else {
           console.warn('[RESULTS] Process not found or failed to load:', processResponse.error);
           setProcessPrompt(prompt);
           setProcessOptions(undefined);
           setProcessName(undefined);
+          setProcessDescription(undefined);
+          setMaskOverrides(undefined);
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
@@ -1018,280 +1027,23 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       </Accordion>
                     )}
 
-                    {/* Basic Adjustments */}
-                    <Accordion defaultExpanded>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">Basic Adjustments</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            gap: 4,
-                            flexDirection: { xs: 'column', md: 'row' },
-                          }}
-                        >
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant="subtitle1"
-                              sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
-                            >
-                              White Balance
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Temperature</Typography>
-                                <Chip
-                                  label={`${Math.round(
-                                    result.metadata.aiAdjustments.temperature || 0
-                                  )} K`}
-                                  variant="outlined"
-                                />
-                              </Box>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Tint</Typography>
-                                <Chip
-                                  label={Math.round(result.metadata.aiAdjustments.tint || 0)}
-                                  variant="outlined"
-                                />
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant="subtitle1"
-                              sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
-                            >
-                              Exposure
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Exposure</Typography>
-                                <Chip
-                                  label={(result.metadata.aiAdjustments.exposure || 0).toFixed(2)}
-                                  variant="outlined"
-                                />
-                              </Box>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Contrast</Typography>
-                                <Chip
-                                  label={result.metadata.aiAdjustments.contrast ?? 0}
-                                  variant="outlined"
-                                />
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant="subtitle1"
-                              sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
-                            >
-                              Tone
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Highlights</Typography>
-                                <Chip
-                                  label={result.metadata.aiAdjustments.highlights ?? 0}
-                                  variant="outlined"
-                                />
-                              </Box>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Shadows</Typography>
-                                <Chip
-                                  label={result.metadata.aiAdjustments.shadows ?? 0}
-                                  variant="outlined"
-                                />
-                              </Box>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Whites</Typography>
-                                <Chip
-                                  label={result.metadata.aiAdjustments.whites ?? 0}
-                                  variant="outlined"
-                                />
-                              </Box>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Typography variant="body1">Blacks</Typography>
-                                <Chip
-                                  label={result.metadata.aiAdjustments.blacks ?? 0}
-                                  variant="outlined"
-                                />
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
 
-                    {/* Presence & Color */}
-                    <Accordion>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">Presence & Color</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            gap: 3,
-                            flexDirection: { xs: 'column', sm: 'row' },
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              flex: 1,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Typography variant="body1">Clarity</Typography>
-                            <Chip
-                              label={result.metadata.aiAdjustments.clarity ?? 0}
-                              variant="outlined"
-                            />
-                          </Box>
-                          <Box
-                            sx={{
-                              flex: 1,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Typography variant="body1">Vibrance</Typography>
-                            <Chip
-                              label={result.metadata.aiAdjustments.vibrance ?? 0}
-                              variant="outlined"
-                            />
-                          </Box>
-                          <Box
-                            sx={{
-                              flex: 1,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Typography variant="body1">Saturation</Typography>
-                            <Chip
-                              label={result.metadata.aiAdjustments.saturation ?? 0}
-                              variant="outlined"
-                            />
-                          </Box>
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-
-                    {/* HSL Adjustments */}
-                    <Accordion>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6">HSL Color Adjustments</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            gap: 3,
-                            flexDirection: { xs: 'column', md: 'row' },
-                          }}
-                        >
-                          {['Hue', 'Saturation', 'Luminance'].map(adjustmentType => (
-                            <Box key={adjustmentType} sx={{ flex: 1 }}>
-                              <Typography
-                                variant="subtitle1"
-                                sx={{ fontWeight: 600, mb: 2, color: 'primary.main' }}
-                              >
-                                {adjustmentType}
-                              </Typography>
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                {[
-                                  'red',
-                                  'orange',
-                                  'yellow',
-                                  'green',
-                                  'aqua',
-                                  'blue',
-                                  'purple',
-                                  'magenta',
-                                ].map(color => {
-                                  const key = `${adjustmentType
-                                    .toLowerCase()
-                                    .slice(0, 3)}_${color}`;
-                                  const value = (result.metadata!.aiAdjustments as any)[key] ?? 0;
-                                  return (
-                                    <Box
-                                      key={color}
-                                      sx={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                      }}
-                                    >
-                                      <Typography
-                                        variant="body2"
-                                        sx={{ textTransform: 'capitalize' }}
-                                      >
-                                        {color}
-                                      </Typography>
-                                      <Chip size="small" label={value} variant="outlined" />
-                                    </Box>
-                                  );
-                                })}
-                              </Box>
-                            </Box>
-                          ))}
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-
+                    <Paper sx={{ p: 2 }}>
+                      <RecipeAdjustmentsPanel
+                        recipe={{
+                          id: processId || '',
+                          name: successfulResults[selectedResult]?.metadata?.presetName || 'Unnamed Recipe',
+                          prompt: processPrompt || '',
+                          description: processDescription,
+                          userOptions: processOptions,
+                          results: successfulResults,
+                          timestamp: new Date().toISOString(),
+                        }}
+                        pendingModifications={null}
+                        aiAdjustments={result.metadata.aiAdjustments as any}
+                        showOnlyCurrent
+                      />
+                    </Paper>
                     {/* AI Notes */}
                     {typeof result.metadata.aiAdjustments.reasoning === 'string' &&
                       result.metadata.aiAdjustments.reasoning.trim().length > 0 && (
@@ -1369,6 +1121,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               updates.name = modifications.name;
                               setProcessName(modifications.name);
                             }
+                            if (typeof (modifications as any).description === 'string') {
+                              updates.description = (modifications as any).description;
+                              setProcessDescription((modifications as any).description);
+                            }
+                            // Apply mask overrides even when they are the only change
+                            if (Array.isArray((modifications as any).masks)) {
+                              updates.maskOverrides = (modifications as any).masks;
+                              setMaskOverrides((modifications as any).masks);
+                            }
                             if (Object.keys(updates).length > 0) {
                               await window.electronAPI.updateProcess(processId, updates);
                             }
@@ -1389,7 +1150,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   </Box>
                 )}
 
-                {activeTab === 4 && (
+                {activeTab === 3 && (
                   <Box>
                     <Typography
                       variant="h5"
@@ -1739,7 +1500,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 )}
 
                 {/* Tab Panel 6: Author */}
-                {author && (author.firstName || author.lastName) && activeTab === 6 && (
+                {author && (author.firstName || author.lastName) && activeTab === 5 && (
                   <Box>
                     <Typography
                       variant="subtitle1"

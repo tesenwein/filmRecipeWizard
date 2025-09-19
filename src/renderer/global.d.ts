@@ -66,7 +66,20 @@ declare global {
         content?: string;
         // New structured chat result fields
         message?: string;
-        modifications?: any;
+        modifications?: {
+          userOptions?: any;
+          prompt?: string;
+          name?: string;
+          description?: string;
+          masks?: Array<{
+            op?: 'add' | 'update' | 'remove';
+            name?: string;
+            type?: string;
+            subCategoryId?: number;
+            adjustments?: Record<string, number>;
+            [k: string]: any;
+          }>;
+        };
         error?: string;
       }>;
 

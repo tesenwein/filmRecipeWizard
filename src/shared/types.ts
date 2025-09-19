@@ -61,6 +61,8 @@ export interface Recipe {
   recipeImageData?: string; // base64 encoded image
   // User-selected style options (sliders/toggles)
   userOptions?: StyleOptions;
+  // Optional mask overrides proposed/accepted via chat; used to guide next generation
+  maskOverrides?: any[];
   // Processing status to track if generation is still in progress
   status?: 'generating' | 'completed' | 'failed';
   // Optional author/creator profile attached to the recipe

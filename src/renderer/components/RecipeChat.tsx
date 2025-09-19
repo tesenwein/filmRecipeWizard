@@ -46,7 +46,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     }, [messages]);
 
     const handleSendMessage = async (e?: React.FormEvent | React.KeyboardEvent) => {
-        try { (e as any)?.preventDefault?.(); } catch {}
+        try { (e as any)?.preventDefault?.(); } catch { }
         if (!input.trim() || isProcessing) return;
 
         const userMessage = input.trim();
@@ -133,118 +133,118 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         };
     };
 
-  const recipeData = formatRecipeForDisplay(recipe);
-  const latestAdjustments = (() => {
-    try {
-      const res = Array.isArray(recipe.results) ? recipe.results.filter(r => r && r.success) : [];
-      const last = res.length > 0 ? res[res.length - 1] : undefined;
-      return last?.metadata?.aiAdjustments as any | undefined;
-    } catch {
-      return undefined;
-    }
-  })();
+    const recipeData = formatRecipeForDisplay(recipe);
+    const latestAdjustments = (() => {
+        try {
+            const res = Array.isArray(recipe.results) ? recipe.results.filter(r => r && r.success) : [];
+            const last = res.length > 0 ? res[res.length - 1] : undefined;
+            return last?.metadata?.aiAdjustments as any | undefined;
+        } catch {
+            return undefined;
+        }
+    })();
 
     return (
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
 
-        {/* Split View: Chat (left) + Adjustments (right) */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 1.5, minHeight: 0, flex: 1 }}>
-          {/* Chat Column */}
-          <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 2, border: '1px solid #e9ecef' }}>
-            <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-              {messages.map((message) => (
-                <Box key={message.id} sx={{ display: 'flex', mb: 2, justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, maxWidth: '80%', flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>
-                    <Avatar sx={{ bgcolor: message.role === 'user' ? 'primary.main' : '#6c757d', width: 32, height: 32 }}>
-                      {message.role === 'user' ? <PersonIcon /> : <BotIcon />}
-                    </Avatar>
-                    <Paper sx={{ p: 2, backgroundColor: message.role === 'user' ? 'primary.main' : '#f8f9fa', color: message.role === 'user' ? 'white' : '#2c3338', borderRadius: 2, border: message.role === 'user' ? 'none' : '1px solid #e9ecef' }}>
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>
-                        {message.content}
-                      </Typography>
-                    </Paper>
-                  </Box>
-                </Box>
-              ))}
+            {/* Split View: Chat (left) + Adjustments (right) */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 1.5, minHeight: 0, flex: 1 }}>
+                {/* Chat Column */}
+                <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 2, border: '1px solid #e9ecef' }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', p: 2 }}>
+                        {messages.map((message) => (
+                            <Box key={message.id} sx={{ display: 'flex', mb: 2, justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, maxWidth: '80%', flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>
+                                    <Avatar sx={{ bgcolor: message.role === 'user' ? 'primary.main' : '#6c757d', width: 32, height: 32 }}>
+                                        {message.role === 'user' ? <PersonIcon /> : <BotIcon />}
+                                    </Avatar>
+                                    <Paper sx={{ p: 2, backgroundColor: message.role === 'user' ? 'primary.main' : '#f8f9fa', color: message.role === 'user' ? 'white' : '#2c3338', borderRadius: 2, border: message.role === 'user' ? 'none' : '1px solid #e9ecef' }}>
+                                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>
+                                            {message.content}
+                                        </Typography>
+                                    </Paper>
+                                </Box>
+                            </Box>
+                        ))}
 
-              {isProcessing && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Avatar sx={{ bgcolor: '#6c757d', width: 32, height: 32 }}>
-                    <BotIcon />
-                  </Avatar>
-                  <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e9ecef' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CircularProgress size={16} />
-                      <Typography variant="body2" sx={{ fontSize: 13, color: '#6c757d' }}>
-                        AI is thinking...
-                      </Typography>
+                        {isProcessing && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                <Avatar sx={{ bgcolor: '#6c757d', width: 32, height: 32 }}>
+                                    <BotIcon />
+                                </Avatar>
+                                <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e9ecef' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <CircularProgress size={16} />
+                                        <Typography variant="body2" sx={{ fontSize: 13, color: '#6c757d' }}>
+                                            AI is thinking...
+                                        </Typography>
+                                    </Box>
+                                </Paper>
+                            </Box>
+                        )}
+
+                        <div ref={messagesEndRef} />
                     </Box>
-                  </Paper>
-                </Box>
-              )}
 
-              <div ref={messagesEndRef} />
+                    {/* Footer: Actions + Input */}
+                    {pendingModifications && (
+                        <Box sx={{ p: 2.5, borderTop: 1, borderColor: '#e9ecef', backgroundColor: '#fff3cd', border: '1px solid #ffeaa7' }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: '#856404' }}>
+                                Suggested Changes Ready
+                            </Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Button size="small" variant="contained" color="success" startIcon={<CheckIcon />} onClick={handleAcceptModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
+                                    Accept Changes
+                                </Button>
+                                <Button size="small" variant="outlined" color="error" startIcon={<CloseIcon />} onClick={handleRejectModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
+                                    Reject Changes
+                                </Button>
+                            </Stack>
+                        </Box>
+                    )}
+
+                    {error && (
+                        <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    <Box sx={{ p: 2, borderTop: 1, borderColor: '#e9ecef' }}>
+                        <form onSubmit={handleSendMessage}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    maxRows={4}
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            if (input.trim() && !isProcessing) {
+                                                handleSendMessage(e);
+                                            }
+                                        }
+                                    }}
+                                    placeholder="Ask me to modify your recipe... (e.g., 'Make it warmer and more cinematic')"
+                                    disabled={isProcessing}
+                                    size="small"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: 13 } }}
+                                />
+                                <IconButton type="submit" disabled={!input.trim() || isProcessing} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
+                                    {isProcessing ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+                                </IconButton>
+                            </Box>
+                        </form>
+                    </Box>
+                </Paper>
+
+                {/* Adjustments Column */}
+          <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', borderRadius: 2, border: '1px solid #e9ecef', p: 2, gap: 2, minHeight: 0 }}>
+                    <RecipeAdjustmentsPanel recipe={recipe} pendingModifications={pendingModifications as any} aiAdjustments={latestAdjustments as any} />
+                </Paper>
             </Box>
-
-            {/* Footer: Actions + Input */}
-            {pendingModifications && (
-              <Box sx={{ p: 2.5, borderTop: 1, borderColor: '#e9ecef', backgroundColor: '#fff3cd', border: '1px solid #ffeaa7' }}>
-                <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: '#856404' }}>
-                  Suggested Changes Ready
-                </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Button size="small" variant="contained" color="success" startIcon={<CheckIcon />} onClick={handleAcceptModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
-                    Accept Changes
-                  </Button>
-                  <Button size="small" variant="outlined" color="error" startIcon={<CloseIcon />} onClick={handleRejectModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
-                    Reject Changes
-                  </Button>
-                </Stack>
-              </Box>
-            )}
-
-            {error && (
-              <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>
-                {error}
-              </Alert>
-            )}
-
-            <Box sx={{ p: 2, borderTop: 1, borderColor: '#e9ecef' }}>
-              <form onSubmit={handleSendMessage}>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    maxRows={4}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (input.trim() && !isProcessing) {
-                          handleSendMessage(e);
-                        }
-                      }
-                    }}
-                    placeholder="Ask me to modify your recipe... (e.g., 'Make it warmer and more cinematic')"
-                    disabled={isProcessing}
-                    size="small"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: 13 } }}
-                  />
-                  <IconButton type="submit" disabled={!input.trim() || isProcessing} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
-                    {isProcessing ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-                  </IconButton>
-                </Box>
-              </form>
-            </Box>
-          </Paper>
-
-          {/* Adjustments Column */}
-          <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflow: 'auto', borderRadius: 2, border: '1px solid #e9ecef', p: 2, gap: 2, minHeight: 0 }}>
-            <RecipeAdjustmentsPanel recipe={recipe} pendingModifications={pendingModifications as any} aiAdjustments={latestAdjustments as any} />
-          </Paper>
         </Box>
-      </Box>
     );
 };
 
