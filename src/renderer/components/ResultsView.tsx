@@ -41,7 +41,7 @@ import AIFunctionsSelector from './AIFunctionsSelector';
 import ConfirmDialog from './ConfirmDialog';
 import ImageSelectionChips from './results/ImageSelectionChips';
 import RecipeChat from './RecipeChat';
-import RecipeAdjustmentsPanel from './RecipeAdjustmentsPanel';
+import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
 import RecipeNameHeader from './results/RecipeNameHeader';
 import SingleImage from './SingleImage';
 
@@ -1235,8 +1235,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   </Box>
                 )}
 
-                {/* Tab Panel 5: LUT Export */}
-                {activeTab === 5 && (
+                {/* Tab Panel 4: LUT Export */}
+                {activeTab === 4 && (
                   <Box>
                     <Typography
                       variant="h5"

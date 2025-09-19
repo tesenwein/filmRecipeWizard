@@ -157,7 +157,7 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         <Row label="Film Style" cur={<ValueChip label={str(current.filmStyle?.name)} />} next={<ValueChip label={str(proposed.filmStyle?.name)} color={hasChange(current.filmStyle?.key, proposed.filmStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmStyle?.key, proposed.filmStyle?.key)} />
       </Section>
 
-  <Section title="AI Functions">
+      <Section title="AI Functions">
         <Stack direction="column" spacing={1}>
           {[
             ['temperatureTint', 'Temperature/Tint'],
@@ -212,8 +212,8 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
           <Divider sx={{ my: 1 }} />
           <Row
             label="Curves Present"
-            cur={<ValueChip label={((((aiAdjustments as any).tone_curve?.length || 0) > 0) || ['red','green','blue'].some(c => (((aiAdjustments as any)[`tone_curve_${c}`]?.length || 0) > 0)) || ['parametric_shadows','parametric_darks','parametric_lights','parametric_highlights'].some(k => (aiAdjustments as any)[k] !== undefined)) ? 'Yes' : 'No'} />}
-            next={<ValueChip label={((((aiAdjustments as any).tone_curve?.length || 0) > 0) || ['red','green','blue'].some(c => (((aiAdjustments as any)[`tone_curve_${c}`]?.length || 0) > 0)) || ['parametric_shadows','parametric_darks','parametric_lights','parametric_highlights'].some(k => (aiAdjustments as any)[k] !== undefined)) ? 'Yes' : 'No'} />}
+            cur={<ValueChip label={((((aiAdjustments as any).tone_curve?.length || 0) > 0) || ['red', 'green', 'blue'].some(c => (((aiAdjustments as any)[`tone_curve_${c}`]?.length || 0) > 0)) || ['parametric_shadows', 'parametric_darks', 'parametric_lights', 'parametric_highlights'].some(k => (aiAdjustments as any)[k] !== undefined)) ? 'Yes' : 'No'} />}
+            next={<ValueChip label={((((aiAdjustments as any).tone_curve?.length || 0) > 0) || ['red', 'green', 'blue'].some(c => (((aiAdjustments as any)[`tone_curve_${c}`]?.length || 0) > 0)) || ['parametric_shadows', 'parametric_darks', 'parametric_lights', 'parametric_highlights'].some(k => (aiAdjustments as any)[k] !== undefined)) ? 'Yes' : 'No'} />}
             isChanged={false}
           />
           <Divider sx={{ my: 1 }} />
@@ -335,4 +335,3 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
   );
 };
 
-export default RecipeAdjustmentsPanel;

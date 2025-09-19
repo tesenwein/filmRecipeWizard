@@ -8,7 +8,7 @@ import {
     Close as CloseIcon,
 } from '@mui/icons-material';
 import { Recipe } from '../../shared/types';
-import RecipeAdjustmentsPanel from './RecipeAdjustmentsPanel';
+import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
 
 interface RecipeChatProps {
     recipe: Recipe;

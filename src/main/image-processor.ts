@@ -84,7 +84,6 @@ export class ImageProcessor {
         metadata: {
           aiAdjustments,
           confidence: aiAdjustments.confidence,
-          usedSettings: undefined,
         },
       };
     } catch (error) {
@@ -124,7 +123,7 @@ export class ImageProcessor {
       const presetPath = path.join(presetsDir, `Film Recipe Wizard-${timestamp}.xmp`);
 
       // Generate XMP preset content
-      const xmpContent = generateXMPContentImpl(data.adjustments, data.include, data.styleOptions?.aiFunctions);
+      const xmpContent = generateXMPContentImpl(data.adjustments, data.include);
       await fs.writeFile(presetPath, xmpContent, 'utf8');
 
       return {
@@ -189,7 +188,7 @@ export class ImageProcessor {
 
   // Use centralized XMP generator implementation
   generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, aiFunctions?: any): string {
-    return generateXMPContentImpl(aiAdjustments, include, aiFunctions);
+    return generateXMPContentImpl(aiAdjustments, include);
   }
 
   generateLUTContent(

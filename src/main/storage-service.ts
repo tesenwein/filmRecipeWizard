@@ -222,10 +222,13 @@ export class StorageService {
                 : undefined,
         status: p.status,
       }));
-      // Normalize entries (backfill missing ids or timestamps)
+      // Normalize entries (backfill missing ids or timestamps) and trigger a one-time
+      // re-save if new fields (description, maskOverrides) were present so they're persisted.
       let changed = false;
       const nowIso = new Date().toISOString();
-      for (const rec of history) {
+      for (let i = 0; i < history.length; i++) {
+        const rec = history[i];
+        const src = raw[i] || {};
         if (!rec.id || typeof rec.id !== 'string' || rec.id.trim().length === 0) {
           rec.id = this.generateProcessId();
           changed = true;
@@ -236,6 +239,12 @@ export class StorageService {
         }
         if (!rec.status) {
           rec.status = 'completed';
+          changed = true;
+        }
+        // If the source JSON already has description or maskOverrides, ensure we re-save once
+        // to persist them with the updated mapping going forward.
+        if ((typeof src.description === 'string' && src.description.trim().length > 0) ||
+            (Array.isArray(src.maskOverrides) && src.maskOverrides.length >= 0)) {
           changed = true;
         }
       }
