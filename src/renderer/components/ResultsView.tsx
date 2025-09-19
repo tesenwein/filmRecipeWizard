@@ -33,7 +33,7 @@ import {
   Typography,
 } from '@mui/material';
 // Subcomponents
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -181,6 +181,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [activeTab, setActiveTab] = useState(0);
   const [selectedResult, setSelectedResult] = useState(0);
   const [isReprocessing, setIsReprocessing] = useState(false);
+  const [expectGenerating, setExpectGenerating] = useState(false);
+  const subscribedRef = useRef(false);
 
   // LUT export state
   const [lutSize, setLutSize] = useState<'17' | '33' | '65'>('33');
@@ -400,12 +402,25 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // Clear reprocessing indicator when recipe status flips away from 'generating'
   const { recipes } = useAppStore();
   useEffect(() => {
-    if (!isReprocessing || !processId) return;
+    if (!isReprocessing || !processId || !expectGenerating) return;
     const rec = recipes.find(r => r.id === processId);
     if (rec && rec.status && rec.status !== 'generating') {
       setIsReprocessing(false);
+      setExpectGenerating(false);
     }
   }, [recipes, isReprocessing, processId]);
+
+  // Fallback: clear indicator when processing completes event fires (regardless of status toggling)
+  useEffect(() => {
+    if (subscribedRef.current) return;
+    subscribedRef.current = true;
+    try {
+      window.electronAPI.onProcessingComplete?.(() => {
+        setIsReprocessing(false);
+        setExpectGenerating(false);
+      });
+    } catch { /* ignore */ }
+  }, []);
 
   // Reset export options when aiFunctions changes
   useEffect(() => {
@@ -479,12 +494,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     // Apply userOptions modifications if they exist
     if (processOptions) {
       // Map userOptions to aiAdjustments properties
+      if (typeof (processOptions as any).temperatureK === 'number') {
+        const k = Math.max(2000, Math.min(50000, Number((processOptions as any).temperatureK)));
+        (effectiveAdjustments as any).temperature = Math.round(k);
+      } else if (typeof processOptions.warmth === 'number') {
       if (typeof processOptions.warmth === 'number') {
         // Convert warmth (-100 to 100) to temperature (2000K to 50000K)
         // warmth 0 = 6500K (neutral), warmth 100 = warmer (lower K), warmth -100 = cooler (higher K)
         const baseTemp = 6500;
         const tempRange = 3500; // Allow ±3500K range
         effectiveAdjustments.temperature = Math.round(baseTemp - (processOptions.warmth * tempRange / 100));
+      }
       }
 
       if (typeof processOptions.tint === 'number') {
@@ -1151,9 +1171,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                             // Optionally show generating state in gallery
                             try {
-                              if (settings?.reprocessShowsGenerating !== false) {
+                              const showGen = settings?.reprocessShowsGenerating !== false;
+                              if (showGen) {
                                 setGeneratingStatus(processId, true);
                               }
+                              setExpectGenerating(!!showGen);
                               // Always show local reprocessing indicator in this view
                               setIsReprocessing(true);
                             } catch { /* ignore */ }

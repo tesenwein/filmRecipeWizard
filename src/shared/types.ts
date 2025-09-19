@@ -22,6 +22,8 @@ export interface StyleOptions {
   // 0-100 sliders; neutral around 50
   warmth?: number;
   tint?: number; // -50..50 where 0 is neutral; UI can map 0-100
+  // Optional direct Kelvin override for white balance; takes precedence over warmth when provided
+  temperatureK?: number; // 2000..50000
   contrast?: number;
   vibrance?: number;
   saturationBias?: number;

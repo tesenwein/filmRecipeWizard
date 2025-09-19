@@ -36,6 +36,8 @@ export class ChatHandlers {
                             message: z.string().describe('Explanation of the changes made'),
                             modifications: z.object({
                                 userOptions: z.object({
+                                    // Direct Kelvin override supported (2000..50000)
+                                    temperatureK: z.number().min(2000).max(50000).optional(),
                                     warmth: z.number().min(-100).max(100).optional(),
                                     tint: z.number().min(-100).max(100).optional(),
                                     contrast: z.number().min(-100).max(100).optional(),
@@ -93,7 +95,8 @@ CRITICAL RESPONSE FORMAT:
 \n+Mask editing guidance:\n+- Prefer including a stable id for any mask you add; reuse that id when updating or removing.\n+- If id is omitted, removal/update will match by name when present, otherwise by type + subCategoryId + referenceX/referenceY.\n+- To clear all pending mask overrides, use op: 'remove_all' or 'clear' with no other fields.
 
 Available user options:
-- warmth: -100 to 100 (temperature adjustment)
+- temperatureK: 2000 to 50000 (Kelvin). Use this when the user specifies a value like "7500K".
+- warmth: -100 to 100 (temperature bias; positive=warmer i.e., lower Kelvin, negative=cooler)
 - tint: -100 to 100 (tint adjustment) 
 - contrast: -100 to 100 (contrast adjustment)
 - vibrance: -100 to 100 (vibrance adjustment)

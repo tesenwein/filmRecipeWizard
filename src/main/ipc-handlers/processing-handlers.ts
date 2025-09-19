@@ -167,7 +167,12 @@ export class ProcessingHandlers {
             optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
           }
           const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
-          // Only include temperature/tint hints if the option is enabled
+          // Temperature hints: direct Kelvin takes precedence, otherwise warmth/tint when enabled
+          if (typeof options.temperatureK === 'number') {
+            const k = Math.max(2000, Math.min(50000, Number(options.temperatureK)));
+            optionsHintParts.push(`Target White Balance Temperature: ${k} K`);
+          }
+          // Only include warmth/tint hints if the option is enabled
           if (options.aiFunctions?.temperatureTint) {
             if (options.warmth !== undefined) {
               const w = Math.max(0, Math.min(100, Number(options.warmth)));
