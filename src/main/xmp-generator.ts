@@ -109,7 +109,7 @@ export function generateXMPContent(
   const vibrance = round(clamp(scale(aiAdjustments.vibrance as any), -100, 100));
   const saturation = round(clamp(scale(aiAdjustments.saturation as any), -100, 100));
 
-  const sanitizeName = (n: string) => {
+  const _sanitizeName = (n: string) => {
     const sanitized = n
       .replace(/\b(image\s*match|imagematch|match|target|base)\b/gi, '')
       .replace(/\s{2,}/g, ' ')

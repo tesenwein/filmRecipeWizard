@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Paper, Typography, Chip, Stack, Divider, Tooltip } from '@mui/material';
+import { Box, Paper, Typography, Chip, Divider } from '@mui/material';
 import { StyleOptions, Recipe } from '../../shared/types';
 import type { AIColorAdjustments } from '../../services/types';
 
@@ -65,7 +65,7 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
     ? hasChange((recipe as any).description, (pendingModifications as any).description)
     : false;
 
-  const Row = ({ label, cur, next, isChanged }: { label: string; cur: React.ReactNode; next?: React.ReactNode; isChanged?: boolean }) => (
+  const Row = ({ label, cur, next, isChanged: _isChanged }: { label: string; cur: React.ReactNode; next?: React.ReactNode; isChanged?: boolean }) => (
     <Box sx={{ display: 'grid', gridTemplateColumns: showOnlyCurrent ? '1.2fr 1fr' : '1.2fr 1fr 1fr', alignItems: 'center', gap: 1, py: 0.75 }}>
       <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>{label}</Typography>
       <Box>{cur}</Box>

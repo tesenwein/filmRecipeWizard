@@ -9,9 +9,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HomeIcon from '@mui/icons-material/Home';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import MovieFilterIcon from '@mui/icons-material/MovieFilter';
 import PaletteIcon from '@mui/icons-material/Palette';
-import PersonIcon from '@mui/icons-material/Person';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -37,7 +35,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
-import AIFunctionsSelector from './AIFunctionsSelector';
+// import AIFunctionsSelector from './AIFunctionsSelector';
 import ConfirmDialog from './ConfirmDialog';
 import ImageSelectionChips from './results/ImageSelectionChips';
 import RecipeChat from './RecipeChat';
@@ -258,7 +256,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Description editing functions
   const startEditingDescription = (resultIndex: number) => {
-    const result = successfulResults[resultIndex];
+    const _result = successfulResults[resultIndex];
     const currentDescription = processDescription || '';
     setDescriptionInput(currentDescription);
     setEditingDescription(resultIndex);

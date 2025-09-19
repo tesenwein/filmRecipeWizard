@@ -179,7 +179,7 @@ export class StorageHandlers {
           try {
             const payload = { processId, updates };
             for (const win of BrowserWindow.getAllWindows()) {
-              try { win.webContents.send('process-updated', payload); } catch { }
+              try { win.webContents.send('process-updated', payload); } catch { /* ignore IPC send errors */ }
             }
           } catch {
             // Ignore IPC send errors
@@ -265,7 +265,7 @@ export class StorageHandlers {
             delete nextUo.warmth;
             nextUo.temperatureK = Math.max(2000, Math.min(50000, k));
             (process as any).userOptions = nextUo;
-            try { await this.storageService.updateProcess(processId, { userOptions: nextUo } as any); } catch { }
+            try { await this.storageService.updateProcess(processId, { userOptions: nextUo } as any); } catch { /* ignore update errors */ }
           }
         } catch { /* ignore */ }
         // Ensure canonical name exists: set from AI preset_name if absent
@@ -276,7 +276,7 @@ export class StorageHandlers {
             const aiName = first?.metadata?.aiAdjustments?.preset_name as string | undefined;
             if (aiName && aiName.trim().length > 0) {
               (process as any).name = aiName.trim();
-              try { await this.storageService.updateProcess(processId, { name: aiName.trim() } as any); } catch { }
+              try { await this.storageService.updateProcess(processId, { name: aiName.trim() } as any); } catch { /* ignore update errors */ }
             }
           }
         } catch { /* ignore */ }

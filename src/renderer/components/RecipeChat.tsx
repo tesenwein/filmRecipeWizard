@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Paper, TextField, Button, Typography, Avatar, IconButton, CircularProgress, Alert, Chip, Stack } from '@mui/material';
+import { Box, Paper, TextField, Button, Typography, Avatar, IconButton, CircularProgress, Alert, Stack } from '@mui/material';
 import {
     Send as SendIcon,
     SmartToy as BotIcon,
@@ -135,7 +135,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         };
     };
 
-    const recipeData = formatRecipeForDisplay(recipe);
+    const _recipeData = formatRecipeForDisplay(recipe);
     const latestAdjustments = (() => {
         try {
             const res = Array.isArray(recipe.results) ? recipe.results.filter(r => r && r.success) : [];

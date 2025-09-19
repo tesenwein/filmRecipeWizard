@@ -242,7 +242,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   ].join('');
 
   // Masks block (local adjustments)
-  const masksBlock = Array.isArray(adjustments.masks) && adjustments.masks.length > 0 ? (() => {
+  const _masksBlock = Array.isArray(adjustments.masks) && adjustments.masks.length > 0 ? (() => {
     const maskCorrections = adjustments.masks.map((mask: any, index: number) => {
       const maskName = mask.name || `Mask ${index + 1}`;
       const maskType = mask.type || 'radial';

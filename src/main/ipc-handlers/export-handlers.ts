@@ -295,7 +295,7 @@ export class ExportHandlers {
     });
 
     // Export camera profile (generate from adjustments and save)
-    ipcMain.handle('export-profile', async (_event, data: { adjustments: any; recipeIndex?: number }) => {
+    ipcMain.handle('export-profile', async (_event, data: { adjustments: any; recipeIndex?: number; recipeName?: string }) => {
       try {
         // First generate the camera profile XMP content
         const profileResult = await this.imageProcessor.generateCameraProfile(data);

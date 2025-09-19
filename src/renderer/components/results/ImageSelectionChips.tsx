@@ -13,7 +13,7 @@ const ImageSelectionChips: React.FC<ImageSelectionChipsProps> = ({
   successfulResults,
   selectedResult,
   setSelectedResult,
-  processOptions,
+  processOptions: _processOptions,
 }) => {
   return (
     <Box sx={{ p: 3, pb: 2, borderBottom: 1, borderColor: 'divider' }}>

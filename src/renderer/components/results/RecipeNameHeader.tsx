@@ -17,9 +17,9 @@ interface RecipeNameHeaderProps {
 
 const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
   processId,
-  successfulResults,
-  selectedResult,
-  processOptions,
+  successfulResults: _successfulResults,
+  selectedResult: _selectedResult,
+  processOptions: _processOptions,
   displayNameOverride,
 }) => {
   const { showError } = useAlert();
