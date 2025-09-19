@@ -43,17 +43,17 @@ const XMPImportDialog: React.FC<XMPImportDialogProps> = ({ open, onClose, onImpo
       if (files && files.length > 0) {
         const selectedFile = files[0];
         setFilePath(selectedFile);
-        
+
         // Read file content
         const content = await window.electronAPI.readFile(selectedFile);
         setFileContent(content);
-        
+
         // Auto-fill title from filename
         const fileName = selectedFile.split('/').pop() || '';
         const nameWithoutExt = fileName.replace(/\.xmp$/i, '');
         setTitle(nameWithoutExt);
       }
-    } catch (error) {
+    } catch {
       showError('Failed to select file');
     }
   };
@@ -78,7 +78,7 @@ const XMPImportDialog: React.FC<XMPImportDialogProps> = ({ open, onClose, onImpo
         description: description.trim() || undefined,
       });
       handleClose();
-    } catch (error) {
+    } catch {
       showError('Failed to import XMP preset');
     } finally {
       setIsImporting(false);
@@ -95,8 +95,8 @@ const XMPImportDialog: React.FC<XMPImportDialogProps> = ({ open, onClose, onImpo
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
@@ -123,12 +123,12 @@ const XMPImportDialog: React.FC<XMPImportDialogProps> = ({ open, onClose, onImpo
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
               XMP File
             </Typography>
-            <Paper 
-              variant="outlined" 
-              sx={{ 
-                p: 2, 
-                display: 'flex', 
-                alignItems: 'center', 
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
                 cursor: 'pointer',
                 '&:hover': { backgroundColor: 'action.hover' }
@@ -180,9 +180,9 @@ const XMPImportDialog: React.FC<XMPImportDialogProps> = ({ open, onClose, onImpo
         <Button onClick={handleClose} disabled={isImporting}>
           Cancel
         </Button>
-        <Button 
-          onClick={handleImport} 
-          variant="contained" 
+        <Button
+          onClick={handleImport}
+          variant="contained"
           disabled={isImporting || !filePath || !title.trim()}
           sx={{ minWidth: 100 }}
         >

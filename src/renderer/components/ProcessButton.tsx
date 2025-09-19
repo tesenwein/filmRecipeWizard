@@ -1,5 +1,5 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Button } from '@mui/material';
 import React from 'react';
 
 interface ProcessButtonProps {

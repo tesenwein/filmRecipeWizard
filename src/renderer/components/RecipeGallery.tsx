@@ -58,7 +58,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDetails, setErrorDetails] = useState('');
-  const [isDragOver, setIsDragOver] = useState(false);
   const [xmpImportDialogOpen, setXmpImportDialogOpen] = useState(false);
   const { showSuccess, showError } = useAlert();
 

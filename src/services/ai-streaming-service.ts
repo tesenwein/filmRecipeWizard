@@ -53,7 +53,6 @@ export class AIStreamingService {
 
             // Use AI SDK v5 generateText for non-streaming API calls
             // Set the API key as environment variable for this call
-            const originalApiKey = process.env.OPENAI_API_KEY;
             process.env.OPENAI_API_KEY = this.apiKey;
             const result = await generateText({
                 model: openai(this.model),

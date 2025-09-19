@@ -15,21 +15,21 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Avatar,
-    Box,
-    Button,
-    Chip,
-    Divider,
-    IconButton,
-    Paper,
-    Slider,
-    Tab,
-    Tabs,
-    TextField,
-    Typography,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  Divider,
+  IconButton,
+  Paper,
+  Slider,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
 } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useState } from 'react';
@@ -167,7 +167,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
   const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
-  
+
   // Description editing state
   const [editingDescription, setEditingDescription] = useState<number | null>(null);
   const [descriptionInput, setDescriptionInput] = useState<string>('');
@@ -261,10 +261,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     setDescriptionInput('');
   };
 
-  const saveDescription = async (resultIndex: number) => {
+  const saveDescription = async (_resultIndex: number) => {
     try {
       if (!processId) return;
-      
+
       const newDescription = descriptionInput.trim();
       if (!newDescription) {
         cancelEditingDescription();
@@ -272,10 +272,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       }
 
       // Update the recipe in storage
-      await useAppStore.getState().updateRecipeInStorage(processId, { 
-        description: newDescription 
+      await useAppStore.getState().updateRecipeInStorage(processId, {
+        description: newDescription
       } as any);
-      
+
       setEditingDescription(null);
       setDescriptionInput('');
     } catch (e) {
@@ -341,7 +341,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           window.electronAPI.getImageDataUrls(processId),
           window.electronAPI.getProcess(processId),
         ]);
-        
+
         // Handle image data response - even if process not found, we get empty arrays
         if (imgResponse.success) {
           setBaseImageUrls(
@@ -352,7 +352,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           console.warn('[RESULTS] Failed to load image data URLs:', imgResponse.error);
           setBaseImageUrls([]);
         }
-        
+
         // Handle process data response
         if (processResponse.success && processResponse.process) {
           setProcessPrompt(processResponse.process.prompt);
@@ -384,20 +384,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Generate default options based on aiFunctions
   const getDefaultOptions = () =>
-    ({
-      wbBasic: aiFunctions?.temperatureTint ?? true,
-      exposure: true, // Enable by default
-      hsl: aiFunctions?.hsl ?? true,
-      colorGrading: aiFunctions?.colorGrading ?? true,
-      curves: aiFunctions?.curves ?? true,
-      sharpenNoise: true, // Enable by default
-      vignette: true, // Enable by default
-      pointColor: aiFunctions?.pointColor ?? true,
-      grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
-      masks: aiFunctions?.masks ?? true,
-      // Start export strength at 50%
-      strength: 0.5,
-    } as const);
+  ({
+    wbBasic: aiFunctions?.temperatureTint ?? true,
+    exposure: true, // Enable by default
+    hsl: aiFunctions?.hsl ?? true,
+    colorGrading: aiFunctions?.colorGrading ?? true,
+    curves: aiFunctions?.curves ?? true,
+    sharpenNoise: true, // Enable by default
+    vignette: true, // Enable by default
+    pointColor: aiFunctions?.pointColor ?? true,
+    grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
+    masks: aiFunctions?.masks ?? true,
+    // Start export strength at 50%
+    strength: 0.5,
+  } as const);
 
   const defaultOptions = getDefaultOptions();
 
@@ -586,8 +586,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               Description
                             </Typography>
                             {editingDescription !== selectedResult && (
-                              <IconButton 
-                                size="small" 
+                              <IconButton
+                                size="small"
                                 onClick={() => startEditingDescription(selectedResult)}
                                 title="Edit description"
                               >
@@ -595,7 +595,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               </IconButton>
                             )}
                           </Box>
-                          
+
                           {editingDescription === selectedResult ? (
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                               <TextField
@@ -619,15 +619,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 }}
                               />
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   onClick={() => saveDescription(selectedResult)}
                                   title="Save description"
                                 >
                                   <CheckIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   onClick={cancelEditingDescription}
                                   title="Cancel editing"
                                 >
@@ -1311,7 +1311,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         <AccordionDetails>
                           <AIFunctionsSelector
                             styleOptions={{ aiFunctions }}
-                            onStyleOptionsChange={() => {}} // Read-only in results view
+                            onStyleOptionsChange={() => { }} // Read-only in results view
                           />
                         </AccordionDetails>
                       </Accordion>

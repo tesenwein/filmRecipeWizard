@@ -1,6 +1,6 @@
 import { dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
-import { ExportResult, ImportResult } from '../../shared/types';
+import { ExportResult } from '../../shared/types';
 import { ImageProcessor } from '../image-processor';
 import { StorageService } from '../storage-service';
 import { generateXMPContent } from '../xmp-generator';
