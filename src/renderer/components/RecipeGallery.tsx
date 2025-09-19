@@ -6,23 +6,23 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-    Button,
-    Card,
-    CardActionArea,
-    CardContent,
-    FormControl,
-    Grid,
-    IconButton,
-    InputAdornment,
-    InputLabel,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-    Select,
-    Stack,
-    TextField,
-    Typography,
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  FormControl,
+  Grid,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
 } from '@mui/material';
 import React, { useMemo, useState } from 'react';
 import { Recipe } from '../../shared/types';
@@ -228,7 +228,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     const xmpFiles = files.filter(file => file.name.toLowerCase().endsWith('.xmp'));
-    
+
     if (xmpFiles.length > 0) {
       try {
         for (const file of xmpFiles) {
@@ -277,7 +277,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   }
 
   return (
-    <div 
+    <div
       className="container"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
@@ -568,15 +568,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             <DownloadIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Export Recipe</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => {
-          handleMenuClose();
-          setXmpImportDialogOpen(true);
-        }}>
-          <ListItemIcon>
-            <AddBoxIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Import XMP</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDeleteRecipe} sx={{ color: 'error.main' }}>
           <ListItemIcon>
