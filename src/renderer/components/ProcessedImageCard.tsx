@@ -356,10 +356,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                 </Typography>
                 <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Temperature</span>
-                    <strong>{Math.round(result.metadata.aiAdjustments.temperature || 0)} K</strong>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Tint</span>
                     <strong>{Math.round(result.metadata.aiAdjustments.tint || 0)}</strong>
                   </Box>

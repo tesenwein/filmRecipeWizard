@@ -158,8 +158,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
           <Divider sx={{ my: 1 }} />
           <Row label="Treatment" cur={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} next={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Temperature (K)" cur={<ValueChip label={`${fmtNum(aiAdjustments.temperature)} K`} />} next={<ValueChip label={`${fmtNum(aiAdjustments.temperature)} K`} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
           <Row label="Tint" cur={<ValueChip label={fmtNum(aiAdjustments.tint)} />} next={<ValueChip label={fmtNum(aiAdjustments.tint)} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />
           <Row label="Exposure" cur={<ValueChip label={fmtNum(aiAdjustments.exposure)} />} next={<ValueChip label={fmtNum(aiAdjustments.exposure)} />} isChanged={false} />

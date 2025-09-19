@@ -499,6 +499,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     // Start with a copy of the original adjustments
     const effectiveAdjustments = { ...originalAdjustments };
 
+
     // Apply userOptions modifications if they exist
     if (processOptions) {
       // Map userOptions to aiAdjustments properties
@@ -577,10 +578,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
     const adjustments = getEffectiveAdjustments(result);
     if (!adjustments) return;
+
+
     try {
       const res = await window.electronAPI.downloadXMP({
         adjustments,
         include: getOptions(index),
+        recipeName: processName,
       });
       if (!res.success) {
         showError(`Export failed: ${res.error}`);
@@ -622,6 +626,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const res = await (window.electronAPI as any).exportProfile({
         adjustments,
         recipeIndex: index,
+        recipeName: processName,
       });
 
       if (res?.success) {

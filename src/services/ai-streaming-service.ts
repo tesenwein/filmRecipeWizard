@@ -126,9 +126,11 @@ export class AIStreamingService {
             }
 
             // Ensure preset name is always present
-            if (!finalResult.preset_name || finalResult.preset_name.trim().length === 0) {
-                console.log('[AI] No preset name found, applying fallback name');
+            if (!finalResult.preset_name || finalResult.preset_name.trim().length === 0 || finalResult.preset_name === 'Custom Recipe') {
+                console.log('[AI] No preset name found or using fallback, applying fallback name');
                 finalResult.preset_name = 'Custom Recipe';
+            } else {
+                console.log('[AI] Generated preset name:', finalResult.preset_name);
             }
 
             const ensuredProfile = this.normalizeCameraProfileName(finalResult.camera_profile) || this.autoSelectProfileFromResult(finalResult);

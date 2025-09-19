@@ -83,7 +83,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
     if (!processId) return;
     const newName = (input || '').trim();
     if (!newName) {
-      cancelEditing();
+      showError('Recipe name cannot be empty');
       return;
     }
     try {
@@ -108,11 +108,15 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
             fullWidth
             value={input}
             autoFocus
+            error={!input.trim()}
+            helperText={!input.trim() ? 'Recipe name is required' : ''}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                save();
+                if (input.trim()) {
+                  save();
+                }
               } else if (e.key === 'Escape') {
                 e.preventDefault();
                 cancelEditing();
@@ -125,7 +129,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
               size="small"
               aria-label="Save name"
               onClick={save}
-              disabled={saving}
+              disabled={saving || !input.trim()}
               title="Save name"
             >
               <CheckIcon fontSize="small" />

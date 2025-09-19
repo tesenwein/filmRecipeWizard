@@ -52,6 +52,7 @@ declare global {
       exportProfile: (data: {
         adjustments: any;
         recipeIndex?: number;
+        recipeName?: string;
       }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
 
       // Recipe import/export

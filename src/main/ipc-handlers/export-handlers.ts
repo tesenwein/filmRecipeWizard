@@ -34,23 +34,15 @@ export class ExportHandlers {
         const xmpContent = generateXMPContent(data.adjustments, include);
 
         // Show save dialog
-        // Derive a friendly filename from AI if present
-        const sanitizeName = (n: string) => {
-          const sanitized = n
-            .replace(/\b(image\s*match|imagematch|match|target|base)\b/gi, '')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-          // If sanitization removed everything, return the original name
-          return sanitized.length > 0 ? sanitized : n.trim();
-        };
-        const rawName = (data?.adjustments?.preset_name as string | undefined) || 'Custom Recipe';
-        const clean = sanitizeName(rawName);
-        const baseName = clean
+        // Use recipe name if AI generated "Custom Recipe"
+        const aiPresetName = (data?.adjustments?.preset_name as string | undefined);
+        const recipeName = (data?.recipeName as string | undefined);
+        const presetName = (aiPresetName && aiPresetName !== 'Custom Recipe') ? aiPresetName : (recipeName || 'Custom Recipe');
+        const safeName = presetName
           .replace(/[^A-Za-z0-9 _-]+/g, '')
           .replace(/\s+/g, ' ')
           .trim()
           .replace(/\s/g, '-');
-        const safeName = `${baseName}-Preset`;
         const result = await dialog.showSaveDialog({
           title: 'Save XMP Preset',
           defaultPath: `${safeName}.xmp`,
@@ -307,8 +299,11 @@ export class ExportHandlers {
 
         // Show save dialog
         const { dialog } = require('electron');
-        const profileName = data.adjustments?.preset_name || 'Camera Profile';
-        const safeName = profileName
+        // Use recipe name if AI generated "Custom Recipe"
+        const aiPresetName = (data.adjustments?.preset_name as string | undefined);
+        const recipeName = (data?.recipeName as string | undefined);
+        const presetName = (aiPresetName && aiPresetName !== 'Custom Recipe') ? aiPresetName : (recipeName || 'Camera Profile');
+        const safeName = presetName
           .replace(/[^A-Za-z0-9 _-]+/g, '')
           .replace(/\s+/g, ' ')
           .trim()
