@@ -689,7 +689,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             successfulResults={successfulResults}
             selectedResult={selectedResult}
             processOptions={processOptions}
-            displayNameOverride={processName}
+            onNameChange={(n) => {
+              try { setProcessName(n); } catch { /* noop */ }
+            }}
           />
 
           <Tabs

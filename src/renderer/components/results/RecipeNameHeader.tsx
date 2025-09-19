@@ -13,6 +13,7 @@ interface RecipeNameHeaderProps {
   selectedResult: number;
   processOptions?: any;
   displayNameOverride?: string;
+  onNameChange?: (name: string) => void;
 }
 
 const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
@@ -21,6 +22,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
   selectedResult: _selectedResult,
   processOptions: _processOptions,
   displayNameOverride,
+  onNameChange,
 }) => {
   const { showError } = useAlert();
   const [savedName, setSavedName] = useState<string | undefined>(undefined);
@@ -82,6 +84,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
       setSaving(true);
       await useAppStore.getState().updateRecipeInStorage(processId, { name: newName } as any);
       setSavedName(newName);
+      try { onNameChange?.(newName); } catch { /* noop */ }
       setEditing(false);
     } catch (e) {
       console.error('Failed to save recipe name:', e);
