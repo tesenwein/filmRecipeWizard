@@ -149,8 +149,8 @@ export class ExportHandlers {
             } as any;
 
             const xmp = generateXMPContent(adj as any, include);
-            const name = (adj as any)?.preset_name as string | undefined;
-            const safePreset = (name || 'Custom Recipe')
+            const baseName = (process.name || 'Recipe') + (results.length > 1 ? `-${idx + 1}` : '');
+            const safePreset = baseName
               .replace(/[^A-Za-z0-9 _-]+/g, '')
               .replace(/\s+/g, ' ')
               .trim()
@@ -251,8 +251,8 @@ export class ExportHandlers {
                 masks: false,
               } as any;
               const xmp = generateXMPContent(adj as any, include);
-              const name = (adj as any)?.preset_name as string | undefined;
-              const safePreset = (name || 'Custom Recipe')
+              const baseName = (recipe.name || 'Recipe') + (results.length > 1 ? `-${idx + 1}` : '');
+              const safePreset = baseName
                 .replace(/[^A-Za-z0-9 _-]+/g, '')
                 .replace(/\s+/g, ' ')
                 .trim()
