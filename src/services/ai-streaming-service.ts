@@ -1,7 +1,8 @@
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
-import { getAllMaskTypes, getMaskTypesByCategory, normalizeMaskType, getMaskConfig } from '../shared/mask-types';
+import { getMaskTypesByCategory, normalizeMaskType, getMaskConfig } from '../shared/mask-types';
+import { AIFunctionToggles, buildBaseAdjustmentsSchema, createStreamingMaskSchema, getDefaultAIFunctionToggles } from './ai-shared';
 import { AIColorAdjustments } from './types';
 
 export interface StreamingUpdate {
@@ -260,188 +261,18 @@ Provide detailed reasoning for each adjustment to help the user understand the c
     }
 
     private createTools(options?: StreamingOptions) {
-        const aiFunctions = options?.aiFunctions || {
-            temperatureTint: true,
-            colorGrading: true,
-            hsl: true,
-            curves: true,
-            masks: true,
-            grain: false,
-            pointColor: true,
-        };
+        const aiFunctions: AIFunctionToggles = options?.aiFunctions || getDefaultAIFunctionToggles();
 
         // Build base schema using Zod
-        let baseSchema = z.object({
-            preset_name: z.string().describe('Short, friendly preset name to use for XMP and recipe title'),
-            description: z.string().describe('Short, engaging description of the recipe style and mood (1-2 sentences)'),
-            treatment: z.enum(['color', 'black_and_white']).describe("Overall treatment for the target image"),
-            camera_profile: z.string().optional().describe("Preferred camera profile (e.g., 'Adobe Color', 'Adobe Monochrome')"),
-            monochrome: z.boolean().optional().describe('Convert to black and white'),
-            confidence: z.number().min(0).max(1).describe('Confidence in the analysis (0.0 to 1.0)'),
-
-            exposure: z.number().min(-5).max(5).optional().describe('Exposure adjustment in stops (-5.0 to +5.0)'),
-            highlights: z.number().min(-100).max(100).optional().describe('Highlights recovery (-100 to +100)'),
-            shadows: z.number().min(-100).max(100).optional().describe('Shadows lift (-100 to +100)'),
-            whites: z.number().min(-100).max(100).optional().describe('Whites adjustment (-100 to +100)'),
-            blacks: z.number().min(-100).max(100).optional().describe('Blacks adjustment (-100 to +100)'),
-            brightness: z.number().min(-100).max(100).optional().describe('Brightness adjustment (-100 to +100)'),
-            contrast: z.number().min(-100).max(100).optional().describe('Contrast adjustment (-100 to +100)'),
-            clarity: z.number().min(-100).max(100).optional().describe('Clarity adjustment (-100 to +100)'),
-            vibrance: z.number().min(-100).max(100).optional().describe('Vibrance adjustment (-100 to +100)'),
-            saturation: z.number().min(-100).max(100).optional().describe('Saturation adjustment (-100 to +100)'),
-        });
+        let baseSchema = buildBaseAdjustmentsSchema(aiFunctions);
 
         // Add conditional properties based on enabled functions
-        if (aiFunctions.temperatureTint) {
-            baseSchema = baseSchema.extend({
-                temperature: z.number().min(2000).max(50000).optional().describe('White balance temperature in Kelvin (2000 to 50000)'),
-                tint: z.number().min(-150).max(150).optional().describe('White balance tint (-150 to +150, negative=green, positive=magenta)'),
-            });
-        }
-
-        if (aiFunctions.colorGrading) {
-            baseSchema = baseSchema.extend({
-                color_grade_shadow_hue: z.number().min(0).max(360).optional(),
-                color_grade_shadow_sat: z.number().min(0).max(100).optional(),
-                color_grade_shadow_lum: z.number().min(-100).max(100).optional(),
-                color_grade_midtone_hue: z.number().min(0).max(360).optional(),
-                color_grade_midtone_sat: z.number().min(0).max(100).optional(),
-                color_grade_midtone_lum: z.number().min(-100).max(100).optional(),
-                color_grade_highlight_hue: z.number().min(0).max(360).optional(),
-                color_grade_highlight_sat: z.number().min(0).max(100).optional(),
-                color_grade_highlight_lum: z.number().min(-100).max(100).optional(),
-            });
-        }
-
-        if (aiFunctions.hsl) {
-            baseSchema = baseSchema.extend({
-                hue_red: z.number().min(-100).max(100).optional(),
-                hue_orange: z.number().min(-100).max(100).optional(),
-                hue_yellow: z.number().min(-100).max(100).optional(),
-                hue_green: z.number().min(-100).max(100).optional(),
-                hue_aqua: z.number().min(-100).max(100).optional(),
-                hue_blue: z.number().min(-100).max(100).optional(),
-                hue_purple: z.number().min(-100).max(100).optional(),
-                hue_magenta: z.number().min(-100).max(100).optional(),
-                sat_red: z.number().min(-100).max(100).optional(),
-                sat_orange: z.number().min(-100).max(100).optional(),
-                sat_yellow: z.number().min(-100).max(100).optional(),
-                sat_green: z.number().min(-100).max(100).optional(),
-                sat_aqua: z.number().min(-100).max(100).optional(),
-                sat_blue: z.number().min(-100).max(100).optional(),
-                sat_purple: z.number().min(-100).max(100).optional(),
-                sat_magenta: z.number().min(-100).max(100).optional(),
-                lum_red: z.number().min(-100).max(100).optional(),
-                lum_orange: z.number().min(-100).max(100).optional(),
-                lum_yellow: z.number().min(-100).max(100).optional(),
-                lum_green: z.number().min(-100).max(100).optional(),
-                lum_aqua: z.number().min(-100).max(100).optional(),
-                lum_blue: z.number().min(-100).max(100).optional(),
-                lum_purple: z.number().min(-100).max(100).optional(),
-                lum_magenta: z.number().min(-100).max(100).optional(),
-            });
-        }
-
-        if (aiFunctions.grain) {
-            baseSchema = baseSchema.extend({
-                grain_amount: z.number().min(0).max(100).optional(),
-                grain_size: z.number().min(0).max(100).optional(),
-                grain_frequency: z.number().min(0).max(100).optional(),
-            });
-        }
-
-        if (aiFunctions.curves) {
-            const curvePoint = z.object({
-                input: z.number(),
-                output: z.number(),
-            });
-            const curveArray = z.array(curvePoint);
-
-            baseSchema = baseSchema.extend({
-                tone_curve: curveArray.optional(),
-                tone_curve_red: curveArray.optional(),
-                tone_curve_green: curveArray.optional(),
-                tone_curve_blue: curveArray.optional(),
-            });
-        }
-
-        if (aiFunctions.pointColor) {
-            baseSchema = baseSchema.extend({
-                point_colors: z.array(z.array(z.number())).optional().describe('Point color adjustments as arrays of RGB values'),
-                color_variance: z.array(z.number()).optional().describe('Color variance adjustments for point colors'),
-            });
-        }
-
-        // Add Black & White Mix properties
-        baseSchema = baseSchema.extend({
-            gray_red: z.number().min(-100).max(100).optional(),
-            gray_orange: z.number().min(-100).max(100).optional(),
-            gray_yellow: z.number().min(-100).max(100).optional(),
-            gray_green: z.number().min(-100).max(100).optional(),
-            gray_aqua: z.number().min(-100).max(100).optional(),
-            gray_blue: z.number().min(-100).max(100).optional(),
-            gray_purple: z.number().min(-100).max(100).optional(),
-            gray_magenta: z.number().min(-100).max(100).optional(),
-        });
+        // base schema now built via shared helper
 
         // Add masks if enabled
         if (aiFunctions.masks) {
-            const localAdjustmentsSchema = z.object({
-                local_exposure: z.number().min(-1).max(1).optional(),
-                local_contrast: z.number().min(-1).max(1).optional(),
-                local_highlights: z.number().min(-1).max(1).optional(),
-                local_shadows: z.number().min(-1).max(1).optional(),
-                local_whites: z.number().min(-1).max(1).optional(),
-                local_blacks: z.number().min(-1).max(1).optional(),
-                local_clarity: z.number().min(-1).max(1).optional(),
-                local_dehaze: z.number().min(-1).max(1).optional(),
-                local_texture: z.number().min(-1).max(1).optional(),
-                local_saturation: z.number().min(-1).max(1).optional(),
-            });
-
-            const maskSchema = z.object({
-                name: z.string().optional(),
-                type: z.enum(getAllMaskTypes() as [string, ...string[]]),
-                adjustments: localAdjustmentsSchema.optional(),
-                // Optional sub-category for background masks and other AI masks
-                subCategoryId: z.number().optional().describe('For background masks, use 22 for general background detection. For person masks: 1=face, 2=eye, 3=skin, 4=hair, 5=clothing, 6=person'),
-                // Radial geometry
-                top: z.number().min(0).max(1).optional(),
-                left: z.number().min(0).max(1).optional(),
-                bottom: z.number().min(0).max(1).optional(),
-                right: z.number().min(0).max(1).optional(),
-                angle: z.number().optional(),
-                midpoint: z.number().min(0).max(100).optional(),
-                roundness: z.number().min(-100).max(100).optional(),
-                feather: z.number().min(0).max(100).optional(),
-                inverted: z.boolean().optional(),
-                flipped: z.boolean().optional(),
-                // Linear geometry
-                zeroX: z.number().min(0).max(1).optional(),
-                zeroY: z.number().min(0).max(1).optional(),
-                fullX: z.number().min(0).max(1).optional(),
-                fullY: z.number().min(0).max(1).optional(),
-                // Person/subject reference point
-                referenceX: z.number().min(0).max(1).optional(),
-                referenceY: z.number().min(0).max(1).optional(),
-                // Range mask parameters
-                colorAmount: z.number().min(0).max(1).optional(),
-                invert: z.boolean().optional(),
-                pointModels: z.array(z.array(z.number())).optional(),
-                lumRange: z.array(z.number()).optional(),
-                luminanceDepthSampleInfo: z.array(z.number()).optional(),
-                // Brush mask parameters
-                brushSize: z.number().min(0).max(100).optional(),
-                brushFlow: z.number().min(0).max(100).optional(),
-                brushDensity: z.number().min(0).max(100).optional(),
-                // AI mask specific parameters
-                confidence: z.number().min(0).max(1).optional(),
-                detectionQuality: z.number().min(0).max(1).optional(),
-            });
-
-            baseSchema = baseSchema.extend({
-                masks: z.array(maskSchema).max(3).optional(),
-            });
+            const maskSchema = createStreamingMaskSchema();
+            baseSchema = baseSchema.extend({ masks: z.array(maskSchema).max(3).optional() });
         }
 
         // Create tools using AI SDK v5's tool function with Zod schemas

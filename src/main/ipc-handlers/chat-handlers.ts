@@ -2,6 +2,7 @@ import { ipcMain } from 'electron';
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
+import { getDefaultAIFunctionToggles, maskAdjustmentsSchemaChat, maskEditSchemaChat } from '../../services/ai-shared';
 import { SettingsService } from '../settings-service';
 
 export class ChatHandlers {
@@ -25,36 +26,8 @@ export class ChatHandlers {
 
                 // Create tools for recipe modification
                 // Reuse mask structure similar to AIStreamingService for consistency
-                const maskAdjustmentsSchema = z.object({
-                    local_exposure: z.number().min(-5).max(5).optional(),
-                    local_contrast: z.number().min(-100).max(100).optional(),
-                    local_highlights: z.number().min(-100).max(100).optional(),
-                    local_shadows: z.number().min(-100).max(100).optional(),
-                    local_whites: z.number().min(-100).max(100).optional(),
-                    local_blacks: z.number().min(-100).max(100).optional(),
-                    local_clarity: z.number().min(-100).max(100).optional(),
-                    local_dehaze: z.number().min(-100).max(100).optional(),
-                    local_temperature: z.number().min(-15000).max(15000).optional(),
-                    local_tint: z.number().min(-150).max(150).optional(),
-                    local_texture: z.number().min(-100).max(100).optional(),
-                    local_saturation: z.number().min(-100).max(100).optional(),
-                }).partial();
-
-                const maskEditSchema = z.object({
-                    op: z.enum(['add', 'update', 'remove']).optional(),
-                    name: z.string().optional(),
-                    type: z.enum([
-                        'radial', 'linear', 'person', 'subject', 'background', 'sky', 'range_color', 'range_luminance', 'brush', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object'
-                    ]).optional(),
-                    subCategoryId: z.number().optional(),
-                    adjustments: maskAdjustmentsSchema.optional(),
-                    // Geometry / reference fields
-                    top: z.number().optional(), left: z.number().optional(), bottom: z.number().optional(), right: z.number().optional(),
-                    angle: z.number().optional(), midpoint: z.number().optional(), roundness: z.number().optional(), feather: z.number().optional(),
-                    inverted: z.boolean().optional(), flipped: z.boolean().optional(),
-                    zeroX: z.number().optional(), zeroY: z.number().optional(), fullX: z.number().optional(), fullY: z.number().optional(),
-                    referenceX: z.number().optional(), referenceY: z.number().optional(),
-                });
+                const maskAdjustmentsSchema = maskAdjustmentsSchemaChat;
+                const maskEditSchema = maskEditSchemaChat;
 
                 const tools = {
                     modify_recipe: tool({
@@ -71,15 +44,7 @@ export class ChatHandlers {
                                     saturationBias: z.number().min(-100).max(100).optional(),
                                     filmGrain: z.boolean().optional(),
                                     vibe: z.string().optional(),
-                                    aiFunctions: z.object({
-                                        temperatureTint: z.boolean().optional(),
-                                        masks: z.boolean().optional(),
-                                        colorGrading: z.boolean().optional(),
-                                        hsl: z.boolean().optional(),
-                                        curves: z.boolean().optional(),
-                                        grain: z.boolean().optional(),
-                                        pointColor: z.boolean().optional(),
-                                    }).optional(),
+                                    aiFunctions: z.object(Object.fromEntries(Object.keys(getDefaultAIFunctionToggles()).map(k => [k, z.boolean().optional()]))).optional(),
                                     artistStyle: z.object({
                                         key: z.string(),
                                         name: z.string(),
