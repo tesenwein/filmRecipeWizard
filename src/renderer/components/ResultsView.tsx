@@ -873,59 +873,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 </Paper>
                               </Box>
                             )}
-                            {processOptions && (
-                              <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                                  User Settings
-                                </Typography>
-                                <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
-                                  <Box
-                                    sx={{
-                                      display: 'grid',
-                                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                                      gap: 2,
-                                    }}
-                                  >
-                                    <Typography variant="body1">
-                                      <strong>Vibe:</strong> {processOptions.vibe || '—'}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <strong>Warmth:</strong> {processOptions.warmth ?? '—'}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <strong>Tint:</strong> {processOptions.tint ?? '—'}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <strong>Contrast:</strong> {processOptions.contrast ?? '—'}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <strong>Vibrance:</strong> {processOptions.vibrance ?? '—'}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <strong>Saturation Bias:</strong>{' '}
-                                      {processOptions.saturationBias ?? '—'}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <strong>Film Grain:</strong>{' '}
-                                      {processOptions.filmGrain ? 'On' : 'Off'}
-                                    </Typography>
-                                    {processOptions.artistStyle?.name && (
-                                      <Typography variant="body1">
-                                        <strong>Artist Style:</strong>{' '}
-                                        {processOptions.artistStyle.name}
-                                      </Typography>
-                                    )}
-                                    {processOptions.filmStyle?.name && (
-                                      <Typography variant="body1">
-                                        <strong>Film Stock:</strong> {processOptions.filmStyle.name}
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                </Paper>
-                              </Box>
-                            )}
                           </Box>
                         </AccordionDetails>
                       </Accordion>

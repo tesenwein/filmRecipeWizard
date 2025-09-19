@@ -142,7 +142,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         <Divider sx={{ my: 1 }} />
         <Row label="Vibrance" cur={<ValueChip label={fmtNum(current.vibrance)} />} next={<ValueChip label={fmtNum(proposed.vibrance)} color={hasChange(current.vibrance, proposed.vibrance) ? 'warning' : 'default'} />} isChanged={hasChange(current.vibrance, proposed.vibrance)} />
         <Divider sx={{ my: 1 }} />
-        <Divider sx={{ my: 1 }} />
         <Row label="Saturation Bias" cur={<ValueChip label={fmtNum(current.saturationBias)} />} next={<ValueChip label={fmtNum(proposed.saturationBias)} color={hasChange(current.saturationBias, proposed.saturationBias) ? 'warning' : 'default'} />} isChanged={hasChange(current.saturationBias, proposed.saturationBias)} />
       </Section>
 
