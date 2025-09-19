@@ -343,6 +343,15 @@ export class StorageService {
     await this.cleanupTempFiles();
   }
 
+  async deleteMultipleProcesses(processIds: string[]): Promise<void> {
+    const history = await this.loadRecipes();
+    const filteredHistory = history.filter(p => !processIds.includes(p.id));
+    await this.saveRecipes(filteredHistory);
+
+    // Clean up any temporary files (optional)
+    await this.cleanupTempFiles();
+  }
+
   async getProcess(processId: string): Promise<ProcessHistory | null> {
     const history = await this.loadRecipes();
     return history.find(p => p.id === processId) || null;

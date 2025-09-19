@@ -6,10 +6,12 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import {
+  Box,
   Button,
   Card,
   CardActionArea,
   CardContent,
+  Checkbox,
   FormControl,
   Grid,
   IconButton,
@@ -22,6 +24,7 @@ import {
   Select,
   Stack,
   TextField,
+  Toolbar,
   Typography,
 } from '@mui/material';
 import React, { useMemo, useState } from 'react';
@@ -44,6 +47,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     recipesLoading,
     generatingRecipes,
     deleteRecipe,
+    deleteMultipleRecipes,
     importRecipes,
     importXMP,
     exportRecipe,
@@ -55,10 +59,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [multiDeleteDialogOpen, setMultiDeleteDialogOpen] = useState(false);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDetails, setErrorDetails] = useState('');
   const [xmpImportDialogOpen, setXmpImportDialogOpen] = useState(false);
+  const [selectedRecipes, setSelectedRecipes] = useState<Set<string>>(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
   const { showSuccess, showError } = useAlert();
 
   // Recipes are loaded during splash screen, no need to load here
@@ -198,6 +205,56 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     setSelectedRecipeId(null);
   };
 
+  // Multi-selection handlers
+  const handleToggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    if (selectionMode) {
+      setSelectedRecipes(new Set());
+    }
+  };
+
+  const handleSelectRecipe = (recipeId: string) => {
+    const newSelected = new Set(selectedRecipes);
+    if (newSelected.has(recipeId)) {
+      newSelected.delete(recipeId);
+    } else {
+      newSelected.add(recipeId);
+    }
+    setSelectedRecipes(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRecipes.size === sortedRecipes.length) {
+      setSelectedRecipes(new Set());
+    } else {
+      setSelectedRecipes(new Set(sortedRecipes.map(r => r.id)));
+    }
+  };
+
+  const handleMultiDelete = () => {
+    if (selectedRecipes.size === 0) return;
+    setMultiDeleteDialogOpen(true);
+  };
+
+  const handleConfirmMultiDelete = async () => {
+    if (selectedRecipes.size === 0) return;
+    const count = selectedRecipes.size;
+    setMultiDeleteDialogOpen(false);
+    try {
+      await deleteMultipleRecipes(Array.from(selectedRecipes));
+      setSelectedRecipes(new Set());
+      setSelectionMode(false);
+      showSuccess(`Deleted ${count} recipes`);
+    } catch (error) {
+      console.error('Failed to delete recipes:', error);
+      showError('Failed to delete recipes');
+    }
+  };
+
+  const handleCancelMultiDelete = () => {
+    setMultiDeleteDialogOpen(false);
+  };
+
   const handleExportRecipe = async () => {
     if (!selectedRecipeId) return;
     handleMenuClose();
@@ -282,29 +339,22 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       onDrop={handleDrop}
       style={{ minHeight: '100vh' }}
     >
-      <Grid container alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Typography variant="h5" fontWeight={700}>
-            Your Recipes
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {sortedRecipes.length === recipes.length
-              ? `${recipes.length} recipes`
-              : `${sortedRecipes.length} of ${recipes.length} recipes`}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-            useFlexGap
-            sx={{
-              width: '100%',
-              alignItems: { xs: 'stretch', sm: 'center' },
-              justifyContent: { xs: 'flex-start', lg: 'flex-end' },
-              flexWrap: 'wrap',
-            }}
-          >
+      <Box sx={{ mb: 3 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          sx={{
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            p: 2,
+            boxShadow: 1,
+          }}
+        >
+          {/* Search and Sort Section */}
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flex: { sm: '1 1 auto' } }}>
             <TextField
               size="small"
               placeholder="Search recipes..."
@@ -318,19 +368,11 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                 ),
               }}
               sx={{
-                minWidth: { sm: 220 },
-                width: { xs: '100%', sm: 'auto' },
-                flex: { sm: '1 1 260px' },
+                minWidth: 200,
+                flex: '1 1 200px',
               }}
             />
-            <FormControl
-              size="small"
-              sx={{
-                minWidth: { sm: 150 },
-                width: { xs: '100%', sm: 'auto' },
-                flex: { sm: '0 0 160px' },
-              }}
-            >
+            <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Sort by</InputLabel>
               <Select
                 value={sortBy}
@@ -342,8 +384,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                 <MenuItem value="oldest">Oldest</MenuItem>
               </Select>
             </FormControl>
+          </Box>
+
+          {/* Action Buttons Section */}
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
             <Button
               variant="outlined"
+              size="small"
               onClick={async () => {
                 try {
                   const res = await importRecipes();
@@ -356,31 +403,29 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                       showSuccess('Import completed');
                     }
                   } else {
-                    // Show detailed error dialog
                     setErrorMessage('Failed to import recipes');
                     setErrorDetails(res.error || 'Unknown error occurred during import');
                     setErrorDialogOpen(true);
                   }
                 } catch (error) {
-                  // Show detailed error dialog for unexpected errors
                   setErrorMessage('Import failed unexpectedly');
                   setErrorDetails(error instanceof Error ? error.message : 'An unexpected error occurred');
                   setErrorDialogOpen(true);
                 }
               }}
-              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
             >
-              Import Recipe
+              Import
             </Button>
             <Button
               variant="outlined"
+              size="small"
               onClick={() => setXmpImportDialogOpen(true)}
-              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
             >
               Import XMP
             </Button>
             <Button
               variant="outlined"
+              size="small"
               onClick={async () => {
                 try {
                   const res = await exportAllRecipes();
@@ -392,20 +437,76 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                 }
               }}
               disabled={sortedRecipes.length === 0 || generatingRecipes.size > 0}
-              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
             >
               Export All
             </Button>
             <Button
+              variant={selectionMode ? "contained" : "outlined"}
+              size="small"
+              onClick={handleToggleSelectionMode}
+            >
+              {selectionMode ? 'Cancel' : 'Select'}
+            </Button>
+            <Button
               variant="contained"
+              size="small"
               onClick={onNewProcess}
-              sx={{ width: { xs: '100%', sm: 'auto' }, flex: { sm: '0 0 auto' } }}
             >
               New Recipe
             </Button>
-          </Stack>
-        </Grid>
-      </Grid>
+          </Box>
+        </Stack>
+      </Box>
+
+      {/* Bulk Action Toolbar */}
+      {selectionMode && selectedRecipes.size > 0 && (
+        <Toolbar
+          sx={{
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
+            borderRadius: 1,
+            mb: 2,
+            minHeight: '48px !important',
+            px: 3,
+            py: 1,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+            <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
+              {selectedRecipes.size} recipe{selectedRecipes.size !== 1 ? 's' : ''} selected
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleSelectAll}
+              sx={{
+                color: 'primary.contrastText',
+                borderColor: 'primary.contrastText',
+                '&:hover': {
+                  borderColor: 'primary.contrastText',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                }
+              }}
+            >
+              {selectedRecipes.size === sortedRecipes.length ? 'Deselect All' : 'Select All'}
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleMultiDelete}
+              sx={{
+                backgroundColor: 'error.main',
+                '&:hover': {
+                  backgroundColor: 'error.dark',
+                }
+              }}
+              startIcon={<DeleteOutlineIcon />}
+            >
+              Delete Selected
+            </Button>
+          </Box>
+        </Toolbar>
+      )}
 
       {recipes.length === 0 ? (
         <Card sx={{ p: 6, textAlign: 'center' }}>
@@ -437,35 +538,71 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         <Grid container spacing={2}>
           {sortedRecipes.map((recipe, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={recipe.id}>
-              <Card elevation={2} sx={{ position: 'relative', overflow: 'hidden' }}>
-                {/* Menu button (top-right) */}
-                <IconButton
-                  aria-label="Options"
-                  size="small"
-                  onClick={e => handleMenuOpen(e, recipe.id)}
-                  title="Options"
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    zIndex: 2,
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: 'none',
-                    boxShadow: 'none',
+              <Card
+                elevation={2}
+                sx={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'transform 0.2s ease-in-out',
+                  ...(selectionMode && selectedRecipes.has(recipe.id) && {
+                    border: '1px solid',
+                    borderColor: 'primary.main',
                     '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                      transform: 'scale(1.02)',
+                    }
+                  })
+                }}
+              >
+                {/* Selection checkbox (top-left) */}
+                {selectionMode && (
+                  <Checkbox
+                    checked={selectedRecipes.has(recipe.id)}
+                    onChange={() => handleSelectRecipe(recipe.id)}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      left: 8,
+                      zIndex: 3,
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      borderRadius: 1,
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 1)',
+                      },
+                    }}
+                  />
+                )}
+                {/* Menu button (top-right) */}
+                {!selectionMode && (
+                  <IconButton
+                    aria-label="Options"
+                    size="small"
+                    onClick={e => handleMenuOpen(e, recipe.id)}
+                    title="Options"
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
                       backdropFilter: 'blur(10px)',
                       WebkitBackdropFilter: 'blur(10px)',
-                    },
-                  }}
-                >
-                  <MoreVertIcon fontSize="small" sx={{ color: '#666' }} />
-                </IconButton>
+                      border: 'none',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                      },
+                    }}
+                  >
+                    <MoreVertIcon fontSize="small" sx={{ color: '#666' }} />
+                  </IconButton>
+                )}
                 <CardActionArea
                   onClick={() => {
-                    if (!generatingRecipes.has(recipe.id)) {
+                    if (selectionMode) {
+                      handleSelectRecipe(recipe.id);
+                    } else if (!generatingRecipes.has(recipe.id)) {
                       onOpenRecipe(recipe);
                     }
                   }}
@@ -473,6 +610,9 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                     ...(generatingRecipes.has(recipe.id) && {
                       pointerEvents: 'none',
                       opacity: 0.7,
+                    }),
+                    ...(selectionMode && {
+                      cursor: 'pointer',
                     }),
                   }}
                 >
@@ -533,10 +673,12 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
                   <Button
                     variant="outlined"
                     fullWidth
-                    disabled={generatingRecipes.has(recipe.id)}
+                    disabled={generatingRecipes.has(recipe.id) || selectionMode}
                     onClick={e => {
                       e.stopPropagation();
-                      onOpenRecipe(recipe);
+                      if (!selectionMode) {
+                        onOpenRecipe(recipe);
+                      }
                     }}
                   >
                     {generatingRecipes.has(recipe.id) ? 'Generating...' : 'Open'}
@@ -582,6 +724,15 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         title="Delete Recipe"
         content="Are you sure you want to delete this recipe? This action cannot be undone."
         confirmButtonText="Delete"
+        confirmColor="error"
+      />
+      <ConfirmDialog
+        open={multiDeleteDialogOpen}
+        onClose={handleCancelMultiDelete}
+        onConfirm={handleConfirmMultiDelete}
+        title="Delete Multiple Recipes"
+        content={`Are you sure you want to delete ${selectedRecipes.size} recipe${selectedRecipes.size !== 1 ? 's' : ''}? This action cannot be undone.`}
+        confirmButtonText="Delete All"
         confirmColor="error"
       />
 

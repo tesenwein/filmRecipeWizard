@@ -54,6 +54,7 @@ interface AppState {
   ) => Promise<{ success: boolean; processId?: string; error?: string }>;
   updateRecipeInStorage: (processId: string, updates: any) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
+  deleteMultipleRecipes: (ids: string[]) => Promise<void>;
   importRecipes: () => Promise<{ success: boolean; count?: number; error?: string }>;
   importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => Promise<{ success: boolean; recipeId?: string; error?: string }>;
   exportRecipe: (id: string) => Promise<{ success: boolean; error?: string }>;
@@ -346,6 +347,21 @@ export const useAppStore = create<AppState>()(
           get().removeRecipe(id);
         } catch (error) {
           console.error('[STORE] Error deleting recipe:', error);
+          throw error;
+        }
+      },
+
+      deleteMultipleRecipes: async ids => {
+        try {
+          const result = await window.electronAPI.deleteMultipleProcesses(ids);
+          if (result.success) {
+            // Remove all deleted recipes from the store
+            ids.forEach(id => get().removeRecipe(id));
+          } else {
+            throw new Error(result.error || 'Failed to delete recipes');
+          }
+        } catch (error) {
+          console.error('[STORE] Error deleting multiple recipes:', error);
           throw error;
         }
       },

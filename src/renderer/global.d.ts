@@ -80,6 +80,7 @@ declare global {
         updates: any
       ) => Promise<{ success: boolean; error?: string }>;
       deleteProcess: (processId: string) => Promise<{ success: boolean; error?: string }>;
+      deleteMultipleProcesses: (processIds: string[]) => Promise<{ success: boolean; error?: string }>;
       getProcess: (
         processId: string
       ) => Promise<{ success: boolean; process?: any; error?: string }>;

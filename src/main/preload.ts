@@ -31,7 +31,7 @@ const electronAPI = {
   exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
   exportAllRecipes: () => ipcRenderer.invoke('export-all-recipes'),
   importRecipe: () => ipcRenderer.invoke('import-recipe'),
-  importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => 
+  importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) =>
     ipcRenderer.invoke('import-xmp', data),
   readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
 
@@ -59,6 +59,7 @@ const electronAPI = {
   updateProcess: (processId: string, updates: any) =>
     ipcRenderer.invoke('update-process', processId, updates),
   deleteProcess: (processId: string) => ipcRenderer.invoke('delete-process', processId),
+  deleteMultipleProcesses: (processIds: string[]) => ipcRenderer.invoke('delete-multiple-processes', processIds),
   getProcess: (processId: string) => ipcRenderer.invoke('get-process', processId),
   getImageDataUrls: (processId: string) => ipcRenderer.invoke('get-image-data-urls', processId),
   setBaseImage: (processId: string, filePath: string) =>

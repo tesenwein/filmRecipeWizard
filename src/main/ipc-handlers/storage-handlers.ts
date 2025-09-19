@@ -12,7 +12,7 @@ export class StorageHandlers {
     private storageService: StorageService,
     private settingsService?: SettingsService,
     private imageProcessor?: ImageProcessor
-  ) {}
+  ) { }
 
   // Helper method to validate process ID format
   private isValidProcessId(processId: string): boolean {
@@ -175,6 +175,17 @@ export class StorageHandlers {
       }
     });
 
+    // Delete multiple processes
+    ipcMain.handle('delete-multiple-processes', async (_event, processIds: string[]) => {
+      try {
+        await this.storageService.deleteMultipleProcesses(processIds);
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error deleting multiple processes:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Get a specific process
     ipcMain.handle('get-process', async (_event, processId: string) => {
       try {
@@ -200,10 +211,10 @@ export class StorageHandlers {
         if (!process) {
           // Process not found - return empty result instead of throwing error
           console.warn(`[IPC] Process not found for ID: ${processId}`);
-          return { 
-            success: true, 
-            baseImageUrls: [], 
-            targetImageUrls: [] 
+          return {
+            success: true,
+            baseImageUrls: [],
+            targetImageUrls: []
           };
         }
 
