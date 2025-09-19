@@ -221,92 +221,92 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                     })()}
 
                     <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 2, border: '1px solid #e9ecef', backgroundColor: 'white' }}>
-                    <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', p: 2 }}>
-                        {messages.map((message) => (
-                            <Box key={message.id} sx={{ display: 'flex', mb: 2, justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, maxWidth: '80%', flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>
-                                    <Avatar sx={{ bgcolor: message.role === 'user' ? 'primary.main' : '#6c757d', width: 32, height: 32 }}>
-                                        {message.role === 'user' ? <PersonIcon /> : <BotIcon />}
+                        <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', p: 2 }}>
+                            {messages.map((message) => (
+                                <Box key={message.id} sx={{ display: 'flex', mb: 2, justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, maxWidth: '80%', flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }}>
+                                        <Avatar sx={{ bgcolor: message.role === 'user' ? 'primary.main' : '#6c757d', width: 32, height: 32 }}>
+                                            {message.role === 'user' ? <PersonIcon /> : <BotIcon />}
+                                        </Avatar>
+                                        <Paper sx={{ p: 2, backgroundColor: message.role === 'user' ? 'primary.main' : '#f8f9fa', color: message.role === 'user' ? 'white' : '#2c3338', borderRadius: 2, border: message.role === 'user' ? 'none' : '1px solid #e9ecef' }}>
+                                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>
+                                                {message.content}
+                                            </Typography>
+                                        </Paper>
+                                    </Box>
+                                </Box>
+                            ))}
+
+                            {(isProcessing || isReprocessing) && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                    <Avatar sx={{ bgcolor: '#6c757d', width: 32, height: 32 }}>
+                                        <BotIcon />
                                     </Avatar>
-                                    <Paper sx={{ p: 2, backgroundColor: message.role === 'user' ? 'primary.main' : '#f8f9fa', color: message.role === 'user' ? 'white' : '#2c3338', borderRadius: 2, border: message.role === 'user' ? 'none' : '1px solid #e9ecef' }}>
-                                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>
-                                            {message.content}
-                                        </Typography>
+                                    <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e9ecef' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <CircularProgress size={16} />
+                                            <Typography variant="body2" sx={{ fontSize: 13, color: '#6c757d' }}>
+                                                {isReprocessing ? 'Applying changes with AI…' : 'AI is thinking...'}
+                                            </Typography>
+                                        </Box>
                                     </Paper>
                                 </Box>
-                            </Box>
-                        ))}
+                            )}
 
-                        {(isProcessing || isReprocessing) && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                <Avatar sx={{ bgcolor: '#6c757d', width: 32, height: 32 }}>
-                                    <BotIcon />
-                                </Avatar>
-                                <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e9ecef' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <CircularProgress size={16} />
-                                        <Typography variant="body2" sx={{ fontSize: 13, color: '#6c757d' }}>
-                                            {isReprocessing ? 'Applying changes with AI…' : 'AI is thinking...'}
-                                        </Typography>
-                                    </Box>
-                                </Paper>
+                            <div ref={messagesEndRef} />
+                        </Box>
+
+                        {/* Footer: Actions + Input */}
+                        {pendingModifications && (
+                            <Box sx={{ p: 2.5, borderTop: 1, borderColor: '#e9ecef', backgroundColor: '#fff3cd', border: '1px solid #ffeaa7' }}>
+                                <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: '#856404' }}>
+                                    Suggested Changes Ready
+                                </Typography>
+                                <Stack direction="row" spacing={1}>
+                                    <Button size="small" variant="contained" color="success" startIcon={<CheckIcon />} onClick={handleAcceptModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
+                                        Accept Changes
+                                    </Button>
+                                    <Button size="small" variant="outlined" color="error" startIcon={<CloseIcon />} onClick={handleRejectModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
+                                        Reject Changes
+                                    </Button>
+                                </Stack>
                             </Box>
                         )}
 
-                        <div ref={messagesEndRef} />
-                    </Box>
+                        {error && (
+                            <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>
+                                {error}
+                            </Alert>
+                        )}
 
-                    {/* Footer: Actions + Input */}
-                    {pendingModifications && (
-                        <Box sx={{ p: 2.5, borderTop: 1, borderColor: '#e9ecef', backgroundColor: '#fff3cd', border: '1px solid #ffeaa7' }}>
-                            <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: '#856404' }}>
-                                Suggested Changes Ready
-                            </Typography>
-                            <Stack direction="row" spacing={1}>
-                                <Button size="small" variant="contained" color="success" startIcon={<CheckIcon />} onClick={handleAcceptModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
-                                    Accept Changes
-                                </Button>
-                                <Button size="small" variant="outlined" color="error" startIcon={<CloseIcon />} onClick={handleRejectModifications} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1.5 }}>
-                                    Reject Changes
-                                </Button>
-                            </Stack>
-                        </Box>
-                    )}
-
-                    {error && (
-                        <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
-
-                    <Box sx={{ p: 2, borderTop: 1, borderColor: '#e9ecef' }}>
-                        <form onSubmit={handleSendMessage}>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    maxRows={4}
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                            e.preventDefault();
-                                            if (input.trim() && !isProcessing && !isReprocessing) {
-                                                handleSendMessage(e);
+                        <Box sx={{ p: 2, borderTop: 1, borderColor: '#e9ecef' }}>
+                            <form onSubmit={handleSendMessage}>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <TextField
+                                        fullWidth
+                                        multiline
+                                        maxRows={4}
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                if (input.trim() && !isProcessing && !isReprocessing) {
+                                                    handleSendMessage(e);
+                                                }
                                             }
-                                        }
-                                    }}
-                                    placeholder="Ask me to modify your recipe... (e.g., 'Make it warmer and more cinematic')"
-                                    disabled={isProcessing || !!isReprocessing}
-                                    size="small"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: 13 } }}
-                                />
-                                <IconButton type="submit" disabled={!input.trim() || isProcessing || !!isReprocessing} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
-                                    {isProcessing ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-                                </IconButton>
-                            </Box>
-                        </form>
-                    </Box>
+                                        }}
+                                        placeholder="Ask me to modify your recipe... (e.g., 'Make it warmer and more cinematic')"
+                                        disabled={isProcessing || !!isReprocessing}
+                                        size="small"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: 13 } }}
+                                    />
+                                    <IconButton type="submit" disabled={!input.trim() || isProcessing || !!isReprocessing} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
+                                        {isProcessing ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+                                    </IconButton>
+                                </Box>
+                            </form>
+                        </Box>
                     </Paper>
                 </Box>
 

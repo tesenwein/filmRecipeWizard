@@ -89,7 +89,7 @@ export class ProcessingHandlers {
           if (data?.processId && this.storageService) {
             // Get stored process data to check existing name/description
             const stored = await this.storageService.getProcess(data.processId);
-            
+
             // Sanitize AI adjustments: move name/description to top-level, avoid persisting duplicates
             const aiAdjRaw = (result?.metadata as any)?.aiAdjustments || null;
             const aiNameRaw = aiAdjRaw?.preset_name as string | undefined;
