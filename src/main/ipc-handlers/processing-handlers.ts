@@ -173,7 +173,7 @@ export class ProcessingHandlers {
               const w = Math.max(0, Math.min(100, Number(options.warmth)));
               const warmthBias = Math.round(w - 50); // -50 (cool) .. +50 (warm)
               optionsHintParts.push(
-                `White Balance Warmth Bias: ${warmthBias} (negative=cool, positive=warm)`
+                `White Balance Temperature Bias: ${warmthBias} (negative=cool, positive=warm)`
               );
             }
             if (options.tint !== undefined) {

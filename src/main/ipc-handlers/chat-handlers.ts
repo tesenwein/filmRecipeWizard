@@ -93,7 +93,7 @@ CRITICAL RESPONSE FORMAT:
 \n+Mask editing guidance:\n+- Prefer including a stable id for any mask you add; reuse that id when updating or removing.\n+- If id is omitted, removal/update will match by name when present, otherwise by type + subCategoryId + referenceX/referenceY.\n+- To clear all pending mask overrides, use op: 'remove_all' or 'clear' with no other fields.
 
 Available user options:
-- warmth: -100 to 100 (warmth adjustment)
+- warmth: -100 to 100 (temperature adjustment)
 - tint: -100 to 100 (tint adjustment) 
 - contrast: -100 to 100 (contrast adjustment)
 - vibrance: -100 to 100 (vibrance adjustment)

@@ -335,7 +335,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   }}
                 >
                   <div>Vibe: {processOptions.vibe || '—'}</div>
-                  <div>Warmth: {processOptions.warmth ?? '—'}</div>
+                  <div>Temperature: {processOptions.warmth ?? '—'}</div>
                   <div>Tint: {processOptions.tint ?? '—'}</div>
                   <div>Contrast: {processOptions.contrast ?? '—'}</div>
                   <div>Vibrance: {processOptions.vibrance ?? '—'}</div>

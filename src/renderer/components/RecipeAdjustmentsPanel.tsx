@@ -134,7 +134,7 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
       </Section>
 
       <Section title="Basic Adjustments">
-        <Row label="Warmth" cur={<ValueChip label={fmtNum(current.warmth)} />} next={<ValueChip label={fmtNum(proposed.warmth)} color={hasChange(current.warmth, proposed.warmth) ? 'warning' : 'default'} />} isChanged={hasChange(current.warmth, proposed.warmth)} />
+        <Row label="Temperature" cur={<ValueChip label={fmtNum(current.warmth)} />} next={<ValueChip label={fmtNum(proposed.warmth)} color={hasChange(current.warmth, proposed.warmth) ? 'warning' : 'default'} />} isChanged={hasChange(current.warmth, proposed.warmth)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Tint" cur={<ValueChip label={fmtNum(current.tint)} />} next={<ValueChip label={fmtNum(proposed.tint)} color={hasChange(current.tint, proposed.tint) ? 'warning' : 'default'} />} isChanged={hasChange(current.tint, proposed.tint)} />
         <Divider sx={{ my: 1 }} />
