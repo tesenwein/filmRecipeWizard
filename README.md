@@ -1,10 +1,9 @@
 # Film Recipe Wizard - AI Color Grading & Film Emulation Tool
 
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/tesenwein/filmRecipeWizard)](LICENSE)
 [![Releases](https://img.shields.io/github/v/release/tesenwein/filmRecipeWizard?include_prereleases&label=releases)](https://github.com/tesenwein/filmRecipeWizard/releases)
-[![TypeScript](https://img.shields.io/badge/typescript-%3E%3D5.9.2-blue.svg)](package.json)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Lint Status](https://img.shields.io/badge/lint-passing-brightgreen.svg)](#)
+[![Build Status](https://github.com/tesenwein/filmRecipeWizard/workflows/Build/badge.svg)](https://github.com/tesenwein/filmRecipeWizard/actions)
+[![Lint Status](https://github.com/tesenwein/filmRecipeWizard/workflows/Lint/badge.svg)](https://github.com/tesenwein/filmRecipeWizard/actions)
 
 > **Professional Lightroom Presets & LUTs with AI-Powered Film Simulation**
 
