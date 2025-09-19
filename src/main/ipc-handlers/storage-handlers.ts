@@ -14,6 +14,11 @@ export class StorageHandlers {
     private imageProcessor?: ImageProcessor
   ) {}
 
+  // Helper method to validate process ID format
+  private isValidProcessId(processId: string): boolean {
+    return typeof processId === 'string' && processId.length > 0 && processId.trim().length > 0;
+  }
+
   setupHandlers(): void {
     // Load all recipes
     ipcMain.handle('load-recipes', async () => {
@@ -187,9 +192,19 @@ export class StorageHandlers {
     // Get image data URLs for UI display from stored base64 data
     ipcMain.handle('get-image-data-urls', async (_event, processId: string) => {
       try {
+        if (!processId) {
+          return { success: false, error: 'Process ID is required' };
+        }
+
         const process = await this.storageService.getProcess(processId);
         if (!process) {
-          throw new Error('Process not found');
+          // Process not found - return empty result instead of throwing error
+          console.warn(`[IPC] Process not found for ID: ${processId}`);
+          return { 
+            success: true, 
+            baseImageUrls: [], 
+            targetImageUrls: [] 
+          };
         }
 
         const result: { baseImageUrls: string[]; targetImageUrls: string[] } = {
@@ -198,9 +213,14 @@ export class StorageHandlers {
         };
 
         if ((process as any).recipeImageData) {
-          result.baseImageUrls = [
-            this.storageService.getImageDataUrl((process as any).recipeImageData as string),
-          ];
+          try {
+            result.baseImageUrls = [
+              this.storageService.getImageDataUrl((process as any).recipeImageData as string),
+            ];
+          } catch (imageError) {
+            console.warn(`[IPC] Error processing image data for process ${processId}:`, imageError);
+            result.baseImageUrls = [];
+          }
         }
 
         // Do not persist target images anymore; no target previews returned
@@ -253,7 +273,10 @@ export class StorageHandlers {
       try {
         if (!processId || !Array.isArray(filePaths)) throw new Error('Invalid arguments');
         const process = await this.storageService.getProcess(processId);
-        if (!process) throw new Error('Process not found');
+        if (!process) {
+          console.warn(`[IPC] Process not found for ID: ${processId}`);
+          return { success: false, error: 'Process not found' };
+        }
         const existing: string[] = [];
         const converted: string[] = [];
         for (const fp of filePaths.slice(0, 3)) {
@@ -278,7 +301,10 @@ export class StorageHandlers {
       try {
         if (!processId || typeof index !== 'number') throw new Error('Invalid arguments');
         const process = await this.storageService.getProcess(processId);
-        if (!process) throw new Error('Process not found');
+        if (!process) {
+          console.warn(`[IPC] Process not found for ID: ${processId}`);
+          return { success: false, error: 'Process not found' };
+        }
         const existing: string[] = (process as any).recipeImageData
           ? [(process as any).recipeImageData as string]
           : [];

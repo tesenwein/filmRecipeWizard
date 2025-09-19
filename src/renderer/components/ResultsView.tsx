@@ -341,21 +341,28 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           window.electronAPI.getImageDataUrls(processId),
           window.electronAPI.getProcess(processId),
         ]);
+        
+        // Handle image data response - even if process not found, we get empty arrays
         if (imgResponse.success) {
           setBaseImageUrls(
             Array.isArray(imgResponse.baseImageUrls) ? imgResponse.baseImageUrls : []
           );
           setActiveBase(0);
         } else {
-          throw new Error(imgResponse.error || 'Failed to load image data URLs');
+          console.warn('[RESULTS] Failed to load image data URLs:', imgResponse.error);
+          setBaseImageUrls([]);
         }
+        
+        // Handle process data response
         if (processResponse.success && processResponse.process) {
           setProcessPrompt(processResponse.process.prompt);
           setProcessOptions(processResponse.process.userOptions);
           setAuthor((processResponse.process as any).author);
           // name is handled in header component
         } else {
+          console.warn('[RESULTS] Process not found or failed to load:', processResponse.error);
           setProcessPrompt(prompt);
+          setProcessOptions(undefined);
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
