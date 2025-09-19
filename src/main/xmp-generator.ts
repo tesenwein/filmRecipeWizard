@@ -37,7 +37,40 @@ export function generateXMPContent(
     (typeof aiAdjustments.camera_profile === 'string' &&
       /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
     (typeof aiAdjustments.saturation === 'number' && aiAdjustments.saturation <= -100);
-  const cameraProfile = aiAdjustments.camera_profile || (isBW ? 'Adobe Monochrome' : 'Adobe Color');
+  // Normalize any AI-provided profile name to Adobe's canonical set
+  const normalizeCameraProfile = (name?: string): string | undefined => {
+    if (!name) return undefined;
+    const n = String(name).toLowerCase();
+    if (/mono|black\s*&?\s*white|b\s*&\s*w/.test(n)) return 'Adobe Monochrome';
+    if (/portrait|people|skin/.test(n)) return 'Adobe Portrait';
+    if (/landscape|sky|mountain|nature/.test(n)) return 'Adobe Landscape';
+    if (/color|standard|default|auto/.test(n)) return 'Adobe Color';
+    // Fallback to Adobe Color for unknown strings
+    return 'Adobe Color';
+  };
+
+  // Heuristic auto-selection based on masks/scene if AI didn't specify
+  const autoSelectCameraProfile = (): string => {
+    if (isBW) return 'Adobe Monochrome';
+    const masks = Array.isArray((aiAdjustments as any).masks) ? ((aiAdjustments as any).masks as any[]) : [];
+    let faceCount = 0;
+    let landscapeLike = 0;
+    let hasSky = false;
+    for (const m of masks) {
+      let t: any = m?.type;
+      if (typeof t === 'string') t = normalizeMaskType(t);
+      const cfg = typeof t === 'string' ? getMaskConfig(t) : undefined;
+      const cat = cfg?.category;
+      if (cat === 'face' || t === 'subject' || t === 'person') faceCount++;
+      if (cat === 'landscape' || cat === 'background') landscapeLike++;
+      if (t === 'sky') hasSky = true;
+    }
+    if (faceCount > 0) return 'Adobe Portrait';
+    if (hasSky || landscapeLike > 0) return 'Adobe Landscape';
+    return 'Adobe Color';
+  };
+
+  const cameraProfile = normalizeCameraProfile(aiAdjustments.camera_profile) || autoSelectCameraProfile();
   const profileName = cameraProfile;
   const treatmentTag = isBW
     ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>'

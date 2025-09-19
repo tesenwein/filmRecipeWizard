@@ -195,6 +195,13 @@ CRITICAL INSTRUCTIONS FOR YOUR RESPONSE:
 - Explain your reasoning in conversational text
 - Generate a short, engaging description (1-2 sentences) that captures the style and mood
 
+PROFILE SELECTION:
+- Always set camera_profile to one of: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
+- Use 'Adobe Monochrome' when treatment is black & white or the style is clearly monochrome
+- Prefer 'Adobe Portrait' for people/face-focused images (skin, eyes, hair, etc.)
+- Prefer 'Adobe Landscape' for scenes with sky/foliage/mountains/background-dominant content
+- Otherwise use 'Adobe Color'
+
 Show your thinking process step by step as you analyze the images. Explain what you're looking for, what you notice about the colors, tones, and style, and how you're building the recipe.
 
 CRITICAL: You must call the generate_color_adjustments function with ALL adjustments including masks in a single call. Do NOT call individual mask functions - they are just for reference.
