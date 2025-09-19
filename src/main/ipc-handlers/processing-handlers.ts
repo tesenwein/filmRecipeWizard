@@ -324,6 +324,12 @@ export class ProcessingHandlers {
             } catch {
               // Ignore name derivation errors
             }
+            // Preserve an existing user-defined name if present
+            const existingName = (stored as any)?.name;
+            const shouldSetName = !(
+              typeof existingName === 'string' && existingName.trim().length > 0
+            );
+
             await this.storageService.updateProcess(data.processId, {
               results: [
                 {
@@ -334,7 +340,7 @@ export class ProcessingHandlers {
               ],
               status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
-              ...(derivedName ? { name: derivedName } : {}),
+              ...(shouldSetName && derivedName ? { name: derivedName } : {}),
             } as any);
             try {
               mainWindow?.webContents.send('process-updated', {
@@ -351,7 +357,7 @@ export class ProcessingHandlers {
                   ],
                   status: result.success ? 'completed' : 'failed',
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
-                  ...(derivedName ? { name: derivedName } : {}),
+                  ...(shouldSetName && derivedName ? { name: derivedName } : {}),
                 },
               });
             } catch {

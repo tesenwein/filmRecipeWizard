@@ -27,7 +27,7 @@ export class ExportHandlers {
           exposure: false, // Keep exposure separate and disabled by default
           sharpenNoise: false, // Not implemented in XMP
           vignette: false, // Not implemented in XMP
-          strength: data?.styleOptions?.strength || 0.5, // Use strength slider (0-1, default 0.5)
+          strength: data?.styleOptions?.strength || 1.0, // Use strength slider (0-1, default 1.0)
         } as any;
 
         // Generate XMP content
@@ -154,7 +154,7 @@ export class ExportHandlers {
               exposure: false, // Keep exposure separate and disabled by default
               sharpenNoise: false, // Not implemented in XMP
               vignette: false, // Not implemented in XMP
-              strength: 0.5, // Default strength
+              strength: 1.0, // Default strength
             } as any;
 
             const xmp = generateXMPContent(adj as any, include);

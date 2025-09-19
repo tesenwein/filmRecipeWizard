@@ -16,8 +16,8 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     (typeof adjustments.camera_profile === 'string' && /monochrome/i.test(adjustments.camera_profile || '')) ||
     (typeof adjustments.saturation === 'number' && adjustments.saturation <= -100);
 
-  // Apply strength scaling (same as preset export - default 0.5 to reduce intensity)
-  const strength = 0.5; // Default strength multiplier
+  // Apply strength scaling (same as preset export - default 1.0 for full intensity)
+  const strength = 1.0; // Default strength multiplier
   const scale = (v: any): number | undefined =>
     typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined;
 

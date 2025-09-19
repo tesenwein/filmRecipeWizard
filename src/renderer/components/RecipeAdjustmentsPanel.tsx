@@ -61,9 +61,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
   const nameChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'name'))
     ? hasChange(recipe.name, (pendingModifications as any).name)
     : false;
-  const promptChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'prompt'))
-    ? hasChange(recipe.prompt, (pendingModifications as any).prompt)
-    : false;
   const descriptionChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'description'))
     ? hasChange((recipe as any).description, (pendingModifications as any).description)
     : false;
@@ -110,26 +107,19 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
       <Typography variant="h6" sx={{ fontWeight: 700 }}>Adjustments Overview</Typography>
 
-      <Section title="Name & Prompt">
+      <Section title="Name & Description">
         <Row
           label="Name"
-          cur={<ValueChip label={str(recipe.name)} />}
-          next={<ValueChip label={str(pendingModifications?.name ?? recipe.name)} color={nameChange ? 'warning' : 'default'} />}
+          cur={<ValueChip label={str(recipe.name || (aiAdjustments as any)?.preset_name)} />}
+          next={<ValueChip label={str(pendingModifications?.name ?? recipe.name ?? (aiAdjustments as any)?.preset_name)} color={nameChange ? 'warning' : 'default'} />}
           isChanged={nameChange}
         />
         <Divider sx={{ my: 1 }} />
         <Row
           label="Description"
-          cur={<LongValue text={(recipe as any).description} />}
-          next={<LongValue text={(pendingModifications as any)?.description ?? (recipe as any).description} highlight={descriptionChange} />}
+          cur={<LongValue text={(aiAdjustments as any)?.description || (recipe as any).description} />}
+          next={<LongValue text={(pendingModifications as any)?.description ?? (aiAdjustments as any)?.description ?? (recipe as any).description} highlight={descriptionChange} />}
           isChanged={descriptionChange}
-        />
-        <Divider sx={{ my: 1 }} />
-        <Row
-          label="Prompt"
-          cur={<LongValue text={recipe.prompt} />}
-          next={<LongValue text={(pendingModifications?.prompt ?? recipe.prompt) as string} highlight={promptChange} />}
-          isChanged={promptChange}
         />
       </Section>
 

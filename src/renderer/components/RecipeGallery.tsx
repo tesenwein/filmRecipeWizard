@@ -51,10 +51,10 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
   // Helper function to get recipe name for sorting and searching
   const getRecipeName = (recipe: Recipe) => {
-    const aiName = (recipe as any)?.results?.[0]?.metadata?.aiAdjustments?.preset_name as string | undefined;
-    return recipe.name ||
-      (typeof aiName === 'string' && aiName.trim().length > 0 ? aiName : '') ||
-      new Date(recipe.timestamp).toLocaleString();
+    return (
+      (typeof recipe.name === 'string' && recipe.name.trim().length > 0 ? recipe.name : '') ||
+      new Date(recipe.timestamp).toLocaleString()
+    );
   };
 
   // Build a searchable haystack of all relevant fields (excluding image blobs)

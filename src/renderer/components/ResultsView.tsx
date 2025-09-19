@@ -161,7 +161,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         vignette: boolean;
         pointColor?: boolean;
         grain?: boolean;
-        // Export strength multiplier (0.0–2.0). 0.5 = 50%.
+        // Export strength multiplier (0.0–2.0). 1.0 = 100%.
         strength?: number;
       }
     >
@@ -377,6 +377,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setProcessName(typeof nm === 'string' && nm.trim().length > 0 ? nm : undefined);
           const desc = (processResponse.process as any).description;
           setProcessDescription(typeof desc === 'string' && desc.trim().length > 0 ? desc : undefined);
+
+          // If no description in process data, try to get it from AI adjustments
+          if (!desc || desc.trim().length === 0) {
+            const aiDesc = successfulResults[0]?.metadata?.aiAdjustments?.description;
+            if (typeof aiDesc === 'string' && aiDesc.trim().length > 0) {
+              setProcessDescription(aiDesc);
+            }
+          }
           const masks = (processResponse.process as any).maskOverrides;
           setMaskOverrides(Array.isArray(masks) ? masks : undefined);
           // name is handled in header component
@@ -475,8 +483,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     pointColor: aiFunctions?.pointColor ?? true,
     grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
     masks: aiFunctions?.masks ?? true,
-    // Start export strength at 50%
-    strength: 0.5,
+    // Start export strength at 100%
+    strength: 1.0,
   } as const);
 
   const defaultOptions = getDefaultOptions();
@@ -999,7 +1007,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           <RecipeAdjustmentsPanel
                             recipe={{
                               id: processId || '',
-                              name: successfulResults[selectedResult]?.metadata?.presetName || 'Unnamed Recipe',
+                              name: processName || successfulResults[selectedResult]?.metadata?.aiAdjustments?.preset_name || 'Unnamed Recipe',
                               prompt: processPrompt || '',
                               description: processDescription,
                               userOptions: processOptions,
@@ -1035,8 +1043,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       <RecipeChat
                         recipe={{
                           id: processId || '',
-                          name: successfulResults[selectedResult]?.metadata?.presetName || 'Unnamed Recipe',
+                          name: processName || successfulResults[selectedResult]?.metadata?.aiAdjustments?.preset_name || 'Unnamed Recipe',
                           prompt: processPrompt || '',
+                          description: processDescription || successfulResults[selectedResult]?.metadata?.aiAdjustments?.description,
                           userOptions: processOptions,
                           maskOverrides: maskOverrides,
                           results: successfulResults,
@@ -1244,7 +1253,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Slider
-                                value={Math.round((getOptions(index).strength ?? 0.5) * 100)}
+                                value={Math.round((getOptions(index).strength ?? 1.0) * 100)}
                                 onChange={(_e, val) => {
                                   const pct = Array.isArray(val) ? val[0] : (val as number);
                                   setExportOptions(prev => ({
@@ -1263,11 +1272,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 sx={{ flex: 1 }}
                               />
                               <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
-                                {Math.round((getOptions(index).strength ?? 0.5) * 100)}%
+                                {Math.round((getOptions(index).strength ?? 1.0) * 100)}%
                               </Typography>
                             </Box>
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              Tip: 100% applies the full AI adjustments. 50% is softer.
+                              Tip: 100% applies the full AI adjustments. Lower values create softer effects.
                             </Typography>
                           </Paper>
                           <Box
