@@ -49,7 +49,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     }, [messages]);
 
     const handleSendMessage = async (e?: React.FormEvent | React.KeyboardEvent) => {
-        try { (e as any)?.preventDefault?.(); } catch { }
+        try { (e as any)?.preventDefault?.(); } catch { /* ignore preventDefault errors */ }
         if (!input.trim() || isProcessing) return;
 
         const userMessage = input.trim();
@@ -135,7 +135,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         };
     };
 
-    const _recipeData = formatRecipeForDisplay(recipe);
+    // Note: recipeData removed as it was unused
     const latestAdjustments = (() => {
         try {
             const res = Array.isArray(recipe.results) ? recipe.results.filter(r => r && r.success) : [];

@@ -241,58 +241,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     tag('GrainFrequency', round(clamp(adjustments.grain_frequency, 0, 100))),
   ].join('');
 
-  // Masks block (local adjustments)
-  const _masksBlock = Array.isArray(adjustments.masks) && adjustments.masks.length > 0 ? (() => {
-    const maskCorrections = adjustments.masks.map((mask: any, index: number) => {
-      const maskName = mask.name || `Mask ${index + 1}`;
-      const maskType = mask.type || 'radial';
-      const adjustments = mask.adjustments || {};
-
-      // Generate mask correction XML
-      return `     <rdf:li>
-      <rdf:Description
-       crs:What="Correction"
-       crs:CorrectionAmount="1"
-       crs:CorrectionActive="true"
-       crs:CorrectionName="${maskName}" crs:CorrectionSyncID="${generateUUID()}" 
-       ${adjustments.local_exposure !== undefined ? `crs:LocalExposure2012="${(adjustments.local_exposure / 100).toFixed(3)}"` : ''}
-       ${adjustments.local_contrast !== undefined ? `crs:LocalContrast2012="${(adjustments.local_contrast / 100).toFixed(3)}"` : ''}
-       ${adjustments.local_highlights !== undefined ? `crs:LocalHighlights2012="${(adjustments.local_highlights / 100).toFixed(3)}"` : ''}
-       ${adjustments.local_shadows !== undefined ? `crs:LocalShadows2012="${(adjustments.local_shadows / 100).toFixed(3)}"` : ''}
-       ${adjustments.local_whites !== undefined ? `crs:LocalWhites2012="${(adjustments.local_whites / 100).toFixed(3)}"` : ''}
-       ${adjustments.local_blacks !== undefined ? `crs:LocalBlacks2012="${(adjustments.local_blacks / 100).toFixed(3)}"` : ''}
-       ${adjustments.local_clarity !== undefined ? `crs:LocalClarity2012="${(adjustments.local_clarity / 100).toFixed(3)}"` : ''}
-       ${adjustments.local_temperature !== undefined ? `crs:LocalTemperature="${adjustments.local_temperature}"` : ''}
-       ${adjustments.local_tint !== undefined ? `crs:LocalTint="${adjustments.local_tint}"` : ''}
-       ${adjustments.local_saturation !== undefined ? `crs:LocalSaturation="${adjustments.local_saturation}"` : ''}
-       crs:LocalCurveRefineSaturation="100">
-      <crs:CorrectionMasks>
-       <rdf:Seq>
-        <rdf:li
-         crs:What="Mask/Image"
-         crs:MaskActive="true"
-         crs:MaskName="${maskName}"
-         crs:MaskBlendMode="0"
-         crs:MaskInverted="false"
-         crs:MaskSyncID="${generateUUID()}"
-         crs:MaskValue="1"
-         crs:MaskVersion="1"
-         crs:MaskSubType="${maskType === 'background' ? '0' : maskType === 'subject' ? '1' : maskType === 'sky' ? '2' : '0'}"
-         ${mask.subCategoryId ? `crs:MaskSubCategoryID="${mask.subCategoryId}"` : ''}
-         ${mask.referenceX !== undefined && mask.referenceY !== undefined ? `crs:ReferencePoint="${mask.referenceX.toFixed(3)} ${mask.referenceY.toFixed(3)}"` : ''}
-         crs:ErrorReason="0"/>
-       </rdf:Seq>
-      </crs:CorrectionMasks>
-      </rdf:Description>
-     </rdf:li>`;
-    }).join('\n');
-
-    return `   <crs:MaskGroupBasedCorrections>
-    <rdf:Seq>
-${maskCorrections}
-    </rdf:Seq>
-   </crs:MaskGroupBasedCorrections>`;
-  })() : '';
+  // Note: Local adjustment masks are not supported in camera profiles; omitted intentionally
 
   // Generate proper camera profile XMP (Look type, not Normal preset)
   return `<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00">

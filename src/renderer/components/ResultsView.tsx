@@ -256,7 +256,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Description editing functions
   const startEditingDescription = (resultIndex: number) => {
-    const _result = successfulResults[resultIndex];
+    // Note: result variable removed as it was unused
     const currentDescription = processDescription || '';
     setDescriptionInput(currentDescription);
     setEditingDescription(resultIndex);

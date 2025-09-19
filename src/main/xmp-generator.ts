@@ -109,14 +109,7 @@ export function generateXMPContent(
   const vibrance = round(clamp(scale(aiAdjustments.vibrance as any), -100, 100));
   const saturation = round(clamp(scale(aiAdjustments.saturation as any), -100, 100));
 
-  const _sanitizeName = (n: string) => {
-    const sanitized = n
-      .replace(/\b(image\s*match|imagematch|match|target|base)\b/gi, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-    // If sanitization removed everything, return the original name
-    return sanitized.length > 0 ? sanitized : n.trim();
-  };
+  // Note: sanitizeName function removed as it was unused
 
   // Prefer a renderer-provided recipeName override to avoid AI vs recipe name mismatches
   const presetName = (include?.recipeName as string) || (aiAdjustments as any).preset_name || 'Custom Recipe';

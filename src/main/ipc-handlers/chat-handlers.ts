@@ -26,7 +26,6 @@ export class ChatHandlers {
 
                 // Create tools for recipe modification
                 // Reuse mask structure similar to AIStreamingService for consistency
-                const _maskAdjustmentsSchema = maskAdjustmentsSchemaChat;
                 const maskEditSchema = maskEditSchemaChat;
 
                 const tools = {
