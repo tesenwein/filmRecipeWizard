@@ -27,8 +27,7 @@ export function getExampleBWMixer(): Pick<
 
 export function generateXMPContent(
   aiAdjustments: AIColorAdjustments,
-  include: any,
-  preserveSkinTones?: boolean
+  include: any
 ): string {
   // Generate XMP content for Lightroom based on AI adjustments
   const isBW =
@@ -766,7 +765,7 @@ ${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBl
       <!-- Masks (optional) -->
       ${masksBlock}
       <!-- Processing Notes -->
-      ${preserveSkinTones ? '      <!-- Skin tones preserved during AI processing -->' : ''}
+      
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>`;

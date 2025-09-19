@@ -16,9 +16,6 @@ export interface ProcessingResult {
     confidence?: number;
     presetName?: string;
     groupFolder?: string;
-    usedSettings?: {
-      preserveSkinTones?: boolean;
-    };
   };
 }
 
@@ -31,7 +28,6 @@ export interface StyleOptions {
   moodiness?: number; // overall curve mood
   saturationBias?: number;
   filmGrain?: boolean;
-  preserveSkinTones?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
   // AI Function Selection - user chooses what features are available to AI
   aiFunctions?: {

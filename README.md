@@ -104,7 +104,6 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 
 ### 🔧 **Processing Options**
 - **Film Grain**: Add authentic film texture
-- **Preserve Skin Tones**: Protect natural skin colors during processing
 - **Lightroom Profiles**: Adobe Color, Adobe Monochrome, Flat Profile base
 - **Custom Vibes**: Cinematic, Soft Pastel, and other mood presets
 

@@ -184,29 +184,7 @@ const AIFunctionsSelector: React.FC<AIFunctionsSelectorProps> = ({
               </Box>
             }
           />
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={!!styleOptions?.preserveSkinTones}
-                onChange={(_, c) =>
-                  onStyleOptionsChange?.({
-                    preserveSkinTones: c,
-                  })
-                }
-              />
-            }
-            label={
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Preserve Skin Tones
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                  Protect skin tones from excessive color adjustments
-                </Typography>
-              </Box>
-            }
-          />
+          {null}
         </Stack>
       </AccordionDetails>
     </Accordion>

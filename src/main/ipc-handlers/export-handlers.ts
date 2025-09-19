@@ -31,8 +31,7 @@ export class ExportHandlers {
         } as any;
 
         // Generate XMP content
-        const preserveSkinTones = data?.styleOptions?.preserveSkinTones;
-        const xmpContent = generateXMPContent(data.adjustments, include, preserveSkinTones);
+        const xmpContent = generateXMPContent(data.adjustments, include);
 
         // Show save dialog
         // Derive a friendly filename from AI if present
@@ -158,8 +157,7 @@ export class ExportHandlers {
               strength: 0.5, // Default strength
             } as any;
 
-            const preserveSkinTones = (process as any)?.userOptions?.preserveSkinTones;
-            const xmp = generateXMPContent(adj as any, include, preserveSkinTones);
+            const xmp = generateXMPContent(adj as any, include);
             const name = (adj as any)?.preset_name as string | undefined;
             const safePreset = (name || `Preset-${idx + 1}`)
               .replace(/[^A-Za-z0-9 _-]+/g, '')

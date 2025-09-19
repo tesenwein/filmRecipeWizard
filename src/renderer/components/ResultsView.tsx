@@ -254,7 +254,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // Description editing functions
   const startEditingDescription = (resultIndex: number) => {
     const result = successfulResults[resultIndex];
-    const currentDescription = result.metadata?.aiAdjustments?.description || '';
+    const currentDescription = (processDescription ?? result.metadata?.aiAdjustments?.description) || '';
     setDescriptionInput(currentDescription);
     setEditingDescription(resultIndex);
   };
@@ -278,6 +278,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       await useAppStore.getState().updateRecipeInStorage(processId, {
         description: newDescription
       } as any);
+
+      // Reflect the change in UI immediately
+      setProcessDescription(newDescription);
 
       setEditingDescription(null);
       setDescriptionInput('');
@@ -599,21 +602,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       <Paper elevation={1} sx={{ p: 3 }}>
                         {/* Description */}
                         <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                              Description
-                            </Typography>
-                            {editingDescription !== selectedResult && (
-                              <IconButton
-                                size="small"
-                                onClick={() => startEditingDescription(selectedResult)}
-                                title="Edit description"
-                              >
-                                <EditOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            )}
-                          </Box>
-
                           {editingDescription === selectedResult ? (
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                               <TextField
@@ -654,38 +642,24 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               </Box>
                             </Box>
                           ) : (
-                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
-                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>
-                                {result.metadata?.aiAdjustments?.description || 'No description available'}
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontStyle: 'italic', flex: 1 }}>
+                                {(processDescription ?? result.metadata?.aiAdjustments?.description) || 'No description available'}
                               </Typography>
-                            </Paper>
+                              <IconButton
+                                size="small"
+                                onClick={() => startEditingDescription(selectedResult)}
+                                title="Edit description"
+                                sx={{ mt: -0.5 }}
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
                           )}
                         </Box>
 
-                        {/* AI Analysis */}
-                        {result.metadata?.aiAdjustments?.reasoning && (
-                          <Box sx={{ mb: 3 }}>
-                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
-                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {result.metadata.aiAdjustments.reasoning}
-                              </Typography>
-                            </Paper>
-                          </Box>
-                        )}
 
-                        {/* User Prompt */}
-                        {processPrompt && processPrompt.trim().length > 0 && (
-                          <Box sx={{ mb: 3 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                              User Prompt
-                            </Typography>
-                            <Paper sx={{ p: 2, backgroundColor: 'grey.50' }}>
-                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {processPrompt}
-                              </Typography>
-                            </Paper>
-                          </Box>
-                        )}
+
 
                         {/* Style Information */}
                         {processOptions &&
@@ -712,104 +686,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Box>
                           )}
 
-                        {/* Options */}
-                        {processOptions &&
-                          (processOptions.filmGrain !== undefined ||
-                            processOptions.preserveSkinTones !== undefined) && (
-                            <Box>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                                Options
-                              </Typography>
-                              <Box
-                                sx={{
-                                  display: 'grid',
-                                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                                  gap: 2,
-                                }}
-                              >
-                                {processOptions.filmGrain !== undefined && (
-                                  <Paper
-                                    variant="outlined"
-                                    sx={{
-                                      p: 2,
-                                      textAlign: 'center',
-                                      backgroundColor: 'grey.50',
-                                      border: '1px solid',
-                                      borderColor: 'grey.200',
-                                    }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 0.5,
-                                        mb: 1,
-                                      }}
-                                    >
-                                      <MovieFilterIcon
-                                        sx={{ fontSize: '16px', color: 'text.secondary' }}
-                                      />
-                                      <Typography
-                                        variant="body2"
-                                        sx={{ color: 'text.secondary', fontWeight: 600 }}
-                                      >
-                                        Film Grain
-                                      </Typography>
-                                    </Box>
-                                    <Chip
-                                      label={processOptions.filmGrain ? 'On' : 'Off'}
-                                      color={processOptions.filmGrain ? 'success' : 'default'}
-                                      variant="filled"
-                                      size="small"
-                                      sx={{ fontWeight: 600 }}
-                                    />
-                                  </Paper>
-                                )}
-                                {processOptions.preserveSkinTones !== undefined && (
-                                  <Paper
-                                    variant="outlined"
-                                    sx={{
-                                      p: 2,
-                                      textAlign: 'center',
-                                      backgroundColor: 'grey.50',
-                                      border: '1px solid',
-                                      borderColor: 'grey.200',
-                                    }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 0.5,
-                                        mb: 1,
-                                      }}
-                                    >
-                                      <PersonIcon
-                                        sx={{ fontSize: '16px', color: 'text.secondary' }}
-                                      />
-                                      <Typography
-                                        variant="body2"
-                                        sx={{ color: 'text.secondary', fontWeight: 600 }}
-                                      >
-                                        Preserve Skin Tones
-                                      </Typography>
-                                    </Box>
-                                    <Chip
-                                      label={processOptions.preserveSkinTones ? 'On' : 'Off'}
-                                      color={
-                                        processOptions.preserveSkinTones ? 'success' : 'default'
-                                      }
-                                      variant="filled"
-                                      size="small"
-                                      sx={{ fontWeight: 600 }}
-                                    />
-                                  </Paper>
-                                )}
-                              </Box>
-                            </Box>
-                          )}
                       </Paper>
 
                       {/* Right Column: Recipe Image */}
@@ -1003,10 +879,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                       <strong>Film Grain:</strong>{' '}
                                       {processOptions.filmGrain ? 'On' : 'Off'}
                                     </Typography>
-                                    <Typography variant="body1">
-                                      <strong>Preserve Skin Tones:</strong>{' '}
-                                      {processOptions.preserveSkinTones ? 'On' : 'Off'}
-                                    </Typography>
                                     {processOptions.artistStyle?.name && (
                                       <Typography variant="body1">
                                         <strong>Artist Style:</strong>{' '}
@@ -1097,6 +969,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           name: successfulResults[selectedResult]?.metadata?.presetName || 'Unnamed Recipe',
                           prompt: processPrompt || '',
                           userOptions: processOptions,
+                          maskOverrides: maskOverrides,
                           results: successfulResults,
                           timestamp: new Date().toISOString(),
                         }}
@@ -1113,22 +986,50 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               updates.userOptions = merged;
                               setProcessOptions(merged);
                             }
-                            if (typeof modifications.prompt === 'string') {
+                            if (typeof modifications.prompt === 'string' && modifications.prompt !== processPrompt) {
                               updates.prompt = modifications.prompt;
                               setProcessPrompt(modifications.prompt);
                             }
-                            if (typeof modifications.name === 'string') {
+                            if (typeof modifications.name === 'string' && modifications.name !== processName) {
                               updates.name = modifications.name;
                               setProcessName(modifications.name);
                             }
-                            if (typeof (modifications as any).description === 'string') {
+                            if (typeof (modifications as any).description === 'string' && (modifications as any).description !== processDescription) {
                               updates.description = (modifications as any).description;
                               setProcessDescription((modifications as any).description);
                             }
                             // Apply mask overrides even when they are the only change
                             if (Array.isArray((modifications as any).masks)) {
-                              updates.maskOverrides = (modifications as any).masks;
-                              setMaskOverrides((modifications as any).masks);
+                              const ops = (modifications as any).masks as any[];
+                              const currentMasks = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
+                              const idOf = (m: any) => (m?.name && typeof m.name === 'string' ? m.name : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}`);
+                              const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
+                              for (const op of ops) {
+                                const idx = indexOf(currentMasks, op);
+                                if ((op.op || 'add') === 'remove') {
+                                  if (idx >= 0) currentMasks.splice(idx, 1);
+                                  continue;
+                                }
+                                if ((op.op || 'add') === 'update') {
+                                  if (idx >= 0) {
+                                    const prev = currentMasks[idx] || {};
+                                    currentMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+                                  } else {
+                                    currentMasks.push(op);
+                                  }
+                                  continue;
+                                }
+                                // default add
+                                if (idx >= 0) {
+                                  // merge
+                                  const prev = currentMasks[idx] || {};
+                                  currentMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+                                } else {
+                                  currentMasks.push(op);
+                                }
+                              }
+                              updates.maskOverrides = currentMasks;
+                              setMaskOverrides(currentMasks);
                             }
                             if (Object.keys(updates).length > 0) {
                               await window.electronAPI.updateProcess(processId, updates);

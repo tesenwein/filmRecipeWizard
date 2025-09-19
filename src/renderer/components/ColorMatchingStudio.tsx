@@ -108,7 +108,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     styleOptions?.artistStyle || // Has artist style selected
     styleOptions?.filmStyle || // Has film style selected
     styleOptions?.filmGrain || // Has film grain enabled
-    styleOptions?.preserveSkinTones || // Has preserve skin tones enabled
     styleOptions?.warmth !== undefined || // Has warmth adjustment
     styleOptions?.tint !== undefined || // Has tint adjustment
     styleOptions?.contrast !== undefined || // Has contrast adjustment
@@ -207,7 +206,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     generateTargetPreviews();
   }, [targetImages]);
 
-  // Load current global setting for Preserve Skin Tones
+  // Load current global settings
   useEffect(() => {
     const loadSettings = async () => {
       try {

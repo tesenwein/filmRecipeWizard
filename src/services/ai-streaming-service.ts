@@ -15,7 +15,6 @@ export interface StreamingUpdate {
 
 export interface StreamingOptions {
     onUpdate?: (update: StreamingUpdate) => void;
-    preserveSkinTones?: boolean;
     aiFunctions?: {
         temperatureTint?: boolean;
         masks?: boolean;
@@ -238,7 +237,7 @@ Call the generate_color_adjustments function with:
    - Face-specific masks work best for portrait photography and require clear facial features
    - Landscape masks work best for outdoor/nature photography and require clear landscape elements` +
             (options.aiFunctions?.pointColor ? `\n6. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
-            (options.preserveSkinTones ? `\n${options.aiFunctions?.pointColor ? '7' : '6'}. Preserve natural skin tones in Subject masks` : '') +
+            '' +
             `
 7. For portraits, ensure a match in skin tone and backdrop
 8. For landscapes, ensure sky/foliage mood and lighting alignment

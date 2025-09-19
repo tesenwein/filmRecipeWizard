@@ -68,7 +68,6 @@ export class ImageProcessor {
               data.onStreamUpdate(update);
             }
           },
-          preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
           aiFunctions: data.styleOptions?.aiFunctions,
         }
       );
@@ -86,9 +85,7 @@ export class ImageProcessor {
           aiAdjustments,
           confidence: aiAdjustments.confidence,
           reasoning: aiAdjustments.reasoning,
-          usedSettings: {
-            preserveSkinTones: !!data.styleOptions?.preserveSkinTones,
-          },
+          usedSettings: undefined,
         },
       };
     } catch (error) {

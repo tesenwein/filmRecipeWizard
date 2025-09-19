@@ -342,7 +342,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   <div>Moodiness: {processOptions.moodiness ?? '—'}</div>
                   <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
                   <div>Film Grain: {processOptions.filmGrain ? 'On' : 'Off'}</div>
-                  <div>Preserve Skin Tones: {processOptions.preserveSkinTones ? 'On' : 'Off'}</div>
                 </Box>
               </>
             )}

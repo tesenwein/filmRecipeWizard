@@ -58,9 +58,15 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
     return merged;
   }, [current, pendingModifications]);
 
-  const nameChange = hasChange(recipe.name, pendingModifications?.name);
-  const promptChange = hasChange(recipe.prompt, pendingModifications?.prompt);
-  const descriptionChange = hasChange((recipe as any).description, pendingModifications && (pendingModifications as any).description);
+  const nameChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'name'))
+    ? hasChange(recipe.name, (pendingModifications as any).name)
+    : false;
+  const promptChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'prompt'))
+    ? hasChange(recipe.prompt, (pendingModifications as any).prompt)
+    : false;
+  const descriptionChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'description'))
+    ? hasChange((recipe as any).description, (pendingModifications as any).description)
+    : false;
 
   const Row = ({ label, cur, next, isChanged }: { label: string; cur: React.ReactNode; next?: React.ReactNode; isChanged?: boolean }) => (
     <Box sx={{ display: 'grid', gridTemplateColumns: showOnlyCurrent ? '1.2fr 1fr' : '1.2fr 1fr 1fr', alignItems: 'center', gap: 1, py: 0.75 }}>
@@ -70,9 +76,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         <Box>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
             {next}
-            {isChanged && (
-              <Chip size="small" color="warning" label="Changed" sx={{ height: 20 }} />
-            )}
           </Box>
         </Box>
       )}
@@ -81,6 +84,17 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
 
   const ValueChip = ({ label, color }: { label: React.ReactNode; color?: 'default' | 'success' | 'warning' | 'info' | 'error' }) => (
     <Chip size="small" variant="outlined" color={color || 'default'} label={label} />
+  );
+
+  const LongValue = ({ text, highlight }: { text?: string; highlight?: boolean }) => (
+    <Paper
+      variant="outlined"
+      sx={{ p: 1, backgroundColor: 'grey.50', borderColor: highlight ? 'warning.main' : 'divider' }}
+    >
+      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+        {str(text)}
+      </Typography>
+    </Paper>
   );
 
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -106,15 +120,15 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         <Divider sx={{ my: 1 }} />
         <Row
           label="Description"
-          cur={<Tooltip title={str((recipe as any).description)}><span><ValueChip label={str((recipe as any).description)} /></span></Tooltip>}
-          next={<Tooltip title={str((pendingModifications as any)?.description ?? (recipe as any).description)}><span><ValueChip label={str((pendingModifications as any)?.description ?? (recipe as any).description)} color={descriptionChange ? 'warning' : 'default'} /></span></Tooltip>}
+          cur={<LongValue text={(recipe as any).description} />}
+          next={<LongValue text={(pendingModifications as any)?.description ?? (recipe as any).description} highlight={descriptionChange} />}
           isChanged={descriptionChange}
         />
         <Divider sx={{ my: 1 }} />
         <Row
           label="Prompt"
-          cur={<ValueChip label={str(recipe.prompt)} />}
-          next={<Tooltip title={str(pendingModifications?.prompt ?? recipe.prompt)}><span><ValueChip label={str(pendingModifications?.prompt ?? recipe.prompt)} color={promptChange ? 'warning' : 'default'} /></span></Tooltip>}
+          cur={<LongValue text={recipe.prompt} />}
+          next={<LongValue text={(pendingModifications?.prompt ?? recipe.prompt) as string} highlight={promptChange} />}
           isChanged={promptChange}
         />
       </Section>
@@ -137,8 +151,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         <Row label="Vibe" cur={<ValueChip label={str(current.vibe)} />} next={<ValueChip label={str(proposed.vibe)} color={hasChange(current.vibe, proposed.vibe) ? 'warning' : 'default'} />} isChanged={hasChange(current.vibe, proposed.vibe)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Film Grain" cur={<ValueChip label={boolLabel(current.filmGrain)} />} next={<ValueChip label={boolLabel(proposed.filmGrain)} color={hasChange(current.filmGrain, proposed.filmGrain) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmGrain, proposed.filmGrain)} />
-        <Divider sx={{ my: 1 }} />
-        <Row label="Preserve Skin Tones" cur={<ValueChip label={boolLabel(current.preserveSkinTones)} />} next={<ValueChip label={boolLabel(proposed.preserveSkinTones)} color={hasChange(current.preserveSkinTones, proposed.preserveSkinTones) ? 'warning' : 'default'} />} isChanged={hasChange(current.preserveSkinTones, proposed.preserveSkinTones)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Artist Style" cur={<ValueChip label={str(current.artistStyle?.name)} />} next={<ValueChip label={str(proposed.artistStyle?.name)} color={hasChange(current.artistStyle?.key, proposed.artistStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.artistStyle?.key, proposed.artistStyle?.key)} />
         <Divider sx={{ my: 1 }} />
@@ -249,6 +261,40 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
               })}
             </Box>
           )}
+        </Section>
+      )}
+
+      {/* Accepted mask overrides on the recipe (persisted) */}
+      {Array.isArray((recipe as any).maskOverrides) && (recipe as any).maskOverrides.length > 0 && (
+        <Section title="Recipe Mask Overrides">
+          <Box>
+            {(recipe as any).maskOverrides.map((m: any, idx: number) => {
+              const adj = m?.adjustments || {};
+              const adjKeys = Object.keys(adj).filter(k => typeof (adj as any)[k] === 'number');
+              const name = m?.name || `Mask ${idx + 1}`;
+              const type = m?.type || 'mask';
+              const op = m?.op || 'add';
+              return (
+                <Paper key={idx} variant="outlined" sx={{ p: 1, mb: 1, backgroundColor: 'white', overflowX: 'hidden' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <Chip size="small" color={op === 'remove' ? 'error' : op === 'update' ? 'warning' : 'success'} label={op.toUpperCase()} />
+                    <Chip size="small" label={name} />
+                    <Chip size="small" color="info" label={`Type: ${type}`} />
+                    {typeof m.subCategoryId === 'number' && (
+                      <Chip size="small" variant="outlined" label={`SubCat: ${m.subCategoryId}`} />
+                    )}
+                  </Box>
+                  {adjKeys.length > 0 && (
+                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                      {adjKeys.map(k => (
+                        <Chip key={k} size="small" variant="outlined" label={`${k.replace('local_', '')}: ${(adj as any)[k]}`} />
+                      ))}
+                    </Box>
+                  )}
+                </Paper>
+              );
+            })}
+          </Box>
         </Section>
       )}
 

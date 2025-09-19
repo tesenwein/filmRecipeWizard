@@ -127,7 +127,6 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
             saturationBias: options?.saturationBias ?? '—',
             vibe: options?.vibe || '—',
             filmGrain: options?.filmGrain ? 'On' : 'Off',
-            preserveSkinTones: options?.preserveSkinTones ? 'On' : 'Off',
             artistStyle: options?.artistStyle?.name || '—',
             filmStyle: options?.filmStyle?.name || '—',
         };
