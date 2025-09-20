@@ -668,6 +668,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             successfulResults={successfulResults}
             selectedResult={selectedResult}
             processOptions={processOptions}
+            displayNameOverride={processName}
             onNameChange={n => {
               try {
                 setProcessName(n);
@@ -993,6 +994,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             if (typeof modifications.name === 'string' && modifications.name !== processName) {
                               updates.name = modifications.name;
                               setProcessName(modifications.name);
+                              // Also update the global store so the gallery reflects the new name
+                              useAppStore.getState().updateRecipe(processId, { name: modifications.name });
                             }
                             if (
                               typeof (modifications as any).description === 'string' &&
