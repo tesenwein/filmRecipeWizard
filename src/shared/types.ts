@@ -25,7 +25,6 @@ export interface StyleOptions {
   contrast?: number;
   vibrance?: number;
   saturationBias?: number;
-  filmGrain?: boolean;
   vibe?: string; // e.g., Cinematic, Soft Pastel
   // AI Function Selection - user chooses what features are available to AI
   aiFunctions?: {
@@ -35,6 +34,7 @@ export interface StyleOptions {
     hsl?: boolean; // Enable HSL adjustments
     curves?: boolean; // Enable tone curves
     grain?: boolean; // Enable film grain
+    vignette?: boolean; // Enable post-crop vignette
     pointColor?: boolean; // Enable point color adjustments
   };
   // Optional artist and film selections

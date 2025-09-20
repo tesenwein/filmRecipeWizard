@@ -245,6 +245,16 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     tag('GrainFrequency', round(clamp(adjustments.grain_frequency, 0, 100))),
   ].join('');
 
+  const vignetteBlock = [
+    tag('PostCropVignetteAmount', round(clamp(adjustments.vignette_amount, -100, 100))),
+    tag('PostCropVignetteMidpoint', round(clamp(adjustments.vignette_midpoint, 0, 100))),
+    tag('PostCropVignetteFeather', round(clamp(adjustments.vignette_feather, 0, 100))),
+    tag('PostCropVignetteRoundness', round(clamp(adjustments.vignette_roundness, -100, 100))),
+    tag('PostCropVignetteStyle', round(clamp(adjustments.vignette_style, 0, 2))),
+    tag('PostCropVignetteHighlightContrast', round(clamp(adjustments.vignette_highlight_contrast, 0, 100))),
+    adjustments.override_look_vignette ? tag('OverrideLookVignette', 'True') : '',
+  ].join('');
+
   // Note: Local adjustment masks are not supported in camera profiles; omitted intentionally
 
   // Generate proper camera profile XMP (Look type, not Normal preset)
@@ -305,6 +315,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
       ${bwMixerBlock}
       ${pointColorBlock}
       ${grainBlock}
+      ${vignetteBlock}
       <!-- Local adjustment masks are not supported in camera profiles; omitted intentionally -->
     </rdf:Description>
   </rdf:RDF>

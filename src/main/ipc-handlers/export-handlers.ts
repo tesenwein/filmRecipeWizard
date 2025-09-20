@@ -26,7 +26,7 @@ export class ExportHandlers {
           masks: true,
           exposure: false, // Keep exposure separate and disabled by default
           sharpenNoise: false, // Not implemented in XMP
-          vignette: false, // Not implemented in XMP
+          vignette: true, // Enable vignette support
           strength: data?.styleOptions?.strength || 1.0, // Use strength slider (0-1, default 1.0)
         } as any;
 
@@ -140,10 +140,10 @@ export class ExportHandlers {
               curves: true,
               pointColor: true,
               grain: true,
+              vignette: true,
               masks: true,
               exposure: false, // Keep exposure separate and disabled by default
               sharpenNoise: false, // Not implemented in XMP
-              vignette: false, // Not implemented in XMP
               strength: 1.0, // Default strength
             } as any;
 

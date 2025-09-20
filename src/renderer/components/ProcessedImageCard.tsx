@@ -335,7 +335,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   <div>Contrast: {processOptions.contrast ?? '—'}</div>
                   <div>Vibrance: {processOptions.vibrance ?? '—'}</div>
                   <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
-                  <div>Film Grain: {processOptions.filmGrain ? 'On' : 'Off'}</div>
                 </Box>
               </>
             )}

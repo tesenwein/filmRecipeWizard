@@ -109,6 +109,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     curves: include?.curves === true,
     pointColor: include?.pointColor === true,
     grain: include?.grain === true,
+    vignette: include?.vignette === true,
     masks: include?.masks === true,
   } as const;
 
@@ -302,6 +303,19 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100))),
         tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100))),
         tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
+      ].join('')
+    : '';
+
+  // Vignette block
+  const vignetteBlock = inc.vignette
+    ? [
+        tag('PostCropVignetteAmount', round(clamp((aiAdjustments as any).vignette_amount, -100, 100))),
+        tag('PostCropVignetteMidpoint', round(clamp((aiAdjustments as any).vignette_midpoint, 0, 100))),
+        tag('PostCropVignetteFeather', round(clamp((aiAdjustments as any).vignette_feather, 0, 100))),
+        tag('PostCropVignetteRoundness', round(clamp((aiAdjustments as any).vignette_roundness, -100, 100))),
+        tag('PostCropVignetteStyle', round(clamp((aiAdjustments as any).vignette_style, 0, 2))),
+        tag('PostCropVignetteHighlightContrast', round(clamp((aiAdjustments as any).vignette_highlight_contrast, 0, 100))),
+        (aiAdjustments as any).override_look_vignette ? tag('OverrideLookVignette', 'True') : '',
       ].join('')
     : '';
 
@@ -585,7 +599,7 @@ ${correctionLis}
         </rdf:Alt>
       </crs:Group>
       ${treatmentTag}
-${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}
+${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}${vignetteBlock}
       <!-- Masks (optional) -->
       ${masksBlock}
       <!-- Processing Notes -->

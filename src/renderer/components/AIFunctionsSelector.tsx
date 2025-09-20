@@ -1,13 +1,13 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  FormControlLabel,
-  Stack,
-  Switch,
-  Typography,
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Box,
+    FormControlLabel,
+    Stack,
+    Switch,
+    Typography,
 } from '@mui/material';
 import React from 'react';
 import { StyleOptions } from '../../shared/types';
@@ -184,7 +184,25 @@ const AIFunctionsSelector: React.FC<AIFunctionsSelectorProps> = ({
               </Box>
             }
           />
-          {null}
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={!!aiFunctions.vignette}
+                onChange={(_, c) => handleToggle('vignette', c)}
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Post-Crop Vignette
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                  Darken or lighten edges for artistic effect (disabled by default)
+                </Typography>
+              </Box>
+            }
+          />
         </Stack>
       </AccordionDetails>
     </Accordion>

@@ -144,8 +144,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
       <Section title="Style & Options">
         <Row label="Vibe" cur={<ValueChip label={str(current.vibe)} />} next={<ValueChip label={str(proposed.vibe)} color={hasChange(current.vibe, proposed.vibe) ? 'warning' : 'default'} />} isChanged={hasChange(current.vibe, proposed.vibe)} />
         <Divider sx={{ my: 1 }} />
-        <Row label="Film Grain" cur={<ValueChip label={boolLabel(current.filmGrain)} />} next={<ValueChip label={boolLabel(proposed.filmGrain)} color={hasChange(current.filmGrain, proposed.filmGrain) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmGrain, proposed.filmGrain)} />
-        <Divider sx={{ my: 1 }} />
         <Row label="Artist Style" cur={<ValueChip label={str(current.artistStyle?.name)} />} next={<ValueChip label={str(proposed.artistStyle?.name)} color={hasChange(current.artistStyle?.key, proposed.artistStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.artistStyle?.key, proposed.artistStyle?.key)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Film Style" cur={<ValueChip label={str(current.filmStyle?.name)} />} next={<ValueChip label={str(proposed.filmStyle?.name)} color={hasChange(current.filmStyle?.key, proposed.filmStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmStyle?.key, proposed.filmStyle?.key)} />
@@ -196,6 +194,26 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
             next={<ValueChip label={Object.keys(aiAdjustments).some(k => /^(hue|sat|lum)_(red|orange|yellow|green|aqua|blue|purple|magenta)$/.test(k)) ? 'Yes' : 'No'} />}
             isChanged={false}
           />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Grain Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Grain Size" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Grain Frequency" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Vignette Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Vignette Midpoint" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Vignette Feather" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_feather)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_feather)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Vignette Roundness" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_roundness)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_roundness)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Vignette Style" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Vignette Highlight Contrast" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} isChanged={false} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Override Look Vignette" cur={<ValueChip label={(aiAdjustments as any).override_look_vignette ? 'True' : 'False'} />} next={<ValueChip label={(aiAdjustments as any).override_look_vignette ? 'True' : 'False'} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />
           <Row label="Masks" cur={<ValueChip label={`${Array.isArray((aiAdjustments as any).masks) ? (aiAdjustments as any).masks.length : 0}`} />} next={<ValueChip label={`${Array.isArray((aiAdjustments as any).masks) ? (aiAdjustments as any).masks.length : 0}`} />} isChanged={false} />
 

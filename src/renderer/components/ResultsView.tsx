@@ -75,6 +75,11 @@ const getAvailableFeatures = (adjustments: any): string[] => {
     features.push('Film Grain');
   }
 
+  // Post-Crop Vignette
+  if (adjustments.vignette_amount !== undefined || adjustments.vignette_midpoint !== undefined || adjustments.vignette_feather !== undefined || adjustments.vignette_roundness !== undefined || adjustments.vignette_style !== undefined || adjustments.vignette_highlight_contrast !== undefined) {
+    features.push('Post-Crop Vignette');
+  }
+
   // Local Adjustments (Masks)
   if (adjustments.masks && adjustments.masks.length > 0) {
     features.push('Local Adjustments');
@@ -480,9 +485,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         effectiveAdjustments.saturation = processOptions.saturationBias;
       }
 
-      if (typeof processOptions.filmGrain === 'boolean') {
-        (effectiveAdjustments as any).grain = processOptions.filmGrain;
-      }
     }
 
     // Apply mask overrides if they exist

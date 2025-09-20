@@ -242,16 +242,22 @@ Call the generate_color_adjustments function with:
 2. Color grading: shadow/midtone/highlight color grading values
 3. HSL adjustments: hue/saturation/luminance for each color range
 4. Tone curves: parametric and point curve adjustments
-5. Masks: Include masks array with local adjustments (max 3 masks)
+5. Film grain: grain_amount (0-100), grain_size (0-100), grain_frequency (0-100) for analog film texture
+6. Post-crop vignette: vignette_amount (-100 to +100), vignette_midpoint (0-100), vignette_feather (0-100), vignette_roundness (-100 to +100), vignette_style (0-2), vignette_highlight_contrast (0-100) for edge darkening/lightening
+   - IMPORTANT: Use dedicated vignette values instead of creating radial masks for vignette effects
+   - Vignette masks should only be used for very specific localized vignette effects, not general edge darkening
+7. Masks: Include masks array with local adjustments (max 3 masks)
    - For background masks, include subCategoryId: 22 for proper Lightroom detection
    - For subject/person masks, use type: 'subject' with referenceX/Y coordinates
    - For sky masks, use type: 'sky' with referenceX/Y coordinates
    - CRITICAL: For ANY facial features (skin, eyes, teeth, hair, etc.), ALWAYS use specific face masks instead of radial masks
    - NEVER use 'radial' masks for facial features - use specific face mask types instead
    - AVOID using 'subject' or 'person' masks unless you can clearly identify a face/person in the image
+   - AVOID using 'radial' masks for vignette effects - use dedicated vignette values instead
    - AVOID using 'radial' masks - prefer specific mask types (face, landscape, background, sky) or 'linear' masks for gradients
    - Use 'linear' masks for gradients or directional lighting effects
    - Use 'background' masks to adjust everything except the main subject
+   - Only use radial masks for very specific localized effects, not general vignetting
    
    AVAILABLE MASK TYPES:
    - Face/Body Masks: ${faceMaskList}
@@ -262,15 +268,18 @@ Call the generate_color_adjustments function with:
    
    - Face-specific masks work best for portrait photography and require clear facial features
    - Landscape masks work best for outdoor/nature photography and require clear landscape elements` +
-            (options.aiFunctions?.pointColor ? `\n6. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
+            (options.aiFunctions?.pointColor ? `\n8. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
             '' +
             `
-7. For portraits, ensure a match in skin tone and backdrop
-8. For landscapes, ensure sky/foliage mood and lighting alignment
-9. Mask modifications values should be minimal and very subtle
-10. Apply advanced color grading techniques including shadow/midtone/highlight color grading
-11. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
-12. Consider tone curve adjustments for sophisticated contrast control
+9. For portraits, ensure a match in skin tone and backdrop
+10. For landscapes, ensure sky/foliage mood and lighting alignment
+11. Mask modifications values should be minimal and very subtle
+12. Apply advanced color grading techniques including shadow/midtone/highlight color grading
+13. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
+14. Consider tone curve adjustments for sophisticated contrast control
+15. Use film grain for analog texture and vintage film looks
+16. Use post-crop vignette for artistic edge effects and focus drawing
+17. CRITICAL: Always prefer dedicated vignette values over radial masks for vignette effects
 
 CRITICAL: You MUST always include a preset_name (2-4 words, Title Case) that describes the visual style and mood of the recipe. This is REQUIRED and cannot be empty. The preset_name will be used as the recipe name, so make it descriptive and appealing. Examples: "Warm Portrait", "Cool Landscape", "Cinematic Shadows", "Vintage Film", "Golden Hour", "Moody B&W", "Film Noir", "Sunset Glow", "Urban Grit", "Soft Pastels". Also include a compelling description (1-2 sentences) that describes the visual style and mood of the recipe (e.g., "Warm, cinematic tones with rich shadows and golden highlights perfect for portrait photography" or "Cool, desaturated look with blue undertones ideal for urban landscapes").
 If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).

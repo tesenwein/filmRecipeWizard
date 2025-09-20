@@ -191,7 +191,6 @@ const FineTuneControls: React.FC<FineTuneControlsProps> = ({
               />
             </Box>
 
-            {/* Film grain switch moved to main options in ColorMatchingStudio */}
           </Box>
         </AccordionDetails>
       </Accordion>

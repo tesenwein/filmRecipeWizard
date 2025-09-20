@@ -64,6 +64,15 @@ export interface AIColorAdjustments {
   // Film Grain
   grain_amount?: number; grain_size?: number; grain_frequency?: number;
 
+  // Post-Crop Vignette
+  vignette_amount?: number; // -100..100
+  vignette_midpoint?: number; // 0..100
+  vignette_feather?: number; // 0..100
+  vignette_roundness?: number; // -100..100
+  vignette_style?: number; // 0..2 (0=Highlight Priority, 1=Color Priority, 2=Paint Overlay)
+  vignette_highlight_contrast?: number; // 0..100
+  override_look_vignette?: boolean;
+
   // Local masks proposed by AI
   masks?: Array<{
     name?: string;

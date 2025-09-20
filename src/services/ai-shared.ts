@@ -8,6 +8,7 @@ export interface AIFunctionToggles {
     hsl?: boolean;
     curves?: boolean;
     grain?: boolean;
+    vignette?: boolean;
     pointColor?: boolean;
 }
 
@@ -100,6 +101,18 @@ export function buildBaseAdjustmentsSchema(aiFunctions: AIFunctionToggles) {
             grain_amount: z.number().min(0).max(100).optional(),
             grain_size: z.number().min(0).max(100).optional(),
             grain_frequency: z.number().min(0).max(100).optional(),
+        });
+    }
+
+    if (aiFunctions.vignette) {
+        baseSchema = baseSchema.extend({
+            vignette_amount: z.number().min(-100).max(100).optional(),
+            vignette_midpoint: z.number().min(0).max(100).optional(),
+            vignette_feather: z.number().min(0).max(100).optional(),
+            vignette_roundness: z.number().min(-100).max(100).optional(),
+            vignette_style: z.number().min(0).max(2).optional(),
+            vignette_highlight_contrast: z.number().min(0).max(100).optional(),
+            override_look_vignette: z.boolean().optional(),
         });
     }
 

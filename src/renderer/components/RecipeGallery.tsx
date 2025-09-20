@@ -1,7 +1,7 @@
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import BoltIcon from '@mui/icons-material/Bolt';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Card, Typography, Button } from '@mui/material';
+import { Box, Button, Card, Typography } from '@mui/material';
 import React, { useMemo, useState } from 'react';
 import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
@@ -9,10 +9,10 @@ import { useAppStore } from '../store/appStore';
 import ConfirmDialog from './ConfirmDialog';
 import ErrorDialog from './ErrorDialog';
 import XMPImportDialog from './XMPImportDialog';
-import GalleryHeader from './recipes/GalleryHeader';
 import BulkActionsToolbar from './recipes/BulkActionsToolbar';
-import RecipeGrid from './recipes/RecipeGrid';
+import GalleryHeader from './recipes/GalleryHeader';
 import RecipeContextMenu from './recipes/RecipeContextMenu';
+import RecipeGrid from './recipes/RecipeGrid';
 
 interface RecipeGalleryProps {
   onOpenRecipe: (recipe: Recipe) => void;
@@ -87,7 +87,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       const numKeys = ['temperatureK', 'tint', 'contrast', 'vibrance', 'saturationBias'] as const;
       for (const k of numKeys) if (uo[k] !== undefined) parts.push(String(uo[k]));
       if (uo.vibe) parts.push(uo.vibe);
-      if (uo.filmGrain !== undefined) parts.push(uo.filmGrain ? 'film grain' : 'no film grain');
       if (uo.artistStyle) parts.push(uo.artistStyle.name, uo.artistStyle.category, uo.artistStyle.blurb, uo.artistStyle.key);
       if (uo.filmStyle) parts.push(uo.filmStyle.name, uo.filmStyle.category, uo.filmStyle.blurb, uo.filmStyle.key);
     }

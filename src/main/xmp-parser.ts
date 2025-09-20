@@ -97,6 +97,9 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
     // Parse grain
     parseGrain(xmpContent, adjustments);
 
+    // Parse vignette
+    parseVignette(xmpContent, adjustments);
+
     // Parse point color
     parsePointColor(xmpContent, adjustments);
 
@@ -549,7 +552,11 @@ function mapMaskSubTypeToType(subType: string, subCategory: string | null): stri
 
 function parseGrain(xmpContent: string, adjustments: AIColorAdjustments): void {
   const parseGrainValue = (pattern: string, key: keyof AIColorAdjustments): void => {
-    const match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
+    // Try both element format and attribute format
+    let match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
+    if (!match) {
+      match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+    }
     if (match) {
       const value = parseFloat(match[1]);
       if (!isNaN(value)) {
@@ -561,6 +568,42 @@ function parseGrain(xmpContent: string, adjustments: AIColorAdjustments): void {
   parseGrainValue('GrainAmount', 'grain_amount');
   parseGrainValue('GrainSize', 'grain_size');
   parseGrainValue('GrainFrequency', 'grain_frequency');
+}
+
+function parseVignette(xmpContent: string, adjustments: AIColorAdjustments): void {
+  const parseVignetteValue = (pattern: string, key: keyof AIColorAdjustments): void => {
+    // Try both element format and attribute format
+    let match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
+    if (!match) {
+      match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+    }
+    if (match) {
+      const value = parseFloat(match[1]);
+      if (!isNaN(value)) {
+        (adjustments as any)[key] = value;
+      }
+    }
+  };
+
+  const parseVignetteBoolean = (pattern: string, key: keyof AIColorAdjustments): void => {
+    // Try both element format and attribute format
+    let match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
+    if (!match) {
+      match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+    }
+    if (match) {
+      const value = match[1].toLowerCase() === 'true';
+      (adjustments as any)[key] = value;
+    }
+  };
+
+  parseVignetteValue('PostCropVignetteAmount', 'vignette_amount');
+  parseVignetteValue('PostCropVignetteMidpoint', 'vignette_midpoint');
+  parseVignetteValue('PostCropVignetteFeather', 'vignette_feather');
+  parseVignetteValue('PostCropVignetteRoundness', 'vignette_roundness');
+  parseVignetteValue('PostCropVignetteStyle', 'vignette_style');
+  parseVignetteValue('PostCropVignetteHighlightContrast', 'vignette_highlight_contrast');
+  parseVignetteBoolean('OverrideLookVignette', 'override_look_vignette');
 }
 
 function parsePointColor(xmpContent: string, adjustments: AIColorAdjustments): void {
