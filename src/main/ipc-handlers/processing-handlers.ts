@@ -293,11 +293,17 @@ export class ProcessingHandlers {
             // Extract AI-generated recipe name and description from the result
             const aiGeneratedName = result.metadata?.aiAdjustments?.preset_name;
             const aiGeneratedDescription = result.metadata?.aiAdjustments?.description;
-            const shouldUpdateName = result.success && 
-              aiGeneratedName && 
-              typeof aiGeneratedName === 'string' && 
+            // Only allow AI to set a name when no explicit name exists on the recipe
+            let shouldUpdateName = result.success &&
+              aiGeneratedName &&
+              typeof aiGeneratedName === 'string' &&
               aiGeneratedName.trim().length > 0 &&
               aiGeneratedName !== 'Custom Recipe';
+            try {
+              const existing = await this.storageService.getProcess(data.processId);
+              const hasUserName = existing && typeof (existing as any).name === 'string' && (existing as any).name.trim().length > 0;
+              if (hasUserName) shouldUpdateName = false;
+            } catch { /* ignore */ }
             const shouldUpdateDescription = result.success && 
               aiGeneratedDescription && 
               typeof aiGeneratedDescription === 'string' && 

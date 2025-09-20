@@ -73,9 +73,7 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
     return { ...aiAdjustments, ...pendingAiMods };
   }, [aiAdjustments, pendingModifications]);
 
-  const nameChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'name'))
-    ? hasChange(recipe.name, (pendingModifications as any).name)
-    : false;
+  // Name changes are not supported via AI chat; hide name row in adjustments panel
   const descriptionChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'description'))
     ? hasChange((recipe as any).description, (pendingModifications as any).description)
     : false;
@@ -122,14 +120,7 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
       <Typography variant="h6" sx={{ fontWeight: 700 }}>Adjustments Overview</Typography>
 
-      <Section title="Name & Description">
-        <Row
-          label="Name"
-          cur={<ValueChip label={str(recipe.name)} />}
-          next={<ValueChip label={str(pendingModifications?.name ?? recipe.name)} color={nameChange ? 'warning' : 'default'} />}
-          isChanged={nameChange}
-        />
-        <Divider sx={{ my: 1 }} />
+  <Section title="Description">
         <Row
           label="Description"
           cur={<LongValue text={(recipe as any).description} />}

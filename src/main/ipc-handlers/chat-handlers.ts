@@ -70,7 +70,6 @@ export class ChatHandlers {
                                     vignette_highlight_contrast: z.number().min(0).max(100).optional(),
                                 }).optional(),
                                 prompt: z.string().optional(),
-                                name: z.string().optional(),
                                 description: z.string().optional(),
                                 // Mask edits allow adding/updating/removing masks to be applied in next generation
                                 masks: z.array(maskEditSchema).optional(),
@@ -83,7 +82,7 @@ export class ChatHandlers {
                 // Create system message with recipe context
                 const systemMessage = `You are a professional photo editing assistant specializing in color grading and film recipe creation. 
 
-The user has a recipe with the following details:
+ The user has a recipe with the following details:
 - Recipe ID: ${recipe.id}
 - Name: ${recipe.name || 'Unnamed Recipe'}
 - Prompt: ${recipe.prompt || 'No prompt provided'}
@@ -94,13 +93,12 @@ The user has a recipe with the following details:
  1. User options (temperatureK, tint, contrast, vibrance, saturationBias, vibe, artistStyle, filmStyle, aiFunctions, masks, colorGrading, hsl, curves, grain, pointColor)
  2. AI adjustments (grain_amount, grain_size, grain_frequency, vignette_amount, vignette_midpoint, vignette_feather, vignette_roundness, vignette_style, vignette_highlight_contrast)
  3. The prompt text
- 4. Recipe name
- 5. Recipe description (short human-friendly summary)
+ 4. Recipe description (short human-friendly summary)
 
 CRITICAL RESPONSE FORMAT:
  - When suggesting changes, CALL modify_recipe exactly once with fields:
   - message: a concise summary of the changes and why
-  - modifications: { userOptions?, aiAdjustments?, prompt?, name?, description?, masks? }
+  - modifications: { userOptions?, aiAdjustments?, prompt?, description?, masks? }
   This function result will be used by the UI to apply changes.
   Do not emit raw JSON outside of the tool; keep your chat explanation separate.
 \n+Mask editing guidance:\n+- Prefer including a stable id for any mask you add; reuse that id when updating or removing.\n+- If id is omitted, removal/update will match by name when present, otherwise by type + subCategoryId + referenceX/referenceY.\n+- To clear all pending mask overrides, use op: 'remove_all' or 'clear' with no other fields.

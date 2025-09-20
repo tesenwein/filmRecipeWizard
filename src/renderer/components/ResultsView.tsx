@@ -1013,12 +1013,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               updates.prompt = modifications.prompt;
                               setProcessPrompt(modifications.prompt);
                             }
-                            if (typeof modifications.name === 'string' && modifications.name !== processName) {
-                              updates.name = modifications.name;
-                              setProcessName(modifications.name);
-                              // Also update the global store so the gallery reflects the new name
-                              useAppStore.getState().updateRecipe(processId, { name: modifications.name });
-                            }
+                            // Name changes are not accepted from AI chat
                             if (
                               typeof (modifications as any).description === 'string' &&
                               (modifications as any).description !== processDescription
