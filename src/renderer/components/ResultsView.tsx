@@ -31,7 +31,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
-// import AIFunctionsSelector from './AIFunctionsSelector';
 import ConfirmDialog from './ConfirmDialog';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
 import RecipeChat from './RecipeChat';
@@ -252,7 +251,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Description editing functions
   const startEditingDescription = (resultIndex: number) => {
-    // Note: result variable removed as it was unused
     const currentDescription = processDescription || '';
     setDescriptionInput(currentDescription);
     setEditingDescription(resultIndex);

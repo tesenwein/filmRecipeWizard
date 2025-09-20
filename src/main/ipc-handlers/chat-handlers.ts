@@ -1,6 +1,6 @@
-import { ipcMain } from 'electron';
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
+import { ipcMain } from 'electron';
 import { z } from 'zod';
 import { getDefaultAIFunctionToggles, maskEditSchemaChat } from '../../services/ai-shared';
 import { SettingsService } from '../settings-service';
@@ -139,9 +139,6 @@ Available user options:
 
                 return {
                     success: true,
-                    // Backward compatibility for existing UI
-                    content: messageText || contentText,
-                    // New structured fields
                     message: messageText || contentText,
                     modifications,
                 };

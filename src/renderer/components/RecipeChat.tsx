@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Box, Paper, TextField, Button, Typography, Avatar, IconButton, CircularProgress, Alert, Stack } from '@mui/material';
 import {
-    Send as SendIcon,
     SmartToy as BotIcon,
-    Person as PersonIcon,
     Check as CheckIcon,
     Close as CloseIcon,
+    Person as PersonIcon,
+    Send as SendIcon,
 } from '@mui/icons-material';
+import { Alert, Avatar, Box, Button, CircularProgress, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
 import { Recipe, StyleOptions } from '../../shared/types';
 import AIFunctionsSelector from './AIFunctionsSelector';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
@@ -73,7 +73,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
             });
 
             if (response.success) {
-                const displayText = response.message || response.content || '';
+                const displayText = response.message || '';
                 const assistantMessage = {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant' as const,
@@ -84,15 +84,6 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                 // Try to parse modifications from the response
                 if ((response as any).modifications) {
                     setPendingModifications((response as any).modifications as Partial<Recipe>);
-                } else if (response.content) {
-                    try {
-                        const parsed = JSON.parse(response.content);
-                        if (parsed.modifications) {
-                            setPendingModifications(parsed.modifications);
-                        }
-                    } catch {
-                        // Not a modification message, just continue
-                    }
                 }
             } else {
                 setError(response.error || 'Failed to get response');
@@ -118,9 +109,6 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         onRejectChanges();
     };
 
-    // Note: formatRecipeForDisplay function removed as it was unused
-
-    // Note: recipeData removed as it was unused
     const latestAdjustments = (() => {
         try {
             const res = Array.isArray(recipe.results) ? recipe.results.filter(r => r && r.success) : [];

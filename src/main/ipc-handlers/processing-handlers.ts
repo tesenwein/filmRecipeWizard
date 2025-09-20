@@ -64,8 +64,6 @@ export class ProcessingHandlers {
               try {
                 // Send structured streaming update
                 mainWindow.webContents.send('streaming-update', update);
-                // Also send progress update for backward compatibility
-                mainWindow.webContents.send('processing-progress', update.progress || 50, update.content);
               } catch {
                 /* ignore */
               }

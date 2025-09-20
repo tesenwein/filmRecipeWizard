@@ -211,24 +211,15 @@ export class StorageService {
         author: p.author,
         // Persisted mask overrides from chat edits
         maskOverrides: Array.isArray(p.maskOverrides) ? p.maskOverrides : undefined,
-        // Persisted recipe image (single) — maintain backward compatibility
-        recipeImageData:
-          typeof p.recipeImageData === 'string'
-            ? p.recipeImageData
-            : typeof p.baseImageData === 'string'
-              ? p.baseImageData
-              : Array.isArray(p.baseImagesData) && typeof p.baseImagesData[0] === 'string'
-                ? p.baseImagesData[0]
-                : undefined,
+        // Persisted recipe image (single)
+        recipeImageData: typeof p.recipeImageData === 'string' ? p.recipeImageData : undefined,
         status: p.status,
       }));
-      // Normalize entries (backfill missing ids or timestamps) and trigger a one-time
-      // re-save if new fields (description, maskOverrides) were present so they're persisted.
+      // Normalize entries (backfill missing ids or timestamps)
       let changed = false;
       const nowIso = new Date().toISOString();
       for (let i = 0; i < history.length; i++) {
         const rec = history[i];
-        const src = raw[i] || {};
         if (!rec.id || typeof rec.id !== 'string' || rec.id.trim().length === 0) {
           rec.id = this.generateProcessId();
           changed = true;
@@ -241,15 +232,8 @@ export class StorageService {
           rec.status = 'completed';
           changed = true;
         }
-        // If the source JSON already has description or maskOverrides, ensure we re-save once
-        // to persist them with the updated mapping going forward.
-        if ((typeof src.description === 'string' && src.description.trim().length > 0) ||
-            (Array.isArray(src.maskOverrides) && src.maskOverrides.length >= 0)) {
-          changed = true;
-        }
       }
       if (changed) {
-        // Persist normalized history to avoid future issues (e.g., deletion not working)
         await this.saveRecipes(history);
       }
       return history;

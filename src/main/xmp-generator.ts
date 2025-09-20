@@ -1,5 +1,5 @@
 import type { AIColorAdjustments } from '../services/types';
-import { getMaskConfig, getAllMaskTypes, normalizeMaskType } from '../shared/mask-types';
+import { getAllMaskTypes, getMaskConfig, normalizeMaskType } from '../shared/mask-types';
 
 // Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
 export function getExampleBWMixer(): Pick<
@@ -109,7 +109,6 @@ export function generateXMPContent(
   const vibrance = round(clamp(scale(aiAdjustments.vibrance as any), -100, 100));
   const saturation = round(clamp(scale(aiAdjustments.saturation as any), -100, 100));
 
-  // Note: sanitizeName function removed as it was unused
 
   // Prefer a renderer-provided recipeName override to avoid AI vs recipe name mismatches
   const presetName = (include?.recipeName as string) || (aiAdjustments as any).preset_name || 'Custom Recipe';

@@ -63,8 +63,6 @@ declare global {
       // Chat operations
       chatRecipe: (data: { messages: Array<{ role: string; content: string }>; recipe: any }) => Promise<{
         success: boolean;
-        // Backward compatibility: content holds message text if present
-        content?: string;
         // New structured chat result fields
         message?: string;
         modifications?: {

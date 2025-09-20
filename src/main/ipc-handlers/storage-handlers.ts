@@ -1,4 +1,4 @@
-import { dialog, ipcMain, BrowserWindow } from 'electron';
+import { BrowserWindow, dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
@@ -48,21 +48,6 @@ export class StorageHandlers {
                 out = { ...out, name: aiName.trim() } as ProcessHistory;
                 mutated = true;
               }
-            }
-          } catch { /* ignore */ }
-          // Migrate legacy warmth -> temperatureK once
-          try {
-            const uo: any = (out as any).userOptions;
-            if (uo && uo.warmth !== undefined && uo.temperatureK === undefined) {
-              const w = Math.max(-100, Math.min(100, Number(uo.warmth)));
-              const baseTemp = 6500;
-              const tempRange = 3500; // +/- range
-              const k = Math.round(baseTemp - (w * tempRange / 100));
-              const nextUo = { ...uo };
-              delete nextUo.warmth;
-              nextUo.temperatureK = Math.max(2000, Math.min(50000, k));
-              out = { ...out, userOptions: nextUo } as ProcessHistory;
-              mutated = true;
             }
           } catch { /* ignore */ }
           return out;
@@ -253,21 +238,6 @@ export class StorageHandlers {
         if (!process) {
           return { success: false, error: 'Process not found' };
         }
-        // On-the-fly migration for legacy warmth -> temperatureK
-        try {
-          const uo: any = (process as any).userOptions;
-          if (uo && uo.warmth !== undefined && uo.temperatureK === undefined) {
-            const w = Math.max(-100, Math.min(100, Number(uo.warmth)));
-            const baseTemp = 6500;
-            const tempRange = 3500;
-            const k = Math.round(baseTemp - (w * tempRange / 100));
-            const nextUo = { ...uo };
-            delete nextUo.warmth;
-            nextUo.temperatureK = Math.max(2000, Math.min(50000, k));
-            (process as any).userOptions = nextUo;
-            try { await this.storageService.updateProcess(processId, { userOptions: nextUo } as any); } catch { /* ignore update errors */ }
-          }
-        } catch { /* ignore */ }
         // Ensure canonical name exists: set from AI preset_name if absent
         try {
           const hasName = typeof (process as any).name === 'string' && (process as any).name.trim().length > 0;
