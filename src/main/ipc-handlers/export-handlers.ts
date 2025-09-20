@@ -36,10 +36,7 @@ export class ExportHandlers {
         const xmpContent = generateXMPContent(data.adjustments, include);
 
         // Show save dialog
-        // Use recipe name if AI generated "Custom Recipe"
-        const aiPresetName = (data?.adjustments?.preset_name as string | undefined);
-        const recipeName = (data?.recipeName as string | undefined);
-        const presetName = (aiPresetName && aiPresetName !== 'Custom Recipe') ? aiPresetName : (recipeName || 'Custom Recipe');
+        const presetName = (data?.recipeName as string) || 'Custom Recipe';
         const safeName = presetName
           .replace(/[^A-Za-z0-9 _-]+/g, '')
           .replace(/\s+/g, ' ')

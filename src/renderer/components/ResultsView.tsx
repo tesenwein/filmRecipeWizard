@@ -12,20 +12,7 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
-import {
-    Avatar,
-    Box,
-    Button,
-    Chip,
-    Divider,
-    IconButton,
-    Paper,
-    Slider,
-    Tab,
-    Tabs,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, IconButton, Paper, Slider, Tab, Tabs, TextField, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
 import { ProcessingResult, UserProfile } from '../../shared/types';
@@ -62,9 +49,7 @@ const getAvailableFeatures = (adjustments: any): string[] => {
   }
 
   // HSL Adjustments
-  const hasHSL = Object.keys(adjustments).some(
-    key => key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_')
-  );
+  const hasHSL = Object.keys(adjustments).some(key => key.startsWith('hue_') || key.startsWith('sat_') || key.startsWith('lum_'));
   if (hasHSL) {
     features.push('HSL Adjustments');
   }
@@ -76,12 +61,7 @@ const getAvailableFeatures = (adjustments: any): string[] => {
   }
 
   // Tone Curves
-  if (
-    adjustments.tone_curve ||
-    adjustments.tone_curve_red ||
-    adjustments.tone_curve_green ||
-    adjustments.tone_curve_blue
-  ) {
+  if (adjustments.tone_curve || adjustments.tone_curve_red || adjustments.tone_curve_green || adjustments.tone_curve_blue) {
     features.push('Tone Curves');
   }
 
@@ -91,11 +71,7 @@ const getAvailableFeatures = (adjustments: any): string[] => {
   }
 
   // Film Grain
-  if (
-    adjustments.grain_amount !== undefined ||
-    adjustments.grain_size !== undefined ||
-    adjustments.grain_frequency !== undefined
-  ) {
+  if (adjustments.grain_amount !== undefined || adjustments.grain_size !== undefined || adjustments.grain_frequency !== undefined) {
     features.push('Film Grain');
   }
 
@@ -135,7 +111,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   aiFunctions,
 }) => {
   const { showError } = useAlert();
-  const { deleteRecipe, setGeneratingStatus, } = useAppStore();
+  const { deleteRecipe, setGeneratingStatus } = useAppStore();
   // Access settings via hook (safe inside component)
   const { settings } = useAppStore();
   // Base64 image data URLs for display
@@ -226,10 +202,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         }
 
         // Reload the image data after adding
-        const [data, proc] = await Promise.all([
-          window.electronAPI.getImageDataUrls(processId),
-          window.electronAPI.getProcess(processId),
-        ]);
+        const [data, proc] = await Promise.all([window.electronAPI.getImageDataUrls(processId), window.electronAPI.getProcess(processId)]);
         if (data.success) {
           setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
           setActiveBase(0);
@@ -273,7 +246,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
       // Update the recipe in storage
       await useAppStore.getState().updateRecipeInStorage(processId, {
-        description: newDescription
+        description: newDescription,
       } as any);
 
       // Reflect the change in UI immediately
@@ -295,10 +268,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         showError(res?.error || 'Failed to remove recipe image');
         return;
       }
-      const [data, proc] = await Promise.all([
-        window.electronAPI.getImageDataUrls(processId),
-        window.electronAPI.getProcess(processId),
-      ]);
+      const [data, proc] = await Promise.all([window.electronAPI.getImageDataUrls(processId), window.electronAPI.getProcess(processId)]);
       if (data.success) {
         setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
         setActiveBase(0);
@@ -351,9 +321,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
         // Handle image data response - even if process not found, we get empty arrays
         if (imgResponse.success) {
-          setBaseImageUrls(
-            Array.isArray(imgResponse.baseImageUrls) ? imgResponse.baseImageUrls : []
-          );
+          setBaseImageUrls(Array.isArray(imgResponse.baseImageUrls) ? imgResponse.baseImageUrls : []);
           setActiveBase(0);
         } else {
           console.warn('[RESULTS] Failed to load image data URLs:', imgResponse.error);
@@ -404,7 +372,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   }, [recipes, isReprocessing, processId]);
 
-  // Fallback: clear indicator when processing completes event fires (regardless of status toggling)
+  // Clear indicator when processing completes event fires
   useEffect(() => {
     if (subscribedRef.current) return;
     subscribedRef.current = true;
@@ -413,7 +381,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         setIsReprocessing(false);
         setExpectGenerating(false);
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   // Reset export options when aiFunctions changes
@@ -458,20 +428,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Generate default options based on aiFunctions
   const getDefaultOptions = () =>
-  ({
-    wbBasic: aiFunctions?.temperatureTint ?? true,
-    exposure: true, // Enable by default
-    hsl: aiFunctions?.hsl ?? true,
-    colorGrading: aiFunctions?.colorGrading ?? true,
-    curves: aiFunctions?.curves ?? true,
-    sharpenNoise: true, // Enable by default
-    vignette: true, // Enable by default
-    pointColor: aiFunctions?.pointColor ?? true,
-    grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
-    masks: aiFunctions?.masks ?? true,
-    // Start export strength at 100%
-    strength: 1.0,
-  } as const);
+    ({
+      wbBasic: aiFunctions?.temperatureTint ?? true,
+      exposure: true, // Enable by default
+      hsl: aiFunctions?.hsl ?? true,
+      colorGrading: aiFunctions?.colorGrading ?? true,
+      curves: aiFunctions?.curves ?? true,
+      sharpenNoise: true, // Enable by default
+      vignette: true, // Enable by default
+      pointColor: aiFunctions?.pointColor ?? true,
+      grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
+      masks: aiFunctions?.masks ?? true,
+      // Start export strength at 100%
+      strength: 1.0,
+    } as const);
 
   const defaultOptions = getDefaultOptions();
 
@@ -484,7 +454,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
     // Start with a copy of the original adjustments
     const effectiveAdjustments = { ...originalAdjustments };
-
 
     // Apply userOptions modifications if they exist
     if (processOptions) {
@@ -520,7 +489,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     if (Array.isArray(maskOverrides) && maskOverrides.length > 0) {
       const idOf = (m: any) =>
         m?.id ||
-        (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '').toString().slice(0, 4)}`);
+        (m?.name
+          ? `name:${m.name}`
+          : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '')
+              .toString()
+              .slice(0, 4)}`);
       const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
 
       let masks = Array.isArray(effectiveAdjustments.masks) ? [...effectiveAdjustments.masks] : [];
@@ -540,7 +513,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         if (operation === 'update') {
           if (idx >= 0) {
             const prev = masks[idx] || {};
-            masks[idx] = { ...prev, ...op, id: (prev as any).id || (op as any).id, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+            masks[idx] = {
+              ...prev,
+              ...op,
+              id: (prev as any).id || (op as any).id,
+              adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
+            };
           } else {
             masks.push({ ...op, id: (op as any).id || idOf(op) });
           }
@@ -549,7 +527,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         // default add
         if (idx >= 0) {
           const prev = masks[idx] || {};
-          masks[idx] = { ...prev, ...op, id: (prev as any).id || (op as any).id || idOf(op), adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+          masks[idx] = {
+            ...prev,
+            ...op,
+            id: (prev as any).id || (op as any).id || idOf(op),
+            adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
+          };
         } else {
           masks.push({ ...op, id: (op as any).id || idOf(op) });
         }
@@ -564,7 +547,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const handleExportXMP = async (index: number, result: ProcessingResult) => {
     const adjustments = getEffectiveAdjustments(result);
     if (!adjustments) return;
-
 
     try {
       const adjForExport = { ...adjustments } as any;
@@ -661,8 +643,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             Processing Failed
           </Typography>
           <Typography variant="body1" sx={{ color: '#999', mb: 4 }}>
-            The AI processing failed for all images. This might be due to API issues or invalid
-            images.
+            The AI processing failed for all images. This might be due to API issues or invalid images.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button variant="outlined" onClick={onReset} startIcon={<RefreshIcon />}>
@@ -683,8 +664,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             successfulResults={successfulResults}
             selectedResult={selectedResult}
             processOptions={processOptions}
-            onNameChange={(n) => {
-              try { setProcessName(n); } catch { /* noop */ }
+            onNameChange={n => {
+              try {
+                setProcessName(n);
+              } catch {
+                /* noop */
+              }
             }}
           />
 
@@ -704,9 +689,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             <Tab icon={<ChatIcon />} label="AI Chat" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
-            {author && (author.firstName || author.lastName) && (
-              <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />
-            )}
+            {author && (author.firstName || author.lastName) && <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />}
           </Tabs>
 
           {/* Image Selection */}
@@ -731,10 +714,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 1: Overview */}
                 {activeTab === 0 && (
                   <Box>
-                    <Typography
-                      variant="h5"
-                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <CompareArrowsIcon color="primary" />
                       Overview
                     </Typography>
@@ -761,11 +741,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 minRows={2}
                                 maxRows={4}
                                 value={descriptionInput}
-                                onChange={(e) => setDescriptionInput(e.target.value)}
+                                onChange={e => setDescriptionInput(e.target.value)}
                                 placeholder="Enter recipe description..."
                                 size="small"
                                 autoFocus
-                                onKeyDown={(e) => {
+                                onKeyDown={e => {
                                   if (e.key === 'Enter' && e.ctrlKey) {
                                     e.preventDefault();
                                     saveDescription(selectedResult);
@@ -776,18 +756,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 }}
                               />
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => saveDescription(selectedResult)}
-                                  title="Save description"
-                                >
+                                <IconButton size="small" onClick={() => saveDescription(selectedResult)} title="Save description">
                                   <CheckIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton
-                                  size="small"
-                                  onClick={cancelEditingDescription}
-                                  title="Cancel editing"
-                                >
+                                <IconButton size="small" onClick={cancelEditingDescription} title="Cancel editing">
                                   <CloseIcon fontSize="small" />
                                 </IconButton>
                               </Box>
@@ -809,34 +781,22 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           )}
                         </Box>
 
-
-
-
                         {/* Style Information */}
-                        {processOptions &&
-                          (processOptions.artistStyle ||
-                            processOptions.filmStyle) && (
-                            <Box sx={{ mb: 3 }}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                                Applied Styles
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                {processOptions.artistStyle?.name && (
-                                  <Chip
-                                    label={`Artist: ${processOptions.artistStyle.name}`}
-                                    variant="outlined"
-                                  />
-                                )}
-                                {processOptions.filmStyle?.name && (
-                                  <Chip
-                                    label={`Film: ${processOptions.filmStyle.name}`}
-                                    variant="outlined"
-                                  />
-                                )}
-                              </Box>
+                        {processOptions && (processOptions.artistStyle || processOptions.filmStyle) && (
+                          <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                              Applied Styles
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              {processOptions.artistStyle?.name && (
+                                <Chip label={`Artist: ${processOptions.artistStyle.name}`} variant="outlined" />
+                              )}
+                              {processOptions.filmStyle?.name && (
+                                <Chip label={`Film: ${processOptions.filmStyle.name}`} variant="outlined" />
+                              )}
                             </Box>
-                          )}
-
+                          </Box>
+                        )}
                       </Paper>
 
                       {/* Right Column: Recipe Image */}
@@ -858,14 +818,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               source={baseImageUrls[activeBase]}
                               alt={`Recipe Image ${activeBase + 1}`}
                               fit="contain"
-                              placeholderLabel={
-                                baseImageUrls.length === 0 ? 'Click to add' : 'No image'
-                              }
+                              placeholderLabel={baseImageUrls.length === 0 ? 'Click to add' : 'No image'}
                               placeholderIcon={
                                 baseImageUrls.length === 0 ? (
-                                  <AddPhotoAlternateOutlinedIcon
-                                    style={{ fontSize: 28, color: '#7c8aa0', opacity: 0.9 }}
-                                  />
+                                  <AddPhotoAlternateOutlinedIcon style={{ fontSize: 28, color: '#7c8aa0', opacity: 0.9 }} />
                                 ) : undefined
                               }
                             />
@@ -899,11 +855,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 <Button
                                   variant="contained"
                                   size="small"
-                                  onClick={() =>
-                                    setActiveBase(
-                                      (activeBase - 1 + baseImageUrls.length) % baseImageUrls.length
-                                    )
-                                  }
+                                  onClick={() => setActiveBase((activeBase - 1 + baseImageUrls.length) % baseImageUrls.length)}
                                   sx={{
                                     position: 'absolute',
                                     top: 'calc(50% - 16px)',
@@ -918,9 +870,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 <Button
                                   variant="contained"
                                   size="small"
-                                  onClick={() =>
-                                    setActiveBase((activeBase + 1) % baseImageUrls.length)
-                                  }
+                                  onClick={() => setActiveBase((activeBase + 1) % baseImageUrls.length)}
                                   sx={{
                                     position: 'absolute',
                                     top: 'calc(50% - 16px)',
@@ -953,23 +903,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 2: Adjustments */}
                 {activeTab === 1 && result.metadata?.aiAdjustments && (
                   <Box>
-                    <Typography
-                      variant="h5"
-                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TuneIcon color="primary" />
                       Applied Adjustments
                       <Chip
-                        label={`${Math.round(
-                          (result.metadata.aiAdjustments.confidence || 0) * 100
-                        )}% Confidence`}
+                        label={`${Math.round((result.metadata.aiAdjustments.confidence || 0) * 100)}% Confidence`}
                         size="medium"
                         color="primary"
                         sx={{ ml: 'auto' }}
                       />
                     </Typography>
-
-
 
                     <Paper sx={{ p: 2 }}>
                       {(() => {
@@ -978,17 +921,19 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         const effective = { ...aiAdj, masks: effectiveMasks } as any;
                         return (
                           <RecipeAdjustmentsPanel
-                            recipe={{
-                              id: processId || '',
-                              name: processName || 'Unnamed Recipe',
-                              prompt: processPrompt || '',
-                              description: processDescription,
-                              userOptions: processOptions,
-                              results: successfulResults,
-                              timestamp: new Date().toISOString(),
-                              // expose overrides for panel sections
-                              ...(maskOverrides ? { maskOverrides } : {}),
-                            } as any}
+                            recipe={
+                              {
+                                id: processId || '',
+                                name: processName || 'Unnamed Recipe',
+                                prompt: processPrompt || '',
+                                description: processDescription,
+                                userOptions: processOptions,
+                                results: successfulResults,
+                                timestamp: new Date().toISOString(),
+                                // expose overrides for panel sections
+                                ...(maskOverrides ? { maskOverrides } : {}),
+                              } as any
+                            }
                             pendingModifications={null}
                             aiAdjustments={effective}
                             showOnlyCurrent
@@ -997,7 +942,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       })()}
                     </Paper>
 
-
                     {/* Intentionally hide AI Functions toggles in adjustments panel */}
                   </Box>
                 )}
@@ -1005,10 +949,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 3: Lightroom Export */}
                 {activeTab === 2 && (
                   <Box>
-                    <Typography
-                      variant="h5"
-                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <ChatIcon color="primary" />
                       AI Chat
                     </Typography>
@@ -1025,7 +966,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           timestamp: new Date().toISOString(),
                         }}
                         isReprocessing={isReprocessing}
-                        onRecipeModification={async (modifications) => {
+                        onRecipeModification={async modifications => {
                           if (!processId) return;
                           try {
                             const updates: any = {};
@@ -1033,7 +974,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               const merged = { ...(processOptions || {}), ...modifications.userOptions } as any;
                               // merge nested aiFunctions if present
                               if ((processOptions as any)?.aiFunctions || (modifications.userOptions as any).aiFunctions) {
-                                merged.aiFunctions = { ...(processOptions as any)?.aiFunctions, ...(modifications.userOptions as any).aiFunctions };
+                                merged.aiFunctions = {
+                                  ...(processOptions as any)?.aiFunctions,
+                                  ...(modifications.userOptions as any).aiFunctions,
+                                };
                               }
                               updates.userOptions = merged;
                               setProcessOptions(merged);
@@ -1046,7 +990,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               updates.name = modifications.name;
                               setProcessName(modifications.name);
                             }
-                            if (typeof (modifications as any).description === 'string' && (modifications as any).description !== processDescription) {
+                            if (
+                              typeof (modifications as any).description === 'string' &&
+                              (modifications as any).description !== processDescription
+                            ) {
                               updates.description = (modifications as any).description;
                               setProcessDescription((modifications as any).description);
                             }
@@ -1056,7 +1003,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               let next = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
                               const idOf = (m: any) =>
                                 m?.id ||
-                                (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '').toString().slice(0, 4)}`);
+                                (m?.name
+                                  ? `name:${m.name}`
+                                  : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(
+                                      m?.referenceY ?? ''
+                                    )
+                                      .toString()
+                                      .slice(0, 4)}`);
                               const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
                               for (const op of ops) {
                                 const operation = op.op || 'add';
@@ -1072,7 +1025,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 if (operation === 'update') {
                                   if (idx >= 0) {
                                     const prev = next[idx] || {};
-                                    next[idx] = { ...prev, ...op, id: prev.id || op.id, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+                                    next[idx] = {
+                                      ...prev,
+                                      ...op,
+                                      id: prev.id || op.id,
+                                      adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
+                                    };
                                   } else {
                                     next.push({ ...op, id: op.id || idOf(op) });
                                   }
@@ -1081,7 +1039,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 // default add
                                 if (idx >= 0) {
                                   const prev = next[idx] || {};
-                                  next[idx] = { ...prev, ...op, id: prev.id || op.id || idOf(op), adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
+                                  next[idx] = {
+                                    ...prev,
+                                    ...op,
+                                    id: prev.id || op.id || idOf(op),
+                                    adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
+                                  };
                                 } else {
                                   next.push({ ...op, id: op.id || idOf(op) });
                                 }
@@ -1131,7 +1094,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             // Optimistically flip status to generating in storage for reliable UI updates
                             try {
                               await window.electronAPI.updateProcess(processId, { status: 'generating' } as any);
-                            } catch { /* ignore */ }
+                            } catch {
+                              /* ignore */
+                            }
 
                             // Optionally show generating state in gallery
                             try {
@@ -1142,7 +1107,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               setExpectGenerating(!!showGen);
                               // Always show local reprocessing indicator in this view
                               setIsReprocessing(true);
-                            } catch { /* ignore */ }
+                            } catch {
+                              /* ignore */
+                            }
 
                             // Trigger re-processing
                             await window.electronAPI.processWithStoredImages(processingData);
@@ -1152,11 +1119,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             // The processing will complete and update the process in storage
                             // The App component will handle the results update via onProcessingComplete
                             console.log('[RESULTS] Re-processing initiated - results will be updated automatically');
-
                           } catch (error) {
                             console.error('[RESULTS] Failed to trigger AI re-processing:', error);
-                            try { if (processId) setGeneratingStatus(processId, false); } catch { /* ignore */ }
-                            try { setIsReprocessing(false); } catch { /* ignore */ }
+                            try {
+                              if (processId) setGeneratingStatus(processId, false);
+                            } catch {
+                              /* ignore */
+                            }
+                            try {
+                              setIsReprocessing(false);
+                            } catch {
+                              /* ignore */
+                            }
                             showError('Failed to re-process with updated parameters');
                           }
                         }}
@@ -1171,10 +1145,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                 {activeTab === 3 && (
                   <Box>
-                    <Typography
-                      variant="h5"
-                      sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
+                    <Typography variant="h5" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <DownloadIcon color="primary" />
                       Lightroom Export
                     </Typography>
@@ -1188,15 +1159,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           The XMP preset will include these features detected in the AI adjustments:
                         </Typography>
                         {(() => {
-                          const availableFeatures = getAvailableFeatures(
-                            result.metadata?.aiAdjustments
-                          );
+                          const availableFeatures = getAvailableFeatures(result.metadata?.aiAdjustments);
                           if (availableFeatures.length === 0) {
                             return (
-                              <Typography
-                                variant="body2"
-                                sx={{ color: 'text.secondary', fontStyle: 'italic' }}
-                              >
+                              <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
                                 No specific features detected - basic adjustments will be included
                               </Typography>
                             );
@@ -1204,23 +1170,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           return (
                             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                               {availableFeatures.map((feature, idx) => (
-                                <Chip
-                                  key={idx}
-                                  size="small"
-                                  label={feature}
-                                  color="primary"
-                                  variant="outlined"
-                                />
+                                <Chip key={idx} size="small" label={feature} color="primary" variant="outlined" />
                               ))}
                             </Box>
                           );
                         })()}
                         {/* Export Strength and Button - 50/50 Layout */}
                         <Box sx={{ display: 'flex', gap: 3, mt: 3, alignItems: 'stretch' }}>
-                          <Paper
-                            variant="outlined"
-                            sx={{ p: 3, flex: 1, backgroundColor: 'grey.50' }}
-                          >
+                          <Paper variant="outlined" sx={{ p: 3, flex: 1, backgroundColor: 'grey.50' }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                               Export Strength
                             </Typography>
@@ -1276,10 +1233,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       {/* Divider between Preset and Camera Profile */}
                       <Box sx={{ display: 'flex', alignItems: 'center', my: 4 }}>
                         <Divider sx={{ flex: 1 }} />
-                        <Typography
-                          variant="body2"
-                          sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}
-                        >
+                        <Typography variant="body2" sx={{ px: 2, color: 'text.secondary', fontWeight: 500 }}>
                           OR
                         </Typography>
                         <Divider sx={{ flex: 1 }} />
@@ -1290,8 +1244,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           Camera Profile (.xmp)
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                          Create a new Camera Profile from your recipe adjustments for use in
-                          Lightroom.
+                          Create a new Camera Profile from your recipe adjustments for use in Lightroom.
                         </Typography>
                         {profileExportStatus && (
                           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
@@ -1323,10 +1276,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 4: LUT Export */}
                 {activeTab === 4 && (
                   <Box>
-                    <Typography
-                      variant="h5"
-                      sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
+                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PaletteIcon color="primary" />
                       LUT Export
                     </Typography>
@@ -1344,8 +1294,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           3D LUT Creation
                         </Typography>
                         <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-                          Generate a 3D LUT file that captures the color transformations from this
-                          processing session.
+                          Generate a 3D LUT file that captures the color transformations from this processing session.
                         </Typography>
 
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
@@ -1388,9 +1337,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   variant={lutFormat === format.value ? 'filled' : 'outlined'}
                                   color={lutFormat === format.value ? 'primary' : 'default'}
                                   clickable
-                                  onClick={() =>
-                                    setLutFormat(format.value as 'cube' | '3dl' | 'lut')
-                                  }
+                                  onClick={() => setLutFormat(format.value as 'cube' | '3dl' | 'lut')}
                                   sx={{ cursor: 'pointer' }}
                                 />
                               ))}
@@ -1420,8 +1367,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               </Typography>
                             </Box>
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              Tip: 100% applies the full AI adjustments. Lower values create more
-                              subtle effects.
+                              Tip: 100% applies the full AI adjustments. Lower values create more subtle effects.
                             </Typography>
                           </Paper>
                         </Box>
@@ -1449,43 +1395,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </Typography>
 
                         <Box sx={{ mb: 3 }}>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}
-                          >
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
                             What is a 3D LUT?
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                            A 3D Lookup Table captures the exact color transformations applied by
-                            the AI, allowing you to recreate this look in other software.
+                            A 3D Lookup Table captures the exact color transformations applied by the AI, allowing you to recreate this look
+                            in other software.
                           </Typography>
                         </Box>
 
-                        <Box sx={{ mb: 3 }}>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}
-                          >
-                            Compatible Software
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              • Adobe Lightroom & Photoshop
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              • DaVinci Resolve
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              • Final Cut Pro
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              • Luminar & Aurora HDR
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                              • Most video editing software
-                            </Typography>
-                          </Box>
-                        </Box>
+                        {/* Compatible software list removed — no longer necessary. */}
 
                         <Box
                           sx={{
@@ -1509,8 +1428,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             Pro Tip
                           </Typography>
                           <Typography variant="body2">
-                            33³ LUTs offer the best balance of quality and file size for most
-                            applications.
+                            33³ LUTs offer the best balance of quality and file size for most applications.
                           </Typography>
                         </Box>
                       </Paper>
@@ -1569,15 +1487,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 fontWeight: 600,
                               }}
                             >
-                              {`${(author.firstName?.[0] || '').toUpperCase()}${(
-                                author.lastName?.[0] || ''
-                              ).toUpperCase()}`}
+                              {`${(author.firstName?.[0] || '').toUpperCase()}${(author.lastName?.[0] || '').toUpperCase()}`}
                             </Avatar>
                             {(author.firstName || author.lastName) && (
-                              <Typography
-                                variant="h6"
-                                sx={{ fontWeight: 600, color: 'text.primary' }}
-                              >
+                              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
                                 {[author.firstName, author.lastName].filter(Boolean).join(' ')}
                               </Typography>
                             )}
@@ -1600,10 +1513,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             {/* Email */}
                             {author.email && (
                               <Box sx={{ textAlign: 'left' }}>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}
-                                >
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
                                   Email
                                 </Typography>
                                 <Typography
@@ -1625,10 +1535,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             {/* Website */}
                             {author.website && (
                               <Box sx={{ textAlign: 'left' }}>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}
-                                >
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
                                   Website
                                 </Typography>
                                 <Typography
@@ -1654,10 +1561,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             {/* Instagram */}
                             {author.instagram && (
                               <Box sx={{ textAlign: 'left' }}>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}
-                                >
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>
                                   Instagram
                                 </Typography>
                                 <Typography

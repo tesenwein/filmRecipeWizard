@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Box, IconButton, TextField, Typography } from '@mui/material';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import { Box, IconButton, TextField, Typography } from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ProcessingResult } from '../../../shared/types';
-import { useAppStore } from '../../store/appStore';
 import { useAlert } from '../../context/AlertContext';
+import { useAppStore } from '../../store/appStore';
 
 interface RecipeNameHeaderProps {
   processId?: string;
@@ -57,7 +57,6 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
   // (Name updates are driven via displayNameOverride to avoid global listener conflicts.)
 
   const computedDefaultName = useMemo(() => {
-    // Do not use AI preset_name for display; fallback to generic title
     return 'Untitled Recipe';
   }, []);
 

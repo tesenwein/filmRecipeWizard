@@ -38,18 +38,6 @@ export class StorageHandlers {
             mutated = true;
             out = { ...out, author } as ProcessHistory;
           }
-          // Ensure a single canonical name: if missing, derive from first result's preset_name
-          try {
-            const hasName = typeof (out as any).name === 'string' && (out as any).name.trim().length > 0;
-            if (!hasName) {
-              const first = Array.isArray((out as any).results) ? (out as any).results[0] : undefined;
-              const aiName = first?.metadata?.aiAdjustments?.preset_name as string | undefined;
-              if (aiName && aiName.trim().length > 0) {
-                out = { ...out, name: aiName.trim() } as ProcessHistory;
-                mutated = true;
-              }
-            }
-          } catch { /* ignore */ }
           return out;
         });
         if (mutated && this.settingsService) {
@@ -238,18 +226,6 @@ export class StorageHandlers {
         if (!process) {
           return { success: false, error: 'Process not found' };
         }
-        // Ensure canonical name exists: set from AI preset_name if absent
-        try {
-          const hasName = typeof (process as any).name === 'string' && (process as any).name.trim().length > 0;
-          if (!hasName) {
-            const first = Array.isArray((process as any).results) ? (process as any).results[0] : undefined;
-            const aiName = first?.metadata?.aiAdjustments?.preset_name as string | undefined;
-            if (aiName && aiName.trim().length > 0) {
-              (process as any).name = aiName.trim();
-              try { await this.storageService.updateProcess(processId, { name: aiName.trim() } as any); } catch { /* ignore update errors */ }
-            }
-          }
-        } catch { /* ignore */ }
         return { success: true, process };
       } catch (error) {
         console.error('[IPC] Error getting process:', error);

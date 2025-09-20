@@ -1,7 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
-import { getMaskTypesByCategory, normalizeMaskType, getMaskConfig } from '../shared/mask-types';
+import { getMaskConfig, getMaskTypesByCategory, normalizeMaskType } from '../shared/mask-types';
 import { AIFunctionToggles, buildBaseAdjustmentsSchema, createStreamingMaskSchema, getDefaultAIFunctionToggles } from './ai-shared';
 import { AIColorAdjustments } from './types';
 
@@ -86,7 +86,6 @@ export class AIStreamingService {
             // Removed streaming code since we're using generateText instead of streamText
 
             if (!finalResult) {
-                // Fallback: try to parse the result from the text
                 console.log('[AI] No tool results found, attempting to parse from text');
                 finalResult = this.parseResultFromText(result.text);
                 if (finalResult) {
@@ -121,13 +120,11 @@ export class AIStreamingService {
 
             // Ensure description is always present
             if (!finalResult.description || finalResult.description.trim().length === 0) {
-                console.log('[AI] No description found, applying fallback description');
                 finalResult.description = 'A professional color grading recipe with carefully balanced tones and contrast.';
             }
 
             // Ensure preset name is always present
             if (!finalResult.preset_name || finalResult.preset_name.trim().length === 0 || finalResult.preset_name === 'Custom Recipe') {
-                console.log('[AI] No preset name found or using fallback, applying fallback name');
                 finalResult.preset_name = 'Custom Recipe';
             } else {
                 console.log('[AI] Generated preset name:', finalResult.preset_name);
@@ -328,7 +325,6 @@ Provide detailed reasoning for each adjustment to help the user understand the c
 
     private parseResultFromText(text: string): AIColorAdjustments | null {
         // Try to extract structured data from the text
-        // This is a fallback method
         try {
             // Look for JSON-like structures in the text
             const jsonMatches = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);

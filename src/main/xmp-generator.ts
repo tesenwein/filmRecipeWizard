@@ -4,14 +4,7 @@ import { getAllMaskTypes, getMaskConfig, normalizeMaskType } from '../shared/mas
 // Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
 export function getExampleBWMixer(): Pick<
   AIColorAdjustments,
-  | 'gray_red'
-  | 'gray_orange'
-  | 'gray_yellow'
-  | 'gray_green'
-  | 'gray_aqua'
-  | 'gray_blue'
-  | 'gray_purple'
-  | 'gray_magenta'
+  'gray_red' | 'gray_orange' | 'gray_yellow' | 'gray_green' | 'gray_aqua' | 'gray_blue' | 'gray_purple' | 'gray_magenta'
 > {
   return {
     gray_red: -20,
@@ -25,16 +18,12 @@ export function getExampleBWMixer(): Pick<
   };
 }
 
-export function generateXMPContent(
-  aiAdjustments: AIColorAdjustments,
-  include: any
-): string {
+export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
   // Generate XMP content for Lightroom based on AI adjustments
   const isBW =
     !!aiAdjustments.monochrome ||
     aiAdjustments.treatment === 'black_and_white' ||
-    (typeof aiAdjustments.camera_profile === 'string' &&
-      /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
+    (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
     (typeof aiAdjustments.saturation === 'number' && aiAdjustments.saturation <= -100);
   // Normalize any AI-provided profile name to Adobe's canonical set
   const normalizeCameraProfile = (name?: string): string | undefined => {
@@ -88,11 +77,8 @@ export function generateXMPContent(
   // Apply a global strength scaling to reduce effect intensity.
   // Default to 0.5 based on feedback that presets were ~2x too strong.
   const strength =
-    typeof include?.strength === 'number' && Number.isFinite(include.strength)
-      ? Math.max(0, Math.min(2, include.strength))
-      : 0.5;
-  const scale = (v: any): number | undefined =>
-    typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined;
+    typeof include?.strength === 'number' && Number.isFinite(include.strength) ? Math.max(0, Math.min(2, include.strength)) : 0.5;
+  const scale = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined);
 
   // Sanitize all inputs
   // Use D65 (6500K) as a neutral default to avoid unintended warm/yellow bias
@@ -109,366 +95,228 @@ export function generateXMPContent(
   const vibrance = round(clamp(scale(aiAdjustments.vibrance as any), -100, 100));
   const saturation = round(clamp(scale(aiAdjustments.saturation as any), -100, 100));
 
-
-  // Prefer a renderer-provided recipeName override to avoid AI vs recipe name mismatches
-  const presetName = (include?.recipeName as string) || (aiAdjustments as any).preset_name || 'Custom Recipe';
+  const presetName = (include?.recipeName as string) || 'Custom Recipe';
   const groupName = 'film-recipe-wizard';
-  // Inclusion flags with flexible defaults (back-compat: include everything when not specified)
+  // Inclusion flags: only include sections when explicitly enabled.
   const inc = {
-    wbBasic: include?.wbBasic !== false,
-    exposure: !!include?.exposure, // exposure is separate and defaults to off unless explicitly enabled
-    hsl: include?.hsl !== false,
-    colorGrading: include?.colorGrading !== false,
-    curves: include?.curves !== false,
-    // Enable Point Color by default unless explicitly disabled
-    pointColor: include?.pointColor !== false,
-    // Film Grain optional export flag (default ON for back-compat)
-    grain: include?.grain !== false,
-    // Masks/local adjustments export flag (default OFF)
-    masks: !!include?.masks,
+    wbBasic: include?.wbBasic === true,
+    exposure: include?.exposure === true,
+    hsl: include?.hsl === true,
+    colorGrading: include?.colorGrading === true,
+    curves: include?.curves === true,
+    pointColor: include?.pointColor === true,
+    grain: include?.grain === true,
+    masks: include?.masks === true,
   } as const;
 
   // Build conditional blocks - always include what's available
   const wbBasicBlock = inc.wbBasic
     ? [
-      tag('Temperature', temp),
-      tag('Tint', tint),
-      tag('Contrast2012', contrast),
-      tag('Highlights2012', highlights),
-      tag('Shadows2012', shadows),
-      tag('Whites2012', whites),
-      tag('Blacks2012', blacks),
-      tag('Clarity2012', clarity),
-      tag('Vibrance', vibrance),
-      tag('Saturation', isBW ? 0 : saturation),
-    ].join('')
+        tag('Temperature', temp),
+        tag('Tint', tint),
+        tag('Contrast2012', contrast),
+        tag('Highlights2012', highlights),
+        tag('Shadows2012', shadows),
+        tag('Whites2012', whites),
+        tag('Blacks2012', blacks),
+        tag('Clarity2012', clarity),
+        tag('Vibrance', vibrance),
+        tag('Saturation', isBW ? 0 : saturation),
+      ].join('')
     : '';
 
-  const shouldIncludeExposure =
-    inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
+  const shouldIncludeExposure = inc.exposure && typeof exposure === 'number' && Number.isFinite(exposure);
   const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(exposure)) : '';
 
   const parametricCurvesBlock = inc.curves
     ? [
-      tag(
-        'ParametricShadows',
-        round(clamp(scale((aiAdjustments as any).parametric_shadows), -100, 100))
-      ),
-      tag(
-        'ParametricDarks',
-        round(clamp(scale((aiAdjustments as any).parametric_darks), -100, 100))
-      ),
-      tag(
-        'ParametricLights',
-        round(clamp(scale((aiAdjustments as any).parametric_lights), -100, 100))
-      ),
-      tag(
-        'ParametricHighlights',
-        round(clamp(scale((aiAdjustments as any).parametric_highlights), -100, 100))
-      ),
-      tag(
-        'ParametricShadowSplit',
-        round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))
-      ),
-      tag(
-        'ParametricMidtoneSplit',
-        round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))
-      ),
-      tag(
-        'ParametricHighlightSplit',
-        round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))
-      ),
-    ].join('')
+        tag('ParametricShadows', round(clamp(scale((aiAdjustments as any).parametric_shadows), -100, 100))),
+        tag('ParametricDarks', round(clamp(scale((aiAdjustments as any).parametric_darks), -100, 100))),
+        tag('ParametricLights', round(clamp(scale((aiAdjustments as any).parametric_lights), -100, 100))),
+        tag('ParametricHighlights', round(clamp(scale((aiAdjustments as any).parametric_highlights), -100, 100))),
+        tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))),
+        tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))),
+        tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))),
+      ].join('')
     : '';
 
   const toneCurvesBlock = inc.curves
     ? [
-      (aiAdjustments as any).tone_curve
-        ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(
-          ((aiAdjustments as any).tone_curve as any[]) || []
-        )
-          .map(
-            p =>
-              `          <rdf:li>${Math.max(
-                0,
-                Math.min(255, Math.round(p.input || 0))
-              )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
-          )
-          .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n`
-        : '',
-      (aiAdjustments as any).tone_curve_red
-        ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(
-          ((aiAdjustments as any).tone_curve_red as any[]) || []
-        )
-          .map(
-            p =>
-              `          <rdf:li>${Math.max(
-                0,
-                Math.min(255, Math.round(p.input || 0))
-              )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
-          )
-          .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n`
-        : '',
-      (aiAdjustments as any).tone_curve_green
-        ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(
-          ((aiAdjustments as any).tone_curve_green as any[]) || []
-        )
-          .map(
-            p =>
-              `          <rdf:li>${Math.max(
-                0,
-                Math.min(255, Math.round(p.input || 0))
-              )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
-          )
-          .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n`
-        : '',
-      (aiAdjustments as any).tone_curve_blue
-        ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(
-          ((aiAdjustments as any).tone_curve_blue as any[]) || []
-        )
-          .map(
-            p =>
-              `          <rdf:li>${Math.max(
-                0,
-                Math.min(255, Math.round(p.input || 0))
-              )}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}</rdf:li>`
-          )
-          .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n`
-        : '',
-    ].join('')
+        (aiAdjustments as any).tone_curve
+          ? `<crs:ToneCurvePV2012>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve as any[]) || [])
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.output || 0))
+                  )}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012>\n`
+          : '',
+        (aiAdjustments as any).tone_curve_red
+          ? `<crs:ToneCurvePV2012Red>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_red as any[]) || [])
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.output || 0))
+                  )}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Red>\n`
+          : '',
+        (aiAdjustments as any).tone_curve_green
+          ? `<crs:ToneCurvePV2012Green>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_green as any[]) || [])
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.output || 0))
+                  )}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Green>\n`
+          : '',
+        (aiAdjustments as any).tone_curve_blue
+          ? `<crs:ToneCurvePV2012Blue>\n        <rdf:Seq>\n${(((aiAdjustments as any).tone_curve_blue as any[]) || [])
+              .map(
+                p =>
+                  `          <rdf:li>${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(
+                    0,
+                    Math.min(255, Math.round(p.output || 0))
+                  )}</rdf:li>`
+              )
+              .join('\n')}\n        </rdf:Seq>\n      </crs:ToneCurvePV2012Blue>\n`
+          : '',
+      ].join('')
     : '';
 
   // HSL only applies to color treatment; B&W uses GrayMixer tags
   const hslBlock =
     inc.hsl && !isBW
       ? [
-        tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
-        tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange),
-        tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow),
-        tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green),
-        tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua),
-        tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue),
-        tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple),
-        tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta),
-        tag(
-          'SaturationAdjustmentRed',
-          round(clamp(scale((aiAdjustments as any).sat_red), -100, 100))
-        ),
-        tag(
-          'SaturationAdjustmentOrange',
-          round(clamp(scale((aiAdjustments as any).sat_orange), -100, 100))
-        ),
-        tag(
-          'SaturationAdjustmentYellow',
-          round(clamp(scale((aiAdjustments as any).sat_yellow), -100, 100))
-        ),
-        tag(
-          'SaturationAdjustmentGreen',
-          round(clamp(scale((aiAdjustments as any).sat_green), -100, 100))
-        ),
-        tag(
-          'SaturationAdjustmentAqua',
-          round(clamp(scale((aiAdjustments as any).sat_aqua), -100, 100))
-        ),
-        tag(
-          'SaturationAdjustmentBlue',
-          round(clamp(scale((aiAdjustments as any).sat_blue), -100, 100))
-        ),
-        tag(
-          'SaturationAdjustmentPurple',
-          round(clamp(scale((aiAdjustments as any).sat_purple), -100, 100))
-        ),
-        tag(
-          'SaturationAdjustmentMagenta',
-          round(clamp(scale((aiAdjustments as any).sat_magenta), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentRed',
-          round(clamp(scale((aiAdjustments as any).lum_red), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentOrange',
-          round(clamp(scale((aiAdjustments as any).lum_orange), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentYellow',
-          round(clamp(scale((aiAdjustments as any).lum_yellow), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentGreen',
-          round(clamp(scale((aiAdjustments as any).lum_green), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentAqua',
-          round(clamp(scale((aiAdjustments as any).lum_aqua), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentBlue',
-          round(clamp(scale((aiAdjustments as any).lum_blue), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentPurple',
-          round(clamp(scale((aiAdjustments as any).lum_purple), -100, 100))
-        ),
-        tag(
-          'LuminanceAdjustmentMagenta',
-          round(clamp(scale((aiAdjustments as any).lum_magenta), -100, 100))
-        ),
-      ].join('')
+          tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
+          tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange),
+          tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow),
+          tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green),
+          tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua),
+          tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue),
+          tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple),
+          tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta),
+          tag('SaturationAdjustmentRed', round(clamp(scale((aiAdjustments as any).sat_red), -100, 100))),
+          tag('SaturationAdjustmentOrange', round(clamp(scale((aiAdjustments as any).sat_orange), -100, 100))),
+          tag('SaturationAdjustmentYellow', round(clamp(scale((aiAdjustments as any).sat_yellow), -100, 100))),
+          tag('SaturationAdjustmentGreen', round(clamp(scale((aiAdjustments as any).sat_green), -100, 100))),
+          tag('SaturationAdjustmentAqua', round(clamp(scale((aiAdjustments as any).sat_aqua), -100, 100))),
+          tag('SaturationAdjustmentBlue', round(clamp(scale((aiAdjustments as any).sat_blue), -100, 100))),
+          tag('SaturationAdjustmentPurple', round(clamp(scale((aiAdjustments as any).sat_purple), -100, 100))),
+          tag('SaturationAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).sat_magenta), -100, 100))),
+          tag('LuminanceAdjustmentRed', round(clamp(scale((aiAdjustments as any).lum_red), -100, 100))),
+          tag('LuminanceAdjustmentOrange', round(clamp(scale((aiAdjustments as any).lum_orange), -100, 100))),
+          tag('LuminanceAdjustmentYellow', round(clamp(scale((aiAdjustments as any).lum_yellow), -100, 100))),
+          tag('LuminanceAdjustmentGreen', round(clamp(scale((aiAdjustments as any).lum_green), -100, 100))),
+          tag('LuminanceAdjustmentAqua', round(clamp(scale((aiAdjustments as any).lum_aqua), -100, 100))),
+          tag('LuminanceAdjustmentBlue', round(clamp(scale((aiAdjustments as any).lum_blue), -100, 100))),
+          tag('LuminanceAdjustmentPurple', round(clamp(scale((aiAdjustments as any).lum_purple), -100, 100))),
+          tag('LuminanceAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).lum_magenta), -100, 100))),
+        ].join('')
       : '';
 
   // Color Grading block
   const colorGradingBlock = inc.colorGrading
     ? [
-      tag(
-        'ColorGradeMidtoneHue',
-        round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))
-      ),
-      tag(
-        'ColorGradeMidtoneSat',
-        round(clamp(scale((aiAdjustments as any).color_grade_midtone_sat), 0, 100))
-      ),
-      tag(
-        'ColorGradeMidtoneLum',
-        round(clamp(scale((aiAdjustments as any).color_grade_midtone_lum), -100, 100))
-      ),
-      tag(
-        'ColorGradeShadowHue',
-        round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))
-      ),
-      tag(
-        'ColorGradeShadowSat',
-        round(clamp(scale((aiAdjustments as any).color_grade_shadow_sat), 0, 100))
-      ),
-      tag(
-        'ColorGradeShadowLum',
-        round(clamp(scale((aiAdjustments as any).color_grade_shadow_lum), -100, 100))
-      ),
-      tag(
-        'ColorGradeHighlightHue',
-        round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))
-      ),
-      tag(
-        'ColorGradeHighlightSat',
-        round(clamp(scale((aiAdjustments as any).color_grade_highlight_sat), 0, 100))
-      ),
-      tag(
-        'ColorGradeHighlightLum',
-        round(clamp(scale((aiAdjustments as any).color_grade_highlight_lum), -100, 100))
-      ),
-      tag(
-        'ColorGradeGlobalHue',
-        round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))
-      ),
-      tag(
-        'ColorGradeGlobalSat',
-        round(clamp(scale((aiAdjustments as any).color_grade_global_sat), 0, 100))
-      ),
-      tag(
-        'ColorGradeGlobalLum',
-        round(clamp(scale((aiAdjustments as any).color_grade_global_lum), -100, 100))
-      ),
-      tag(
-        'ColorGradeBlending',
-        round(clamp(scale((aiAdjustments as any).color_grade_blending), 0, 100))
-      ),
-      tag(
-        'ColorGradeBalance',
-        round(clamp(scale((aiAdjustments as any).color_grade_balance), -100, 100))
-      ),
-    ].join('')
+        tag('ColorGradeMidtoneHue', round(clamp((aiAdjustments as any).color_grade_midtone_hue, 0, 360))),
+        tag('ColorGradeMidtoneSat', round(clamp(scale((aiAdjustments as any).color_grade_midtone_sat), 0, 100))),
+        tag('ColorGradeMidtoneLum', round(clamp(scale((aiAdjustments as any).color_grade_midtone_lum), -100, 100))),
+        tag('ColorGradeShadowHue', round(clamp((aiAdjustments as any).color_grade_shadow_hue, 0, 360))),
+        tag('ColorGradeShadowSat', round(clamp(scale((aiAdjustments as any).color_grade_shadow_sat), 0, 100))),
+        tag('ColorGradeShadowLum', round(clamp(scale((aiAdjustments as any).color_grade_shadow_lum), -100, 100))),
+        tag('ColorGradeHighlightHue', round(clamp((aiAdjustments as any).color_grade_highlight_hue, 0, 360))),
+        tag('ColorGradeHighlightSat', round(clamp(scale((aiAdjustments as any).color_grade_highlight_sat), 0, 100))),
+        tag('ColorGradeHighlightLum', round(clamp(scale((aiAdjustments as any).color_grade_highlight_lum), -100, 100))),
+        tag('ColorGradeGlobalHue', round(clamp((aiAdjustments as any).color_grade_global_hue, 0, 360))),
+        tag('ColorGradeGlobalSat', round(clamp(scale((aiAdjustments as any).color_grade_global_sat), 0, 100))),
+        tag('ColorGradeGlobalLum', round(clamp(scale((aiAdjustments as any).color_grade_global_lum), -100, 100))),
+        tag('ColorGradeBlending', round(clamp(scale((aiAdjustments as any).color_grade_blending), 0, 100))),
+        tag('ColorGradeBalance', round(clamp(scale((aiAdjustments as any).color_grade_balance), -100, 100))),
+      ].join('')
     : '';
 
   // Black & White Mix block (GrayMixer*) when in monochrome
   const bwMixerBlock = isBW
     ? (() => {
-      const clamp = (v: any, min: number, max: number): number | undefined => {
-        if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
-        return Math.max(min, Math.min(max, v));
-      };
-      const round = (v: number | undefined) =>
-        typeof v === 'number' ? Math.round(v) : undefined;
-      const src = aiAdjustments as any;
-      const vals = [
-        src.gray_red,
-        src.gray_orange,
-        src.gray_yellow,
-        src.gray_green,
-        src.gray_aqua,
-        src.gray_blue,
-        src.gray_purple,
-        src.gray_magenta,
-      ];
-      const hasAny = vals.some(v => typeof v === 'number' && Number.isFinite(v));
-      if (!hasAny) return '';
-      const tag = (name: string, val?: number) =>
-        val === 0 || (typeof val === 'number' && Number.isFinite(val))
-          ? `      <crs:${name}>${val}</crs:${name}>\n`
-          : '';
-      return [
-        tag('GrayMixerRed', round(clamp(src.gray_red, -100, 100) as any)),
-        tag('GrayMixerOrange', round(clamp(src.gray_orange, -100, 100) as any)),
-        tag('GrayMixerYellow', round(clamp(src.gray_yellow, -100, 100) as any)),
-        tag('GrayMixerGreen', round(clamp(src.gray_green, -100, 100) as any)),
-        tag('GrayMixerAqua', round(clamp(src.gray_aqua, -100, 100) as any)),
-        tag('GrayMixerBlue', round(clamp(src.gray_blue, -100, 100) as any)),
-        tag('GrayMixerPurple', round(clamp(src.gray_purple, -100, 100) as any)),
-        tag('GrayMixerMagenta', round(clamp(src.gray_magenta, -100, 100) as any)),
-      ].join('');
-    })()
+        const clamp = (v: any, min: number, max: number): number | undefined => {
+          if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
+          return Math.max(min, Math.min(max, v));
+        };
+        const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
+        const src = aiAdjustments as any;
+        const vals = [
+          src.gray_red,
+          src.gray_orange,
+          src.gray_yellow,
+          src.gray_green,
+          src.gray_aqua,
+          src.gray_blue,
+          src.gray_purple,
+          src.gray_magenta,
+        ];
+        const hasAny = vals.some(v => typeof v === 'number' && Number.isFinite(v));
+        if (!hasAny) return '';
+        const tag = (name: string, val?: number) =>
+          val === 0 || (typeof val === 'number' && Number.isFinite(val)) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
+        return [
+          tag('GrayMixerRed', round(clamp(src.gray_red, -100, 100) as any)),
+          tag('GrayMixerOrange', round(clamp(src.gray_orange, -100, 100) as any)),
+          tag('GrayMixerYellow', round(clamp(src.gray_yellow, -100, 100) as any)),
+          tag('GrayMixerGreen', round(clamp(src.gray_green, -100, 100) as any)),
+          tag('GrayMixerAqua', round(clamp(src.gray_aqua, -100, 100) as any)),
+          tag('GrayMixerBlue', round(clamp(src.gray_blue, -100, 100) as any)),
+          tag('GrayMixerPurple', round(clamp(src.gray_purple, -100, 100) as any)),
+          tag('GrayMixerMagenta', round(clamp(src.gray_magenta, -100, 100) as any)),
+        ].join('');
+      })()
     : '';
 
   // Point Color block (optional)
   const pointColorBlock =
     inc.pointColor && Array.isArray((aiAdjustments as any).point_colors)
       ? (() => {
-        const points = ((aiAdjustments as any).point_colors as number[][]).slice(0, 4);
-        if (!points.length) return '';
-        return points
-          .map(
-            (p, idx) =>
-              `<crs:PointColor${idx + 1}>${p
-                .map(v => Math.max(-100, Math.min(100, Math.round(v))))
-                .join(',')}</crs:PointColor${idx + 1}>\n`
-          )
-          .join('');
-      })()
+          const points = ((aiAdjustments as any).point_colors as number[][]).slice(0, 4);
+          if (!points.length) return '';
+          return points
+            .map(
+              (p, idx) =>
+                `<crs:PointColor${idx + 1}>${p.map(v => Math.max(-100, Math.min(100, Math.round(v)))).join(',')}</crs:PointColor${
+                  idx + 1
+                }>\n`
+            )
+            .join('');
+        })()
       : '';
 
   // Grain block
   const grainBlock = inc.grain
     ? [
-      tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100))),
-      tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100))),
-      tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
-    ].join('')
+        tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100))),
+        tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100))),
+        tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
+      ].join('')
     : '';
 
   // Masks block (skipped unless disabled). Emits Lightroom MaskGroupBasedCorrections.
-  const masksBlock =
-    inc.masks
-      ? (() => {
-        const masks = Array.isArray((aiAdjustments as any).masks)
-          ? ((aiAdjustments as any).masks as any[])
-          : [];
+  const masksBlock = inc.masks
+    ? (() => {
+        const masks = Array.isArray((aiAdjustments as any).masks) ? ((aiAdjustments as any).masks as any[]) : [];
         if (!masks.length) return '';
-        const f3 = (v: any) =>
-          typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined;
-        const n0_1 = (v: any) =>
-          typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined;
+        const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
+        const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
         // Apply reduced strength for mask adjustments to make them less strong
         const maskStrength = strength * 0.6; // 60% of the main strength
-        const nM1_1_scaled = (v: any) =>
-          typeof v === 'number' ? Math.max(-1, Math.min(1, v * maskStrength)) : undefined;
+        const nM1_1_scaled = (v: any) => (typeof v === 'number' ? Math.max(-1, Math.min(1, v * maskStrength)) : undefined);
         const attrIf = (k: string, val?: string | number) =>
-          val === 0 || val === '0' || (val !== undefined && val !== null)
-            ? ` crs:${k}="${val}"`
-            : '';
+          val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
 
         // Helper to generate a 32-character uppercase hex string (Lightroom expects 32 hex chars)
-        const randomHex32 = () =>
-          Array.from({ length: 32 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)])
-            .join('');
+        const randomHex32 = () => Array.from({ length: 32 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)]).join('');
 
         const correctionLis = masks
           .map((m, i) => {
@@ -539,18 +387,9 @@ export function generateXMPContent(
               const bottom = f3(n0_1(m.bottom));
               const right = f3(n0_1(m.right));
               const angle = f3(typeof m.angle === 'number' ? m.angle : 0);
-              const midpoint =
-                typeof m.midpoint === 'number'
-                  ? Math.round(Math.max(0, Math.min(100, m.midpoint)))
-                  : 50;
-              const roundness =
-                typeof m.roundness === 'number'
-                  ? Math.round(Math.max(-100, Math.min(100, m.roundness)))
-                  : 0;
-              const feather =
-                typeof m.feather === 'number'
-                  ? Math.round(Math.max(0, Math.min(100, m.feather)))
-                  : 75;
+              const midpoint = typeof m.midpoint === 'number' ? Math.round(Math.max(0, Math.min(100, m.midpoint))) : 50;
+              const roundness = typeof m.roundness === 'number' ? Math.round(Math.max(-100, Math.min(100, m.roundness))) : 0;
+              const feather = typeof m.feather === 'number' ? Math.round(Math.max(0, Math.min(100, m.feather))) : 75;
               maskLi = `<rdf:li
          crs:What="Mask/CircularGradient"
          crs:MaskActive="true"
@@ -594,11 +433,12 @@ export function generateXMPContent(
               } else {
                 // Prefer configured subCategoryId when defined (canonical Lightroom values).
                 // Only use provided subCategoryId when config doesn't specify one.
-                const finalSubCat = (maskConfig.subCategoryId && maskConfig.subCategoryId.length > 0)
-                  ? maskConfig.subCategoryId
-                  : (typeof (m as any)?.subCategoryId === 'number'
+                const finalSubCat =
+                  maskConfig.subCategoryId && maskConfig.subCategoryId.length > 0
+                    ? maskConfig.subCategoryId
+                    : typeof (m as any)?.subCategoryId === 'number'
                     ? String((m as any).subCategoryId)
-                    : undefined);
+                    : undefined;
 
                 maskLi = `<rdf:li
          crs:What="Mask/Image"
@@ -621,11 +461,7 @@ export function generateXMPContent(
                 const pointModels = Array.isArray(m?.pointModels) ? m.pointModels : [];
                 const pmLis = (pointModels as any[])
                   .map((pm: any) =>
-                    Array.isArray(pm)
-                      ? (pm as any[])
-                        .map((v: any) => (typeof v === 'number' ? Number(v) : 0))
-                        .join(' ')
-                      : ''
+                    Array.isArray(pm) ? (pm as any[]).map((v: any) => (typeof v === 'number' ? Number(v) : 0)).join(' ') : ''
                   )
                   .filter((s: string) => s.length > 0)
                   .map((s: string) => `           <rdf:li>${s}</rdf:li>`)
@@ -649,23 +485,15 @@ export function generateXMPContent(
            crs:SampleType="0">${pointModelsBlock}\n          </rdf:Description>\n         </crs:CorrectionRangeMask>\n         </rdf:Description>\n        </rdf:li>`;
               } else {
                 // range_luminance
-                const lum =
-                  Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
+                const lum = Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
                 const lumStr = lum
-                  ? lum
-                    .map((v: any) =>
-                      typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'
-                    )
-                    .join(' ')
+                  ? lum.map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ')
                   : '0.000000 1.000000 1.000000 1.000000';
                 const lds =
-                  Array.isArray(m?.luminanceDepthSampleInfo) &&
-                    m.luminanceDepthSampleInfo.length === 3
+                  Array.isArray(m?.luminanceDepthSampleInfo) && m.luminanceDepthSampleInfo.length === 3
                     ? m.luminanceDepthSampleInfo
                     : [0, 0.5, 0.5];
-                const ldsStr = (lds as any[])
-                  .map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000'))
-                  .join(' ');
+                const ldsStr = (lds as any[]).map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ');
                 maskLi = `<rdf:li>
          <rdf:Description
           crs:What="Mask/RangeMask"
@@ -722,7 +550,7 @@ ${correctionLis}
     </rdf:Seq>
    </crs:MaskGroupBasedCorrections>`;
       })()
-      : '';
+    : '';
 
   const xmp = `<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
