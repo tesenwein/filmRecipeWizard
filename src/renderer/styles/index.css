@@ -27,13 +27,13 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   /* Extra top padding to avoid macOS window controls overlap */
-  padding: 48px 32px 32px;
+  padding: 32px 32px 32px;
 }
 
 /* Results view should use full available width but still maintain some padding */
 .container.results {
   max-width: 100%;
-  padding: 48px 24px 32px;
+  padding: 32px 24px 32px;
 }
 
 .card {
@@ -268,11 +268,11 @@ body {
 
   .container {
     /* Keep extra top space on smaller screens as well */
-    padding: 44px 20px 20px;
+    padding: 32px 20px 20px;
   }
 
   .container.results {
-    padding: 44px 16px 20px;
+    padding: 32px 16px 20px;
   }
 
   .card {

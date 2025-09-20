@@ -12,7 +12,7 @@ interface AppHeaderProps {
 
 const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
   return (
-    <header style={{ position: 'sticky', top: 8, zIndex: 50, marginBottom: '16px' }}>
+    <header style={{ position: 'sticky', top: 8, zIndex: 50, marginBottom: '4px' }}>
       <div className="drag-region" />
       <div
         style={{
