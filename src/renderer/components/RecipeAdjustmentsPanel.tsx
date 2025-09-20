@@ -1,7 +1,7 @@
+import { Box, Chip, Divider, Paper, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
-import { Box, Paper, Typography, Chip, Divider } from '@mui/material';
-import { StyleOptions, Recipe } from '../../shared/types';
 import type { AIColorAdjustments } from '../../services/types';
+import { Recipe, StyleOptions } from '../../shared/types';
 
 type Maybe<T> = T | undefined | null;
 
@@ -25,9 +25,6 @@ function fmtNum(v: any): string {
   return n.toFixed(1);
 }
 
-function boolLabel(v: Maybe<boolean>): string {
-  return v ? 'On' : v === false ? 'Off' : '—';
-}
 
 function str(v: Maybe<string>): string {
   const s = (v ?? '').toString().trim();
