@@ -52,21 +52,21 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   {
     type: 'lips',
     subType: '3',
-    subCategoryId: '10', // Using available ID for lips
+    subCategoryId: '6', // Correct value from working moremask.xmp
     description: 'Lips',
     category: 'face'
   },
   {
     type: 'facial_hair',
     subType: '3',
-    subCategoryId: '6',
+    subCategoryId: '13', // Using available ID since '6' is used by lips
     description: 'Facial hair (beard, mustache)',
     category: 'face'
   },
   {
     type: 'body_skin',
     subType: '3',
-    subCategoryId: '7',
+    subCategoryId: '4',
     description: 'Body skin',
     category: 'face'
   },
