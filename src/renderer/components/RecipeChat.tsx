@@ -28,7 +28,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     onRecipeModification,
     onAcceptChanges,
     onRejectChanges,
-    onPreviewUpdate,
+    onPreviewUpdate: _onPreviewUpdate,
     onPendingModifications,
 }) => {
     const [input, setInput] = useState('');

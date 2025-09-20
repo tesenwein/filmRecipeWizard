@@ -116,9 +116,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   aiFunctions,
 }) => {
   const { showError } = useAlert();
-  const { deleteRecipe, setGeneratingStatus } = useAppStore();
-  // Access settings via hook (safe inside component)
-  const { settings } = useAppStore();
+  const { deleteRecipe } = useAppStore();
   // Base64 image data URLs for display
   const [baseImageUrls, setBaseImageUrls] = useState<string[]>([]);
   const [activeBase, setActiveBase] = useState(0);
@@ -219,6 +217,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             } as any);
           } catch {
             // Ignore store update errors
+            console.debug('Store update error ignored');
           }
         }
       }
@@ -285,6 +284,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           } as any);
         } catch {
           // Ignore store update errors
+          console.debug('Store update error ignored');
         }
       }
     } catch (e) {
@@ -310,7 +310,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [processDescription, setProcessDescription] = useState<string | undefined>(undefined);
   
   // State for chat preview updates and pending modifications
-  const [chatPreviewDataUrl, setChatPreviewDataUrl] = useState<string | null>(null);
   const [pendingChatModifications, setPendingChatModifications] = useState<any>(null);
 
   // Load base64 image data when processId is provided
@@ -395,7 +394,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         setExpectGenerating(false);
       });
     } catch {
-      /* ignore */
+      // Ignore subscription errors
+      console.debug('Subscription error ignored');
     }
   }, []);
 
@@ -688,7 +688,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
               try {
                 setProcessName(n);
               } catch {
-                /* noop */
+                // Ignore name update errors
+                console.debug('Name update error ignored');
               }
             }}
           />
