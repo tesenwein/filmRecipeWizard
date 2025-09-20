@@ -26,7 +26,7 @@ export function getDefaultAIFunctionToggles(): AIFunctionToggles {
 // Base adjustments schema builder (used by streaming service)
 export function buildBaseAdjustmentsSchema(aiFunctions: AIFunctionToggles) {
     let baseSchema = z.object({
-        preset_name: z.string().min(1).describe('REQUIRED: Short, friendly preset name (2-4 words, Title Case) to use for XMP and recipe title. Examples: "Warm Portrait", "Cool Landscape", "Cinematic Shadows", "Vintage Film"'),
+        preset_name: z.string().min(1).describe('REQUIRED: Short, friendly preset name (2-4 words, Title Case) that will be used as the recipe name. Make it descriptive and appealing. Examples: "Warm Portrait", "Cool Landscape", "Cinematic Shadows", "Vintage Film", "Film Noir", "Sunset Glow", "Urban Grit", "Soft Pastels"'),
         description: z.string().describe('Short, engaging description of the recipe style and mood (1-2 sentences)'),
         treatment: z.enum(['color', 'black_and_white']).describe('Overall treatment for the target image'),
         camera_profile: z.string().optional().describe("Preferred camera profile (e.g., 'Adobe Color', 'Adobe Monochrome')"),

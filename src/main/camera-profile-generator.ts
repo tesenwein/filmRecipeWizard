@@ -40,9 +40,13 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   const vibrance = round(clamp(scale(adjustments.vibrance), -100, 100));
   const saturation = isBW ? 0 : round(clamp(scale(adjustments.saturation), -100, 100));
 
-  // Temperature and tint
-  const temp = round(clamp(adjustments.temperature || 6500, 2000, 50000));
-  const tint = round(clamp(adjustments.tint || 0, -150, 150));
+  // Temperature and tint - only include if explicitly set
+  const temp = adjustments.temperature !== undefined && adjustments.temperature !== null 
+    ? round(clamp(adjustments.temperature, 2000, 50000)) 
+    : undefined;
+  const tint = adjustments.tint !== undefined && adjustments.tint !== null 
+    ? round(clamp(adjustments.tint, -150, 150)) 
+    : undefined;
 
   // Normalize/select camera profile same way as preset generator
   const normalizeCameraProfile = (name?: string): string | undefined => {
@@ -260,7 +264,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
         crs:SupportsAmount="True"
         crs:SupportsAmount2="True"
         crs:SupportsColor="True"
-        crs:SupportsMonochrome="True"
+        crs:SupportsMonochrome="True"${temp === undefined && tint === undefined ? '\n        crs:WhiteBalance="As Shot"' : ''}
         crs:Name="${profileName}">
       <crs:Name>
         <rdf:Alt>

@@ -291,6 +291,19 @@ export class ProcessingHandlers {
           try {
             const firstBase = Array.isArray(baseImageData) ? baseImageData[0] : baseImageData;
 
+            // Extract AI-generated recipe name and description from the result
+            const aiGeneratedName = result.metadata?.aiAdjustments?.preset_name;
+            const aiGeneratedDescription = result.metadata?.aiAdjustments?.description;
+            const shouldUpdateName = result.success && 
+              aiGeneratedName && 
+              typeof aiGeneratedName === 'string' && 
+              aiGeneratedName.trim().length > 0 &&
+              aiGeneratedName !== 'Custom Recipe';
+            const shouldUpdateDescription = result.success && 
+              aiGeneratedDescription && 
+              typeof aiGeneratedDescription === 'string' && 
+              aiGeneratedDescription.trim().length > 0;
+
             await this.storageService.updateProcess(data.processId, {
               results: [
                 {
@@ -301,6 +314,8 @@ export class ProcessingHandlers {
               ],
               status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
+              ...(shouldUpdateName ? { name: aiGeneratedName.trim() } : {}),
+              ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
             } as any);
             try {
               mainWindow?.webContents.send('process-updated', {
@@ -317,6 +332,8 @@ export class ProcessingHandlers {
                   ],
                   status: result.success ? 'completed' : 'failed',
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
+                  ...(shouldUpdateName ? { name: aiGeneratedName.trim() } : {}),
+                  ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
                 },
               });
             } catch {

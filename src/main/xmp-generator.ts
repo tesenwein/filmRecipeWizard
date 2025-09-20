@@ -81,10 +81,13 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const scale = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined);
 
   // Sanitize all inputs
-  // Use D65 (6500K) as a neutral default to avoid unintended warm/yellow bias
-  const withDefault = (v: any, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
-  const temp = round(clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000));
-  const tint = round(clamp(withDefault(aiAdjustments.tint, 0), -150, 150));
+  // Only include temperature/tint if explicitly set, otherwise use "As Shot" behavior
+  const temp = aiAdjustments.temperature !== undefined && aiAdjustments.temperature !== null 
+    ? round(clamp(aiAdjustments.temperature, 2000, 50000)) 
+    : undefined;
+  const tint = aiAdjustments.tint !== undefined && aiAdjustments.tint !== null 
+    ? round(clamp(aiAdjustments.tint, -150, 150)) 
+    : undefined;
   const exposure = clamp(scale(aiAdjustments.exposure as any), -5, 5);
   const contrast = round(clamp(scale(aiAdjustments.contrast as any), -100, 100));
   const highlights = round(clamp(scale(aiAdjustments.highlights as any), -100, 100));
@@ -569,7 +572,7 @@ ${correctionLis}
       crs:SupportsAmount="True"
       crs:SupportsAmount2="True"
       crs:SupportsColor="True"
-      crs:SupportsMonochrome="True"
+      crs:SupportsMonochrome="True"${temp === undefined && tint === undefined ? '\n      crs:WhiteBalance="As Shot"' : ''}
       crs:Name="${presetName}">
       <crs:Name>
         <rdf:Alt>
