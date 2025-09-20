@@ -25,6 +25,10 @@
 ![Export Results](assets/screenshots/screen3.png)
 *Lightroom XMP presets and 3D LUT export options*
 
+### AI Chat Recipe Alteration
+![AI Chat Interface](assets/screenshots/screen4.png)
+*Interactive chat interface to modify and refine film recipes with AI assistance*
+
 </div>
 
 ## 💻 Installation

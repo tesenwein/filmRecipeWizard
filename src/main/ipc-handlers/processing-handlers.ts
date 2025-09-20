@@ -460,15 +460,13 @@ export class ProcessingHandlers {
         // Show save dialog
         const sanitizeName = (n: string) =>
           n
-            .replace(/\b(image\s*match|imagematch|match|target|base|ai|photo)\b/gi, '')
+            .replace(/\b(image\s*match|imagematch)\b/gi, '') // Only remove specific technical terms
             .replace(/\s{2,}/g, ' ')
             .trim();
         const rawName =
           (data?.adjustments?.preset_name as string | undefined) ||
           `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
-        const clean =
-          sanitizeName(rawName) ||
-          `LUT-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`;
+        const clean = sanitizeName(rawName);
         const baseName = clean
           .replace(/[^A-Za-z0-9 _-]+/g, '')
           .replace(/\s+/g, ' ')
@@ -478,7 +476,7 @@ export class ProcessingHandlers {
           data.strength !== undefined && data.strength !== 1.0
             ? `-${Math.round(data.strength * 100)}pct`
             : '';
-        const safeName = `${baseName}-LUT-${data.size}${strengthSuffix}`;
+        const safeName = baseName ? `${baseName}-LUT-${data.size}${strengthSuffix}` : `LUT-${data.size}${strengthSuffix}`;
 
         const result = await dialog.showSaveDialog({
           title: 'Save LUT File',

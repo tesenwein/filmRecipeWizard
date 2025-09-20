@@ -571,8 +571,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     if (!adjustments) return;
 
     try {
+      const adjForExport = { ...adjustments } as any;
+      if (processName) adjForExport.preset_name = processName;
+      if (processDescription) adjForExport.description = processDescription;
+      
       const res = await (window.electronAPI as any).generateLUT({
-        adjustments,
+        adjustments: adjForExport,
         size: parseInt(lutSize),
         format: lutFormat,
         strength: lutStrength / 100, // Convert percentage to 0-1 range

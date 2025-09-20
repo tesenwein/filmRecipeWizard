@@ -80,9 +80,10 @@ export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: numb
 }
 
 function generateCubeLUT(adjustments: any, size: number): string {
+  const description = adjustments.description || 'AI-generated color grading';
   let lut = `# Created by Film Recipe Wizard
 # LUT size: ${size}
-# Description: AI-generated color grading
+# Description: ${description}
 
 LUT_3D_SIZE ${size}
 
