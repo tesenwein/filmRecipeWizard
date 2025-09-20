@@ -1,12 +1,11 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
-import CheckIcon from '@mui/icons-material/Check';
 import ChatIcon from '@mui/icons-material/Chat';
+import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HomeIcon from '@mui/icons-material/Home';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -14,21 +13,18 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Avatar,
-  Box,
-  Button,
-  Chip,
-  Divider,
-  IconButton,
-  Paper,
-  Slider,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
+    Avatar,
+    Box,
+    Button,
+    Chip,
+    Divider,
+    IconButton,
+    Paper,
+    Slider,
+    Tab,
+    Tabs,
+    TextField,
+    Typography,
 } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
@@ -37,9 +33,9 @@ import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 // import AIFunctionsSelector from './AIFunctionsSelector';
 import ConfirmDialog from './ConfirmDialog';
-import ImageSelectionChips from './results/ImageSelectionChips';
-import RecipeChat from './RecipeChat';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
+import RecipeChat from './RecipeChat';
+import ImageSelectionChips from './results/ImageSelectionChips';
 import RecipeNameHeader from './results/RecipeNameHeader';
 import SingleImage from './SingleImage';
 
@@ -975,32 +971,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       />
                     </Typography>
 
-                    {/* Processing Context */}
-                    {(processPrompt || processOptions) && (
-                      <Accordion>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            Processing Context
-                          </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                            {processPrompt && processPrompt.trim().length > 0 && (
-                              <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                                  Prompt
-                                </Typography>
-                                <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
-                                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                                    {processPrompt}
-                                  </Typography>
-                                </Paper>
-                              </Box>
-                            )}
-                          </Box>
-                        </AccordionDetails>
-                      </Accordion>
-                    )}
 
 
                     <Paper sx={{ p: 2 }}>
