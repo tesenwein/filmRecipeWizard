@@ -306,7 +306,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   const [processName, setProcessName] = useState<string | undefined>(undefined);
   const [maskOverrides, setMaskOverrides] = useState<any[] | undefined>(undefined);
+  const [adjustmentOverrides, setAdjustmentOverrides] = useState<Record<string, number> | undefined>(undefined);
   const [processDescription, setProcessDescription] = useState<string | undefined>(undefined);
+  
+  // State for chat preview updates and pending modifications
+  const [chatPreviewDataUrl, setChatPreviewDataUrl] = useState<string | null>(null);
+  const [pendingChatModifications, setPendingChatModifications] = useState<any>(null);
 
   // Load base64 image data when processId is provided
   useEffect(() => {
@@ -346,6 +351,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           // Do not source description from AI adjustments; keep top-level only
           const masks = (processResponse.process as any).maskOverrides;
           setMaskOverrides(Array.isArray(masks) ? masks : undefined);
+          const adjOv = (processResponse.process as any).aiAdjustmentOverrides;
+          setAdjustmentOverrides(adjOv && typeof adjOv === 'object' ? adjOv : undefined);
           // name is handled in header component
         } else {
           console.warn('[RESULTS] Process not found or failed to load:', processResponse.error);
@@ -354,6 +361,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setProcessName(undefined);
           setProcessDescription(undefined);
           setMaskOverrides(undefined);
+          setAdjustmentOverrides(undefined);
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
@@ -541,6 +549,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       }
 
       effectiveAdjustments.masks = masks;
+    }
+
+    // Apply global adjustment overrides (e.g., grain, vignette) if present
+    if (adjustmentOverrides && typeof adjustmentOverrides === 'object') {
+      Object.assign(effectiveAdjustments as any, adjustmentOverrides);
     }
 
     return effectiveAdjustments;
@@ -923,9 +936,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
                     <Paper sx={{ p: 2 }}>
                       {(() => {
-                        const aiAdj = (result.metadata.aiAdjustments as any) || {};
-                        const effectiveMasks = getEffectiveMasks(aiAdj.masks, maskOverrides);
-                        const effective = { ...aiAdj, masks: effectiveMasks } as any;
+                        const effectiveAdjustments = getEffectiveAdjustments(result);
+                        const effectiveMasks = getEffectiveMasks(effectiveAdjustments?.masks, maskOverrides);
+                        const effective = { ...effectiveAdjustments, masks: effectiveMasks } as any;
                         return (
                           <RecipeAdjustmentsPanel
                             recipe={
@@ -941,7 +954,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 ...(maskOverrides ? { maskOverrides } : {}),
                               } as any
                             }
-                            pendingModifications={null}
+                            pendingModifications={pendingChatModifications}
                             aiAdjustments={effective}
                             showOnlyCurrent
                           />
@@ -969,6 +982,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           description: processDescription,
                           userOptions: processOptions,
                           maskOverrides: maskOverrides,
+                          aiAdjustmentOverrides: adjustmentOverrides,
                           results: successfulResults,
                           timestamp: new Date().toISOString(),
                         }}
@@ -988,6 +1002,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               }
                               updates.userOptions = merged;
                               setProcessOptions(merged);
+                            }
+                            if ((modifications as any).aiAdjustments && typeof (modifications as any).aiAdjustments === 'object') {
+                              const cur = adjustmentOverrides || {};
+                              const merged = { ...cur, ...(modifications as any).aiAdjustments } as Record<string, number>;
+                              updates.aiAdjustmentOverrides = merged;
+                              setAdjustmentOverrides(merged);
                             }
                             if (typeof modifications.prompt === 'string' && modifications.prompt !== processPrompt) {
                               updates.prompt = modifications.prompt;
@@ -1069,11 +1089,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           }
                         }}
                         onAcceptChanges={async () => {
-                          // Handle accepting changes - trigger AI re-processing
+                          // Accept: trigger AI re-processing (sends to LLM) with updated params
                           if (!processId) return;
-
                           try {
-                            // Get the stored process data to access base64 images
+                            // Clear pending changes immediately in parent scope for a snappy UI
+                            setPendingChatModifications(null);
+
                             const processResponse = await window.electronAPI.getProcess(processId);
                             if (!processResponse.success || !processResponse.process) {
                               console.error('[RESULTS] Failed to get process data for re-processing');
@@ -1081,71 +1102,41 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             }
 
                             const storedProcess = processResponse.process;
-
-                            // Prepare processing data with updated parameters
                             const processingData = {
                               processId: processId,
                               targetIndex: 0,
                               baseImageData: (storedProcess as any).recipeImageData ? [(storedProcess as any).recipeImageData] : undefined,
-                              targetImageData: undefined, // No target images for re-processing
+                              targetImageData: undefined,
                               prompt: processPrompt || storedProcess.prompt,
-                              // Always use the latest persisted options to avoid stale state
                               styleOptions: (storedProcess as any).userOptions,
                             };
 
-                            console.log('[RESULTS] Triggering AI re-processing with updated parameters:', {
-                              hasProcessId: !!processingData.processId,
-                              hasBaseImageData: !!processingData.baseImageData,
-                              hasPrompt: !!processingData.prompt,
-                              hasStyleOptions: !!processingData.styleOptions,
-                            });
-
-                            // Optimistically flip status to generating in storage for reliable UI updates
-                            try {
-                              await window.electronAPI.updateProcess(processId, { status: 'generating' } as any);
-                            } catch {
-                              /* ignore */
-                            }
-
-                            // Optionally show generating state in gallery
+                            // flip status -> generating and show spinner
+                            try { await window.electronAPI.updateProcess(processId, { status: 'generating' } as any); } catch {}
                             try {
                               const showGen = settings?.reprocessShowsGenerating !== false;
-                              if (showGen) {
-                                setGeneratingStatus(processId, true);
-                              }
+                              if (showGen) setGeneratingStatus(processId, true);
                               setExpectGenerating(!!showGen);
-                              // Always show local reprocessing indicator in this view
                               setIsReprocessing(true);
-                            } catch {
-                              /* ignore */
-                            }
+                            } catch {}
 
-                            // Trigger re-processing
                             await window.electronAPI.processWithStoredImages(processingData);
-
-                            console.log('[RESULTS] AI re-processing triggered successfully');
-
-                            // The processing will complete and update the process in storage
-                            // The App component will handle the results update via onProcessingComplete
-                            console.log('[RESULTS] Re-processing initiated - results will be updated automatically');
+                            // XMP will be created and stored by main process when results arrive
                           } catch (error) {
                             console.error('[RESULTS] Failed to trigger AI re-processing:', error);
-                            try {
-                              if (processId) setGeneratingStatus(processId, false);
-                            } catch {
-                              /* ignore */
-                            }
-                            try {
-                              setIsReprocessing(false);
-                            } catch {
-                              /* ignore */
-                            }
+                            try { if (processId) setGeneratingStatus(processId, false); } catch {}
+                            try { setIsReprocessing(false); } catch {}
                             showError('Failed to re-process with updated parameters');
                           }
                         }}
                         onRejectChanges={() => {
+                          // Clear pending modifications when rejecting changes
+                          setPendingChatModifications(null);
                           // Handle rejecting changes
                           console.log('Changes rejected');
+                        }}
+                        onPendingModifications={(modifications) => {
+                          setPendingChatModifications(modifications);
                         }}
                       />
                     </Box>

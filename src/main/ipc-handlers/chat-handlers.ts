@@ -56,6 +56,19 @@ export class ChatHandlers {
                                         blurb: z.string()
                                     }).optional(),
                                 }).optional(),
+                                aiAdjustments: z.object({
+                                    // Film grain adjustments
+                                    grain_amount: z.number().min(0).max(100).optional(),
+                                    grain_size: z.number().min(0).max(100).optional(),
+                                    grain_frequency: z.number().min(0).max(100).optional(),
+                                    // Vignette adjustments
+                                    vignette_amount: z.number().min(-100).max(100).optional(),
+                                    vignette_midpoint: z.number().min(0).max(100).optional(),
+                                    vignette_feather: z.number().min(0).max(100).optional(),
+                                    vignette_roundness: z.number().min(-100).max(100).optional(),
+                                    vignette_style: z.number().min(0).max(2).optional(),
+                                    vignette_highlight_contrast: z.number().min(0).max(100).optional(),
+                                }).optional(),
                                 prompt: z.string().optional(),
                                 name: z.string().optional(),
                                 description: z.string().optional(),
@@ -79,14 +92,15 @@ The user has a recipe with the following details:
 
  You can help modify this recipe by suggesting changes to:
  1. User options (temperatureK, tint, contrast, vibrance, saturationBias, vibe, artistStyle, filmStyle, aiFunctions, masks, colorGrading, hsl, curves, grain, pointColor)
- 2. The prompt text
- 3. Recipe name
- 4. Recipe description (short human-friendly summary)
+ 2. AI adjustments (grain_amount, grain_size, grain_frequency, vignette_amount, vignette_midpoint, vignette_feather, vignette_roundness, vignette_style, vignette_highlight_contrast)
+ 3. The prompt text
+ 4. Recipe name
+ 5. Recipe description (short human-friendly summary)
 
 CRITICAL RESPONSE FORMAT:
  - When suggesting changes, CALL modify_recipe exactly once with fields:
   - message: a concise summary of the changes and why
-  - modifications: { userOptions?, prompt?, name?, description?, masks? }
+  - modifications: { userOptions?, aiAdjustments?, prompt?, name?, description?, masks? }
   This function result will be used by the UI to apply changes.
   Do not emit raw JSON outside of the tool; keep your chat explanation separate.
 \n+Mask editing guidance:\n+- Prefer including a stable id for any mask you add; reuse that id when updating or removing.\n+- If id is omitted, removal/update will match by name when present, otherwise by type + subCategoryId + referenceX/referenceY.\n+- To clear all pending mask overrides, use op: 'remove_all' or 'clear' with no other fields.
@@ -99,7 +113,18 @@ Available user options:
 - saturationBias: -100 to 100 (saturation bias)
 - vibe: string (vibe description)
 - artistStyle: object with key, name, category, blurb
-- filmStyle: object with key, name, category, blurb`;
+- filmStyle: object with key, name, category, blurb
+
+Available AI adjustments:
+- grain_amount: 0 to 100 (film grain intensity)
+- grain_size: 0 to 100 (grain particle size)
+- grain_frequency: 0 to 100 (grain density/frequency)
+- vignette_amount: -100 to 100 (vignette strength, negative for lightening)
+- vignette_midpoint: 0 to 100 (vignette center point)
+- vignette_feather: 0 to 100 (vignette edge softness)
+- vignette_roundness: -100 to 100 (vignette shape)
+- vignette_style: 0 to 2 (vignette style type)
+- vignette_highlight_contrast: 0 to 100 (vignette highlight contrast)`;
 
                 // Prepare messages for OpenAI
                 const openaiMessages = [

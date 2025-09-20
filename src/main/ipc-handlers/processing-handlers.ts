@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import { ImageProcessor } from '../image-processor';
 import { generateLUTContent } from '../lut-generator';
 import { StorageService } from '../storage-service';
+import { generateXMPContent } from '../xmp-generator';
 
 export class ProcessingHandlers {
   constructor(
@@ -302,18 +303,55 @@ export class ProcessingHandlers {
               typeof aiGeneratedDescription === 'string' && 
               aiGeneratedDescription.trim().length > 0;
 
+            // If we have adjustments, merge with any stored overrides, auto-generate XMP, and store it
+            let xmpContent: string | undefined;
+            let effectiveAdjustments: any | undefined;
+            try {
+              let adj = result?.metadata?.aiAdjustments;
+              if (result.success && adj) {
+                try {
+                  const currentProcess = await this.storageService.getProcess(data.processId);
+                  const overrides = (currentProcess as any)?.aiAdjustmentOverrides;
+                  if (overrides && typeof overrides === 'object') {
+                    adj = { ...adj, ...overrides };
+                  }
+                } catch { /* ignore overlay failures */ }
+                effectiveAdjustments = adj;
+                const include = {
+                  wbBasic: true,
+                  hsl: true,
+                  colorGrading: true,
+                  curves: true,
+                  pointColor: true,
+                  grain: true,
+                  vignette: true,
+                  masks: true,
+                  exposure: false,
+                  sharpenNoise: false,
+                  strength: 1.0,
+                  recipeName: aiGeneratedName || 'Custom Recipe',
+                } as any;
+                xmpContent = generateXMPContent(adj as any, include);
+              }
+            } catch (e) {
+              console.warn('[IPC] Auto XMP generation failed:', e);
+            }
+
             await this.storageService.updateProcess(data.processId, {
               results: [
                 {
                   success: !!result.success,
                   error: result.error,
-                  metadata: result.metadata,
+                  metadata: effectiveAdjustments
+                    ? { ...(result.metadata || {}), aiAdjustments: effectiveAdjustments }
+                    : result.metadata,
                 },
               ],
               status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
               ...(shouldUpdateName ? { name: aiGeneratedName.trim() } : {}),
               ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
+              ...(xmpContent ? { xmpPreset: xmpContent, xmpCreatedAt: new Date().toISOString() } : {}),
             } as any);
             try {
               mainWindow?.webContents.send('process-updated', {
@@ -325,13 +363,16 @@ export class ProcessingHandlers {
                       outputPath: result.outputPath,
                       success: !!result.success,
                       error: result.error,
-                      metadata: result.metadata,
+                      metadata: effectiveAdjustments
+                        ? { ...(result.metadata || {}), aiAdjustments: effectiveAdjustments }
+                        : result.metadata,
                     },
                   ],
                   status: result.success ? 'completed' : 'failed',
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
                   ...(shouldUpdateName ? { name: aiGeneratedName.trim() } : {}),
                   ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
+                  ...(xmpContent ? { xmpPreset: xmpContent, xmpCreatedAt: new Date().toISOString() } : {}),
                 },
               });
             } catch {

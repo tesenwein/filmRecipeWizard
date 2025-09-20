@@ -17,6 +17,8 @@ interface RecipeChatProps {
     onRecipeModification: (modifiedRecipe: Partial<Recipe>) => void | Promise<void>;
     onAcceptChanges: () => void;
     onRejectChanges: () => void;
+    onPreviewUpdate?: (previewDataUrl: string) => void;
+    onPendingModifications?: (modifications: any) => void;
 }
 
 
@@ -26,6 +28,8 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     onRecipeModification,
     onAcceptChanges,
     onRejectChanges,
+    onPreviewUpdate,
+    onPendingModifications,
 }) => {
     const [input, setInput] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -84,6 +88,11 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                 // Try to parse modifications from the response
                 if ((response as any).modifications) {
                     setPendingModifications((response as any).modifications as Partial<Recipe>);
+                    
+                    // Notify parent component about pending modifications
+                    if (onPendingModifications) {
+                        onPendingModifications((response as any).modifications);
+                    }
                 }
             } else {
                 setError(response.error || 'Failed to get response');
@@ -97,10 +106,13 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
 
     const handleAcceptModifications = async () => {
         if (pendingModifications) {
-            // Ensure upstream storage/state updates complete before triggering re-processing
-            await Promise.resolve(onRecipeModification(pendingModifications));
-            onAcceptChanges();
+            const mods = pendingModifications;
+            // Clear banner immediately for responsive UX
             setPendingModifications(null);
+            // Persist changes upstream
+            await Promise.resolve(onRecipeModification(mods));
+            // Fire apply (reprocess) without blocking UI clearing
+            try { await Promise.resolve(onAcceptChanges()); } catch { /* ignore */ }
         }
     };
 
@@ -157,7 +169,13 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                 masks.push({ ...op, id: op.id || idOf(op) });
             }
         }
-        return { ...aiAdj, masks } as any;
+        const out = { ...aiAdj, masks } as any;
+        // Apply any global adjustment overrides (e.g. grain, vignette) stored on recipe
+        const globalOverrides = (recipe as any)?.aiAdjustmentOverrides;
+        if (globalOverrides && typeof globalOverrides === 'object') {
+            Object.assign(out, globalOverrides);
+        }
+        return out;
     })();
 
     return (

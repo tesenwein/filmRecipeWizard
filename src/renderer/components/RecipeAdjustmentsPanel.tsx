@@ -9,6 +9,17 @@ export interface RecipeAdjustmentsPanelProps {
   recipe: Recipe;
   pendingModifications?: {
     userOptions?: Partial<StyleOptions>;
+    aiAdjustments?: {
+      grain_amount?: number;
+      grain_size?: number;
+      grain_frequency?: number;
+      vignette_amount?: number;
+      vignette_midpoint?: number;
+      vignette_feather?: number;
+      vignette_roundness?: number;
+      vignette_style?: number;
+      vignette_highlight_contrast?: number;
+    };
     prompt?: string;
     name?: string;
     description?: string;
@@ -54,6 +65,13 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
     if ((mods as any).filmStyle) merged.filmStyle = (mods as any).filmStyle;
     return merged;
   }, [current, pendingModifications]);
+
+  // Create effective aiAdjustments that include pending modifications
+  const effectiveAiAdjustments = useMemo(() => {
+    if (!aiAdjustments) return null;
+    const pendingAiMods = pendingModifications?.aiAdjustments || {};
+    return { ...aiAdjustments, ...pendingAiMods };
+  }, [aiAdjustments, pendingModifications]);
 
   const nameChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'name'))
     ? hasChange(recipe.name, (pendingModifications as any).name)
@@ -192,23 +210,23 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
             isChanged={false}
           />
           <Divider sx={{ my: 1 }} />
-          <Row label="Grain Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} isChanged={false} />
+          <Row label="Grain Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_amount)} color={hasChange((aiAdjustments as any).grain_amount, (effectiveAiAdjustments as any).grain_amount) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_amount, (effectiveAiAdjustments as any).grain_amount)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Grain Size" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} isChanged={false} />
+          <Row label="Grain Size" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_size)} color={hasChange((aiAdjustments as any).grain_size, (effectiveAiAdjustments as any).grain_size) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_size, (effectiveAiAdjustments as any).grain_size)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Grain Frequency" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} isChanged={false} />
+          <Row label="Grain Frequency" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_frequency)} color={hasChange((aiAdjustments as any).grain_frequency, (effectiveAiAdjustments as any).grain_frequency) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_frequency, (effectiveAiAdjustments as any).grain_frequency)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} isChanged={false} />
+          <Row label="Vignette Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_amount)} color={hasChange((aiAdjustments as any).vignette_amount, (effectiveAiAdjustments as any).vignette_amount) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_amount, (effectiveAiAdjustments as any).vignette_amount)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Midpoint" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} isChanged={false} />
+          <Row label="Vignette Midpoint" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_midpoint)} color={hasChange((aiAdjustments as any).vignette_midpoint, (effectiveAiAdjustments as any).vignette_midpoint) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_midpoint, (effectiveAiAdjustments as any).vignette_midpoint)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Feather" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_feather)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_feather)} />} isChanged={false} />
+          <Row label="Vignette Feather" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_feather)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_feather)} color={hasChange((aiAdjustments as any).vignette_feather, (effectiveAiAdjustments as any).vignette_feather) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_feather, (effectiveAiAdjustments as any).vignette_feather)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Roundness" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_roundness)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_roundness)} />} isChanged={false} />
+          <Row label="Vignette Roundness" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_roundness)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_roundness)} color={hasChange((aiAdjustments as any).vignette_roundness, (effectiveAiAdjustments as any).vignette_roundness) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_roundness, (effectiveAiAdjustments as any).vignette_roundness)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Style" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} isChanged={false} />
+          <Row label="Vignette Style" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_style)} color={hasChange((aiAdjustments as any).vignette_style, (effectiveAiAdjustments as any).vignette_style) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_style, (effectiveAiAdjustments as any).vignette_style)} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Highlight Contrast" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} next={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} isChanged={false} />
+          <Row label="Vignette Highlight Contrast" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_highlight_contrast)} color={hasChange((aiAdjustments as any).vignette_highlight_contrast, (effectiveAiAdjustments as any).vignette_highlight_contrast) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_highlight_contrast, (effectiveAiAdjustments as any).vignette_highlight_contrast)} />
           <Divider sx={{ my: 1 }} />
           <Row label="Override Look Vignette" cur={<ValueChip label={(aiAdjustments as any).override_look_vignette ? 'True' : 'False'} />} next={<ValueChip label={(aiAdjustments as any).override_look_vignette ? 'True' : 'False'} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />

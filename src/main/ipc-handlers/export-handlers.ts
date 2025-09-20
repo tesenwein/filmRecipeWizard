@@ -12,6 +12,31 @@ export class ExportHandlers {
   ) { }
 
   setupHandlers(): void {
+    // Generate XMP content (no save dialog) and return the string
+    ipcMain.handle('generate-xmp-content', async (_event, data: { adjustments: any; include?: any; recipeName?: string }) => {
+      try {
+        const include = {
+          wbBasic: true,
+          hsl: true,
+          colorGrading: true,
+          curves: true,
+          pointColor: true,
+          grain: true,
+          vignette: true,
+          masks: true,
+          exposure: false,
+          sharpenNoise: false,
+          strength: data?.include?.strength ?? 1.0,
+        } as any;
+        if (data?.recipeName) (include as any).recipeName = String(data.recipeName);
+        const xmpContent = generateXMPContent(data.adjustments, include);
+        return { success: true, content: xmpContent };
+      } catch (error) {
+        console.error('[IPC] Error generating XMP content:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
     // Handle XMP download - generate XMP and show save dialog
     ipcMain.handle('download-xmp', async (_event, data) => {
       try {
@@ -27,7 +52,7 @@ export class ExportHandlers {
           exposure: false, // Keep exposure separate and disabled by default
           sharpenNoise: false, // Not implemented in XMP
           vignette: true, // Enable vignette support
-          strength: data?.styleOptions?.strength || 1.0, // Use strength slider (0-1, default 1.0)
+          strength: (data?.include && typeof data.include.strength === 'number') ? data.include.strength : 1.0, // Use strength slider (0-1, default 1.0)
         } as any;
 
         // Generate XMP content

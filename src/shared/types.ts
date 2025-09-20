@@ -57,6 +57,11 @@ export interface Recipe {
   userOptions?: StyleOptions;
   // Optional mask overrides proposed/accepted via chat; used to guide next generation
   maskOverrides?: any[];
+  // Optional global adjustment overrides accepted via chat (e.g., grain, vignette)
+  aiAdjustmentOverrides?: { [key: string]: number };
+  // Optional embedded XMP preset generated from the current effective adjustments
+  xmpPreset?: string;
+  xmpCreatedAt?: string;
   // Processing status to track if generation is still in progress
   status?: 'generating' | 'completed' | 'failed';
   // Optional author/creator profile attached to the recipe

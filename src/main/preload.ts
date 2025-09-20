@@ -25,6 +25,8 @@ const electronAPI = {
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
   downloadXMP: (data: any) => ipcRenderer.invoke('download-xmp', data),
   generateLUT: (data: any) => ipcRenderer.invoke('generate-lut', data),
+  generateXmpContent: (data: { adjustments: any; include?: any; recipeName?: string }) =>
+    ipcRenderer.invoke('generate-xmp-content', data),
   exportProfile: (data: { adjustments: any; recipeIndex?: number }) =>
     ipcRenderer.invoke('export-profile', data),
   // Recipe import/export

@@ -67,6 +67,17 @@ declare global {
         message?: string;
         modifications?: {
           userOptions?: any;
+          aiAdjustments?: {
+            grain_amount?: number;
+            grain_size?: number;
+            grain_frequency?: number;
+            vignette_amount?: number;
+            vignette_midpoint?: number;
+            vignette_feather?: number;
+            vignette_roundness?: number;
+            vignette_style?: number;
+            vignette_highlight_contrast?: number;
+          };
           prompt?: string;
           name?: string;
           description?: string;

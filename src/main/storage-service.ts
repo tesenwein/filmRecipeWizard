@@ -211,8 +211,13 @@ export class StorageService {
         author: p.author,
         // Persisted mask overrides from chat edits
         maskOverrides: Array.isArray(p.maskOverrides) ? p.maskOverrides : undefined,
+        // Persisted global AI adjustment overrides (grain, vignette, etc.)
+        aiAdjustmentOverrides: p && typeof p.aiAdjustmentOverrides === 'object' ? p.aiAdjustmentOverrides : undefined,
         // Persisted recipe image (single)
         recipeImageData: typeof p.recipeImageData === 'string' ? p.recipeImageData : undefined,
+        // Optional embedded XMP preset
+        xmpPreset: typeof p.xmpPreset === 'string' ? p.xmpPreset : undefined,
+        xmpCreatedAt: typeof p.xmpCreatedAt === 'string' ? p.xmpCreatedAt : undefined,
         status: p.status,
       }));
       // Normalize entries (backfill missing ids or timestamps)
