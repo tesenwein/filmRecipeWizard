@@ -355,7 +355,7 @@ export class ProcessingHandlers {
               ],
               status: result.success ? 'completed' : 'failed',
               ...(firstBase ? { recipeImageData: firstBase } : {}),
-              ...(shouldUpdateName ? { name: aiGeneratedName.trim() } : {}),
+              ...(shouldUpdateName && aiGeneratedName ? { name: aiGeneratedName.trim() } : {}),
               ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
               ...(xmpContent ? { xmpPreset: xmpContent, xmpCreatedAt: new Date().toISOString() } : {}),
             } as any);
@@ -376,7 +376,7 @@ export class ProcessingHandlers {
                   ],
                   status: result.success ? 'completed' : 'failed',
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
-                  ...(shouldUpdateName ? { name: aiGeneratedName.trim() } : {}),
+                  ...(shouldUpdateName && aiGeneratedName ? { name: aiGeneratedName.trim() } : {}),
                   ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
                   ...(xmpContent ? { xmpPreset: xmpContent, xmpCreatedAt: new Date().toISOString() } : {}),
                 },
