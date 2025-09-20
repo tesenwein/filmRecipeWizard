@@ -48,7 +48,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
     if (kind === 'target') {
       return {
         title: 'Target Image',
-        description: 'The photo you want to transform (optional)',
+        description: 'The photo you want to transform',
         chip: undefined,
         icon: <PhotoCameraOutlinedIcon sx={{ color: 'primary.main', fontSize: 24 }} />,
         emptyCta: 'Select Target Images',
@@ -59,7 +59,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
     return {
       title: 'Reference Style',
       description: 'Upload up to 3 reference images',
-      chip: 'Optional' as const,
+      chip: undefined,
       icon: <PaletteOutlinedIcon sx={{ color: 'primary.main', fontSize: 20 }} />,
       emptyCta: 'Select Reference Images',
       changeCta: 'Change Images',
@@ -151,12 +151,14 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>{headerDescription}</p>
           </Box>
         </Box>
-        <Chip
-          label={required ? 'Required' : defaults.chip}
-          size="small"
-          color={required ? 'primary' : 'default'}
-          variant="outlined"
-        />
+        {required && (
+          <Chip
+            label="Required"
+            size="small"
+            color="primary"
+            variant="outlined"
+          />
+        )}
       </Box>
 
       {/* Main area: supports drag & drop */}
