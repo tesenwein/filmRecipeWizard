@@ -326,9 +326,47 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         if (!masks.length) return '';
         const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
         const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
-        // Apply reduced strength for mask adjustments to make them less strong
-        const maskStrength = strength * 0.6; // 60% of the main strength
-        const nM1_1_scaled = (v: any) => (typeof v === 'number' ? Math.max(-1, Math.min(1, v * maskStrength)) : undefined);
+        // Apply reduced strength for mask adjustments to make them less strong (user feedback)
+        const maskStrength = Math.max(0, Math.min(1, strength)) * 0.35; // default ~35% intensity
+        // Normalize local adjustments to Lightroom units and apply mask strength
+        const normalizeLocal = (key: string, val: any): number | undefined => {
+          if (typeof val !== 'number' || !Number.isFinite(val)) return undefined;
+          const abs = Math.abs(val);
+          if (key === 'local_exposure') {
+            // Treat small numbers as stops directly; handle percent-like inputs too.
+            let stops: number;
+            if (abs <= 5) {
+              // value already in stops (e.g., 0.1..2.0)
+              stops = val;
+            } else if (abs <= 100) {
+              // looks like percent (-100..100): map to a conservative +/-2 stops
+              stops = (val / 100) * 2.0;
+            } else {
+              // out-of-range; clamp to a conservative value
+              stops = Math.sign(val) * 2.0;
+            }
+            const scaled = stops * maskStrength;
+            return Math.max(-5, Math.min(5, scaled));
+          }
+          if (key === 'local_temperature') {
+            // Clamp/normalize temp to [-150..150]; downscale very large kelvin deltas
+            let t = val;
+            if (abs > 150 && abs <= 1500) t = val / 10;
+            else if (abs > 1500) t = val / 100;
+            const scaled = t * maskStrength;
+            return Math.max(-150, Math.min(150, scaled));
+          }
+          if (key === 'local_tint') {
+            // Tint typically [-150..150]; normalize very small [-1..1] to slider units
+            const t = abs <= 1 ? val * 150 : val;
+            const scaled = t * maskStrength;
+            return Math.max(-150, Math.min(150, scaled));
+          }
+          // Other locals typically in [-1,1] for XMP; if value looks like -100..100, normalize
+          const normalized = abs > 1 ? val / 100 : val;
+          const scaled = normalized * maskStrength;
+          return Math.max(-1, Math.min(1, scaled));
+        };
         const attrIf = (k: string, val?: string | number) =>
           val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
 
@@ -356,20 +394,21 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
               attrIf('LocalBrightness', 0),
               attrIf('LocalToningHue', 0),
               attrIf('LocalToningSaturation', 0),
-              attrIf('LocalExposure2012', f3(nM1_1_scaled(adj.local_exposure) as any)),
-              attrIf('LocalContrast2012', f3(nM1_1_scaled(adj.local_contrast) as any)),
-              attrIf('LocalHighlights2012', f3(nM1_1_scaled(adj.local_highlights) as any)),
-              attrIf('LocalShadows2012', f3(nM1_1_scaled(adj.local_shadows) as any)),
-              attrIf('LocalWhites2012', f3(nM1_1_scaled(adj.local_whites) as any)),
-              attrIf('LocalBlacks2012', f3(nM1_1_scaled(adj.local_blacks) as any)),
-              attrIf('LocalClarity2012', f3(nM1_1_scaled(adj.local_clarity) as any)),
-              attrIf('LocalDehaze', f3(nM1_1_scaled(adj.local_dehaze) as any)),
+              attrIf('LocalExposure2012', f3(normalizeLocal('local_exposure', adj.local_exposure))),
+              attrIf('LocalContrast2012', f3(normalizeLocal('local_contrast', adj.local_contrast))),
+              attrIf('LocalHighlights2012', f3(normalizeLocal('local_highlights', adj.local_highlights))),
+              attrIf('LocalShadows2012', f3(normalizeLocal('local_shadows', adj.local_shadows))),
+              attrIf('LocalWhites2012', f3(normalizeLocal('local_whites', adj.local_whites))),
+              attrIf('LocalBlacks2012', f3(normalizeLocal('local_blacks', adj.local_blacks))),
+              attrIf('LocalClarity2012', f3(normalizeLocal('local_clarity', adj.local_clarity))),
+              attrIf('LocalDehaze', f3(normalizeLocal('local_dehaze', adj.local_dehaze))),
               attrIf('LocalLuminanceNoise', 0),
               attrIf('LocalMoire', 0),
               attrIf('LocalDefringe', 0),
-              attrIf('LocalTemperature', 0),
-              attrIf('LocalTint', 0),
-              attrIf('LocalTexture', f3(nM1_1_scaled(adj.local_texture) as any)),
+              attrIf('LocalTemperature', f3(normalizeLocal('local_temperature', adj.local_temperature))),
+              attrIf('LocalTint', f3(normalizeLocal('local_tint', adj.local_tint))),
+              attrIf('LocalTexture', f3(normalizeLocal('local_texture', adj.local_texture))),
+              attrIf('LocalSaturation', f3(normalizeLocal('local_saturation', adj.local_saturation))),
               attrIf('LocalGrain', 0),
               attrIf('LocalCurveRefineSaturation', 100),
             ]
