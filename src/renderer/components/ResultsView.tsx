@@ -1084,44 +1084,41 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           }
                         }}
                         onAcceptChanges={async () => {
-                          // Accept: trigger AI re-processing (sends to LLM) with updated params
+                          // Accept: save changes only and generate XMP locally (no new AI call)
                           if (!processId) return;
                           try {
-                            // Clear pending changes immediately in parent scope for a snappy UI
+                            // Clear pending changes immediately for snappy UI
                             setPendingChatModifications(null);
 
-                            const processResponse = await window.electronAPI.getProcess(processId);
-                            if (!processResponse.success || !processResponse.process) {
-                              console.error('[RESULTS] Failed to get process data for re-processing');
+                            const current = successfulResults[selectedResult];
+                            const adjustments = getEffectiveAdjustments(current);
+                            if (!adjustments) {
+                              console.warn('[RESULTS] No adjustments available to generate XMP');
+                              return;
+                            }
+                            const adjForExport = { ...adjustments } as any;
+                            if (processName) adjForExport.preset_name = processName;
+                            if (processDescription) adjForExport.description = processDescription;
+
+                            const gen = await (window.electronAPI as any).generateXmpContent({
+                              adjustments: adjForExport,
+                              include: { strength: 1.0 },
+                              recipeName: processName,
+                            });
+                            if (!gen?.success || !gen?.content) {
+                              showError(`Failed to create XMP${gen?.error ? `: ${gen.error}` : ''}`);
                               return;
                             }
 
-                            const storedProcess = processResponse.process;
-                            const processingData = {
-                              processId: processId,
-                              targetIndex: 0,
-                              baseImageData: (storedProcess as any).recipeImageData ? [(storedProcess as any).recipeImageData] : undefined,
-                              targetImageData: undefined,
-                              prompt: processPrompt || storedProcess.prompt,
-                              styleOptions: (storedProcess as any).userOptions,
-                            };
-
-                            // flip status -> generating and show spinner
-                            try { await window.electronAPI.updateProcess(processId, { status: 'generating' } as any); } catch {}
-                            try {
-                              const showGen = settings?.reprocessShowsGenerating !== false;
-                              if (showGen) setGeneratingStatus(processId, true);
-                              setExpectGenerating(!!showGen);
-                              setIsReprocessing(true);
-                            } catch {}
-
-                            await window.electronAPI.processWithStoredImages(processingData);
-                            // XMP will be created and stored by main process when results arrive
+                            await window.electronAPI.updateProcess(processId, {
+                              xmpPreset: gen.content,
+                              xmpCreatedAt: new Date().toISOString(),
+                              // Ensure status reflects completed state (no generating spinner)
+                              status: 'completed',
+                            } as any);
                           } catch (error) {
-                            console.error('[RESULTS] Failed to trigger AI re-processing:', error);
-                            try { if (processId) setGeneratingStatus(processId, false); } catch {}
-                            try { setIsReprocessing(false); } catch {}
-                            showError('Failed to re-process with updated parameters');
+                            console.error('[RESULTS] Failed to create/store XMP:', error);
+                            showError('Failed to apply and store XMP');
                           }
                         }}
                         onRejectChanges={() => {
