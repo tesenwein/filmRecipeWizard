@@ -65,6 +65,8 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '<crs:Treatment>Color</crs:Treatment>';
   const tag = (name: string, val?: number | string) =>
     val === 0 || val === '0' || !!val ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
+  const attrIf = (k: string, val?: string | number) =>
+    val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
 
   // Clamp helpers to keep values within Lightroom-expected ranges
   const clamp = (v: any, min: number, max: number): number | undefined => {
@@ -91,12 +93,12 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const vibrance = round(clamp(scale(aiAdjustments.vibrance as any), -100, 100));
   const saturation = round(clamp(scale(aiAdjustments.saturation as any), -100, 100));
 
-  const presetName = (include?.recipeName as string) || 'Custom Recipe';
+  const presetName = aiAdjustments.preset_name || (include?.recipeName as string) || 'Custom Recipe';
   const groupName = 'film-recipe-wizard';
   // Inclusion flags: only include sections when explicitly enabled.
   const inc = {
-    wbBasic: include?.wbBasic === true,
-    exposure: include?.exposure === true,
+    wbBasic: include?.basic === true,
+    exposure: include?.basic === true,
     hsl: include?.hsl === true,
     colorGrading: include?.colorGrading === true,
     curves: include?.curves === true,
@@ -185,35 +187,35 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // HSL only applies to color treatment; B&W uses GrayMixer tags
-  const hslBlock =
-    inc.hsl && !isBW
-      ? [
-          tag('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
-          tag('HueAdjustmentOrange', (aiAdjustments as any).hue_orange),
-          tag('HueAdjustmentYellow', (aiAdjustments as any).hue_yellow),
-          tag('HueAdjustmentGreen', (aiAdjustments as any).hue_green),
-          tag('HueAdjustmentAqua', (aiAdjustments as any).hue_aqua),
-          tag('HueAdjustmentBlue', (aiAdjustments as any).hue_blue),
-          tag('HueAdjustmentPurple', (aiAdjustments as any).hue_purple),
-          tag('HueAdjustmentMagenta', (aiAdjustments as any).hue_magenta),
-          tag('SaturationAdjustmentRed', round(clamp(scale((aiAdjustments as any).sat_red), -100, 100))),
-          tag('SaturationAdjustmentOrange', round(clamp(scale((aiAdjustments as any).sat_orange), -100, 100))),
-          tag('SaturationAdjustmentYellow', round(clamp(scale((aiAdjustments as any).sat_yellow), -100, 100))),
-          tag('SaturationAdjustmentGreen', round(clamp(scale((aiAdjustments as any).sat_green), -100, 100))),
-          tag('SaturationAdjustmentAqua', round(clamp(scale((aiAdjustments as any).sat_aqua), -100, 100))),
-          tag('SaturationAdjustmentBlue', round(clamp(scale((aiAdjustments as any).sat_blue), -100, 100))),
-          tag('SaturationAdjustmentPurple', round(clamp(scale((aiAdjustments as any).sat_purple), -100, 100))),
-          tag('SaturationAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).sat_magenta), -100, 100))),
-          tag('LuminanceAdjustmentRed', round(clamp(scale((aiAdjustments as any).lum_red), -100, 100))),
-          tag('LuminanceAdjustmentOrange', round(clamp(scale((aiAdjustments as any).lum_orange), -100, 100))),
-          tag('LuminanceAdjustmentYellow', round(clamp(scale((aiAdjustments as any).lum_yellow), -100, 100))),
-          tag('LuminanceAdjustmentGreen', round(clamp(scale((aiAdjustments as any).lum_green), -100, 100))),
-          tag('LuminanceAdjustmentAqua', round(clamp(scale((aiAdjustments as any).lum_aqua), -100, 100))),
-          tag('LuminanceAdjustmentBlue', round(clamp(scale((aiAdjustments as any).lum_blue), -100, 100))),
-          tag('LuminanceAdjustmentPurple', round(clamp(scale((aiAdjustments as any).lum_purple), -100, 100))),
-          tag('LuminanceAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).lum_magenta), -100, 100))),
-        ].join('')
-      : '';
+  // HSL values should be attributes on the rdf:Description element, not separate elements
+  const hslAttrs = inc.hsl && !isBW
+    ? [
+        attrIf('HueAdjustmentRed', round(clamp((aiAdjustments as any).hue_red, -100, 100))),
+        attrIf('HueAdjustmentOrange', round(clamp((aiAdjustments as any).hue_orange, -100, 100))),
+        attrIf('HueAdjustmentYellow', round(clamp((aiAdjustments as any).hue_yellow, -100, 100))),
+        attrIf('HueAdjustmentGreen', round(clamp((aiAdjustments as any).hue_green, -100, 100))),
+        attrIf('HueAdjustmentAqua', round(clamp((aiAdjustments as any).hue_aqua, -100, 100))),
+        attrIf('HueAdjustmentBlue', round(clamp((aiAdjustments as any).hue_blue, -100, 100))),
+        attrIf('HueAdjustmentPurple', round(clamp((aiAdjustments as any).hue_purple, -100, 100))),
+        attrIf('HueAdjustmentMagenta', round(clamp((aiAdjustments as any).hue_magenta, -100, 100))),
+        attrIf('SaturationAdjustmentRed', round(clamp(scale((aiAdjustments as any).sat_red), -100, 100))),
+        attrIf('SaturationAdjustmentOrange', round(clamp(scale((aiAdjustments as any).sat_orange), -100, 100))),
+        attrIf('SaturationAdjustmentYellow', round(clamp(scale((aiAdjustments as any).sat_yellow), -100, 100))),
+        attrIf('SaturationAdjustmentGreen', round(clamp(scale((aiAdjustments as any).sat_green), -100, 100))),
+        attrIf('SaturationAdjustmentAqua', round(clamp(scale((aiAdjustments as any).sat_aqua), -100, 100))),
+        attrIf('SaturationAdjustmentBlue', round(clamp(scale((aiAdjustments as any).sat_blue), -100, 100))),
+        attrIf('SaturationAdjustmentPurple', round(clamp(scale((aiAdjustments as any).sat_purple), -100, 100))),
+        attrIf('SaturationAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).sat_magenta), -100, 100))),
+        attrIf('LuminanceAdjustmentRed', round(clamp(scale((aiAdjustments as any).lum_red), -100, 100))),
+        attrIf('LuminanceAdjustmentOrange', round(clamp(scale((aiAdjustments as any).lum_orange), -100, 100))),
+        attrIf('LuminanceAdjustmentYellow', round(clamp(scale((aiAdjustments as any).lum_yellow), -100, 100))),
+        attrIf('LuminanceAdjustmentGreen', round(clamp(scale((aiAdjustments as any).lum_green), -100, 100))),
+        attrIf('LuminanceAdjustmentAqua', round(clamp(scale((aiAdjustments as any).lum_aqua), -100, 100))),
+        attrIf('LuminanceAdjustmentBlue', round(clamp(scale((aiAdjustments as any).lum_blue), -100, 100))),
+        attrIf('LuminanceAdjustmentPurple', round(clamp(scale((aiAdjustments as any).lum_purple), -100, 100))),
+        attrIf('LuminanceAdjustmentMagenta', round(clamp(scale((aiAdjustments as any).lum_magenta), -100, 100))),
+      ].join('')
+    : '';
 
   // Color Grading block
   const colorGradingBlock = inc.colorGrading
@@ -318,7 +320,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
         const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
         // Apply reduced strength for mask adjustments to make them less strong (user feedback)
-        const maskStrength = Math.max(0, Math.min(1, strength)) * 0.35; // default ~35% intensity
+        const maskStrength = 0.35; // default ~35% intensity for masks
         // Normalize local adjustments to Lightroom units and apply mask strength
         const normalizeLocal = (key: string, val: any): number | undefined => {
           if (typeof val !== 'number' || !Number.isFinite(val)) return undefined;
@@ -583,45 +585,43 @@ ${correctionLis}
       })()
     : '';
 
-  const xmp = `<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>
-<x:xmpmeta xmlns:x="adobe:ns:meta/">
-  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-    <rdf:Description
-      xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
-      crs:Version="17.5"
-      crs:ProcessVersion="15.4"
-      crs:ProfileName="${profileName}"
-      crs:Look=""
-      crs:HasSettings="True"
-      crs:PresetType="Normal"
-      crs:Cluster="${groupName}"
-      crs:ClusterGroup="${groupName}"
-      crs:PresetSubtype="Normal"
-      crs:SupportsAmount="True"
-      crs:SupportsAmount2="True"
-      crs:SupportsColor="True"
-      crs:SupportsMonochrome="True"
-      crs:WhiteBalance="As Shot"
-      crs:Name="${presetName}">
-      <crs:Name>
-        <rdf:Alt>
-          <rdf:li xml:lang="x-default">${presetName}</rdf:li>
-        </rdf:Alt>
-      </crs:Name>
-      <crs:Group>
-        <rdf:Alt>
-          <rdf:li xml:lang="x-default">Film Recipe Wizard</rdf:li>
-        </rdf:Alt>
-      </crs:Group>
-      ${treatmentTag}
-${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${hslBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}${vignetteBlock}
-      <!-- Masks (optional) -->
-      ${masksBlock}
-      <!-- Processing Notes -->
-      
-    </rdf:Description>
-  </rdf:RDF>
-</x:xmpmeta>
-<?xpacket end="w"?>`;
+  const xmp = `<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00        ">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+    xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
+   crs:Version="17.5"
+   crs:ProcessVersion="15.4"
+   crs:ProfileName="${profileName}"
+   crs:Look=""
+   crs:HasSettings="True"
+   crs:PresetType="Normal"
+   crs:Cluster="${groupName}"
+   crs:ClusterGroup="${groupName}"
+   crs:PresetSubtype="Normal"
+   crs:SupportsAmount="True"
+   crs:SupportsAmount2="True"
+   crs:SupportsColor="True"
+   crs:SupportsMonochrome="True"
+   crs:WhiteBalance="As Shot"
+   crs:Name="${presetName}"${hslAttrs}>
+   <crs:Name>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">${presetName}</rdf:li>
+    </rdf:Alt>
+   </crs:Name>
+   <crs:Group>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">Film Recipe Wizard</rdf:li>
+    </rdf:Alt>
+   </crs:Group>
+   ${treatmentTag}
+${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}${vignetteBlock}
+   <!-- Masks (optional) -->
+   ${masksBlock}
+   <!-- Processing Notes -->
+   
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>`;
   return xmp;
 }

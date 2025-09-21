@@ -194,6 +194,13 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
     subCategoryId: '',
     description: 'General object',
     category: 'other'
+  },
+  {
+    type: 'radial',
+    subType: '1',
+    subCategoryId: '',
+    description: 'Radial mask',
+    category: 'other'
   }
 ];
 

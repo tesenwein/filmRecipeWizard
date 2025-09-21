@@ -55,6 +55,11 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
     // Extract description
     const descMatch = xmpContent.match(/<crs:Description>\s*<rdf:Alt>\s*<rdf:li[^>]*>([^<]*)<\/rdf:li>/);
     const description = descMatch?.[1]?.trim() || '';
+    
+    // Also try to extract from the adjustments object if available
+    if (!description && (adjustments as any).description) {
+      const description = (adjustments as any).description;
+    }
 
     // Extract preset type
     const presetTypeMatch = xmpContent.match(/crs:PresetType\s*=\s*"([^"]*)"/);
@@ -167,7 +172,11 @@ function parseHSLAdjustments(xmpContent: string, adjustments: AIColorAdjustments
   let hasHSL = false;
 
   const parseHSLValue = (pattern: string, key: keyof AIColorAdjustments): void => {
-    const match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
+    // Try attribute format first (new format), then element format (old format)
+    let match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+    if (!match) {
+      match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
+    }
     if (match) {
       const value = parseFloat(match[1]);
       if (!isNaN(value)) {
@@ -366,11 +375,26 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
 
           // Map MaskSubType and MaskSubCategoryID to our mask types
           mask.type = mapMaskSubTypeToType(subType, subCategory);
+          
+          // Override with name-based detection for common cases
+          if (mask.name.toLowerCase().includes('radial') || mask.name.toLowerCase().includes('vignette')) {
+            mask.type = 'radial';
+          } else if (mask.name.toLowerCase().includes('linear') || mask.name.toLowerCase().includes('gradient')) {
+            mask.type = 'linear';
+          } else if (mask.name.toLowerCase().includes('brush')) {
+            mask.type = 'brush';
+          }
+          
           if (subCategory) {
             mask.subCategoryId = parseInt(subCategory);
           }
         } else {
-          mask.type = 'subject';
+          // If no subType, try to determine from mask name or other attributes
+          if (mask.name.toLowerCase().includes('radial') || mask.name.toLowerCase().includes('vignette')) {
+            mask.type = 'radial';
+          } else {
+            mask.type = 'subject';
+          }
         }
       } else if (maskType === 'CircularGradient') {
         mask.type = 'radial';
@@ -409,6 +433,29 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
     parseLocalAdjustment('LocalDehaze', 'local_dehaze');
     parseLocalAdjustment('LocalTexture', 'local_texture');
     parseLocalAdjustment('LocalSaturation', 'local_saturation');
+
+    // Extract reference point for AI masks
+    const referenceXMatch = maskMatch.match(/crs:ReferenceX="([^"]*)"/);
+    if (referenceXMatch) {
+      const value = parseFloat(referenceXMatch[1]);
+      if (!isNaN(value)) {
+        mask.referenceX = value;
+      }
+    }
+
+    const referenceYMatch = maskMatch.match(/crs:ReferenceY="([^"]*)"/);
+    if (referenceYMatch) {
+      const value = parseFloat(referenceYMatch[1]);
+      if (!isNaN(value)) {
+        mask.referenceY = value;
+      }
+    }
+
+    // Extract mask properties
+    const maskInvertedMatch = maskMatch.match(/crs:MaskInverted="([^"]*)"/);
+    if (maskInvertedMatch) {
+      mask.inverted = maskInvertedMatch[1].toLowerCase() === 'true';
+    }
 
     // Extract geometry for radial masks
     if (mask.type === 'radial') {
@@ -506,8 +553,8 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
     }
 
     // Extract inverted flag
-    const invertedMatch = maskMatch.match(/crs:MaskInverted="([^"]*)"/);
-    if (invertedMatch && invertedMatch[1].toLowerCase() === 'true') {
+    const rangeInvertedMatch = maskMatch.match(/crs:MaskInverted="([^"]*)"/);
+    if (rangeInvertedMatch && rangeInvertedMatch[1].toLowerCase() === 'true') {
       mask.inverted = true;
     }
 

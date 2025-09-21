@@ -220,6 +220,7 @@ REQUIREMENTS:
 - Include description (1-2 sentences) of style and mood
 - Set camera_profile: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
 - Use 'Adobe Monochrome' for B&W, 'Adobe Portrait' for people, 'Adobe Landscape' for nature/sky
+- For portrait use masks to optimize and do not use radial masks for portrait
 
 AVAILABLE MASKS:
 - Face: ${faceMaskList}
