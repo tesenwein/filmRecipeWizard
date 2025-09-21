@@ -221,7 +221,7 @@ REQUIREMENTS:
 - Include description (1-2 sentences) of style and mood - REQUIRED
 - Set camera_profile: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
 - Use 'Adobe Monochrome' for B&W, 'Adobe Portrait' for people, 'Adobe Landscape' for nature/sky
-- For portrait use masks to optimize and do not use radial masks for portrait
+- For portrait use masks to optimize and do not use radial masks for portrait. Be very suttle with face lighting and watch out to use sepaarate mask for face lighting.
 - Use tone curves to match contrast and style characteristics
 - Use color grading to match color temperature and mood
 - Analyze reference image's contrast curve and color grading, then replicate
