@@ -261,14 +261,14 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         const tag = (name: string, val?: number) =>
           val === 0 || (typeof val === 'number' && Number.isFinite(val)) ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
         return [
-          tag('GrayMixerRed', round(clamp(src.gray_red, -100, 100) as any)),
-          tag('GrayMixerOrange', round(clamp(src.gray_orange, -100, 100) as any)),
-          tag('GrayMixerYellow', round(clamp(src.gray_yellow, -100, 100) as any)),
-          tag('GrayMixerGreen', round(clamp(src.gray_green, -100, 100) as any)),
-          tag('GrayMixerAqua', round(clamp(src.gray_aqua, -100, 100) as any)),
-          tag('GrayMixerBlue', round(clamp(src.gray_blue, -100, 100) as any)),
-          tag('GrayMixerPurple', round(clamp(src.gray_purple, -100, 100) as any)),
-          tag('GrayMixerMagenta', round(clamp(src.gray_magenta, -100, 100) as any)),
+          tag('GrayMixerRed', round(clamp(scale(src.gray_red), -100, 100) as any)),
+          tag('GrayMixerOrange', round(clamp(scale(src.gray_orange), -100, 100) as any)),
+          tag('GrayMixerYellow', round(clamp(scale(src.gray_yellow), -100, 100) as any)),
+          tag('GrayMixerGreen', round(clamp(scale(src.gray_green), -100, 100) as any)),
+          tag('GrayMixerAqua', round(clamp(scale(src.gray_aqua), -100, 100) as any)),
+          tag('GrayMixerBlue', round(clamp(scale(src.gray_blue), -100, 100) as any)),
+          tag('GrayMixerPurple', round(clamp(scale(src.gray_purple), -100, 100) as any)),
+          tag('GrayMixerMagenta', round(clamp(scale(src.gray_magenta), -100, 100) as any)),
         ].join('');
       })()
     : '';

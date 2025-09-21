@@ -151,14 +151,14 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     const hasAny = vals.some(v => typeof v === 'number' && Number.isFinite(v));
     if (!hasAny) return '';
     return [
-      tag('GrayMixerRed', round(clamp(src.gray_red, -100, 100))),
-      tag('GrayMixerOrange', round(clamp(src.gray_orange, -100, 100))),
-      tag('GrayMixerYellow', round(clamp(src.gray_yellow, -100, 100))),
-      tag('GrayMixerGreen', round(clamp(src.gray_green, -100, 100))),
-      tag('GrayMixerAqua', round(clamp(src.gray_aqua, -100, 100))),
-      tag('GrayMixerBlue', round(clamp(src.gray_blue, -100, 100))),
-      tag('GrayMixerPurple', round(clamp(src.gray_purple, -100, 100))),
-      tag('GrayMixerMagenta', round(clamp(src.gray_magenta, -100, 100))),
+      tag('GrayMixerRed', round(clamp(scale(src.gray_red), -100, 100))),
+      tag('GrayMixerOrange', round(clamp(scale(src.gray_orange), -100, 100))),
+      tag('GrayMixerYellow', round(clamp(scale(src.gray_yellow), -100, 100))),
+      tag('GrayMixerGreen', round(clamp(scale(src.gray_green), -100, 100))),
+      tag('GrayMixerAqua', round(clamp(scale(src.gray_aqua), -100, 100))),
+      tag('GrayMixerBlue', round(clamp(scale(src.gray_blue), -100, 100))),
+      tag('GrayMixerPurple', round(clamp(scale(src.gray_purple), -100, 100))),
+      tag('GrayMixerMagenta', round(clamp(scale(src.gray_magenta), -100, 100))),
     ].join('');
   })() : '';
 
@@ -260,10 +260,10 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
         crs:ProfileName="${cameraProfileName}"
         crs:Look=""
         crs:HasSettings="True"
-        crs:PresetType="Look"
+        crs:PresetType="Normal"
         crs:Cluster="film-recipe-wizard"
         crs:ClusterGroup="film-recipe-wizard"
-        crs:PresetSubtype="Look"
+        crs:PresetSubtype="Normal"
         crs:SupportsAmount="True"
         crs:SupportsAmount2="True"
         crs:SupportsColor="True"
@@ -285,7 +285,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
           <rdf:li xml:lang="x-default">${adjustments.description || 'Camera profile generated from Film Recipe Wizard'}</rdf:li>
         </rdf:Alt>
       </crs:Description>
-      ${tag('Treatment', isBW ? 'Black & White' : 'Color')}
+      ${tag('Treatment', isBW ? 'Black &amp; White' : 'Color')}
       ${(() => {
       // Match preset generator behavior: exclude Exposure by default unless explicitly requested
       const includeExposure = !!((adjustments as any)?.include?.exposure || (adjustments as any)?.includeExposure);
