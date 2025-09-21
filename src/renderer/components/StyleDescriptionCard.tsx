@@ -40,6 +40,10 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
     { icon: <LandscapeIcon sx={{ fontSize: 16 }} />, label: 'Landscape', category: 'photography' },
     { icon: <StreetviewIcon sx={{ fontSize: 16 }} />, label: 'Street', category: 'photography' },
     { icon: <CameraAltIcon sx={{ fontSize: 16 }} />, label: 'Documentary', category: 'photography' },
+    { icon: <StarIcon sx={{ fontSize: 16 }} />, label: 'Fashion', category: 'photography' },
+    { icon: <NatureIcon sx={{ fontSize: 16 }} />, label: 'Nature', category: 'photography' },
+    { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Architecture', category: 'photography' },
+    { icon: <BrushIcon sx={{ fontSize: 16 }} />, label: 'Fine Art', category: 'photography' },
     
     // Visual Styles
     { icon: <MovieIcon sx={{ fontSize: 16 }} />, label: 'Cinematic', category: 'style' },
@@ -48,6 +52,12 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
     { icon: <BlurOnIcon sx={{ fontSize: 16 }} />, label: 'Desaturated', category: 'style' },
     { icon: <BrushIcon sx={{ fontSize: 16 }} />, label: 'Punchy Pop', category: 'style' },
     { icon: <StarIcon sx={{ fontSize: 16 }} />, label: 'Soft Glow', category: 'style' },
+    { icon: <AcUnitIcon sx={{ fontSize: 16 }} />, label: 'Moody', category: 'style' },
+    { icon: <LightModeIcon sx={{ fontSize: 16 }} />, label: 'Bright & Airy', category: 'style' },
+    { icon: <NightlightIcon sx={{ fontSize: 16 }} />, label: 'Dark & Dramatic', category: 'style' },
+    { icon: <BubbleChartIcon sx={{ fontSize: 16 }} />, label: 'Minimalist', category: 'style' },
+    { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Grunge', category: 'style' },
+    { icon: <MovieFilterIcon sx={{ fontSize: 16 }} />, label: 'Vintage', category: 'style' },
     
     // Color Palettes
     { icon: <WbSunnyIcon sx={{ fontSize: 16 }} />, label: 'Warm Sunset', category: 'color' },
@@ -56,11 +66,22 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
     { icon: <AcUnitIcon sx={{ fontSize: 16 }} />, label: 'Teal & Orange', category: 'color' },
     { icon: <NatureIcon sx={{ fontSize: 16 }} />, label: 'Earthy Tones', category: 'color' },
     { icon: <BubbleChartIcon sx={{ fontSize: 16 }} />, label: 'Pastel Dream', category: 'color' },
+    { icon: <PaletteIcon sx={{ fontSize: 16 }} />, label: 'Monochrome', category: 'color' },
+    { icon: <StarIcon sx={{ fontSize: 16 }} />, label: 'Sepia', category: 'color' },
+    { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Cyanotype', category: 'color' },
+    { icon: <WhatshotIcon sx={{ fontSize: 16 }} />, label: 'Split Tone', category: 'color' },
+    { icon: <BrushIcon sx={{ fontSize: 16 }} />, label: 'Duotone', category: 'color' },
+    { icon: <MovieIcon sx={{ fontSize: 16 }} />, label: 'Cross Process', category: 'color' },
     
     // Film & Vintage
     { icon: <MovieFilterIcon sx={{ fontSize: 16 }} />, label: 'Matte Film', category: 'film' },
     { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Moody Ocean', category: 'film' },
     { icon: <CameraAltIcon sx={{ fontSize: 16 }} />, label: 'Vintage', category: 'film' },
+    { icon: <StarIcon sx={{ fontSize: 16 }} />, label: 'Lomography', category: 'film' },
+    { icon: <NatureIcon sx={{ fontSize: 16 }} />, label: 'Polaroid', category: 'film' },
+    { icon: <PaletteIcon sx={{ fontSize: 16 }} />, label: 'Kodachrome', category: 'film' },
+    { icon: <LightModeIcon sx={{ fontSize: 16 }} />, label: 'Fuji Colors', category: 'film' },
+    { icon: <AcUnitIcon sx={{ fontSize: 16 }} />, label: 'Cinema', category: 'film' },
   ];
 
   const handleCategoryToggle = (categoryLabel: string) => {

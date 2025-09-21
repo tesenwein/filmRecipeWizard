@@ -62,41 +62,57 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 
 **Color Negative Film Presets:**
 - **Kodak Portra Series**: Portra 400, 160, 800 (warm skin tones, wedding photography)
-- **Kodak Consumer Films**: Gold 200, UltraMax 400, ColorPlus 200 (nostalgic film look)
+- **Kodak Consumer Films**: Gold 200, UltraMax 400, ColorPlus 200, Max 400 (nostalgic film look)
 - **Kodak Ektar 100**: Ultra-vivid landscape photography colors
-- **Fujifilm Color Negative**: Superia 400, Pro 400H, C200, Pro 160NS (cool greens, pastel fashion tones)
-- **Agfa Vista 200**: European vintage warmth and character
-- **Lomography Films**: Color 400, 800 (creative experimental looks)
+- **Fujifilm Color Negative**: Superia 200/400/800, Pro 400H, C200, Pro 160NS (cool greens, pastel fashion tones)
+- **Agfa Vista Series**: Vista 200, 400 (European vintage warmth and character)
+- **Lomography Films**: Color 400, 800, Metropolis, Lady Grey (creative experimental looks)
 
 **Color Positive (Slide) Film LUTs:**
-- **Kodachrome 64**: Legendary rich reds, deep blacks, vintage travel photography
-- **Fujifilm Velvia 50/100**: Super-saturated nature and landscape photography
-- **Fujifilm Provia 100F**: Neutral professional slide film
+- **Kodachrome Series**: 25, 64 (legendary rich reds, deep blacks, vintage travel photography)
+- **Fujifilm Velvia Series**: 50, 100, original variants (super-saturated nature and landscape photography)
+- **Fujifilm Provia Series**: 100F, 400X (neutral professional slide film)
 - **Fujifilm Astia 100F**: Soft contrast portrait and fashion photography  
-- **Kodak Ektachrome E100**: Modern digital-friendly slide clarity
+- **Kodak Ektachrome Series**: E100, 100VS (modern digital-friendly slide clarity)
+- **Consumer Slides**: Fuji Sensia 100, Agfa CT Precisa 100 (affordable slide film options)
 
 **Black & White Film Presets:**
 - **Kodak Tri-X 400**: Classic street photography grain and contrast
 - **Ilford HP5 Plus 400**: Versatile documentary photography tones
-- **Kodak T-MAX 400**: Modern tabular grain sharpness
-- **Fuji Acros 100**: Ultra-fine grain for detailed B&W work
+- **Kodak T-MAX Series**: 100, 400, 3200 (modern tabular grain sharpness)
+- **Fuji Acros 100 II**: Ultra-fine grain for detailed B&W work
+- **Ilford Delta Series**: 100, 400, 3200 (modern T-grain technology)
+- **European Classics**: Agfa APX 100, Foma Fomapan 100, Kentmere 400
+- **Specialty Films**: Rollei Retro 80S, Fuji Neopan 400 (unique tonality options)
 
 **Cinematic Film LUTs:**
-- **Kodak Vision3 500T**: Tungsten-balanced cinema (Orange & Teal look)
-- **Fuji Eterna 400T**: Warm cinema tones for video color grading
-- **Kodak Vision3 250D**: Daylight cinema stock for bright scenes
+- **Kodak Vision3 Series**: 200T, 250D, 500T (tungsten and daylight cinema stocks)
+- **CineStill Series**: 50D, 400D, 800T (remjet-removed cinema film for still photography)
+- **Fuji Eterna Series**: 250D, 400T (warm cinema tones for video color grading)
 
 ### 🎭 **Artistic Styles**
 **Portrait Styles:**
-- Annie Leibovitz (dramatic portraiture, controlled light)
-- Peter Lindbergh (cinematic monochrome, natural light)
-- Steve McCurry (vivid cultural tones, warm highlights)
-- Platon (high-contrast B&W, powerful close-ups)
-- Irving Penn (minimalist studio elegance)
+- Annie Leibovitz, Peter Lindbergh, Steve McCurry, Platon, Irving Penn
+- Richard Avedon, Helmut Newton, Mario Testino, Patrick Demarchelier
+- Bruce Weber, David Bailey, Nadav Kander (dramatic to minimalist styles)
 
-**Landscape & Editorial:**
-- Ansel Adams, Marc Adamus, and other renowned photographers
-- Various editorial and fashion photography styles
+**Landscape Photography:**
+- Ansel Adams, Galen Rowell, Michael Kenna, Sebastião Salgado
+- Peter Lik, Edward Burtynsky, Alexey Mishkin, Joe Cornish
+- Classic to modern landscape photography aesthetics
+
+**Street Photography:**
+- Henri Cartier-Bresson, Fan Ho, Daido Moriyama, Vivian Maier
+- Joel Meyerowitz, Garry Winogrand, Robert Frank, Lee Friedlander
+- Helen Levitt, Gordon Parks (classic to contemporary street styles)
+
+**Fashion & Editorial:**
+- Steven Meisel, Guy Bourdin, William Klein, Tim Walker
+- Ellen von Unwerth (high-fashion to avant-garde editorial styles)
+
+**Instant Film Styles:**
+- Polaroid 600, SX-70, Spectra, Go, i-Type (classic instant aesthetics)
+- Fuji Instax Wide, Mini, Square (modern instant film looks)
 
 ### ⚙️ **Fine-Tune Controls**
 **Essential Adjustments:**

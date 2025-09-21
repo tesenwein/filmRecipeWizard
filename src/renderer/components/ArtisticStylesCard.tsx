@@ -52,6 +52,42 @@ const CATALOG: Record<string, ArtistStyle[]> = {
       name: 'Nadav Kander',
       category: 'Portrait',
       blurb: 'Muted palettes, painterly tones, contemplative atmosphere with gentle contrast.'
+    },
+    {
+      key: 'newton',
+      name: 'Helmut Newton',
+      category: 'Portrait',
+      blurb: 'High-contrast fashion noir, glossy monochrome, bold highlights and shadows.'
+    },
+    {
+      key: 'aavedon',
+      name: 'Richard Avedon',
+      category: 'Portrait',
+      blurb: 'Minimal backgrounds, crisp tones, expressive portraiture, high-key balance.'
+    },
+    {
+      key: 'testino',
+      name: 'Mario Testino',
+      category: 'Portrait',
+      blurb: 'Polished color fashion, luminous skin tones, bright and energetic palette.'
+    },
+    {
+      key: 'demarchelier',
+      name: 'Patrick Demarchelier',
+      category: 'Portrait',
+      blurb: 'Elegant fashion portraiture, soft natural light, refined color and composition.'
+    },
+    {
+      key: 'weber',
+      name: 'Bruce Weber',
+      category: 'Portrait',
+      blurb: 'Natural outdoor portraiture, warm golden tones, romantic and nostalgic mood.'
+    },
+    {
+      key: 'bailey',
+      name: 'David Bailey',
+      category: 'Portrait',
+      blurb: 'Raw energy, high contrast, bold composition, iconic 60s fashion aesthetic.'
     }
   ],
   Landscape: [
@@ -84,6 +120,36 @@ const CATALOG: Record<string, ArtistStyle[]> = {
       name: 'Peter Lik',
       category: 'Landscape',
       blurb: 'Hyper-vivid color, polished contrast, dramatic skies and glowing horizons.'
+    },
+    {
+      key: 'mccurry_landscape',
+      name: 'Steve McCurry',
+      category: 'Landscape',
+      blurb: 'Rich cultural landscapes, warm golden light, deep saturated colors.'
+    },
+    {
+      key: 'burtynsky',
+      name: 'Edward Burtynsky',
+      category: 'Landscape',
+      blurb: 'Industrial landscapes, muted palettes, environmental storytelling through color.'
+    },
+    {
+      key: 'mishkin',
+      name: 'Alexey Mishkin',
+      category: 'Landscape',
+      blurb: 'Moody atmospheric landscapes, soft contrast, ethereal light and mist.'
+    },
+    {
+      key: 'moon',
+      name: 'Michael Moon',
+      category: 'Landscape',
+      blurb: 'Dramatic seascapes, high contrast, powerful waves and stormy skies.'
+    },
+    {
+      key: 'cornish',
+      name: 'Joe Cornish',
+      category: 'Landscape',
+      blurb: 'Classic British landscapes, natural color, balanced composition and light.'
     }
   ],
   Street: [
@@ -116,6 +182,36 @@ const CATALOG: Record<string, ArtistStyle[]> = {
       name: 'Joel Meyerowitz',
       category: 'Street',
       blurb: 'Lyrical color street, gentle contrast, ambient light and pastel nuance.'
+    },
+    {
+      key: 'winogrand',
+      name: 'Garry Winogrand',
+      category: 'Street',
+      blurb: 'Dynamic composition, tilted angles, high contrast, urban chaos and energy.'
+    },
+    {
+      key: 'frank',
+      name: 'Robert Frank',
+      category: 'Street',
+      blurb: 'Raw documentary style, high grain, emotional depth, American road trip aesthetic.'
+    },
+    {
+      key: 'friedlander',
+      name: 'Lee Friedlander',
+      category: 'Street',
+      blurb: 'Complex compositions, reflections, shadows, layered urban environments.'
+    },
+    {
+      key: 'levitt',
+      name: 'Helen Levitt',
+      category: 'Street',
+      blurb: 'Intimate street moments, children at play, natural light, gentle contrast.'
+    },
+    {
+      key: 'parks',
+      name: 'Gordon Parks',
+      category: 'Street',
+      blurb: 'Social documentary, powerful storytelling, balanced tones, human dignity.'
     }
   ],
   Editorial: [
@@ -148,6 +244,74 @@ const CATALOG: Record<string, ArtistStyle[]> = {
       name: 'Ellen von Unwerth',
       category: 'Editorial',
       blurb: 'Playful high-fashion energy, punchy contrast, sensual monochrome or vivid color.'
+    },
+    {
+      key: 'meisel',
+      name: 'Steven Meisel',
+      category: 'Editorial',
+      blurb: 'High-fashion editorial, dramatic lighting, bold composition, cinematic quality.'
+    },
+    {
+      key: 'bourdin',
+      name: 'Guy Bourdin',
+      category: 'Editorial',
+      blurb: 'Surreal fashion imagery, bold color, dramatic composition, provocative storytelling.'
+    },
+    {
+      key: 'klein',
+      name: 'William Klein',
+      category: 'Editorial',
+      blurb: 'Raw energy, high contrast, bold grain, dynamic composition and movement.'
+    }
+  ],
+  Fashion: [
+    {
+      key: 'demarchelier_fashion',
+      name: 'Patrick Demarchelier',
+      category: 'Fashion',
+      blurb: 'Elegant fashion photography, soft natural light, refined color and composition.'
+    },
+    {
+      key: 'weber_fashion',
+      name: 'Bruce Weber',
+      category: 'Fashion',
+      blurb: 'Natural outdoor fashion, warm golden tones, romantic and nostalgic mood.'
+    },
+    {
+      key: 'bailey_fashion',
+      name: 'David Bailey',
+      category: 'Fashion',
+      blurb: 'Raw energy, high contrast, bold composition, iconic 60s fashion aesthetic.'
+    },
+    {
+      key: 'lindbergh_fashion',
+      name: 'Peter Lindbergh',
+      category: 'Fashion',
+      blurb: 'Cinematic monochrome fashion, natural light, honest texture, minimal retouching.'
+    },
+    {
+      key: 'testino_fashion',
+      name: 'Mario Testino',
+      category: 'Fashion',
+      blurb: 'Polished color fashion, luminous skin tones, bright and energetic palette.'
+    },
+    {
+      key: 'meisel_fashion',
+      name: 'Steven Meisel',
+      category: 'Fashion',
+      blurb: 'High-fashion editorial, dramatic lighting, bold composition, cinematic quality.'
+    },
+    {
+      key: 'bourdin_fashion',
+      name: 'Guy Bourdin',
+      category: 'Fashion',
+      blurb: 'Surreal fashion imagery, bold color, dramatic composition, provocative storytelling.'
+    },
+    {
+      key: 'klein_fashion',
+      name: 'William Klein',
+      category: 'Fashion',
+      blurb: 'Raw energy, high contrast, bold grain, dynamic composition and movement.'
     }
   ]
 };
