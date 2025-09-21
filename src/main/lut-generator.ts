@@ -11,8 +11,6 @@ export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: numb
   const adjustments = {
     // Basic adjustments
     exposure: clamp(withDefault(aiAdjustments.exposure, 0), -5, 5),
-    temperature: clamp(withDefault(aiAdjustments.temperature, 6500), 2000, 50000),
-    tint: clamp(withDefault(aiAdjustments.tint, 0), -150, 150),
     contrast: clamp(withDefault(aiAdjustments.contrast, 0), -100, 100) / 100,
     highlights: clamp(withDefault(aiAdjustments.highlights, 0), -100, 100) / 100,
     shadows: clamp(withDefault(aiAdjustments.shadows, 0), -100, 100) / 100,
@@ -165,16 +163,7 @@ function applyColorTransform(r: number, g: number, b: number, A: any): [number, 
 
   let R = r, G = g, B = b;
 
-  // 1) White balance (Temperature + Tint) using Kelvin-to-RGB approximation
-  const ref = kelvinToRgb(6500);
-  const tgt = kelvinToRgb(A.temperature);
-  const wb = [tgt[0] / ref[0], tgt[1] / ref[1], tgt[2] / ref[2]] as const;
-  // Tint: positive -> magenta (increase R/B vs G), negative -> green (increase G)
-  const tintN = A.tint / 150; // -1..1
-  const tintR = 1 + tintN * 0.20;
-  const tintG = 1 - tintN * 0.40;
-  const tintB = 1 + tintN * 0.20;
-  R *= wb[0] * tintR; G *= wb[1] * tintG; B *= wb[2] * tintB;
+  // White balance removed - using neutral values
 
   // 2) Exposure in stops (map 4 UI units ≈ 1 stop)
   if (Math.abs(A.exposure) > 1e-3) {
@@ -331,21 +320,6 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
   return t * t * (3 - 2 * t);
 }
 
-// Approximate CCT (Kelvin) to normalized RGB multipliers (D65 referenced)
-function kelvinToRgb(kelvin: number): [number, number, number] {
-  const temp = Math.max(1000, Math.min(40000, kelvin)) / 100;
-  let r: number, g: number, b: number;
-  // Red
-  r = temp <= 66 ? 255 : 329.698727446 * Math.pow(temp - 60, -0.1332047592);
-  // Green
-  g = temp <= 66 ? 99.4708025861 * Math.log(temp) - 161.1195681661 : 288.1221695283 * Math.pow(temp - 60, -0.0755148492);
-  // Blue
-  if (temp >= 66) b = 255; else if (temp <= 19) b = 0; else b = 138.5177312231 * Math.log(temp - 10) - 305.0447927307;
-  r = Math.max(0, Math.min(255, r));
-  g = Math.max(0, Math.min(255, g));
-  b = Math.max(0, Math.min(255, b));
-  return [r / 255, g / 255, b / 255];
-}
 
 // Compute soft membership weights for 8 Lightroom HSL bands
 function hueBandWeights(hDeg: number): { red: number; orange: number; yellow: number; green: number; aqua: number; blue: number; purple: number; magenta: number } {

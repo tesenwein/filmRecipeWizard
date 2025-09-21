@@ -4,9 +4,9 @@
     xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
    crs:PresetType="Normal"
    crs:Cluster=""
-   crs:UUID="EE9C9B81A4104E6E93621AF556ECDA64"
-   crs:SupportsAmount2="False"
-   crs:SupportsAmount="False"
+   crs:UUID="5ABEFBEB353749B1868A0408355D4E3F"
+   crs:SupportsAmount2="True"
+   crs:SupportsAmount="True"
    crs:SupportsColor="True"
    crs:SupportsMonochrome="True"
    crs:SupportsHighDynamicRange="True"
@@ -20,11 +20,34 @@
    crs:Copyright=""
    crs:ContactInfo=""
    crs:Version="17.5"
-   crs:WhiteBalance="As Shot"
+   crs:HueAdjustmentRed="-66"
+   crs:HueAdjustmentOrange="-59"
+   crs:HueAdjustmentYellow="-61"
+   crs:HueAdjustmentGreen="-49"
+   crs:HueAdjustmentAqua="-53"
+   crs:HueAdjustmentBlue="-51"
+   crs:HueAdjustmentPurple="-53"
+   crs:HueAdjustmentMagenta="-53"
+   crs:SaturationAdjustmentRed="-65"
+   crs:SaturationAdjustmentOrange="-30"
+   crs:SaturationAdjustmentYellow="-25"
+   crs:SaturationAdjustmentGreen="-38"
+   crs:SaturationAdjustmentAqua="-39"
+   crs:SaturationAdjustmentBlue="-37"
+   crs:SaturationAdjustmentPurple="-37"
+   crs:SaturationAdjustmentMagenta="-57"
+   crs:LuminanceAdjustmentRed="-44"
+   crs:LuminanceAdjustmentOrange="-44"
+   crs:LuminanceAdjustmentYellow="-44"
+   crs:LuminanceAdjustmentGreen="-44"
+   crs:LuminanceAdjustmentAqua="-29"
+   crs:LuminanceAdjustmentBlue="-40"
+   crs:LuminanceAdjustmentPurple="-42"
+   crs:LuminanceAdjustmentMagenta="-41"
    crs:HasSettings="True">
    <crs:Name>
     <rdf:Alt>
-     <rdf:li xml:lang="x-default">temperature</rdf:li>
+     <rdf:li xml:lang="x-default">Unbenanntes Preset</rdf:li>
     </rdf:Alt>
    </crs:Name>
    <crs:ShortName>

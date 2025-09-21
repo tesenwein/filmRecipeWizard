@@ -81,13 +81,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const scale = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined);
 
   // Sanitize all inputs
-  // Only include temperature/tint if explicitly set, otherwise use "As Shot" behavior
-  const temp = aiAdjustments.temperature !== undefined && aiAdjustments.temperature !== null 
-    ? round(clamp(aiAdjustments.temperature, 2000, 50000)) 
-    : undefined;
-  const tint = aiAdjustments.tint !== undefined && aiAdjustments.tint !== null 
-    ? round(clamp(aiAdjustments.tint, -150, 150)) 
-    : undefined;
   const exposure = clamp(scale(aiAdjustments.exposure as any), -5, 5);
   const contrast = round(clamp(scale(aiAdjustments.contrast as any), -100, 100));
   const highlights = round(clamp(scale(aiAdjustments.highlights as any), -100, 100));
@@ -116,8 +109,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   // Build conditional blocks - always include what's available
   const wbBasicBlock = inc.wbBasic
     ? [
-        tag('Temperature', temp),
-        tag('Tint', tint),
         tag('Contrast2012', contrast),
         tag('Highlights2012', highlights),
         tag('Shadows2012', shadows),
@@ -348,20 +339,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
             const scaled = stops * maskStrength;
             return Math.max(-5, Math.min(5, scaled));
           }
-          if (key === 'local_temperature') {
-            // Clamp/normalize temp to [-150..150]; downscale very large kelvin deltas
-            let t = val;
-            if (abs > 150 && abs <= 1500) t = val / 10;
-            else if (abs > 1500) t = val / 100;
-            const scaled = t * maskStrength;
-            return Math.max(-150, Math.min(150, scaled));
-          }
-          if (key === 'local_tint') {
-            // Tint typically [-150..150]; normalize very small [-1..1] to slider units
-            const t = abs <= 1 ? val * 150 : val;
-            const scaled = t * maskStrength;
-            return Math.max(-150, Math.min(150, scaled));
-          }
           // Other locals typically in [-1,1] for XMP; if value looks like -100..100, normalize
           const normalized = abs > 1 ? val / 100 : val;
           const scaled = normalized * maskStrength;
@@ -405,8 +382,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
               attrIf('LocalLuminanceNoise', 0),
               attrIf('LocalMoire', 0),
               attrIf('LocalDefringe', 0),
-              attrIf('LocalTemperature', f3(normalizeLocal('local_temperature', adj.local_temperature))),
-              attrIf('LocalTint', f3(normalizeLocal('local_tint', adj.local_tint))),
               attrIf('LocalTexture', f3(normalizeLocal('local_texture', adj.local_texture))),
               attrIf('LocalSaturation', f3(normalizeLocal('local_saturation', adj.local_saturation))),
               attrIf('LocalGrain', 0),
@@ -625,7 +600,8 @@ ${correctionLis}
       crs:SupportsAmount="True"
       crs:SupportsAmount2="True"
       crs:SupportsColor="True"
-      crs:SupportsMonochrome="True"${temp === undefined && tint === undefined ? '\n      crs:WhiteBalance="As Shot"' : ''}
+      crs:SupportsMonochrome="True"
+      crs:WhiteBalance="As Shot"
       crs:Name="${presetName}">
       <crs:Name>
         <rdf:Alt>

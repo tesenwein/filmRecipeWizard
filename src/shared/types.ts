@@ -19,9 +19,6 @@ export interface ProcessingResult {
 }
 
 export interface StyleOptions {
-  tint?: number; // -50..50 where 0 is neutral; UI can map 0-100
-  // Kelvin selection for white balance
-  temperatureK?: number; // 2000..50000
   contrast?: number;
   vibrance?: number;
   saturationBias?: number;
@@ -41,7 +38,6 @@ export interface StyleOptions {
   
   // AI Function Selection - user chooses what features are available to AI
   aiFunctions?: {
-    temperatureTint?: boolean; // Enable temperature/tint adjustments
     masks?: boolean; // Enable mask/local adjustments
     colorGrading?: boolean; // Enable color grading (shadows/midtones/highlights)
     hsl?: boolean; // Enable HSL adjustments

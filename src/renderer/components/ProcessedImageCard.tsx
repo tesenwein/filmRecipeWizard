@@ -1,16 +1,16 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
 import {
-  Box,
-  Button,
-  Checkbox,
-  Chip,
-  Divider,
-  FormControlLabel,
-  IconButton,
-  Paper,
-  Tooltip,
-  Typography,
+    Box,
+    Button,
+    Checkbox,
+    Chip,
+    Divider,
+    FormControlLabel,
+    IconButton,
+    Paper,
+    Tooltip,
+    Typography,
 } from '@mui/material';
 import React from 'react';
 import { ProcessingResult } from '../../shared/types';
@@ -24,8 +24,6 @@ const getAvailableFeatures = (adjustments: any): string[] => {
 
   // Basic Adjustments
   if (
-    adjustments.temperature !== undefined ||
-    adjustments.tint !== undefined ||
     adjustments.exposure !== undefined ||
     adjustments.contrast !== undefined ||
     adjustments.highlights !== undefined ||
@@ -330,8 +328,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   }}
                 >
                   <div>Vibe: {processOptions.vibe || '—'}</div>
-                  <div>Temperature: {processOptions.temperatureK ? `${processOptions.temperatureK} K` : '—'}</div>
-                  <div>Tint: {processOptions.tint ?? '—'}</div>
                   <div>Contrast: {processOptions.contrast ?? '—'}</div>
                   <div>Vibrance: {processOptions.vibrance ?? '—'}</div>
                   <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
@@ -349,10 +345,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   Basic
                 </Typography>
                 <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Tint</span>
-                    <strong>{Math.round(result.metadata.aiAdjustments.tint || 0)}</strong>
-                  </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Exposure</span>
                     <strong>{(result.metadata.aiAdjustments.exposure || 0).toFixed(2)}</strong>

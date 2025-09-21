@@ -108,8 +108,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     styleOptions?.artistStyle || // Has artist style selected
     styleOptions?.filmStyle || // Has film style selected
     styleOptions?.aiFunctions?.grain || // Has grain function enabled
-    styleOptions?.temperatureK !== undefined || // Has Kelvin temperature
-    styleOptions?.tint !== undefined || // Has tint adjustment
     styleOptions?.contrast !== undefined || // Has contrast adjustment
     styleOptions?.vibrance !== undefined || // Has vibrance adjustment
     styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment

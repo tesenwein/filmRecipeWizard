@@ -121,21 +121,6 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
 
 function parseBasicAdjustments(xmpContent: string, adjustments: AIColorAdjustments): void {
   // Temperature and Tint
-  const tempMatch = xmpContent.match(/<crs:Temperature>([^<]*)<\/crs:Temperature>/);
-  if (tempMatch) {
-    const temp = parseFloat(tempMatch[1]);
-    if (!isNaN(temp)) {
-      adjustments.temperature = temp;
-    }
-  }
-
-  const tintMatch = xmpContent.match(/<crs:Tint>([^<]*)<\/crs:Tint>/);
-  if (tintMatch) {
-    const tint = parseFloat(tintMatch[1]);
-    if (!isNaN(tint)) {
-      adjustments.tint = tint;
-    }
-  }
 
   // Basic tone adjustments
   const parseToneValue = (pattern: string, key: keyof AIColorAdjustments): void => {
@@ -423,8 +408,6 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
     parseLocalAdjustment('LocalClarity2012', 'local_clarity');
     parseLocalAdjustment('LocalDehaze', 'local_dehaze');
     parseLocalAdjustment('LocalTexture', 'local_texture');
-    parseLocalAdjustment('LocalTemperature', 'local_temperature');
-    parseLocalAdjustment('LocalTint', 'local_tint');
     parseLocalAdjustment('LocalSaturation', 'local_saturation');
 
     // Extract geometry for radial masks

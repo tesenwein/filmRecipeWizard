@@ -33,8 +33,6 @@ const getAvailableFeatures = (adjustments: any): string[] => {
 
   // Basic Adjustments
   if (
-    adjustments.temperature !== undefined ||
-    adjustments.tint !== undefined ||
     adjustments.exposure !== undefined ||
     adjustments.contrast !== undefined ||
     adjustments.highlights !== undefined ||
@@ -96,7 +94,6 @@ interface ResultsViewProps {
   processId?: string; // Optional process ID to load base64 image data
   prompt?: string; // Optional prompt provided in this session
   aiFunctions?: {
-    temperatureTint?: boolean;
     masks?: boolean;
     colorGrading?: boolean;
     hsl?: boolean;
@@ -442,7 +439,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // Generate default options based on aiFunctions
   const getDefaultOptions = () =>
     ({
-      wbBasic: aiFunctions?.temperatureTint ?? true,
       exposure: true, // Enable by default
       hsl: aiFunctions?.hsl ?? true,
       colorGrading: aiFunctions?.colorGrading ?? true,
@@ -471,15 +467,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     // Apply userOptions modifications if they exist
     if (processOptions) {
       // Map userOptions to aiAdjustments properties
-      if (typeof (processOptions as any).temperatureK === 'number') {
-        const k = Math.max(2000, Math.min(50000, Number((processOptions as any).temperatureK)));
-        (effectiveAdjustments as any).temperature = Math.round(k);
-      }
-
-      if (typeof processOptions.tint === 'number') {
-        // Convert tint (-100 to 100) to tint (-150 to 150)
-        effectiveAdjustments.tint = Math.round(processOptions.tint * 1.5);
-      }
 
       if (typeof processOptions.contrast === 'number') {
         effectiveAdjustments.contrast = processOptions.contrast;

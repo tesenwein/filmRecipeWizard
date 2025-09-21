@@ -131,15 +131,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
 
       <Section title="Basic Adjustments">
         {/* Unify white balance to Kelvin selection only */}
-        <Row
-          label="Temperature (K)"
-          cur={<ValueChip label={((current as any).temperatureK !== undefined) ? `${fmtNum((current as any).temperatureK)} K` : '—'} />}
-          next={<ValueChip label={((proposed as any).temperatureK ?? (current as any).temperatureK) !== undefined ? `${fmtNum((proposed as any).temperatureK ?? (current as any).temperatureK)} K` : '—'} color={hasChange((current as any).temperatureK, (proposed as any).temperatureK ?? (current as any).temperatureK) ? 'warning' : 'default'} />}
-          isChanged={hasChange((current as any).temperatureK, (proposed as any).temperatureK)}
-        />
-        <Divider sx={{ my: 1 }} />
-        <Row label="Tint" cur={<ValueChip label={fmtNum(current.tint)} />} next={<ValueChip label={fmtNum(proposed.tint)} color={hasChange(current.tint, proposed.tint) ? 'warning' : 'default'} />} isChanged={hasChange(current.tint, proposed.tint)} />
-        <Divider sx={{ my: 1 }} />
         <Row label="Contrast" cur={<ValueChip label={fmtNum(current.contrast)} />} next={<ValueChip label={fmtNum(proposed.contrast)} color={hasChange(current.contrast, proposed.contrast) ? 'warning' : 'default'} />} isChanged={hasChange(current.contrast, proposed.contrast)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Vibrance" cur={<ValueChip label={fmtNum(current.vibrance)} />} next={<ValueChip label={fmtNum(proposed.vibrance)} color={hasChange(current.vibrance, proposed.vibrance) ? 'warning' : 'default'} />} isChanged={hasChange(current.vibrance, proposed.vibrance)} />
@@ -161,8 +152,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
           <Row label="Profile" cur={<ValueChip label={str(aiAdjustments.camera_profile)} />} next={<ValueChip label={str(aiAdjustments.camera_profile)} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />
           <Row label="Treatment" cur={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} next={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Tint" cur={<ValueChip label={fmtNum(aiAdjustments.tint)} />} next={<ValueChip label={fmtNum(aiAdjustments.tint)} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />
           <Row label="Exposure" cur={<ValueChip label={fmtNum(aiAdjustments.exposure)} />} next={<ValueChip label={fmtNum(aiAdjustments.exposure)} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />

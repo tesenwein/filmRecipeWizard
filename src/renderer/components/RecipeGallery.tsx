@@ -84,7 +84,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     // User options
     const uo = recipe.userOptions as any;
     if (uo) {
-      const numKeys = ['temperatureK', 'tint', 'contrast', 'vibrance', 'saturationBias'] as const;
+      const numKeys = ['contrast', 'vibrance', 'saturationBias'] as const;
       for (const k of numKeys) if (uo[k] !== undefined) parts.push(String(uo[k]));
       if (uo.vibe) parts.push(uo.vibe);
       if (uo.artistStyle) parts.push(uo.artistStyle.name, uo.artistStyle.category, uo.artistStyle.blurb, uo.artistStyle.key);

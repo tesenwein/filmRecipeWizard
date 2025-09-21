@@ -17,7 +17,6 @@ export interface StreamingUpdate {
 export interface StreamingOptions {
     onUpdate?: (update: StreamingUpdate) => void;
     aiFunctions?: {
-        temperatureTint?: boolean;
         masks?: boolean;
         colorGrading?: boolean;
         hsl?: boolean;
@@ -203,110 +202,40 @@ export class AIStreamingService {
         const backgroundMasks = getMaskTypesByCategory('background');
         const otherMasks = getMaskTypesByCategory('other');
 
-        const faceMaskList = faceMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
-        const landscapeMaskList = landscapeMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
-        const subjectMaskList = subjectMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
-        const backgroundMaskList = backgroundMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
-        const otherMaskList = otherMasks.map(m => `'${m.type}' for ${m.description}`).join(', ');
+        const faceMaskList = faceMasks.map(m => m.type).join(', ');
+        const landscapeMaskList = landscapeMasks.map(m => m.type).join(', ');
+        const subjectMaskList = subjectMasks.map(m => m.type).join(', ');
+        const backgroundMaskList = backgroundMasks.map(m => m.type).join(', ');
+        const otherMaskList = otherMasks.map(m => m.type).join(', ');
 
-        return `You are a professional photo editor. Create comprehensive Lightroom/Camera Raw adjustments to achieve the target look.
+        return `You are a professional photo editor. Create Lightroom/Camera Raw adjustments to match the target image to the reference style.
 
-IMPORTANT: 
-- REFERENCE IMAGES show the style/look we want to achieve
-- TARGET IMAGE is the photo that needs to be modified to match the reference style
-- STYLE DESCRIPTION is a text description of the desired look/style (NOT an image)
-- Your job is to analyze the reference images and create adjustments that will make the target image look like the reference style
-- If no reference images are provided, use the STYLE DESCRIPTION to understand what look to create
-- PAY SPECIAL ATTENTION to any soft parameters provided in the user preferences (moodiness, warmth, coolness, drama, softness, intensity, vintage, cinematic, faded) and incorporate these into your adjustments
-- PAY SPECIAL ATTENTION to any style categories provided (Portrait, Landscape, Street, Cinematic, Soft Pastel, etc.) and incorporate these into your adjustments
+TASK:
+- REFERENCE IMAGES: Style to achieve
+- TARGET IMAGE: Photo to modify  
+- STYLE DESCRIPTION: Text description of desired look
 
-CRITICAL INSTRUCTIONS FOR YOUR RESPONSE:
-- Write your thinking process in plain text and markdown only
-- DO NOT generate any code, JSON, or technical syntax in your thinking text
-- Use natural language to explain your analysis
-- Focus on describing colors, tones, mood, and style characteristics
-- Explain your reasoning in conversational text
-- Generate a short, engaging description (1-2 sentences) that captures the style and mood
-- When soft parameters are provided, explain how you're interpreting and applying them to achieve the desired mood and style
+REQUIREMENTS:
+- Generate preset_name (2-4 words, Title Case) - REQUIRED
+- Include description (1-2 sentences) of style and mood
+- Set camera_profile: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
+- Use 'Adobe Monochrome' for B&W, 'Adobe Portrait' for people, 'Adobe Landscape' for nature/sky
 
-PROFILE SELECTION:
-- Always set camera_profile to one of: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
-- Use 'Adobe Monochrome' when treatment is black & white or the style is clearly monochrome
-- Prefer 'Adobe Portrait' for people/face-focused images (skin, eyes, hair, etc.)
-- Prefer 'Adobe Landscape' for scenes with sky/foliage/mountains/background-dominant content
-- Otherwise use 'Adobe Color'
+AVAILABLE MASKS:
+- Face: ${faceMaskList}
+- Landscape: ${landscapeMaskList}  
+- Subject: ${subjectMaskList}
+- Background: ${backgroundMaskList}
+- Other: ${otherMaskList}
 
-Show your thinking process step by step as you analyze the images. Explain what you're looking for, what you notice about the colors, tones, and style, and how you're building the recipe.
-
-SOFT PARAMETER INTERPRETATION:
-When soft parameters are provided, interpret them as follows:
-- Moodiness (0-100): 0=neutral/clinical, 50=balanced, 100=very moody/dramatic with deep shadows, rich tones, and atmospheric effects
-- Warmth (0-100): 0=cool/blue tones, 50=neutral, 100=warm/orange tones - adjust temperature and color grading accordingly
-- Coolness (0-100): 0=warm tones, 50=neutral, 100=cool/blue tones - adjust temperature and color grading accordingly
-- Drama (0-100): 0=subtle/flat, 50=balanced, 100=high drama with strong contrast, deep shadows, and bold highlights
-- Softness (0-100): 0=sharp/harsh, 50=balanced, 100=very soft/dreamy with reduced clarity, softer contrast, and gentle transitions
-- Intensity (0-100): 0=muted/subdued, 50=balanced, 100=high intensity with vibrant colors, strong saturation, and bold effects
-- Vintage (0-100): 0=modern/clean, 50=neutral, 100=very vintage with film grain, desaturated colors, and retro color grading
-- Cinematic (0-100): 0=documentary/natural, 50=balanced, 100=very cinematic with dramatic lighting, color grading, and film-like characteristics
-- Faded (0-100): 0=vibrant/saturated, 50=balanced, 100=very faded/washed out with reduced saturation, muted colors, and vintage film look
-
-CRITICAL: You must call the generate_color_adjustments function with ALL adjustments including masks in a single call. Do NOT call individual mask functions - they are just for reference.
-
-Call the generate_color_adjustments function with:
-1. Global adjustments: temperature, tint, exposure, contrast, highlights, shadows, whites, blacks, clarity, vibrance, saturation
-2. Color grading: shadow/midtone/highlight color grading values
-3. HSL adjustments: hue/saturation/luminance for each color range
-4. Tone curves: parametric and point curve adjustments
-5. Film grain: grain_amount (0-100), grain_size (0-100), grain_frequency (0-100) for analog film texture
-6. Post-crop vignette: vignette_amount (-100 to +100), vignette_midpoint (0-100), vignette_feather (0-100), vignette_roundness (-100 to +100), vignette_style (0-2), vignette_highlight_contrast (0-100) for edge darkening/lightening
-   - IMPORTANT: Use dedicated vignette values instead of creating radial masks for vignette effects
-   - Vignette masks should only be used for very specific localized vignette effects, not general edge darkening
-7. Masks: Include masks array with local adjustments (max 3 masks)
-   - For background masks, include subCategoryId: 22 for proper Lightroom detection
-   - For subject/person masks, use type: 'subject' with referenceX/Y coordinates
-   - For sky masks, use type: 'sky' with referenceX/Y coordinates
-   - CRITICAL: For ANY facial features (skin, eyes, teeth, hair, etc.), ALWAYS use specific face masks instead of radial masks
-   - NEVER use 'radial' masks for facial features - use specific face mask types instead
-   - AVOID using 'subject' or 'person' masks unless you can clearly identify a face/person in the image
-   - AVOID using 'radial' masks for vignette effects - use dedicated vignette values instead
-   - AVOID using 'radial' masks - prefer specific mask types (face, landscape, background, sky) or 'linear' masks for gradients
-   - Use 'linear' masks for gradients or directional lighting effects
-   - Use 'background' masks to adjust everything except the main subject
-   - Only use radial masks for very specific localized effects, not general vignetting
-   
-   AVAILABLE MASK TYPES:
-   - Face/Body Masks: ${faceMaskList}
-   - Landscape Masks: ${landscapeMaskList}
-   - Subject Masks: ${subjectMaskList}
-   - Background Masks: ${backgroundMaskList}
-   - Other Masks: ${otherMaskList}
-   
-   - Face-specific masks work best for portrait photography and require clear facial features
-   - Landscape masks work best for outdoor/nature photography and require clear landscape elements` +
-            (options.aiFunctions?.pointColor ? `\n8. Point color adjustments: Use point_colors and color_variance for targeted color corrections` : '') +
-            '' +
-            `
-9. For portraits, ensure a match in skin tone and backdrop
-10. For landscapes, ensure sky/foliage mood and lighting alignment
-11. Mask modifications values should be minimal and very subtle
-12. Apply advanced color grading techniques including shadow/midtone/highlight color grading
-13. Use HSL (hue/saturation/luminance) adjustments to fine-tune specific color ranges
-14. Consider tone curve adjustments for sophisticated contrast control
-15. Use film grain for analog texture and vintage film looks
-16. Use post-crop vignette for artistic edge effects and focus drawing
-17. CRITICAL: Always prefer dedicated vignette values over radial masks for vignette effects
-
-CRITICAL: You MUST always include a preset_name (2-4 words, Title Case) that describes the visual style and mood of the recipe. This is REQUIRED and cannot be empty. The preset_name will be used as the recipe name, so make it descriptive and appealing. Examples: "Warm Portrait", "Cool Landscape", "Cinematic Shadows", "Vintage Film", "Golden Hour", "Moody B&W", "Film Noir", "Sunset Glow", "Urban Grit", "Soft Pastels". Also include a compelling description (1-2 sentences) that describes the visual style and mood of the recipe (e.g., "Warm, cinematic tones with rich shadows and golden highlights perfect for portrait photography" or "Cool, desaturated look with blue undertones ideal for urban landscapes").
-If you select a black & white/monochrome treatment, explicitly include the Black & White Mix (gray_*) values for each color channel (gray_red, gray_orange, gray_yellow, gray_green, gray_aqua, gray_blue, gray_purple, gray_magenta).
-If an artist or film style is mentioned in the hint, explicitly include HSL shifts and tone curve adjustments that reflect that style's palette and contrast.
-
-When analyzing images:
-1. First, describe what you see in the images - the overall mood, color palette, lighting conditions
-2. Identify the key color characteristics that define the style
-3. Explain how you're matching or creating the desired look
-4. Detail each adjustment you're making and why
-
-Provide detailed reasoning for each adjustment to help the user understand the creative process.`;
+TECHNIQUES:
+- Apply subtle mask adjustments
+- Use color grading for shadows/midtones/highlights
+- Fine-tune with HSL adjustments
+- Consider tone curves for contrast
+${options.aiFunctions?.pointColor ? '- Use point_colors for targeted corrections' : ''}
+- For B&W: include gray_* values for each color channel
+- For film/artist styles: match HSL and tone curve characteristics`;
     }
 
     private createTools(options?: StreamingOptions) {
@@ -415,8 +344,6 @@ Provide detailed reasoning for each adjustment to help the user understand the c
             description: 'A balanced color grading recipe with natural tones and clean contrast.',
             confidence: 0.5,
             camera_profile: 'Adobe Color',
-            temperature: 0,
-            tint: 0,
             exposure: 0,
             contrast: 0,
             highlights: 0,

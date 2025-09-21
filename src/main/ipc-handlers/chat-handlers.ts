@@ -35,9 +35,6 @@ export class ChatHandlers {
                             message: z.string().describe('Explanation of the changes made'),
                             modifications: z.object({
                                 userOptions: z.object({
-                                    // Kelvin selection (2000..50000). Use this instead of warmth.
-                                    temperatureK: z.number().min(2000).max(50000).optional(),
-                                    tint: z.number().min(-100).max(100).optional(),
                                     contrast: z.number().min(-100).max(100).optional(),
                                     vibrance: z.number().min(-100).max(100).optional(),
                                     saturationBias: z.number().min(-100).max(100).optional(),
@@ -80,60 +77,30 @@ export class ChatHandlers {
                 };
 
                 // Create system message with recipe context
-                const systemMessage = `You are a professional photo editing assistant specializing in color grading and film recipe creation. 
+                const systemMessage = `You are a photo editing assistant. Help modify this recipe:
 
- The user has a recipe with the following details:
-- Recipe ID: ${recipe.id}
-- Name: ${recipe.name || 'Unnamed Recipe'}
-- Prompt: ${recipe.prompt || 'No prompt provided'}
-- User Options: ${JSON.stringify(recipe.userOptions, null, 2)}
-- Results: ${JSON.stringify(recipe.results, null, 2)}
+Recipe: ${recipe.name || 'Unnamed'} (ID: ${recipe.id})
+Prompt: ${recipe.prompt || 'No prompt provided'}
+Options: ${JSON.stringify(recipe.userOptions, null, 2)}
+Results: ${JSON.stringify(recipe.results, null, 2)}
 
- You can help modify this recipe by suggesting changes to:
- 1. User options (temperatureK, tint, contrast, vibrance, saturationBias, vibe, artistStyle, filmStyle, aiFunctions, masks, colorGrading, hsl, curves, grain, pointColor)
- 2. AI adjustments (grain_amount, grain_size, grain_frequency, vignette_amount, vignette_midpoint, vignette_feather, vignette_roundness, vignette_style, vignette_highlight_contrast)
- 3. The prompt text
- 4. Recipe description (short human-friendly summary)
+You can modify:
+- User options: contrast, vibrance, saturationBias, artistStyle, filmStyle, aiFunctions
+- AI adjustments: grain_*, vignette_*
+- Prompt text and description
 
-CRITICAL RESPONSE FORMAT:
- - When suggesting changes, CALL modify_recipe exactly once with fields:
-  - message: a concise summary of the changes and why
-  - modifications: { userOptions?, aiAdjustments?, prompt?, description?, masks? }
-  This function result will be used by the UI to apply changes.
-  Do not emit raw JSON outside of the tool; keep your chat explanation separate.
-\n+Mask editing guidance:\n+- Prefer including a stable id for any mask you add; reuse that id when updating or removing.\n+- If id is omitted, removal/update will match by name when present, otherwise by type + subCategoryId + referenceX/referenceY.\n+- To clear all pending mask overrides, use op: 'remove_all' or 'clear' with no other fields.
+RESPONSE FORMAT:
+Call modify_recipe once with:
+- message: summary of changes
+- modifications: { userOptions?, aiAdjustments?, prompt?, description?, masks? }
 
-Available user options:
-- temperatureK: 2000 to 50000 (Kelvin). Use this when the user specifies a value like "7500K". Prefer temperatureK and do not use 'warmth'.
-- tint: -100 to 100 (tint adjustment) 
-- contrast: -100 to 100 (contrast adjustment)
-- vibrance: -100 to 100 (vibrance adjustment)
-- saturationBias: -100 to 100 (saturation bias)
-- styleCategories: string[] (array of style categories like ['Cinematic', 'Portrait', 'Street'])
-- artistStyle: object with key, name, category, blurb
-- filmStyle: object with key, name, category, blurb
+Mask editing: Use stable id for masks, op: 'remove_all' to clear all.
 
-Soft parameters (0-100 scale):
-- moodiness: 0=neutral/clinical, 50=balanced, 100=very moody/dramatic
-- warmth: 0=cool/blue tones, 50=neutral, 100=warm/orange tones
-- coolness: 0=warm tones, 50=neutral, 100=cool/blue tones
-- drama: 0=subtle/flat, 50=balanced, 100=high drama
-- softness: 0=sharp/harsh, 50=balanced, 100=very soft/dreamy
-- intensity: 0=muted/subdued, 50=balanced, 100=high intensity
-- vintage: 0=modern/clean, 50=neutral, 100=very vintage
-- cinematic: 0=documentary/natural, 50=balanced, 100=very cinematic
-- faded: 0=vibrant/saturated, 50=balanced, 100=very faded/washed out
-
-Available AI adjustments:
-- grain_amount: 0 to 100 (film grain intensity)
-- grain_size: 0 to 100 (grain particle size)
-- grain_frequency: 0 to 100 (grain density/frequency)
-- vignette_amount: -100 to 100 (vignette strength, negative for lightening)
-- vignette_midpoint: 0 to 100 (vignette center point)
-- vignette_feather: 0 to 100 (vignette edge softness)
-- vignette_roundness: -100 to 100 (vignette shape)
-- vignette_style: 0 to 2 (vignette style type)
-- vignette_highlight_contrast: 0 to 100 (vignette highlight contrast)`;
+Key parameters:
+- contrast/vibrance/saturationBias: -100 to 100
+- Soft params (0-100): moodiness, warmth, drama, softness, intensity, vintage, cinematic, faded
+- Grain: amount/size/frequency (0-100)
+- Vignette: amount (-100 to 100), midpoint/feather/roundness (0-100)`;
 
                 // Prepare messages for OpenAI
                 const openaiMessages = [

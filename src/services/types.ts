@@ -10,8 +10,6 @@ export interface AIColorAdjustments {
 
   // Basic tone and color
   exposure?: number; // -5.0 to +5.0
-  temperature?: number; // 2000..50000
-  tint?: number; // -150..150
   highlights?: number; // -100..100
   shadows?: number; // -100..100
   whites?: number; // -100..100
@@ -85,7 +83,7 @@ export interface AIColorAdjustments {
     adjustments?: {
       local_exposure?: number; local_contrast?: number; local_highlights?: number; local_shadows?: number;
       local_whites?: number; local_blacks?: number; local_clarity?: number; local_dehaze?: number;
-      local_temperature?: number; local_tint?: number; local_texture?: number; local_saturation?: number;
+      local_texture?: number; local_saturation?: number;
     };
     // Optional sub-category for background masks and other AI masks
     subCategoryId?: number;

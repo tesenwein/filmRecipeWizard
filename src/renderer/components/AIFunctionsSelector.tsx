@@ -55,25 +55,6 @@ const AIFunctionsSelector: React.FC<AIFunctionsSelectorProps> = ({
             control={
               <Switch
                 size="small"
-                checked={aiFunctions.temperatureTint !== false}
-                onChange={(_, c) => handleToggle('temperatureTint', c)}
-              />
-            }
-            label={
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Temperature & Tint
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                  White balance adjustments for color temperature and tint correction
-                </Typography>
-              </Box>
-            }
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
                 checked={aiFunctions.colorGrading !== false}
                 onChange={(_, c) => handleToggle('colorGrading', c)}
               />

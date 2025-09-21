@@ -151,17 +151,6 @@ export class ProcessingHandlers {
             optionsHintParts.push(`Vibe: ${options.vibe.trim()}`);
           }
           const pct = (v?: number) => (typeof v === 'number' ? `${Math.round(v)}/100` : undefined);
-          // Temperature hints: Kelvin selection only
-          if (typeof options.temperatureK === 'number') {
-            const k = Math.max(2000, Math.min(50000, Number(options.temperatureK)));
-            optionsHintParts.push(`Target White Balance Temperature: ${k} K`);
-          }
-          if (options.aiFunctions?.temperatureTint) {
-            if (options.tint !== undefined) {
-              const t = Math.max(-50, Math.min(50, Number(options.tint)));
-              optionsHintParts.push(`Tint Bias: ${t} (negative=green, positive=magenta)`);
-            }
-          }
           if (options.contrast !== undefined)
             optionsHintParts.push(`Contrast: ${pct(options.contrast)}`);
           if (options.vibrance !== undefined)
@@ -225,11 +214,11 @@ export class ProcessingHandlers {
             const hasFilm = options.filmStyle && typeof options.filmStyle.name === 'string';
 
             if (hasArtist && hasFilm) {
-              prompt = `Create a comprehensive color grading recipe that combines the distinctive visual style of ${options.artistStyle.name} with the characteristic look of ${options.filmStyle.name} film stock. Apply sophisticated adjustments including color grading, tone curves, HSL modifications, and local adjustments to achieve the desired aesthetic. Focus on the unique color palette, contrast characteristics, and mood that define this artistic combination.`;
+              prompt = `Create a color grading recipe combining ${options.artistStyle.name} style with ${options.filmStyle.name} film look.`;
             } else if (hasArtist) {
-              prompt = `Create a comprehensive color grading recipe inspired by the distinctive visual style of ${options.artistStyle.name}. Apply sophisticated adjustments including color grading, tone curves, HSL modifications, and local adjustments to achieve the characteristic look, mood, and color palette associated with this artist's work. Consider their typical use of contrast, saturation, color temperature, and overall aesthetic approach.`;
+              prompt = `Create a color grading recipe inspired by ${options.artistStyle.name} style.`;
             } else if (hasFilm) {
-              prompt = `Create a comprehensive color grading recipe that emulates the characteristic look of ${options.filmStyle.name} film stock. Apply sophisticated adjustments including color grading, tone curves, HSL modifications, and local adjustments to achieve the film's distinctive color palette, contrast characteristics, grain structure, and overall aesthetic.`;
+              prompt = `Create a color grading recipe emulating ${options.filmStyle.name} film stock.`;
             }
           }
 
@@ -466,8 +455,6 @@ export class ProcessingHandlers {
             'vibrance',
             'saturation',
             'clarity',
-            'temperature',
-            'tint',
             // HSL hue/sat/lum (Lightroom scale -100..100)
             'hue_red',
             'hue_orange',
@@ -510,12 +497,7 @@ export class ProcessingHandlers {
 
           for (const field of numericFields) {
             if (typeof adjustments[field] === 'number') {
-              if (field === 'temperature') {
-                // Temperature: apply strength to deviation from 6500K
-                const neutral = 6500;
-                const deviation = adjustments[field] - neutral;
-                adjustments[field] = neutral + deviation * data.strength;
-              } else if (field.startsWith('hue_')) {
+              if (field.startsWith('hue_')) {
                 // HSL hue shifts: scale toward 0
                 adjustments[field] = adjustments[field] * data.strength;
               } else {

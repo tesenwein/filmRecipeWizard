@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { getAllMaskTypes } from '../shared/mask-types';
 
 export interface AIFunctionToggles {
-    temperatureTint?: boolean;
     masks?: boolean;
     colorGrading?: boolean;
     hsl?: boolean;
@@ -14,7 +13,6 @@ export interface AIFunctionToggles {
 
 export function getDefaultAIFunctionToggles(): AIFunctionToggles {
     return {
-        temperatureTint: true,
         colorGrading: true,
         hsl: true,
         curves: true,
@@ -46,12 +44,6 @@ export function buildBaseAdjustmentsSchema(aiFunctions: AIFunctionToggles) {
         saturation: z.number().min(-100).max(100).optional().describe('Saturation adjustment (-100 to +100)'),
     });
 
-    if (aiFunctions.temperatureTint) {
-        baseSchema = baseSchema.extend({
-            temperature: z.number().min(2000).max(50000).optional().describe('White balance temperature in Kelvin (2000 to 50000)'),
-            tint: z.number().min(-150).max(150).optional().describe('White balance tint (-150 to +150, negative=green, positive=magenta)'),
-        });
-    }
 
     if (aiFunctions.colorGrading) {
         baseSchema = baseSchema.extend({
@@ -163,8 +155,6 @@ export const maskAdjustmentsSchemaChat = z.object({
     local_blacks: z.number().min(-100).max(100).optional(),
     local_clarity: z.number().min(-100).max(100).optional(),
     local_dehaze: z.number().min(-100).max(100).optional(),
-    local_temperature: z.number().min(-15000).max(15000).optional(),
-    local_tint: z.number().min(-150).max(150).optional(),
     local_texture: z.number().min(-100).max(100).optional(),
     local_saturation: z.number().min(-100).max(100).optional(),
 }).partial();
