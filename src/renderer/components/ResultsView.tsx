@@ -93,14 +93,6 @@ interface ResultsViewProps {
   onReset: () => void;
   processId?: string; // Optional process ID to load base64 image data
   prompt?: string; // Optional prompt provided in this session
-  aiFunctions?: {
-    masks?: boolean;
-    colorGrading?: boolean;
-    hsl?: boolean;
-    curves?: boolean;
-    grain?: boolean;
-    pointColor?: boolean;
-  };
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({
@@ -110,7 +102,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   onReset,
   processId,
   prompt,
-  aiFunctions,
 }) => {
   const { showError } = useAlert();
   const { deleteRecipe } = useAppStore();
@@ -396,10 +387,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   }, []);
 
-  // Reset export options when aiFunctions changes
-  useEffect(() => {
-    setExportOptions({});
-  }, [aiFunctions]);
 
   // Name editing handled by RecipeNameHeader subcomponent
 
@@ -436,18 +423,18 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     return baseMasks;
   };
 
-  // Generate default options based on aiFunctions
+  // Generate default options - AI gets access to all features
   const getDefaultOptions = () =>
     ({
       exposure: true, // Enable by default
-      hsl: aiFunctions?.hsl ?? true,
-      colorGrading: aiFunctions?.colorGrading ?? true,
-      curves: aiFunctions?.curves ?? true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
       sharpenNoise: true, // Enable by default
       vignette: true, // Enable by default
-      pointColor: aiFunctions?.pointColor ?? true,
-      grain: aiFunctions?.grain ?? false, // Keep grain off by default as per user preference
-      masks: aiFunctions?.masks ?? true,
+      pointColor: true,
+      grain: false, // Keep grain off by default as per user preference
+      masks: true,
       // Start export strength at 100%
       strength: 1.0,
     } as const);
@@ -950,7 +937,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       })()}
                     </Paper>
 
-                    {/* Intentionally hide AI Functions toggles in adjustments panel */}
                   </Box>
                 )}
 
@@ -981,13 +967,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             const updates: any = {};
                             if (modifications.userOptions) {
                               const merged = { ...(processOptions || {}), ...modifications.userOptions } as any;
-                              // merge nested aiFunctions if present
-                              if ((processOptions as any)?.aiFunctions || (modifications.userOptions as any).aiFunctions) {
-                                merged.aiFunctions = {
-                                  ...(processOptions as any)?.aiFunctions,
-                                  ...(modifications.userOptions as any).aiFunctions,
-                                };
-                              }
                               updates.userOptions = merged;
                               setProcessOptions(merged);
                             }

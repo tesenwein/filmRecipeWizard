@@ -3,7 +3,6 @@ import { Box, Paper } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { StyleOptions } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
-import AIFunctionsSelector from './AIFunctionsSelector';
 import ArtisticStylesCard from './ArtisticStylesCard';
 import ConfirmDialog from './ConfirmDialog';
 import FilmStylesCard from './FilmStylesCard';
@@ -107,7 +106,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     (styleOptions?.styleCategories && styleOptions.styleCategories.length > 0) || // Has style categories selected
     styleOptions?.artistStyle || // Has artist style selected
     styleOptions?.filmStyle || // Has film style selected
-    styleOptions?.aiFunctions?.grain || // Has grain function enabled
     styleOptions?.contrast !== undefined || // Has contrast adjustment
     styleOptions?.vibrance !== undefined || // Has vibrance adjustment
     styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment
@@ -307,10 +305,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           {/* Right Column - All Options */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: 'fit-content', position: 'sticky', top: 0 }}>
 
-            <AIFunctionsSelector
-              styleOptions={styleOptions}
-              onStyleOptionsChange={onStyleOptionsChange}
-            />
 
             <StyleDescriptionCard
               prompt={prompt}

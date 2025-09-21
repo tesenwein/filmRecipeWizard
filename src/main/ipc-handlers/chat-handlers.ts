@@ -2,7 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { ipcMain } from 'electron';
 import { z } from 'zod';
-import { getDefaultAIFunctionToggles, maskEditSchemaChat } from '../../services/ai-shared';
+import { maskEditSchemaChat } from '../../services/ai-shared';
 import { SettingsService } from '../settings-service';
 
 export class ChatHandlers {
@@ -39,7 +39,6 @@ export class ChatHandlers {
                                     vibrance: z.number().min(-100).max(100).optional(),
                                     saturationBias: z.number().min(-100).max(100).optional(),
                                     vibe: z.string().optional(),
-                                    aiFunctions: z.object(Object.fromEntries(Object.keys(getDefaultAIFunctionToggles()).map(k => [k, z.boolean().optional()]))).optional(),
                                     artistStyle: z.object({
                                         key: z.string(),
                                         name: z.string(),
@@ -85,7 +84,7 @@ Options: ${JSON.stringify(recipe.userOptions, null, 2)}
 Results: ${JSON.stringify(recipe.results, null, 2)}
 
 You can modify:
-- User options: contrast, vibrance, saturationBias, artistStyle, filmStyle, aiFunctions
+- User options: contrast, vibrance, saturationBias, artistStyle, filmStyle
 - AI adjustments: grain_*, vignette_*
 - Prompt text and description
 

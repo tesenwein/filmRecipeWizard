@@ -17,7 +17,8 @@ export function getDefaultAIFunctionToggles(): AIFunctionToggles {
         hsl: true,
         curves: true,
         masks: true,
-        grain: false,
+        grain: true,
+        vignette: true,
         pointColor: true,
     };
 }

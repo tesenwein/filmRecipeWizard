@@ -36,16 +36,6 @@ export interface StyleOptions {
   cinematic?: number; // 0-100: 0=documentary, 50=balanced, 100=very cinematic
   faded?: number; // 0-100: 0=vibrant, 50=balanced, 100=very faded/washed out
   
-  // AI Function Selection - user chooses what features are available to AI
-  aiFunctions?: {
-    masks?: boolean; // Enable mask/local adjustments
-    colorGrading?: boolean; // Enable color grading (shadows/midtones/highlights)
-    hsl?: boolean; // Enable HSL adjustments
-    curves?: boolean; // Enable tone curves
-    grain?: boolean; // Enable film grain
-    vignette?: boolean; // Enable post-crop vignette
-    pointColor?: boolean; // Enable point color adjustments
-  };
   // Optional artist and film selections
   artistStyle?: { key: string; name: string; category: string; blurb: string };
   filmStyle?: { key: string; name: string; category: string; blurb: string };

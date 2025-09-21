@@ -7,8 +7,7 @@ import {
 } from '@mui/icons-material';
 import { Alert, Avatar, Box, Button, CircularProgress, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import { Recipe, StyleOptions } from '../../shared/types';
-import AIFunctionsSelector from './AIFunctionsSelector';
+import { Recipe } from '../../shared/types';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
 
 interface RecipeChatProps {
@@ -185,31 +184,6 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
             <Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 1.5, minHeight: 0, flex: 1 }}>
                 {/* Chat Column */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {/* AI Functions toggles (same component as studio). Changes are staged until Accept. */}
-                    {(() => {
-                        const base = (recipe.userOptions || {}) as StyleOptions;
-                        const mods = (pendingModifications?.userOptions || {}) as Partial<StyleOptions>;
-                        const merged: StyleOptions = { ...base, ...mods };
-                        if (base.aiFunctions || mods.aiFunctions) {
-                            merged.aiFunctions = { ...(base.aiFunctions || {}), ...(mods.aiFunctions || {}) };
-                        }
-                        return (
-                            <AIFunctionsSelector
-                                styleOptions={merged}
-                                onStyleOptionsChange={(update) => {
-                                    setPendingModifications(prev => {
-                                        const existing = prev || {};
-                                        const prevUser = (existing.userOptions || {}) as StyleOptions;
-                                        const nextUser: StyleOptions = { ...prevUser } as any;
-                                        if (update.aiFunctions) {
-                                            nextUser.aiFunctions = { ...(prevUser.aiFunctions || {}), ...update.aiFunctions };
-                                        }
-                                        return { ...existing, userOptions: nextUser };
-                                    });
-                                }}
-                            />
-                        );
-                    })()}
 
                     <Paper className="card slide-in" elevation={0} sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 2, border: '1px solid #e9ecef', backgroundColor: 'white' }}>
                         <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', p: 2 }}>

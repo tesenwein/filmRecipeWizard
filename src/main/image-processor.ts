@@ -68,7 +68,6 @@ export class ImageProcessor {
               data.onStreamUpdate(update);
             }
           },
-          aiFunctions: data.styleOptions?.aiFunctions,
         }
       );
       console.log('[PROCESSOR] AI analyzer returned:', {
@@ -186,7 +185,7 @@ export class ImageProcessor {
   }
 
   // Use centralized XMP generator implementation
-  generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, _aiFunctions?: any): string {
+  generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
     return generateXMPContentImpl(aiAdjustments, include);
   }
 

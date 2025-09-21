@@ -194,7 +194,7 @@ export class AIStreamingService {
         return content;
     }
 
-    private getSystemPrompt(options: StreamingOptions): string {
+    private getSystemPrompt(_options: StreamingOptions): string {
         // Generate mask type descriptions dynamically from configuration
         const faceMasks = getMaskTypesByCategory('face');
         const landscapeMasks = getMaskTypesByCategory('landscape');
@@ -234,13 +234,13 @@ TECHNIQUES:
 - Use color grading for shadows/midtones/highlights
 - Fine-tune with HSL adjustments
 - Consider tone curves for contrast
-${options.aiFunctions?.pointColor ? '- Use point_colors for targeted corrections' : ''}
+- Use point_colors for targeted corrections
 - For B&W: include gray_* values for each color channel
 - For film/artist styles: match HSL and tone curve characteristics`;
     }
 
-    private createTools(options?: StreamingOptions) {
-        const aiFunctions: AIFunctionToggles = options?.aiFunctions || getDefaultAIFunctionToggles();
+    private createTools(_options?: StreamingOptions) {
+        const aiFunctions: AIFunctionToggles = getDefaultAIFunctionToggles();
 
         // Build base schema using Zod
         let baseSchema = buildBaseAdjustmentsSchema(aiFunctions);
@@ -248,11 +248,9 @@ ${options.aiFunctions?.pointColor ? '- Use point_colors for targeted corrections
         // Add conditional properties based on enabled functions
         // base schema now built via shared helper
 
-        // Add masks if enabled
-        if (aiFunctions.masks) {
-            const maskSchema = createStreamingMaskSchema();
-            baseSchema = baseSchema.extend({ masks: z.array(maskSchema).max(3).optional() });
-        }
+        // Add masks (always enabled)
+        const maskSchema = createStreamingMaskSchema();
+        baseSchema = baseSchema.extend({ masks: z.array(maskSchema).max(3).optional() });
 
         // Create tools using AI SDK v5's tool function with Zod schemas
         const tools: any = {};

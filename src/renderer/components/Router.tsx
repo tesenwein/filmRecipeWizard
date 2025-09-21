@@ -105,7 +105,6 @@ const Router: React.FC<RouterProps> = ({
               targetImages={targetImages}
               prompt={prompt}
               processId={currentProcessId || undefined}
-              aiFunctions={styleOptions?.aiFunctions}
               onReset={() => {
                 onReset();
                 onNavigate('/gallery');
@@ -127,7 +126,6 @@ const Router: React.FC<RouterProps> = ({
             targetImages={targetImages}
             prompt={prompt}
             processId={currentProcessId || undefined}
-            aiFunctions={styleOptions?.aiFunctions}
             onReset={() => {
               onReset();
               onNavigate('/gallery');

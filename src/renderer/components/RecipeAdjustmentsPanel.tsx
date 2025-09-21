@@ -56,10 +56,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
   const proposed = useMemo<StyleOptions>(() => {
     const mods = pendingModifications?.userOptions || {};
     const merged: StyleOptions = { ...current, ...mods };
-    // Merge nested aiFunctions correctly
-    if (current.aiFunctions || (mods as any).aiFunctions) {
-      merged.aiFunctions = { ...(current.aiFunctions || {}), ...((mods as any).aiFunctions || {}) };
-    }
     // Merge nested artist/film objects wholesale if provided
     if ((mods as any).artistStyle) merged.artistStyle = (mods as any).artistStyle;
     if ((mods as any).filmStyle) merged.filmStyle = (mods as any).filmStyle;
@@ -146,7 +142,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         <Row label="Film Style" cur={<ValueChip label={str(current.filmStyle?.name)} />} next={<ValueChip label={str(proposed.filmStyle?.name)} color={hasChange(current.filmStyle?.key, proposed.filmStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmStyle?.key, proposed.filmStyle?.key)} />
       </Section>
 
-      {/* AI Functions intentionally omitted in recipe panel. Managed via chat or studio UI. */}
       {aiAdjustments && (
         <Section title="Applied Adjustments">
           <Row label="Profile" cur={<ValueChip label={str(aiAdjustments.camera_profile)} />} next={<ValueChip label={str(aiAdjustments.camera_profile)} />} isChanged={false} />

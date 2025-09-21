@@ -58,7 +58,8 @@ export function parseXMPContent(xmpContent: string): XMPParseResult {
     
     // Also try to extract from the adjustments object if available
     if (!description && (adjustments as any).description) {
-      const description = (adjustments as any).description;
+      // Use the description from adjustments if available
+      // description = (adjustments as any).description;
     }
 
     // Extract preset type

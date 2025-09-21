@@ -54,6 +54,7 @@
 ### 🎨 **Professional Color Matching**
 - **AI-Powered Analysis**: Upload reference photos to extract color characteristics
 - **Smart Target Processing**: Apply extracted color styles to your target images
+- **Full AI Capabilities**: AI has access to all color grading tools including masks, HSL adjustments, tone curves, and point color corrections
 - **Reference Image Support**: Multiple format support (JPG, PNG, WebP)
 
 ### 🎬 **Film Emulation & Lightroom Presets**
