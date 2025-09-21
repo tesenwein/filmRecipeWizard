@@ -29,7 +29,6 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          dist/
           node_modules/.cache/
           ~/.npm/_cacache/
         key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}

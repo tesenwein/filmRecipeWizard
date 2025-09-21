@@ -143,7 +143,6 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            dist/
             node_modules/.cache/
             ~/.npm/_cacache/
           key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}
@@ -190,7 +189,6 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            dist/
             node_modules/.cache/
             ~/.npm/_cacache/
           key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}
@@ -206,7 +204,6 @@ jobs:
         with:
           path: |
             node_modules/sharp/
-            ~/.npm/_npx/
           key: ${{ runner.os }}-sharp-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-sharp-
@@ -223,8 +220,6 @@ jobs:
         with:
           path: |
             ~/.cache/electron-builder/
-            ~/Library/Caches/electron-builder/
-            %LOCALAPPDATA%/electron-builder/Cache/
           key: ${{ runner.os }}-electron-builder-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-electron-builder-
