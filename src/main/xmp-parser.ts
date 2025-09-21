@@ -330,7 +330,7 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
   }
 
   const maskContent = maskGroupMatch[1];
-  const maskMatches = maskContent.match(/<rdf:li>\s*<rdf:Description[\s\S]*?<\/rdf:Description>\s*<\/rdf:li>/g);
+  const maskMatches = maskContent.match(/<rdf:li>\s*<rdf:Description[\s\S]*?(?:<\/rdf:Description>|\/>)\s*<\/rdf:li>/g);
 
   if (!maskMatches) {
     return false;
