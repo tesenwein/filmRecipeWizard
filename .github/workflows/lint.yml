@@ -1,4 +1,4 @@
-name: Lint
+name: Lint and Test
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
+  lint-and-test:
     runs-on: ubuntu-latest
     
     steps:
@@ -28,3 +28,6 @@ jobs:
       
     - name: Run Knip (unused code detection)
       run: npm run knip
+      
+    - name: Run Jest tests
+      run: npm test

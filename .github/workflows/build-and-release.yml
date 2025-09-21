@@ -156,6 +156,9 @@ jobs:
       - name: Run type checking
         run: npm run typecheck
 
+      - name: Run Jest tests
+        run: npm test
+
       - name: Build application
         run: npm run prepare:build
 
