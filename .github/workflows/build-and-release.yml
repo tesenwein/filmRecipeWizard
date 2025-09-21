@@ -9,6 +9,7 @@ on:
       - '**.md'
       - '.gitignore'
       - 'LICENSE'
+      - '.github/workflows/*.yml'
   workflow_dispatch:
     inputs:
       force_release:
