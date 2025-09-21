@@ -96,14 +96,9 @@ const CATALOG: Record<string, FilmStyle[]> = {
     { key: 'fuji_eterna_250d', name: 'Fuji Eterna 250D', category: 'Cine', blurb: 'Fuji daylight cine, natural color, fine grain, professional look.', tags: ['landscape', 'portrait'] },
   ],
   'Instant Film': [
-    { key: 'polaroid_600', name: 'Polaroid 600', category: 'Instant', blurb: 'Classic instant film, warm tones, soft contrast, nostalgic look.', tags: ['portrait', 'street'] },
-    { key: 'polaroid_sx70', name: 'Polaroid SX-70', category: 'Instant', blurb: 'Square format instant, soft pastel tones, dreamy aesthetic.', tags: ['portrait'] },
-    { key: 'polaroid_spectra', name: 'Polaroid Spectra', category: 'Instant', blurb: 'Wide format instant, cool tones, sharp detail, professional look.', tags: ['portrait', 'landscape'] },
-    { key: 'fuji_instax_wide', name: 'Fuji Instax Wide', category: 'Instant', blurb: 'Modern instant film, natural color, sharp detail, clean look.', tags: ['portrait', 'landscape'] },
-    { key: 'fuji_instax_mini', name: 'Fuji Instax Mini', category: 'Instant', blurb: 'Small format instant, vibrant color, fun and playful aesthetic.', tags: ['portrait', 'street'] },
-    { key: 'polaroid_go', name: 'Polaroid Go', category: 'Instant', blurb: 'Mini instant film, warm tones, soft contrast, pocket-sized fun.', tags: ['portrait', 'street'] },
-    { key: 'polaroid_itype', name: 'Polaroid i-Type', category: 'Instant', blurb: 'Modern Polaroid film, balanced color, good contrast, reliable results.', tags: ['portrait', 'landscape'] },
-    { key: 'fuji_instax_square', name: 'Fuji Instax Square', category: 'Instant', blurb: 'Square format instant, natural color, sharp detail, Instagram-ready.', tags: ['portrait', 'street'] },
+    { key: 'polaroid_classic', name: 'Polaroid Classic', category: 'Instant', blurb: 'Classic instant film, warm tones, soft contrast, nostalgic look.', tags: ['portrait', 'street'] },
+    { key: 'polaroid_modern', name: 'Polaroid Modern', category: 'Instant', blurb: 'Modern instant film, balanced color, good contrast, reliable results.', tags: ['portrait', 'landscape'] },
+    { key: 'fuji_instax', name: 'Fuji Instax', category: 'Instant', blurb: 'Modern instant film, natural color, sharp detail, clean look.', tags: ['portrait', 'landscape', 'street'] },
   ],
 };
 

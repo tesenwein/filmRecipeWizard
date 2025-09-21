@@ -111,8 +111,8 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 - Ellen von Unwerth (high-fashion to avant-garde editorial styles)
 
 **Instant Film Styles:**
-- Polaroid 600, SX-70, Spectra, Go, i-Type (classic instant aesthetics)
-- Fuji Instax Wide, Mini, Square (modern instant film looks)
+- Polaroid Classic, Modern (classic and contemporary instant aesthetics)
+- Fuji Instax (modern instant film looks)
 
 ### ⚙️ **Fine-Tune Controls**
 **Essential Adjustments:**
