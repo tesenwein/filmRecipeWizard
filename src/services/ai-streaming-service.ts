@@ -208,19 +208,23 @@ export class AIStreamingService {
         const backgroundMaskList = backgroundMasks.map(m => m.type).join(', ');
         const otherMaskList = otherMasks.map(m => m.type).join(', ');
 
-        return `You are a professional photo editor. Create Lightroom/Camera Raw adjustments to match the target image to the reference style.
+        return `You are a professional photo editor. Create bold, impactful Lightroom/Camera Raw adjustments to match the target image to the reference style.
 
 TASK:
 - REFERENCE IMAGES: Style to achieve
 - TARGET IMAGE: Photo to modify  
 - STYLE DESCRIPTION: Text description of desired look
+- GOAL: Create professional, dramatic, presets that transform the image to match the reference style and configuration
 
 REQUIREMENTS:
 - Generate preset_name (2-4 words, Title Case) - REQUIRED
-- Include description (1-2 sentences) of style and mood
+- Include description (1-2 sentences) of style and mood - REQUIRED
 - Set camera_profile: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
 - Use 'Adobe Monochrome' for B&W, 'Adobe Portrait' for people, 'Adobe Landscape' for nature/sky
 - For portrait use masks to optimize and do not use radial masks for portrait
+- Use tone curves to match contrast and style characteristics
+- Use color grading to match color temperature and mood
+- Analyze reference image's contrast curve and color grading, then replicate
 
 AVAILABLE MASKS:
 - Face: ${faceMaskList}
@@ -230,13 +234,21 @@ AVAILABLE MASKS:
 - Other: ${otherMaskList}
 
 TECHNIQUES:
-- Apply subtle mask adjustments
-- Use color grading for shadows/midtones/highlights
-- Fine-tune with HSL adjustments
-- Consider tone curves for contrast
+- Apply significant mask adjustments to achieve the target style
+- Use color grading for shadows/midtones/highlights with noticeable changes
+- Fine-tune with HSL adjustments using the full range (-100 to +100)
+- **PRIORITIZE TONE CURVES** - Use tone_curve, tone_curve_red, tone_curve_green, tone_curve_blue to create dramatic contrast and style matching
+- **USE COLOR GRADING** - Apply color_grade_shadow/midtone/highlight adjustments to shift color temperature and mood
 - Use point_colors for targeted corrections
 - For B&W: include gray_* values for each color channel
-- For film/artist styles: match HSL and tone curve characteristics`;
+- For film/artist styles: **ESSENTIAL** - match HSL and tone curve characteristics from reference
+- **TONE CURVES ARE KEY** - Create S-curves, lift shadows, compress highlights to match reference style
+- **COLOR GRADING IS POWERFUL** - Shift shadows to warm/cool, midtones to match skin tones, highlights for atmosphere
+- **TONE CURVE EXAMPLES**: Film look = lift shadows (0,0 to 30,20), compress highlights (200,200 to 255,240)
+- **COLOR GRADING EXAMPLES**: Warm shadows (+20 hue, +10 sat), cool highlights (-15 hue, +5 sat)
+- **ESSENTIAL**: Match the reference's contrast curve and color temperature shifts
+- Don't be afraid to use strong adjustments - the goal is to match the reference style
+- Use the full range of available values to create impactful changes`;
     }
 
     private createTools(_options?: StreamingOptions) {
@@ -257,7 +269,7 @@ TECHNIQUES:
 
         // Main function for generating color adjustments
         tools.generate_color_adjustments = tool({
-            description: 'Generate precise Lightroom/Camera Raw adjustments to match target image to base image style',
+            description: 'Generate bold, impactful Lightroom/Camera Raw adjustments to transform the target image to match the reference style. ALWAYS use tone curves and color grading as primary tools. Use the full range of available values to create dramatic, noticeable changes.',
             inputSchema: baseSchema,
             execute: async (input) => input, // Placeholder - AI will call this
         });
