@@ -29,6 +29,11 @@ const electronAPI = {
     ipcRenderer.invoke('generate-xmp-content', data),
   exportProfile: (data: { adjustments: any; recipeIndex?: number }) =>
     ipcRenderer.invoke('export-profile', data),
+  // Capture One support
+  generateCaptureOneStyle: (data: { adjustments: any; styleName?: string; description?: string }) =>
+    ipcRenderer.invoke('generate-capture-one-style', data),
+  downloadCaptureOneStyle: (data: { adjustments: any; styleName?: string; description?: string }) =>
+    ipcRenderer.invoke('download-capture-one-style', data),
   // Recipe import/export
   exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
   exportAllRecipes: () => ipcRenderer.invoke('export-all-recipes'),

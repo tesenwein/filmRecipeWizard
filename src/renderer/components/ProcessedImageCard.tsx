@@ -94,6 +94,7 @@ interface ProcessedImageCardProps {
   _exportOptions: Record<string, any>;
   onAttachBaseImage: () => void;
   onExportXMP: (index: number, result: ProcessingResult) => void;
+  onExportCaptureOne: (index: number, result: ProcessingResult) => void;
   _onToggleOption: (index: number, key: string) => void;
   onSetAllOptions: (index: number, value: boolean) => void;
   isAllSelected: (index: number) => boolean;
@@ -110,6 +111,7 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
   _exportOptions,
   onAttachBaseImage,
   onExportXMP,
+  onExportCaptureOne,
   _onToggleOption,
   onSetAllOptions,
   isAllSelected,
@@ -605,7 +607,20 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                 </Box>
               );
             })()}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                onClick={() => onExportCaptureOne(index, result)}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1.25,
+                }}
+              >
+                Export Capture One
+              </Button>
               <Button
                 variant="contained"
                 startIcon={<DownloadIcon />}

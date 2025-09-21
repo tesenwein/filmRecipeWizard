@@ -241,7 +241,7 @@ describe('XMP Generator', () => {
         gray_magenta: 10,
       };
 
-      const include = { basic: true, hsl: false, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false };
+      const include = { basic: true, hsl: false, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false, strength: 1.0 };
 
       const result = generateXMPContent(adjustments, include);
 

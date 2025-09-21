@@ -54,6 +54,9 @@ declare global {
         recipeIndex?: number;
         recipeName?: string;
       }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+      // Capture One support
+      generateCaptureOneStyle: (data: { adjustments: any; styleName?: string; description?: string }) => Promise<{ success: boolean; content?: string; error?: string }>;
+      downloadCaptureOneStyle: (data: { adjustments: any; styleName?: string; description?: string }) => Promise<{ success: boolean; filePath?: string; error?: string }>;
 
       // Recipe import/export
       exportRecipe: (processId: string) => Promise<ExportResult>;

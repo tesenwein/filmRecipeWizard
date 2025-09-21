@@ -5,9 +5,9 @@
 [![Build Status](https://github.com/tesenwein/filmRecipeWizard/workflows/Build/badge.svg)](https://github.com/tesenwein/filmRecipeWizard/actions)
 [![Lint Status](https://github.com/tesenwein/filmRecipeWizard/workflows/Lint/badge.svg)](https://github.com/tesenwein/filmRecipeWizard/actions)
 
-> **Professional Lightroom Presets & LUTs with AI-Powered Film Simulation**
+> **Professional Lightroom & Capture One Presets with AI-Powered Film Simulation**
 
-**Missing Fujifilm simulations in Lightroom? Film Recipe Wizard is your solution.** Transform your photography workflow with intelligent AI-driven color grading that recreates authentic film looks, professional artistic styles, and custom color recipes. Generate industry-standard Lightroom XMP presets and 3D LUTs from reference photos or choose from dozens of built-in film emulations including Kodak, Fuji, Ilford, and cinematic stocks.
+**Missing Fujifilm simulations in Lightroom? Film Recipe Wizard is your solution.** Transform your photography workflow with intelligent AI-driven color grading that recreates authentic film looks, professional artistic styles, and custom color recipes. Generate industry-standard Lightroom XMP presets, Capture One styles, and 3D LUTs from reference photos or choose from dozens of built-in film emulations including Kodak, Fuji, Ilford, and cinematic stocks.
 
 ## 📸 Screenshots
 
@@ -57,8 +57,8 @@
 - **Full AI Capabilities**: AI has access to all color grading tools including masks, HSL adjustments, tone curves, and point color corrections
 - **Reference Image Support**: Multiple format support (JPG, PNG, WebP)
 
-### 🎬 **Film Emulation & Lightroom Presets**
-Perfect for photographers seeking **Fujifilm film simulations for Lightroom** and classic film looks unavailable in Adobe's default profiles.
+### 🎬 **Film Emulation & Multi-Platform Presets**
+Perfect for photographers seeking **Fujifilm film simulations for Lightroom and Capture One** and classic film looks unavailable in Adobe's default profiles.
 
 **Color Negative Film Presets:**
 - **Kodak Portra Series**: Portra 400, 160, 800 (warm skin tones, wedding photography)
@@ -127,25 +127,37 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 - **Lightroom Profiles**: Adobe Color, Adobe Monochrome, Flat Profile base
 - **Custom Vibes**: Cinematic, Soft Pastel, and other mood presets
 
+### 🧠 **Advanced AI Features**
+- **Intelligent Mask Detection**: AI-powered subject, sky, and background masking
+- **Platform-Specific Optimization**: Automatic adjustment mapping for Lightroom vs Capture One
+- **Interactive AI Chat**: Refine and modify recipes through conversational AI
+- **Smart Adjustment Scaling**: Intelligent strength control for natural-looking results
+- **Comprehensive Mask Support**: 25+ mask types including face, landscape, and subject detection
+
 ### 📤 **Export Formats & Compatibility**
 - **Lightroom XMP Presets**: Direct import to Adobe Lightroom Classic & CC
-- **3D LUTs (.cube)**: Compatible with Premiere Pro, Final Cut Pro, DaVinci Resolve, After Effects
+- **Capture One Styles (.costyle)**: Native Capture One Pro style files with full adjustment support
+- **3D LUTs (.cube, .3dl, .lut)**: Compatible with Premiere Pro, Final Cut Pro, DaVinci Resolve, After Effects
+- **Camera Profiles**: Custom camera profile generation for Lightroom
 - **Batch Processing**: Process up to 3 target images simultaneously
 - **Cross-Platform**: macOS (Intel & Apple Silicon) and Windows support
+- **Platform-Specific Optimization**: Intelligent adjustment mapping for Lightroom vs Capture One differences
 
 ### 🎯 **Perfect For**
 - **Wedding Photographers** seeking consistent Portra-style skin tones
-- **Portrait Photographers** missing Fuji film simulation presets in Lightroom  
+- **Portrait Photographers** missing Fuji film simulation presets in Lightroom and Capture One
 - **Landscape Photographers** wanting Velvia saturation and Kodachrome richness
 - **Street Photographers** recreating classic Tri-X and HP5 black & white looks
 - **Content Creators** needing cinematic color grading for video projects
 - **Film Photography Enthusiasts** digitizing analog aesthetics
+- **Capture One Users** wanting professional film emulation styles
+- **Multi-Platform Workflows** requiring consistent looks across different software
 
 ## 🚀 Quick Start
 
 1. **Setup**: Add your [OpenAI API key](https://platform.openai.com/api-keys) in Settings
 2. **Create**: Upload target photos and describe your desired style
-3. **Export**: Generate Lightroom XMP presets or 3D LUTs for your workflow
+3. **Export**: Generate Lightroom XMP presets, Capture One styles, or 3D LUTs for your workflow
 
 ## ⚠️ macOS Installation Note
 

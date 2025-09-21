@@ -260,7 +260,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
         crs:ProfileName="${cameraProfileName}"
         crs:Look=""
         crs:HasSettings="True"
-        crs:PresetType="Normal"
+        crs:PresetType="Look"
         crs:Cluster="film-recipe-wizard"
         crs:ClusterGroup="film-recipe-wizard"
         crs:PresetSubtype="Normal"

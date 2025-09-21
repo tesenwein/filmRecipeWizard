@@ -206,6 +206,7 @@ describe('XMP Integration Tests', () => {
         vignette: false,
         pointColor: false,
         masks: false,
+        strength: 1.0,
       };
 
       // Generate XMP
