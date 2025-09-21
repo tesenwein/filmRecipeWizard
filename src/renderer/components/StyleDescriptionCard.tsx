@@ -14,17 +14,30 @@ import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 import WavesIcon from '@mui/icons-material/Waves';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
-import { Box, Button, Paper, TextField } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import LandscapeIcon from '@mui/icons-material/Landscape';
+import StreetviewIcon from '@mui/icons-material/Streetview';
+import { Box, Button, Paper, TextField, Chip } from '@mui/material';
 import React from 'react';
 
 interface StyleDescriptionCardProps {
   prompt: string;
   onPromptChange: (value: string) => void;
-  selectedVibe?: string;
-  onVibeChange?: (vibe: string) => void;
+  selectedVibe?: string; // Legacy support
+  onVibeChange?: (vibe: string) => void; // Legacy support
+  selectedStyleCategories?: string[];
+  onStyleCategoriesChange?: (categories: string[]) => void;
 }
 
-const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({ prompt, onPromptChange, selectedVibe, onVibeChange }) => {
+const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({ 
+  prompt, 
+  onPromptChange, 
+  selectedVibe, 
+  onVibeChange,
+  selectedStyleCategories = [],
+  onStyleCategoriesChange
+}) => {
+  // Legacy vibe options for backward compatibility
   const vibeOptions = [
     { icon: <MovieIcon sx={{ fontSize: 16 }} />, label: 'Cinematic' },
     { icon: <PaletteIcon sx={{ fontSize: 16 }} />, label: 'Soft Pastel' },
@@ -42,6 +55,49 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({ prompt, onP
     { icon: <LightModeIcon sx={{ fontSize: 16 }} />, label: 'Golden Hour' },
     { icon: <AcUnitIcon sx={{ fontSize: 16 }} />, label: 'Teal & Orange' },
   ];
+
+  // New multi-select style categories
+  const styleCategories = [
+    // Photography Types
+    { icon: <PersonIcon sx={{ fontSize: 16 }} />, label: 'Portrait', category: 'photography' },
+    { icon: <LandscapeIcon sx={{ fontSize: 16 }} />, label: 'Landscape', category: 'photography' },
+    { icon: <StreetviewIcon sx={{ fontSize: 16 }} />, label: 'Street', category: 'photography' },
+    { icon: <CameraAltIcon sx={{ fontSize: 16 }} />, label: 'Documentary', category: 'photography' },
+    
+    // Visual Styles
+    { icon: <MovieIcon sx={{ fontSize: 16 }} />, label: 'Cinematic', category: 'style' },
+    { icon: <PaletteIcon sx={{ fontSize: 16 }} />, label: 'Soft Pastel', category: 'style' },
+    { icon: <WhatshotIcon sx={{ fontSize: 16 }} />, label: 'High Contrast', category: 'style' },
+    { icon: <BlurOnIcon sx={{ fontSize: 16 }} />, label: 'Desaturated', category: 'style' },
+    { icon: <BrushIcon sx={{ fontSize: 16 }} />, label: 'Punchy Pop', category: 'style' },
+    { icon: <StarIcon sx={{ fontSize: 16 }} />, label: 'Soft Glow', category: 'style' },
+    
+    // Color Palettes
+    { icon: <WbSunnyIcon sx={{ fontSize: 16 }} />, label: 'Warm Sunset', category: 'color' },
+    { icon: <NightlightIcon sx={{ fontSize: 16 }} />, label: 'Cool Blue Hour', category: 'color' },
+    { icon: <LightModeIcon sx={{ fontSize: 16 }} />, label: 'Golden Hour', category: 'color' },
+    { icon: <AcUnitIcon sx={{ fontSize: 16 }} />, label: 'Teal & Orange', category: 'color' },
+    { icon: <NatureIcon sx={{ fontSize: 16 }} />, label: 'Earthy Tones', category: 'color' },
+    { icon: <BubbleChartIcon sx={{ fontSize: 16 }} />, label: 'Pastel Dream', category: 'color' },
+    
+    // Film & Vintage
+    { icon: <MovieFilterIcon sx={{ fontSize: 16 }} />, label: 'Matte Film', category: 'film' },
+    { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Moody Ocean', category: 'film' },
+    { icon: <CameraAltIcon sx={{ fontSize: 16 }} />, label: 'Vintage', category: 'film' },
+  ];
+
+  const handleCategoryToggle = (categoryLabel: string) => {
+    if (!onStyleCategoriesChange) return;
+    
+    const isSelected = selectedStyleCategories.includes(categoryLabel);
+    if (isSelected) {
+      // Remove category
+      onStyleCategoriesChange(selectedStyleCategories.filter(cat => cat !== categoryLabel));
+    } else {
+      // Add category
+      onStyleCategoriesChange([...selectedStyleCategories, categoryLabel]);
+    }
+  };
 
   return (
     <Paper className="card slide-in" sx={{ p: 2.5, animationDelay: '0.05s' }}>
@@ -64,30 +120,163 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({ prompt, onP
         size="small"
       />
 
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>
-        {vibeOptions.map(option => {
-          const selected = (selectedVibe || '') === option.label;
-          return (
-            <Button
-              key={option.label}
-              size="small"
-              variant={selected ? 'contained' : 'outlined'}
-              onClick={() => onVibeChange?.(option.label)}
-              startIcon={option.icon}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 500,
-                borderRadius: 2,
-                fontSize: 12,
-                py: 0.5,
-                px: 1.5,
-              }}
-            >
-              {option.label}
-            </Button>
-          );
-        })}
-      </Box>
+      {/* Legacy vibe selection (single select) */}
+      {onVibeChange && (
+        <Box sx={{ mt: 1.5 }}>
+          <Box sx={{ fontSize: 12, fontWeight: 600, color: '#374151', mb: 1 }}>
+            Quick Style (Single Select)
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {vibeOptions.map(option => {
+              const selected = (selectedVibe || '') === option.label;
+              return (
+                <Button
+                  key={option.label}
+                  size="small"
+                  variant={selected ? 'contained' : 'outlined'}
+                  onClick={() => onVibeChange?.(option.label)}
+                  startIcon={option.icon}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    borderRadius: 2,
+                    fontSize: 12,
+                    py: 0.5,
+                    px: 1.5,
+                  }}
+                >
+                  {option.label}
+                </Button>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
+      {/* New multi-select style categories */}
+      {onStyleCategoriesChange && (
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ fontSize: 12, fontWeight: 600, color: '#374151', mb: 1 }}>
+            Style Categories (Multi-Select)
+          </Box>
+          
+          {/* Photography Types */}
+          <Box sx={{ mb: 1.5 }}>
+            <Box sx={{ fontSize: 11, fontWeight: 500, color: '#6b7280', mb: 0.5 }}>
+              Photography Types
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {styleCategories.filter(cat => cat.category === 'photography').map(option => {
+                const selected = selectedStyleCategories.includes(option.label);
+                return (
+                  <Chip
+                    key={option.label}
+                    label={option.label}
+                    icon={option.icon}
+                    onClick={() => handleCategoryToggle(option.label)}
+                    color={selected ? 'primary' : 'default'}
+                    variant={selected ? 'filled' : 'outlined'}
+                    size="small"
+                    sx={{
+                      cursor: 'pointer',
+                      '& .MuiChip-icon': {
+                        fontSize: 16,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Box>
+
+          {/* Visual Styles */}
+          <Box sx={{ mb: 1.5 }}>
+            <Box sx={{ fontSize: 11, fontWeight: 500, color: '#6b7280', mb: 0.5 }}>
+              Visual Styles
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {styleCategories.filter(cat => cat.category === 'style').map(option => {
+                const selected = selectedStyleCategories.includes(option.label);
+                return (
+                  <Chip
+                    key={option.label}
+                    label={option.label}
+                    icon={option.icon}
+                    onClick={() => handleCategoryToggle(option.label)}
+                    color={selected ? 'primary' : 'default'}
+                    variant={selected ? 'filled' : 'outlined'}
+                    size="small"
+                    sx={{
+                      cursor: 'pointer',
+                      '& .MuiChip-icon': {
+                        fontSize: 16,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Box>
+
+          {/* Color Palettes */}
+          <Box sx={{ mb: 1.5 }}>
+            <Box sx={{ fontSize: 11, fontWeight: 500, color: '#6b7280', mb: 0.5 }}>
+              Color Palettes
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {styleCategories.filter(cat => cat.category === 'color').map(option => {
+                const selected = selectedStyleCategories.includes(option.label);
+                return (
+                  <Chip
+                    key={option.label}
+                    label={option.label}
+                    icon={option.icon}
+                    onClick={() => handleCategoryToggle(option.label)}
+                    color={selected ? 'primary' : 'default'}
+                    variant={selected ? 'filled' : 'outlined'}
+                    size="small"
+                    sx={{
+                      cursor: 'pointer',
+                      '& .MuiChip-icon': {
+                        fontSize: 16,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Box>
+
+          {/* Film & Vintage */}
+          <Box sx={{ mb: 1.5 }}>
+            <Box sx={{ fontSize: 11, fontWeight: 500, color: '#6b7280', mb: 0.5 }}>
+              Film & Vintage
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {styleCategories.filter(cat => cat.category === 'film').map(option => {
+                const selected = selectedStyleCategories.includes(option.label);
+                return (
+                  <Chip
+                    key={option.label}
+                    label={option.label}
+                    icon={option.icon}
+                    onClick={() => handleCategoryToggle(option.label)}
+                    color={selected ? 'primary' : 'default'}
+                    variant={selected ? 'filled' : 'outlined'}
+                    size="small"
+                    sx={{
+                      cursor: 'pointer',
+                      '& .MuiChip-icon': {
+                        fontSize: 16,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Box>
+        </Box>
+      )}
     </Paper>
   );
 };

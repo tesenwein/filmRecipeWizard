@@ -217,6 +217,8 @@ IMPORTANT:
 - STYLE DESCRIPTION is a text description of the desired look/style (NOT an image)
 - Your job is to analyze the reference images and create adjustments that will make the target image look like the reference style
 - If no reference images are provided, use the STYLE DESCRIPTION to understand what look to create
+- PAY SPECIAL ATTENTION to any soft parameters provided in the user preferences (moodiness, warmth, coolness, drama, softness, intensity, vintage, cinematic, faded) and incorporate these into your adjustments
+- PAY SPECIAL ATTENTION to any style categories provided (Portrait, Landscape, Street, Cinematic, Soft Pastel, etc.) and incorporate these into your adjustments
 
 CRITICAL INSTRUCTIONS FOR YOUR RESPONSE:
 - Write your thinking process in plain text and markdown only
@@ -225,6 +227,7 @@ CRITICAL INSTRUCTIONS FOR YOUR RESPONSE:
 - Focus on describing colors, tones, mood, and style characteristics
 - Explain your reasoning in conversational text
 - Generate a short, engaging description (1-2 sentences) that captures the style and mood
+- When soft parameters are provided, explain how you're interpreting and applying them to achieve the desired mood and style
 
 PROFILE SELECTION:
 - Always set camera_profile to one of: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
@@ -234,6 +237,18 @@ PROFILE SELECTION:
 - Otherwise use 'Adobe Color'
 
 Show your thinking process step by step as you analyze the images. Explain what you're looking for, what you notice about the colors, tones, and style, and how you're building the recipe.
+
+SOFT PARAMETER INTERPRETATION:
+When soft parameters are provided, interpret them as follows:
+- Moodiness (0-100): 0=neutral/clinical, 50=balanced, 100=very moody/dramatic with deep shadows, rich tones, and atmospheric effects
+- Warmth (0-100): 0=cool/blue tones, 50=neutral, 100=warm/orange tones - adjust temperature and color grading accordingly
+- Coolness (0-100): 0=warm tones, 50=neutral, 100=cool/blue tones - adjust temperature and color grading accordingly
+- Drama (0-100): 0=subtle/flat, 50=balanced, 100=high drama with strong contrast, deep shadows, and bold highlights
+- Softness (0-100): 0=sharp/harsh, 50=balanced, 100=very soft/dreamy with reduced clarity, softer contrast, and gentle transitions
+- Intensity (0-100): 0=muted/subdued, 50=balanced, 100=high intensity with vibrant colors, strong saturation, and bold effects
+- Vintage (0-100): 0=modern/clean, 50=neutral, 100=very vintage with film grain, desaturated colors, and retro color grading
+- Cinematic (0-100): 0=documentary/natural, 50=balanced, 100=very cinematic with dramatic lighting, color grading, and film-like characteristics
+- Faded (0-100): 0=vibrant/saturated, 50=balanced, 100=very faded/washed out with reduced saturation, muted colors, and vintage film look
 
 CRITICAL: You must call the generate_color_adjustments function with ALL adjustments including masks in a single call. Do NOT call individual mask functions - they are just for reference.
 

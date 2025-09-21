@@ -104,7 +104,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   const hasActiveOptions = Boolean(
     baseImages.length > 0 || // Has reference images
     (prompt && prompt.trim().length > 0) || // Has prompt text
-    styleOptions?.vibe || // Has vibe selected
+    styleOptions?.vibe || // Has vibe selected (legacy)
+    (styleOptions?.styleCategories && styleOptions.styleCategories.length > 0) || // Has style categories selected
     styleOptions?.artistStyle || // Has artist style selected
     styleOptions?.filmStyle || // Has film style selected
     styleOptions?.aiFunctions?.grain || // Has grain function enabled
@@ -112,13 +113,27 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     styleOptions?.tint !== undefined || // Has tint adjustment
     styleOptions?.contrast !== undefined || // Has contrast adjustment
     styleOptions?.vibrance !== undefined || // Has vibrance adjustment
-    styleOptions?.saturationBias !== undefined // Has saturation bias adjustment
+    styleOptions?.saturationBias !== undefined || // Has saturation bias adjustment
+    // New soft parameters
+    styleOptions?.moodiness !== undefined || // Has moodiness adjustment
+    styleOptions?.warmth !== undefined || // Has warmth adjustment
+    styleOptions?.coolness !== undefined || // Has coolness adjustment
+    styleOptions?.drama !== undefined || // Has drama adjustment
+    styleOptions?.softness !== undefined || // Has softness adjustment
+    styleOptions?.intensity !== undefined || // Has intensity adjustment
+    styleOptions?.vintage !== undefined || // Has vintage adjustment
+    styleOptions?.cinematic !== undefined || // Has cinematic adjustment
+    styleOptions?.faded !== undefined // Has faded adjustment
   );
 
   const canProcess: boolean = Boolean(!processingState.isProcessing && hasActiveOptions);
 
   const handleVibeChange = (vibe: string) => {
     onStyleOptionsChange?.({ vibe });
+  };
+
+  const handleStyleCategoriesChange = (categories: string[]) => {
+    onStyleOptionsChange?.({ styleCategories: categories });
   };
 
   // Convert base images for display if unsupported
@@ -309,6 +324,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
               onPromptChange={onPromptChange}
               selectedVibe={styleOptions?.vibe}
               onVibeChange={handleVibeChange}
+              selectedStyleCategories={styleOptions?.styleCategories}
+              onStyleCategoriesChange={handleStyleCategoriesChange}
             />
 
             <ArtisticStylesCard

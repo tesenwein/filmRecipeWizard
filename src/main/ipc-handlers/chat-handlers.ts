@@ -113,6 +113,17 @@ Available user options:
 - artistStyle: object with key, name, category, blurb
 - filmStyle: object with key, name, category, blurb
 
+Soft parameters (0-100 scale):
+- moodiness: 0=neutral/clinical, 50=balanced, 100=very moody/dramatic
+- warmth: 0=cool/blue tones, 50=neutral, 100=warm/orange tones
+- coolness: 0=warm tones, 50=neutral, 100=cool/blue tones
+- drama: 0=subtle/flat, 50=balanced, 100=high drama
+- softness: 0=sharp/harsh, 50=balanced, 100=very soft/dreamy
+- intensity: 0=muted/subdued, 50=balanced, 100=high intensity
+- vintage: 0=modern/clean, 50=neutral, 100=very vintage
+- cinematic: 0=documentary/natural, 50=balanced, 100=very cinematic
+- faded: 0=vibrant/saturated, 50=balanced, 100=very faded/washed out
+
 Available AI adjustments:
 - grain_amount: 0 to 100 (film grain intensity)
 - grain_size: 0 to 100 (grain particle size)

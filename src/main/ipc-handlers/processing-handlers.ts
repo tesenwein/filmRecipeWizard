@@ -186,6 +186,32 @@ export class ProcessingHandlers {
               (blurb ? `\nTraits: ${blurb}` : '')
             );
           }
+          
+          // Add style categories
+          if (options.styleCategories && Array.isArray(options.styleCategories) && options.styleCategories.length > 0) {
+            optionsHintParts.push(`Style Categories: ${options.styleCategories.join(', ')}`);
+          }
+          
+          // Add soft parameters
+          if (options.moodiness !== undefined)
+            optionsHintParts.push(`Moodiness: ${pct(options.moodiness)} (0=neutral, 100=very moody/dramatic)`);
+          if (options.warmth !== undefined)
+            optionsHintParts.push(`Warmth: ${pct(options.warmth)} (0=cool, 100=warm)`);
+          if (options.coolness !== undefined)
+            optionsHintParts.push(`Coolness: ${pct(options.coolness)} (0=warm, 100=cool)`);
+          if (options.drama !== undefined)
+            optionsHintParts.push(`Drama: ${pct(options.drama)} (0=subtle, 100=high drama)`);
+          if (options.softness !== undefined)
+            optionsHintParts.push(`Softness: ${pct(options.softness)} (0=sharp/harsh, 100=very soft/dreamy)`);
+          if (options.intensity !== undefined)
+            optionsHintParts.push(`Intensity: ${pct(options.intensity)} (0=muted, 100=high intensity)`);
+          if (options.vintage !== undefined)
+            optionsHintParts.push(`Vintage: ${pct(options.vintage)} (0=modern, 100=very vintage)`);
+          if (options.cinematic !== undefined)
+            optionsHintParts.push(`Cinematic: ${pct(options.cinematic)} (0=documentary, 100=very cinematic)`);
+          if (options.faded !== undefined)
+            optionsHintParts.push(`Faded: ${pct(options.faded)} (0=vibrant, 100=very faded/washed out)`);
+            
           const optionsHint =
             optionsHintParts.length > 0 ? `\nPreferences:\n- ${optionsHintParts.join('\n- ')}` : '';
 

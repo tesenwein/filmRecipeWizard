@@ -25,7 +25,20 @@ export interface StyleOptions {
   contrast?: number;
   vibrance?: number;
   saturationBias?: number;
-  vibe?: string; // e.g., Cinematic, Soft Pastel
+  vibe?: string; // e.g., Cinematic, Soft Pastel (legacy support)
+  styleCategories?: string[]; // Multiple style categories like ['Cinematic', 'Portrait', 'Street']
+  
+  // Soft parameters for mood and style
+  moodiness?: number; // 0-100: 0=neutral, 50=balanced, 100=very moody/dramatic
+  warmth?: number; // 0-100: 0=cool, 50=neutral, 100=warm
+  coolness?: number; // 0-100: 0=warm, 50=neutral, 100=cool
+  drama?: number; // 0-100: 0=subtle, 50=balanced, 100=high drama
+  softness?: number; // 0-100: 0=sharp/harsh, 50=balanced, 100=very soft/dreamy
+  intensity?: number; // 0-100: 0=muted, 50=balanced, 100=high intensity
+  vintage?: number; // 0-100: 0=modern, 50=neutral, 100=very vintage
+  cinematic?: number; // 0-100: 0=documentary, 50=balanced, 100=very cinematic
+  faded?: number; // 0-100: 0=vibrant, 50=balanced, 100=very faded/washed out
+  
   // AI Function Selection - user chooses what features are available to AI
   aiFunctions?: {
     temperatureTint?: boolean; // Enable temperature/tint adjustments
