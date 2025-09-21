@@ -187,9 +187,10 @@ export class ProcessingHandlers {
             );
           }
           
-          // Add style categories
-          if (options.styleCategories && Array.isArray(options.styleCategories) && options.styleCategories.length > 0) {
-            optionsHintParts.push(`Style Categories: ${options.styleCategories.join(', ')}`);
+          // Add style categories (handle both legacy vibe and new styleCategories)
+          const styleCategories = options.styleCategories || (options.vibe ? [options.vibe] : []);
+          if (styleCategories.length > 0) {
+            optionsHintParts.push(`Style Categories: ${styleCategories.join(', ')}`);
           }
           
           // Add soft parameters

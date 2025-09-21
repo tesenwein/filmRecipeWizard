@@ -104,7 +104,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   const hasActiveOptions = Boolean(
     baseImages.length > 0 || // Has reference images
     (prompt && prompt.trim().length > 0) || // Has prompt text
-    styleOptions?.vibe || // Has vibe selected (legacy)
     (styleOptions?.styleCategories && styleOptions.styleCategories.length > 0) || // Has style categories selected
     styleOptions?.artistStyle || // Has artist style selected
     styleOptions?.filmStyle || // Has film style selected
@@ -127,10 +126,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   );
 
   const canProcess: boolean = Boolean(!processingState.isProcessing && hasActiveOptions);
-
-  const handleVibeChange = (vibe: string) => {
-    onStyleOptionsChange?.({ vibe });
-  };
 
   const handleStyleCategoriesChange = (categories: string[]) => {
     onStyleOptionsChange?.({ styleCategories: categories });
@@ -322,8 +317,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             <StyleDescriptionCard
               prompt={prompt}
               onPromptChange={onPromptChange}
-              selectedVibe={styleOptions?.vibe}
-              onVibeChange={handleVibeChange}
               selectedStyleCategories={styleOptions?.styleCategories}
               onStyleCategoriesChange={handleStyleCategoriesChange}
             />

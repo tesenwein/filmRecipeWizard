@@ -3,28 +3,26 @@ import BlurOnIcon from '@mui/icons-material/BlurOn';
 import BrushIcon from '@mui/icons-material/Brush';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import LandscapeIcon from '@mui/icons-material/Landscape';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MovieIcon from '@mui/icons-material/Movie';
 import MovieFilterIcon from '@mui/icons-material/MovieFilter';
 import NatureIcon from '@mui/icons-material/Nature';
 import NightlightIcon from '@mui/icons-material/Nightlight';
 import PaletteIcon from '@mui/icons-material/Palette';
+import PersonIcon from '@mui/icons-material/Person';
 import StarIcon from '@mui/icons-material/Star';
+import StreetviewIcon from '@mui/icons-material/Streetview';
 import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 import WavesIcon from '@mui/icons-material/Waves';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
-import PersonIcon from '@mui/icons-material/Person';
-import LandscapeIcon from '@mui/icons-material/Landscape';
-import StreetviewIcon from '@mui/icons-material/Streetview';
-import { Box, Button, Paper, TextField, Chip } from '@mui/material';
+import { Box, Chip, Paper, TextField } from '@mui/material';
 import React from 'react';
 
 interface StyleDescriptionCardProps {
   prompt: string;
   onPromptChange: (value: string) => void;
-  selectedVibe?: string; // Legacy support
-  onVibeChange?: (vibe: string) => void; // Legacy support
   selectedStyleCategories?: string[];
   onStyleCategoriesChange?: (categories: string[]) => void;
 }
@@ -32,31 +30,10 @@ interface StyleDescriptionCardProps {
 const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({ 
   prompt, 
   onPromptChange, 
-  selectedVibe, 
-  onVibeChange,
   selectedStyleCategories = [],
   onStyleCategoriesChange
 }) => {
-  // Legacy vibe options for backward compatibility
-  const vibeOptions = [
-    { icon: <MovieIcon sx={{ fontSize: 16 }} />, label: 'Cinematic' },
-    { icon: <PaletteIcon sx={{ fontSize: 16 }} />, label: 'Soft Pastel' },
-    { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Moody Ocean' },
-    { icon: <CameraAltIcon sx={{ fontSize: 16 }} />, label: 'Vintage' },
-    { icon: <WhatshotIcon sx={{ fontSize: 16 }} />, label: 'High Contrast' },
-    { icon: <BlurOnIcon sx={{ fontSize: 16 }} />, label: 'Desaturated' },
-    { icon: <WbSunnyIcon sx={{ fontSize: 16 }} />, label: 'Warm Sunset' },
-    { icon: <NightlightIcon sx={{ fontSize: 16 }} />, label: 'Cool Blue Hour' },
-    { icon: <MovieFilterIcon sx={{ fontSize: 16 }} />, label: 'Matte Film' },
-    { icon: <BrushIcon sx={{ fontSize: 16 }} />, label: 'Punchy Pop' },
-    { icon: <StarIcon sx={{ fontSize: 16 }} />, label: 'Soft Glow' },
-    { icon: <NatureIcon sx={{ fontSize: 16 }} />, label: 'Earthy Tones' },
-    { icon: <BubbleChartIcon sx={{ fontSize: 16 }} />, label: 'Pastel Dream' },
-    { icon: <LightModeIcon sx={{ fontSize: 16 }} />, label: 'Golden Hour' },
-    { icon: <AcUnitIcon sx={{ fontSize: 16 }} />, label: 'Teal & Orange' },
-  ];
-
-  // New multi-select style categories
+  // Unified style categories (merged from legacy vibe options and new categories)
   const styleCategories = [
     // Photography Types
     { icon: <PersonIcon sx={{ fontSize: 16 }} />, label: 'Portrait', category: 'photography' },
@@ -120,44 +97,11 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
         size="small"
       />
 
-      {/* Legacy vibe selection (single select) */}
-      {onVibeChange && (
+      {/* Unified style categories (multi-select) */}
+      {onStyleCategoriesChange && (
         <Box sx={{ mt: 1.5 }}>
           <Box sx={{ fontSize: 12, fontWeight: 600, color: '#374151', mb: 1 }}>
-            Quick Style (Single Select)
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {vibeOptions.map(option => {
-              const selected = (selectedVibe || '') === option.label;
-              return (
-                <Button
-                  key={option.label}
-                  size="small"
-                  variant={selected ? 'contained' : 'outlined'}
-                  onClick={() => onVibeChange?.(option.label)}
-                  startIcon={option.icon}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    borderRadius: 2,
-                    fontSize: 12,
-                    py: 0.5,
-                    px: 1.5,
-                  }}
-                >
-                  {option.label}
-                </Button>
-              );
-            })}
-          </Box>
-        </Box>
-      )}
-
-      {/* New multi-select style categories */}
-      {onStyleCategoriesChange && (
-        <Box sx={{ mt: 2 }}>
-          <Box sx={{ fontSize: 12, fontWeight: 600, color: '#374151', mb: 1 }}>
-            Style Categories (Multi-Select)
+            Style Categories
           </Box>
           
           {/* Photography Types */}

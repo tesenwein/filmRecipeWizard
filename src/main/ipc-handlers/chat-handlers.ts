@@ -109,7 +109,7 @@ Available user options:
 - contrast: -100 to 100 (contrast adjustment)
 - vibrance: -100 to 100 (vibrance adjustment)
 - saturationBias: -100 to 100 (saturation bias)
-- vibe: string (vibe description)
+- styleCategories: string[] (array of style categories like ['Cinematic', 'Portrait', 'Street'])
 - artistStyle: object with key, name, category, blurb
 - filmStyle: object with key, name, category, blurb
 

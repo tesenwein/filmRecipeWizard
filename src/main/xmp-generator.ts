@@ -387,7 +387,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
               attrIf('CorrectionSyncID', correctionSyncID),
               attrIf('LocalExposure', 0),
               attrIf('LocalHue', 0),
-              attrIf('LocalSaturation', 0),
+              // Do not emit a default LocalSaturation here; it is emitted below if provided
               attrIf('LocalContrast', 0),
               attrIf('LocalClarity', 0),
               attrIf('LocalSharpness', 0),
