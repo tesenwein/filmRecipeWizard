@@ -121,11 +121,49 @@ jobs:
           echo "is_tag_push=$IS_TAG_PUSH" >> $GITHUB_OUTPUT
           echo "Should release: $SHOULD_RELEASE (version changed: $VERSION_CHANGED, tag push: $IS_TAG_PUSH)"
 
+  # Run tests in parallel (faster than running in each build job)
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: check-release
+    if: needs.check-release.outputs.should_release == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            dist/
+            node_modules/.cache/
+            ~/.npm/_cacache/
+          key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Run Jest tests
+        run: npm test
+
   # Build the application for all platforms
   build:
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: check-release
+    needs: [check-release, test]
     if: needs.check-release.outputs.should_release == 'true'
 
     strategy:
@@ -147,20 +185,48 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            dist/
+            node_modules/.cache/
+            ~/.npm/_cacache/
+          key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
       - name: Install dependencies
-        run: npm ci --prefer-offline
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Cache Sharp binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/sharp/
+            ~/.npm/_npx/
+          key: ${{ runner.os }}-sharp-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-sharp-
 
       - name: Rebuild Sharp for current platform
-        run: npm rebuild sharp
-
-      - name: Run type checking
-        run: npm run typecheck
-
-      - name: Run Jest tests
-        run: npm test
+        run: npm rebuild sharp --silent
 
       - name: Build application
         run: npm run prepare:build
+
+      # Cache electron-builder cache
+      - name: Cache electron-builder
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron-builder/
+            ~/Library/Caches/electron-builder/
+            %LOCALAPPDATA%/electron-builder/Cache/
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
 
       # macOS builds
       - name: Build macOS app
@@ -190,6 +256,7 @@ jobs:
             !release/.icon-ico
             !release/.icon-icns
           retention-days: 30
+          compression-level: 6
 
   # Create GitHub release with built artifacts
   release:
@@ -203,6 +270,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4

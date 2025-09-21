@@ -31,8 +31,20 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            dist/
+            node_modules/.cache/
+            ~/.npm/_cacache/
+          key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
       - name: Install dependencies
-        run: npm ci --prefer-offline --audit=false
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run linting
         run: npm run lint:check
@@ -82,7 +94,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci --prefer-offline
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run npm audit
         run: npm audit --audit-level moderate
