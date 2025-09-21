@@ -113,7 +113,7 @@ Key parameters:
                 // Set API key and generate response using AI SDK v5 (consistent with AIStreamingService)
                 process.env.OPENAI_API_KEY = apiKey;
                 const result = await generateText({
-                    model: openai('gpt-4o'),
+                    model: openai('gpt-5'),
                     messages: openaiMessages,
                     tools,
                     temperature: 0.7,

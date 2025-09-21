@@ -37,7 +37,7 @@ export class ImageProcessor {
       console.log('[PROCESSOR] Creating new AI streaming service...');
       const settings = await this.settingsService.loadSettings();
       console.log('[PROCESSOR] Settings loaded, has API key:', !!settings.openaiKey);
-      this.aiStreamingService = new AIStreamingService(settings.openaiKey || '', 'gpt-4o');
+      this.aiStreamingService = new AIStreamingService(settings.openaiKey || '', 'gpt-5');
     }
     return this.aiStreamingService;
   }

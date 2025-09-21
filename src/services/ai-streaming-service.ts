@@ -30,7 +30,7 @@ export class AIStreamingService {
     private apiKey: string;
     private model: string;
 
-    constructor(apiKey: string, model: string = 'gpt-4o') {
+    constructor(apiKey: string, model: string = 'gpt-5') {
         this.apiKey = apiKey;
         this.model = model;
     }
