@@ -68,12 +68,27 @@ export class ChatHandlers {
                                 prompt: z.string().optional(),
                                 description: z.string().optional(),
                                 // Mask edits allow adding/updating/removing masks to be applied in next generation
-                                masks: z.array(maskEditSchema).optional(),
+                                maskOverrides: z.array(maskEditSchema).optional(),
                             })
                         }),
                         execute: async (input) => input, // Placeholder - AI will call this
                     })
                 };
+
+                // Extract current masks from the latest result
+                const currentMasks = (() => {
+                    try {
+                        const results = Array.isArray(recipe.results) ? recipe.results.filter((r: any) => r && r.success) : [];
+                        const lastResult = results.length > 0 ? results[results.length - 1] : null;
+                        const aiAdjustments = lastResult?.metadata?.aiAdjustments;
+                        return Array.isArray(aiAdjustments?.masks) ? aiAdjustments.masks : [];
+                    } catch {
+                        return [];
+                    }
+                })();
+
+                // Extract existing mask overrides
+                const existingOverrides = Array.isArray((recipe as any).maskOverrides) ? (recipe as any).maskOverrides : [];
 
                 // Create system message with recipe context
                 const systemMessage = `You are a photo editing assistant. Help modify this recipe:
@@ -81,19 +96,35 @@ export class ChatHandlers {
 Recipe: ${recipe.name || 'Unnamed'} (ID: ${recipe.id})
 Prompt: ${recipe.prompt || 'No prompt provided'}
 Options: ${JSON.stringify(recipe.userOptions, null, 2)}
-Results: ${JSON.stringify(recipe.results, null, 2)}
+
+CURRENT MASKS:
+${currentMasks.length > 0 ? currentMasks.map((mask: any, idx: number) => {
+    const id = mask.id || `name:${mask.name}` || `${mask.type}:${mask.subCategoryId ?? ''}:${(mask.referenceX ?? '').toString().slice(0, 4)}:${(mask.referenceY ?? '').toString().slice(0, 4)}`;
+    return `- Mask ${idx + 1}: ${mask.name || 'Unnamed'} (Type: ${mask.type}, ID: ${id})`;
+}).join('\n') : 'No masks currently applied'}
+
+EXISTING MASK OVERRIDES:
+${existingOverrides.length > 0 ? existingOverrides.map((override: any, idx: number) => {
+    const id = override.id || `name:${override.name}` || `${override.type}:${override.subCategoryId ?? ''}:${(override.referenceX ?? '').toString().slice(0, 4)}:${(override.referenceY ?? '').toString().slice(0, 4)}`;
+    return `- Override ${idx + 1}: ${override.op || 'add'} (ID: ${id})`;
+}).join('\n') : 'No mask overrides'}
 
 You can modify:
 - User options: contrast, vibrance, saturationBias, artistStyle, filmStyle
 - AI adjustments: grain_*, vignette_*
 - Prompt text and description
+- Masks: add, update, remove, or remove_all
 
 RESPONSE FORMAT:
 Call modify_recipe once with:
 - message: summary of changes
-- modifications: { userOptions?, aiAdjustments?, prompt?, description?, masks? }
+- modifications: { userOptions?, aiAdjustments?, prompt?, description?, maskOverrides? }
 
-Mask editing: Use stable id for masks, op: 'remove_all' to clear all.
+MASK OPERATIONS:
+- To delete a specific mask: { id: "mask_id", op: "remove" }
+- To delete all masks: { op: "remove_all" }
+- To add a new mask: { op: "add", type: "face_skin", name: "Skin", adjustments: {...} }
+- To update a mask: { id: "mask_id", op: "update", adjustments: {...} }
 
 Key parameters:
 - contrast/vibrance/saturationBias: -100 to 100

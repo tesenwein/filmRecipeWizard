@@ -989,8 +989,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               setProcessDescription((modifications as any).description);
                             }
                             // Apply mask overrides even when they are the only change (store operations)
-                            if (Array.isArray((modifications as any).masks)) {
-                              const ops = (modifications as any).masks as any[];
+                            if (Array.isArray((modifications as any).maskOverrides)) {
+                              const ops = (modifications as any).maskOverrides as any[];
                               let next = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
                               const idOf = (m: any) =>
                                 m?.id ||

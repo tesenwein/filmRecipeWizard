@@ -1,26 +1,25 @@
 import {
-  CheckCircle as CheckCircleIcon,
-  Search as SearchIcon,
-  Settings as SettingsIcon,
-  AutoAwesome as AutoAwesomeIcon,
-  Image as ImageIcon,
-  Palette as PaletteIcon,
-  Tune as TuneIcon,
-  PhotoCamera as PhotoCameraIcon,
+    AutoAwesome as AutoAwesomeIcon,
+    CheckCircle as CheckCircleIcon,
+    Palette as PaletteIcon,
+    PhotoCamera as PhotoCameraIcon,
+    Search as SearchIcon,
+    Settings as SettingsIcon,
+    Tune as TuneIcon
 } from '@mui/icons-material';
 import {
-  Box,
-  LinearProgress,
-  Typography,
-  Grow,
-  Avatar,
-  Card,
-  CardContent,
-  Chip,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText
+    Avatar,
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    Grow,
+    LinearProgress,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
@@ -34,7 +33,7 @@ interface ProcessingViewProps {
 
 interface RecipeStep {
   id: string;
-  type: 'initialization' | 'analysis' | 'color_matching' | 'adjustments' | 'masks' | 'finalization' | 'complete';
+  type: 'initialization' | 'analysis' | 'color_matching' | 'adjustments' | 'finalization' | 'complete';
   title: string;
   description: string;
   status: 'pending' | 'active' | 'completed' | 'error';
@@ -92,16 +91,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           progress: 0,
           timestamp: Date.now(),
           icon: <TuneIcon />
-        },
-        {
-          id: 'masks',
-          type: 'masks',
-          title: 'Creating Local Adjustments',
-          description: 'Generating masks and local adjustments for precise control',
-          status: 'pending',
-          progress: 0,
-          timestamp: Date.now(),
-          icon: <ImageIcon />
         },
         {
           id: 'finalization',

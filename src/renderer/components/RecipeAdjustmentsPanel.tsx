@@ -51,6 +51,7 @@ function hasChange(a: any, b: any): boolean {
   }
 }
 
+
 export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ recipe, pendingModifications, aiAdjustments, showOnlyCurrent }) => {
   const current = (recipe.userOptions || {}) as StyleOptions;
   const proposed = useMemo<StyleOptions>(() => {

@@ -120,6 +120,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         onRejectChanges();
     };
 
+
     const latestAdjustments = (() => {
         try {
             const res = Array.isArray(recipe.results) ? recipe.results.filter(r => r && r.success) : [];
