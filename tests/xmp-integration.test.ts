@@ -124,16 +124,16 @@ describe('XMP Integration Tests', () => {
       // Description parsing is not fully implemented in the current parser
       // expect(parseResult.description).toBe(originalAdjustments.description);
 
-      // Verify basic adjustments (exposure is scaled by 0.5 in the generator)
-      expect(parsedAdjustments.exposure).toBe((originalAdjustments.exposure || 0) * 0.5);
-      expect(parsedAdjustments.contrast).toBe(13); // Actual parsed value
-      expect(parsedAdjustments.highlights).toBe((originalAdjustments.highlights || 0) * 0.5);
-      expect(parsedAdjustments.shadows).toBe((originalAdjustments.shadows || 0) * 0.5);
-      expect(parsedAdjustments.whites).toBe((originalAdjustments.whites || 0) * 0.5);
-      expect(parsedAdjustments.blacks).toBe(8); // Actual parsed value
-      expect(parsedAdjustments.vibrance).toBe(5); // Actual parsed value
-      expect(parsedAdjustments.saturation).toBe(-2); // Actual parsed value
-      expect(parsedAdjustments.clarity).toBe(10); // Actual parsed value
+      // Verify basic adjustments (now using full strength by default)
+      expect(parsedAdjustments.exposure).toBe((originalAdjustments.exposure || 0) * 1.0);
+      expect(parsedAdjustments.contrast).toBe(25); // Actual parsed value
+      expect(parsedAdjustments.highlights).toBe((originalAdjustments.highlights || 0) * 1.0);
+      expect(parsedAdjustments.shadows).toBe((originalAdjustments.shadows || 0) * 1.0);
+      expect(parsedAdjustments.whites).toBe((originalAdjustments.whites || 0) * 1.0);
+      expect(parsedAdjustments.blacks).toBe(15); // Actual parsed value
+      expect(parsedAdjustments.vibrance).toBe(10); // Actual parsed value
+      expect(parsedAdjustments.saturation).toBe(-5); // Actual parsed value
+      expect(parsedAdjustments.clarity).toBe(20); // Actual parsed value
 
       // Verify HSL adjustments are present (exact values may vary due to scaling)
       expect(parsedAdjustments.hue_red).toBeDefined();
@@ -224,15 +224,15 @@ describe('XMP Integration Tests', () => {
       expect(parsedAdjustments.treatment).toBe('black_and_white');
       expect(parsedAdjustments.monochrome).toBe(true);
 
-      // Verify gray mixer adjustments
-      expect(parsedAdjustments.gray_red).toBe(originalAdjustments.gray_red);
-      expect(parsedAdjustments.gray_orange).toBe(originalAdjustments.gray_orange);
-      expect(parsedAdjustments.gray_yellow).toBe(originalAdjustments.gray_yellow);
-      expect(parsedAdjustments.gray_green).toBe(originalAdjustments.gray_green);
-      expect(parsedAdjustments.gray_aqua).toBe(originalAdjustments.gray_aqua);
-      expect(parsedAdjustments.gray_blue).toBe(originalAdjustments.gray_blue);
-      expect(parsedAdjustments.gray_purple).toBe(originalAdjustments.gray_purple);
-      expect(parsedAdjustments.gray_magenta).toBe(originalAdjustments.gray_magenta);
+      // Verify gray mixer adjustments (scaled by 0.5 and rounded in generation)
+      expect(parsedAdjustments.gray_red).toBe(Math.round((originalAdjustments.gray_red || 0) * 1.0));
+      expect(parsedAdjustments.gray_orange).toBe(Math.round((originalAdjustments.gray_orange || 0) * 1.0));
+      expect(parsedAdjustments.gray_yellow).toBe(Math.round((originalAdjustments.gray_yellow || 0) * 1.0));
+      expect(parsedAdjustments.gray_green).toBe(Math.round((originalAdjustments.gray_green || 0) * 1.0));
+      expect(parsedAdjustments.gray_aqua).toBe(Math.round((originalAdjustments.gray_aqua || 0) * 1.0));
+      expect(parsedAdjustments.gray_blue).toBe(Math.round((originalAdjustments.gray_blue || 0) * 1.0));
+      expect(parsedAdjustments.gray_purple).toBe(Math.round((originalAdjustments.gray_purple || 0) * 1.0));
+      expect(parsedAdjustments.gray_magenta).toBe(Math.round((originalAdjustments.gray_magenta || 0) * 1.0));
     });
 
     it('should handle masks round-trip correctly', () => {
@@ -515,8 +515,8 @@ describe('XMP Integration Tests', () => {
       const regeneratedXMP = generateXMPContent(adjustments, include);
       expect(regeneratedXMP).toContain('<x:xmpmeta xmlns:x="adobe:ns:meta/"');
       expect(regeneratedXMP).toContain('crs:HueAdjustmentRed="-66"');
-      expect(regeneratedXMP).toContain('crs:SaturationAdjustmentRed="-32"'); // Actual value from parsed data
-      expect(regeneratedXMP).toContain('crs:LuminanceAdjustmentRed="-22"'); // Actual value from parsed data
+      expect(regeneratedXMP).toContain('crs:SaturationAdjustmentRed="-65"'); // Actual value from parsed data
+      expect(regeneratedXMP).toContain('crs:LuminanceAdjustmentRed="-44"'); // Actual value from parsed data
     });
   });
 

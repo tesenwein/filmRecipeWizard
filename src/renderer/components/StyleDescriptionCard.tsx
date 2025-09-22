@@ -57,7 +57,6 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
     { icon: <NightlightIcon sx={{ fontSize: 16 }} />, label: 'Dark & Dramatic', category: 'style' },
     { icon: <BubbleChartIcon sx={{ fontSize: 16 }} />, label: 'Minimalist', category: 'style' },
     { icon: <WavesIcon sx={{ fontSize: 16 }} />, label: 'Grunge', category: 'style' },
-    { icon: <MovieFilterIcon sx={{ fontSize: 16 }} />, label: 'Vintage', category: 'style' },
     
     // Color Palettes
     { icon: <WbSunnyIcon sx={{ fontSize: 16 }} />, label: 'Warm Sunset', category: 'color' },

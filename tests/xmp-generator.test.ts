@@ -89,15 +89,15 @@ describe('XMP Generator', () => {
 
       const result = generateXMPContent(adjustments, include);
 
-      expect(result).toContain('<crs:Exposure2012>0.25</crs:Exposure2012>'); // 0.5 * 0.5
-      expect(result).toContain('<crs:Contrast2012>13</crs:Contrast2012>'); // 25 * 0.5
-      expect(result).toContain('<crs:Highlights2012>-15</crs:Highlights2012>'); // -30 * 0.5
-      expect(result).toContain('<crs:Shadows2012>20</crs:Shadows2012>'); // 40 * 0.5
-      expect(result).toContain('<crs:Whites2012>-10</crs:Whites2012>'); // -20 * 0.5
-      expect(result).toContain('<crs:Blacks2012>8</crs:Blacks2012>'); // 15 * 0.5
-      expect(result).toContain('<crs:Vibrance>5</crs:Vibrance>'); // 10 * 0.5
-      expect(result).toContain('<crs:Saturation>-2</crs:Saturation>'); // -5 * 0.5
-      expect(result).toContain('<crs:Clarity2012>10</crs:Clarity2012>'); // 20 * 0.5
+      expect(result).toContain('<crs:Exposure2012>0.50</crs:Exposure2012>'); // 0.5 * 1.0
+      expect(result).toContain('<crs:Contrast2012>25</crs:Contrast2012>'); // 25 * 1.0
+      expect(result).toContain('<crs:Highlights2012>-30</crs:Highlights2012>'); // -30 * 1.0
+      expect(result).toContain('<crs:Shadows2012>40</crs:Shadows2012>'); // 40 * 1.0
+      expect(result).toContain('<crs:Whites2012>-20</crs:Whites2012>'); // -20 * 1.0
+      expect(result).toContain('<crs:Blacks2012>15</crs:Blacks2012>'); // 15 * 1.0
+      expect(result).toContain('<crs:Vibrance>10</crs:Vibrance>'); // 10 * 1.0
+      expect(result).toContain('<crs:Saturation>-5</crs:Saturation>'); // -5 * 1.0
+      expect(result).toContain('<crs:Clarity2012>20</crs:Clarity2012>'); // 20 * 1.0
     });
 
     it('should handle undefined values gracefully', () => {
@@ -111,7 +111,7 @@ describe('XMP Generator', () => {
 
       const result = generateXMPContent(adjustments, include);
 
-      expect(result).toContain('<crs:Exposure2012>0.25</crs:Exposure2012>'); // 0.5 * 0.5
+      expect(result).toContain('<crs:Exposure2012>0.50</crs:Exposure2012>'); // 0.5 * 1.0
       // Should not contain undefined values
       expect(result).not.toContain('undefined');
       expect(result).not.toContain('null');
@@ -166,25 +166,25 @@ describe('XMP Generator', () => {
       expect(result).toContain('crs:HueAdjustmentPurple="-25"');
       expect(result).toContain('crs:HueAdjustmentMagenta="20"');
 
-      // Check saturation adjustments (scaled by 0.5)
-      expect(result).toContain('crs:SaturationAdjustmentRed="-15"'); // -30 * 0.5
-      expect(result).toContain('crs:SaturationAdjustmentOrange="10"'); // 20 * 0.5
-      expect(result).toContain('crs:SaturationAdjustmentYellow="-7"'); // -15 * 0.5
-      expect(result).toContain('crs:SaturationAdjustmentGreen="18"'); // 35 * 0.5
-      expect(result).toContain('crs:SaturationAdjustmentAqua="-10"'); // -20 * 0.5
-      expect(result).toContain('crs:SaturationAdjustmentBlue="13"'); // 25 * 0.5
-      expect(result).toContain('crs:SaturationAdjustmentPurple="-17"'); // -35 * 0.5
-      expect(result).toContain('crs:SaturationAdjustmentMagenta="8"'); // 15 * 0.5
+      // Check saturation adjustments (now using full strength)
+      expect(result).toContain('crs:SaturationAdjustmentRed="-30"'); // -30 * 1.0
+      expect(result).toContain('crs:SaturationAdjustmentOrange="20"'); // 20 * 1.0
+      expect(result).toContain('crs:SaturationAdjustmentYellow="-15"'); // -15 * 1.0
+      expect(result).toContain('crs:SaturationAdjustmentGreen="35"'); // 35 * 1.0
+      expect(result).toContain('crs:SaturationAdjustmentAqua="-20"'); // -20 * 1.0
+      expect(result).toContain('crs:SaturationAdjustmentBlue="25"'); // 25 * 1.0
+      expect(result).toContain('crs:SaturationAdjustmentPurple="-35"'); // -35 * 1.0
+      expect(result).toContain('crs:SaturationAdjustmentMagenta="15"'); // 15 * 1.0
 
-      // Check luminance adjustments (scaled by 0.5)
-      expect(result).toContain('crs:LuminanceAdjustmentRed="-12"'); // -25 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentOrange="8"'); // 15 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentYellow="-10"'); // -20 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentGreen="15"'); // 30 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentAqua="-7"'); // -15 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentBlue="10"'); // 20 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentPurple="-15"'); // -30 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentMagenta="5"'); // 10 * 0.5
+      // Check luminance adjustments (now using full strength)
+      expect(result).toContain('crs:LuminanceAdjustmentRed="-25"'); // -25 * 1.0
+      expect(result).toContain('crs:LuminanceAdjustmentOrange="15"'); // 15 * 1.0
+      expect(result).toContain('crs:LuminanceAdjustmentYellow="-20"'); // -20 * 1.0
+      expect(result).toContain('crs:LuminanceAdjustmentGreen="30"'); // 30 * 1.0
+      expect(result).toContain('crs:LuminanceAdjustmentAqua="-15"'); // -15 * 1.0
+      expect(result).toContain('crs:LuminanceAdjustmentBlue="20"'); // 20 * 1.0
+      expect(result).toContain('crs:LuminanceAdjustmentPurple="-30"'); // -30 * 1.0
+      expect(result).toContain('crs:LuminanceAdjustmentMagenta="10"'); // 10 * 1.0
     });
 
     it('should not include HSL adjustments when disabled', () => {
@@ -245,14 +245,116 @@ describe('XMP Generator', () => {
 
       const result = generateXMPContent(adjustments, include);
 
-      expect(result).toContain('<crs:GrayMixerRed>-30</crs:GrayMixerRed>');
-      expect(result).toContain('<crs:GrayMixerOrange>20</crs:GrayMixerOrange>');
-      expect(result).toContain('<crs:GrayMixerYellow>-15</crs:GrayMixerYellow>');
-      expect(result).toContain('<crs:GrayMixerGreen>25</crs:GrayMixerGreen>');
-      expect(result).toContain('<crs:GrayMixerAqua>-20</crs:GrayMixerAqua>');
-      expect(result).toContain('<crs:GrayMixerBlue>15</crs:GrayMixerBlue>');
-      expect(result).toContain('<crs:GrayMixerPurple>-25</crs:GrayMixerPurple>');
-      expect(result).toContain('<crs:GrayMixerMagenta>10</crs:GrayMixerMagenta>');
+      expect(result).toContain('<crs:GrayMixerRed>-30</crs:GrayMixerRed>'); // -30 * 1.0
+      expect(result).toContain('<crs:GrayMixerOrange>20</crs:GrayMixerOrange>'); // 20 * 1.0
+      expect(result).toContain('<crs:GrayMixerYellow>-15</crs:GrayMixerYellow>'); // -15 * 1.0
+      expect(result).toContain('<crs:GrayMixerGreen>25</crs:GrayMixerGreen>'); // 25 * 1.0
+      expect(result).toContain('<crs:GrayMixerAqua>-20</crs:GrayMixerAqua>'); // -20 * 1.0
+      expect(result).toContain('<crs:GrayMixerBlue>15</crs:GrayMixerBlue>'); // 15 * 1.0
+      expect(result).toContain('<crs:GrayMixerPurple>-25</crs:GrayMixerPurple>'); // -25 * 1.0
+      expect(result).toContain('<crs:GrayMixerMagenta>10</crs:GrayMixerMagenta>'); // 10 * 1.0
+    });
+  });
+
+  describe('Scaling with custom strength', () => {
+    it('should apply custom strength scaling to basic tone values', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Custom Strength Test',
+        exposure: 0.5,
+        contrast: 25,
+        highlights: -30,
+        shadows: 40,
+        whites: -20,
+        blacks: 15,
+        vibrance: 10,
+        saturation: -5,
+        clarity: 20,
+      };
+
+      const include = { basic: true, hsl: false, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false };
+
+      // Test with 0.5 strength
+      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+
+      expect(result).toContain('<crs:Exposure2012>0.25</crs:Exposure2012>'); // 0.5 * 0.5
+      expect(result).toContain('<crs:Contrast2012>13</crs:Contrast2012>'); // 25 * 0.5
+      expect(result).toContain('<crs:Highlights2012>-15</crs:Highlights2012>'); // -30 * 0.5
+      expect(result).toContain('<crs:Shadows2012>20</crs:Shadows2012>'); // 40 * 0.5
+      expect(result).toContain('<crs:Whites2012>-10</crs:Whites2012>'); // -20 * 0.5
+      expect(result).toContain('<crs:Blacks2012>8</crs:Blacks2012>'); // 15 * 0.5
+      expect(result).toContain('<crs:Vibrance>5</crs:Vibrance>'); // 10 * 0.5
+      expect(result).toContain('<crs:Saturation>-2</crs:Saturation>'); // -5 * 0.5
+      expect(result).toContain('<crs:Clarity2012>10</crs:Clarity2012>'); // 20 * 0.5
+    });
+
+    it('should apply custom strength scaling to B&W mixer values', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Custom Strength B&W Test',
+        treatment: 'black_and_white',
+        monochrome: true,
+        gray_red: -30,
+        gray_orange: 20,
+        gray_yellow: -15,
+        gray_green: 25,
+        gray_aqua: -20,
+        gray_blue: 15,
+        gray_purple: -25,
+        gray_magenta: 10,
+      };
+
+      const include = { basic: true, hsl: false, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false };
+
+      // Test with 0.5 strength
+      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+
+      expect(result).toContain('<crs:GrayMixerRed>-15</crs:GrayMixerRed>'); // -30 * 0.5
+      expect(result).toContain('<crs:GrayMixerOrange>10</crs:GrayMixerOrange>'); // 20 * 0.5
+      expect(result).toContain('<crs:GrayMixerYellow>-7</crs:GrayMixerYellow>'); // -15 * 0.5
+      expect(result).toContain('<crs:GrayMixerGreen>13</crs:GrayMixerGreen>'); // 25 * 0.5
+      expect(result).toContain('<crs:GrayMixerAqua>-10</crs:GrayMixerAqua>'); // -20 * 0.5
+      expect(result).toContain('<crs:GrayMixerBlue>8</crs:GrayMixerBlue>'); // 15 * 0.5
+      expect(result).toContain('<crs:GrayMixerPurple>-12</crs:GrayMixerPurple>'); // -25 * 0.5
+      expect(result).toContain('<crs:GrayMixerMagenta>5</crs:GrayMixerMagenta>'); // 10 * 0.5
+    });
+
+    it('should apply custom strength scaling to HSL values (except hue)', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Custom Strength HSL Test',
+        hue_red: 10, // Hue should not be scaled
+        sat_red: 20, // Saturation should be scaled
+        lum_red: -15, // Luminance should be scaled
+      };
+
+      const include = { basic: false, hsl: true, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false };
+
+      // Test with 0.5 strength
+      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+
+      expect(result).toContain('crs:HueAdjustmentRed="10"'); // Hue not scaled
+      expect(result).toContain('crs:SaturationAdjustmentRed="10"'); // 20 * 0.5
+      expect(result).toContain('crs:LuminanceAdjustmentRed="-7"'); // -15 * 0.5
+    });
+
+    it('should apply custom strength scaling to color grading values (except hue)', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Custom Strength Color Grading Test',
+        color_grade_shadow_hue: 180, // Hue should not be scaled
+        color_grade_shadow_sat: 30, // Saturation should be scaled
+        color_grade_shadow_lum: -20, // Luminance should be scaled
+        color_grade_blending: 50, // Blending should be scaled
+        color_grade_balance: -25, // Balance should be scaled
+      };
+
+      const include = { basic: false, hsl: false, colorGrading: true, curves: false, grain: false, vignette: false, pointColor: false };
+
+      // Test with 0.5 strength
+      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+
+      expect(result).toContain('<crs:ColorGradeShadowHue>180</crs:ColorGradeShadowHue>'); // Hue not scaled
+      expect(result).toContain('<crs:ColorGradeShadowSat>15</crs:ColorGradeShadowSat>'); // 30 * 0.5
+      expect(result).toContain('<crs:ColorGradeShadowLum>-10</crs:ColorGradeShadowLum>'); // -20 * 0.5
+      expect(result).toContain('<crs:ColorGradeBlending>25</crs:ColorGradeBlending>'); // 50 * 0.5
+      expect(result).toContain('<crs:ColorGradeBalance>-12</crs:ColorGradeBalance>'); // -25 * 0.5
     });
   });
 
@@ -288,27 +390,27 @@ describe('XMP Generator', () => {
 
       // Check shadow color grading
       expect(result).toContain('<crs:ColorGradeShadowHue>200</crs:ColorGradeShadowHue>');
-      expect(result).toContain('<crs:ColorGradeShadowSat>15</crs:ColorGradeShadowSat>'); // 30 * 0.5
-      expect(result).toContain('<crs:ColorGradeShadowLum>-10</crs:ColorGradeShadowLum>'); // -20 * 0.5
+      expect(result).toContain('<crs:ColorGradeShadowSat>30</crs:ColorGradeShadowSat>'); // 30 * 1.0
+      expect(result).toContain('<crs:ColorGradeShadowLum>-20</crs:ColorGradeShadowLum>'); // -20 * 1.0
 
       // Check midtone color grading
       expect(result).toContain('<crs:ColorGradeMidtoneHue>180</crs:ColorGradeMidtoneHue>');
-      expect(result).toContain('<crs:ColorGradeMidtoneSat>13</crs:ColorGradeMidtoneSat>'); // 25 * 0.5
-      expect(result).toContain('<crs:ColorGradeMidtoneLum>5</crs:ColorGradeMidtoneLum>'); // 10 * 0.5
+      expect(result).toContain('<crs:ColorGradeMidtoneSat>25</crs:ColorGradeMidtoneSat>'); // 25 * 1.0
+      expect(result).toContain('<crs:ColorGradeMidtoneLum>10</crs:ColorGradeMidtoneLum>'); // 10 * 1.0
 
       // Check highlight color grading
       expect(result).toContain('<crs:ColorGradeHighlightHue>160</crs:ColorGradeHighlightHue>');
-      expect(result).toContain('<crs:ColorGradeHighlightSat>10</crs:ColorGradeHighlightSat>'); // 20 * 0.5
-      expect(result).toContain('<crs:ColorGradeHighlightLum>8</crs:ColorGradeHighlightLum>'); // 15 * 0.5
+      expect(result).toContain('<crs:ColorGradeHighlightSat>20</crs:ColorGradeHighlightSat>'); // 20 * 1.0
+      expect(result).toContain('<crs:ColorGradeHighlightLum>15</crs:ColorGradeHighlightLum>'); // 15 * 1.0
 
       // Check global color grading
       expect(result).toContain('<crs:ColorGradeGlobalHue>170</crs:ColorGradeGlobalHue>');
-      expect(result).toContain('<crs:ColorGradeGlobalSat>8</crs:ColorGradeGlobalSat>'); // 15 * 0.5
-      expect(result).toContain('<crs:ColorGradeGlobalLum>-2</crs:ColorGradeGlobalLum>'); // -5 * 0.5
+      expect(result).toContain('<crs:ColorGradeGlobalSat>15</crs:ColorGradeGlobalSat>'); // 15 * 1.0
+      expect(result).toContain('<crs:ColorGradeGlobalLum>-5</crs:ColorGradeGlobalLum>'); // -5 * 1.0
 
       // Check blending and balance
-      expect(result).toContain('<crs:ColorGradeBlending>38</crs:ColorGradeBlending>'); // 75 * 0.5
-      expect(result).toContain('<crs:ColorGradeBalance>13</crs:ColorGradeBalance>'); // 25 * 0.5
+      expect(result).toContain('<crs:ColorGradeBlending>75</crs:ColorGradeBlending>'); // 75 * 1.0
+      expect(result).toContain('<crs:ColorGradeBalance>25</crs:ColorGradeBalance>'); // 25 * 1.0
     });
   });
 
@@ -854,14 +956,14 @@ describe('XMP Generator', () => {
 
       const result = generateXMPContent(adjustments, include);
 
-      expect(result).toContain('<crs:Exposure2012>2.50</crs:Exposure2012>'); // 5 * 0.5
-      expect(result).toContain('<crs:Contrast2012>50</crs:Contrast2012>'); // 100 * 0.5
-      expect(result).toContain('<crs:Highlights2012>-50</crs:Highlights2012>'); // -100 * 0.5
-      expect(result).toContain('<crs:Shadows2012>50</crs:Shadows2012>'); // 100 * 0.5
-      expect(result).toContain('<crs:Whites2012>-50</crs:Whites2012>'); // -100 * 0.5
-      expect(result).toContain('<crs:Blacks2012>50</crs:Blacks2012>'); // 100 * 0.5
-      expect(result).toContain('<crs:Vibrance>50</crs:Vibrance>'); // 100 * 0.5
-      expect(result).toContain('<crs:Saturation>0</crs:Saturation>'); // -100 * 0.5 = -50, but B&W sets to 0
+      expect(result).toContain('<crs:Exposure2012>5.00</crs:Exposure2012>'); // 5 * 1.0
+      expect(result).toContain('<crs:Contrast2012>100</crs:Contrast2012>'); // 100 * 1.0
+      expect(result).toContain('<crs:Highlights2012>-100</crs:Highlights2012>'); // -100 * 1.0
+      expect(result).toContain('<crs:Shadows2012>100</crs:Shadows2012>'); // 100 * 1.0
+      expect(result).toContain('<crs:Whites2012>-100</crs:Whites2012>'); // -100 * 1.0
+      expect(result).toContain('<crs:Blacks2012>100</crs:Blacks2012>'); // 100 * 1.0
+      expect(result).toContain('<crs:Vibrance>100</crs:Vibrance>'); // 100 * 1.0
+      expect(result).toContain('<crs:Saturation>0</crs:Saturation>'); // -100 * 1.0 = -100, but B&W sets to 0
       // HSL values are not included in B&W treatment
       // expect(result).toContain('<crs:HueAdjustmentRed>-50</crs:HueAdjustmentRed>'); // -100 * 0.5
       // expect(result).toContain('<crs:SaturationAdjustmentRed>50</crs:SaturationAdjustmentRed>'); // 100 * 0.5

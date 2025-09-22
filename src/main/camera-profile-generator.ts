@@ -1,3 +1,5 @@
+import { extractCurveData, generateAllToneCurvesXML } from '../shared/curve-utils';
+
 export function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
     .replace(/[xy]/g, function (c) {
@@ -177,59 +179,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   })() : '';
 
   // Tone curves block
-  const toneCurvesBlock = (() => {
-    const curves = [];
-
-    // Main tone curve
-    if (Array.isArray(adjustments.tone_curve) && adjustments.tone_curve.length > 0) {
-      const points = adjustments.tone_curve
-        .map((p: any) => `${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}`)
-        .join('</rdf:li>\n          <rdf:li>');
-      curves.push(`<crs:ToneCurvePV2012>
-        <rdf:Seq>
-          <rdf:li>${points}</rdf:li>
-        </rdf:Seq>
-      </crs:ToneCurvePV2012>`);
-    }
-
-    // Red tone curve
-    if (Array.isArray(adjustments.tone_curve_red) && adjustments.tone_curve_red.length > 0) {
-      const points = adjustments.tone_curve_red
-        .map((p: any) => `${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}`)
-        .join('</rdf:li>\n          <rdf:li>');
-      curves.push(`<crs:ToneCurvePV2012Red>
-        <rdf:Seq>
-          <rdf:li>${points}</rdf:li>
-        </rdf:Seq>
-      </crs:ToneCurvePV2012Red>`);
-    }
-
-    // Green tone curve
-    if (Array.isArray(adjustments.tone_curve_green) && adjustments.tone_curve_green.length > 0) {
-      const points = adjustments.tone_curve_green
-        .map((p: any) => `${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}`)
-        .join('</rdf:li>\n          <rdf:li>');
-      curves.push(`<crs:ToneCurvePV2012Green>
-        <rdf:Seq>
-          <rdf:li>${points}</rdf:li>
-        </rdf:Seq>
-      </crs:ToneCurvePV2012Green>`);
-    }
-
-    // Blue tone curve
-    if (Array.isArray(adjustments.tone_curve_blue) && adjustments.tone_curve_blue.length > 0) {
-      const points = adjustments.tone_curve_blue
-        .map((p: any) => `${Math.max(0, Math.min(255, Math.round(p.input || 0)))}, ${Math.max(0, Math.min(255, Math.round(p.output || 0)))}`)
-        .join('</rdf:li>\n          <rdf:li>');
-      curves.push(`<crs:ToneCurvePV2012Blue>
-        <rdf:Seq>
-          <rdf:li>${points}</rdf:li>
-        </rdf:Seq>
-      </crs:ToneCurvePV2012Blue>`);
-    }
-
-    return curves.join('\n');
-  })();
+  const toneCurvesBlock = generateAllToneCurvesXML(extractCurveData(adjustments));
 
   // Grain block
   const grainBlock = [
@@ -260,7 +210,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
         crs:ProfileName="${cameraProfileName}"
         crs:Look=""
         crs:HasSettings="True"
-        crs:PresetType="Normal"
+        crs:PresetType="Look"
         crs:Cluster="film-recipe-wizard"
         crs:ClusterGroup="film-recipe-wizard"
         crs:PresetSubtype="Normal"
