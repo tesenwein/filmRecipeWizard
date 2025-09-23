@@ -208,3 +208,4 @@ function applyCurveToValue(value: number, curve: CurvePoint[]): number {
     return curve[curve.length - 1].output / 255;
   }
 }
+
