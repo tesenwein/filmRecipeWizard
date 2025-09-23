@@ -3,6 +3,7 @@ import { generateText, tool } from 'ai';
 import { ipcMain } from 'electron';
 import { z } from 'zod';
 import { maskEditSchemaChat } from '../../services/ai-shared';
+import { maskIdentifier } from '../../shared/mask-utils';
 import { SettingsService } from '../settings-service';
 
 export class ChatHandlers {
@@ -99,13 +100,13 @@ Options: ${JSON.stringify(recipe.userOptions, null, 2)}
 
 CURRENT MASKS:
 ${currentMasks.length > 0 ? currentMasks.map((mask: any, idx: number) => {
-    const id = mask.id || `name:${mask.name}` || `${mask.type}:${mask.subCategoryId ?? ''}:${(mask.referenceX ?? '').toString().slice(0, 4)}:${(mask.referenceY ?? '').toString().slice(0, 4)}`;
+    const id = maskIdentifier(mask);
     return `- Mask ${idx + 1}: ${mask.name || 'Unnamed'} (Type: ${mask.type}, ID: ${id})`;
 }).join('\n') : 'No masks currently applied'}
 
 EXISTING MASK OVERRIDES:
 ${existingOverrides.length > 0 ? existingOverrides.map((override: any, idx: number) => {
-    const id = override.id || `name:${override.name}` || `${override.type}:${override.subCategoryId ?? ''}:${(override.referenceX ?? '').toString().slice(0, 4)}:${(override.referenceY ?? '').toString().slice(0, 4)}`;
+    const id = maskIdentifier(override);
     return `- Override ${idx + 1}: ${override.op || 'add'} (ID: ${id})`;
 }).join('\n') : 'No mask overrides'}
 

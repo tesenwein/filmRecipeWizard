@@ -273,36 +273,44 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         </Section>
       )}
 
-      {/* Proposed mask changes from chat */}
-      {!showOnlyCurrent && Array.isArray((pendingModifications as any)?.masks) && ((pendingModifications as any).masks.length > 0) && (
+      {/* Proposed mask changes from chat (prefer maskOverrides, fallback to masks) */}
+      {!showOnlyCurrent && (() => {
+        const pm: any = pendingModifications as any;
+        const proposed = (pm && (pm.maskOverrides || pm.masks)) as any[] | undefined;
+        return Array.isArray(proposed) && proposed.length > 0;
+      })() && (
         <Section title="Proposed Masks">
           <Box>
-            {(pendingModifications as any).masks.map((m: any, idx: number) => {
-              const adj = m?.adjustments || {};
-              const adjKeys = Object.keys(adj).filter(k => typeof (adj as any)[k] === 'number');
-              const name = m?.name || `Mask ${idx + 1}`;
-              const type = m?.type || 'mask';
-              const op = m?.op || 'add';
-              return (
-                <Paper key={idx} variant="outlined" sx={{ p: 1, mb: 1, backgroundColor: 'white', overflowX: 'hidden' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                    <Chip size="small" color={op === 'remove' ? 'error' : op === 'update' ? 'warning' : 'success'} label={op.toUpperCase()} />
-                    <Chip size="small" label={name} />
-                    <Chip size="small" color="info" label={`Type: ${type}`} />
-                    {typeof m.subCategoryId === 'number' && (
-                      <Chip size="small" variant="outlined" label={`SubCat: ${m.subCategoryId}`} />
-                    )}
-                  </Box>
-                  {adjKeys.length > 0 && (
-                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                      {adjKeys.map(k => (
-                        <Chip key={k} size="small" variant="outlined" label={`${k.replace('local_', '')}: ${(adj as any)[k]}`} />
-                      ))}
+            {(() => {
+              const pm: any = pendingModifications as any;
+              const proposed = (pm && (pm.maskOverrides || pm.masks)) as any[];
+              return proposed.map((m: any, idx: number) => {
+                const adj = m?.adjustments || {};
+                const adjKeys = Object.keys(adj).filter(k => typeof (adj as any)[k] === 'number');
+                const name = m?.name || `Mask ${idx + 1}`;
+                const type = m?.type || 'mask';
+                const op = m?.op || 'add';
+                return (
+                  <Paper key={idx} variant="outlined" sx={{ p: 1, mb: 1, backgroundColor: 'white', overflowX: 'hidden' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      <Chip size="small" color={op === 'remove' ? 'error' : op === 'update' ? 'warning' : 'success'} label={op.toUpperCase()} />
+                      <Chip size="small" label={name} />
+                      <Chip size="small" color="info" label={`Type: ${type}`} />
+                      {typeof m.subCategoryId === 'number' && (
+                        <Chip size="small" variant="outlined" label={`SubCat: ${m.subCategoryId}`} />
+                      )}
                     </Box>
-                  )}
-                </Paper>
-              );
-            })}
+                    {adjKeys.length > 0 && (
+                      <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                        {adjKeys.map(k => (
+                          <Chip key={k} size="small" variant="outlined" label={`${k.replace('local_', '')}: ${(adj as any)[k]}`} />
+                        ))}
+                      </Box>
+                    )}
+                  </Paper>
+                );
+              });
+            })()}
           </Box>
         </Section>
       )}

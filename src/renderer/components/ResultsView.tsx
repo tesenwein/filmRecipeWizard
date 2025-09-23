@@ -15,6 +15,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import { Avatar, Box, Button, Chip, Divider, IconButton, Paper, Slider, Tab, Tabs, TextField, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
+import { applyMaskOverrides, findMaskIndexFlexible, maskIdentifier } from '../../shared/mask-utils';
 import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -390,38 +391,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // Name editing handled by RecipeNameHeader subcomponent
 
-  // Compute effective masks by applying overrides (add/update/remove) to AI masks
-  const getEffectiveMasks = (aiMasks: any[] | undefined, overrides: any[] | undefined) => {
-    const baseMasks = Array.isArray(aiMasks) ? [...aiMasks] : [];
-    const ops = Array.isArray(overrides) ? overrides : [];
-    const idOf = (m: any) => (m?.name && typeof m.name === 'string' ? m.name : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}`);
-    const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
-    for (const op of ops) {
-      const idx = indexOf(baseMasks, op);
-      const kind = (op?.op || 'add') as string;
-      if (kind === 'remove') {
-        if (idx >= 0) baseMasks.splice(idx, 1);
-        continue;
-      }
-      if (kind === 'update') {
-        if (idx >= 0) {
-          const prev = baseMasks[idx] || {};
-          baseMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
-        } else {
-          baseMasks.push(op);
-        }
-        continue;
-      }
-      // default add
-      if (idx >= 0) {
-        const prev = baseMasks[idx] || {};
-        baseMasks[idx] = { ...prev, ...op, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
-      } else {
-        baseMasks.push(op);
-      }
-    }
-    return baseMasks;
-  };
+  // Compute effective masks by applying overrides (add/update/remove/clear) to AI masks
+  const getEffectiveMasks = (aiMasks: any[] | undefined, overrides: any[] | undefined) =>
+    applyMaskOverrides(aiMasks as any[], overrides as any[]);
 
   // Generate default options - AI gets access to all features
   const getDefaultOptions = () =>
@@ -471,58 +443,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
     // Apply mask overrides if they exist
     if (Array.isArray(maskOverrides) && maskOverrides.length > 0) {
-      const idOf = (m: any) =>
-        m?.id ||
-        (m?.name
-          ? `name:${m.name}`
-          : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '')
-              .toString()
-              .slice(0, 4)}`);
-      const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
-
-      let masks = Array.isArray(effectiveAdjustments.masks) ? [...effectiveAdjustments.masks] : [];
-      const ops = maskOverrides;
-
-      for (const op of ops) {
-        const operation = op.op || 'add';
-        if (operation === 'remove_all' || operation === 'clear') {
-          masks = [];
-          continue;
-        }
-        const idx = indexOf(masks, op);
-        if (operation === 'remove') {
-          if (idx >= 0) masks.splice(idx, 1);
-          continue;
-        }
-        if (operation === 'update') {
-          if (idx >= 0) {
-            const prev = masks[idx] || {};
-            masks[idx] = {
-              ...prev,
-              ...op,
-              id: (prev as any).id || (op as any).id,
-              adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
-            };
-          } else {
-            masks.push({ ...op, id: (op as any).id || idOf(op) });
-          }
-          continue;
-        }
-        // default add
-        if (idx >= 0) {
-          const prev = masks[idx] || {};
-          masks[idx] = {
-            ...prev,
-            ...op,
-            id: (prev as any).id || (op as any).id || idOf(op),
-            adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
-          };
-        } else {
-          masks.push({ ...op, id: (op as any).id || idOf(op) });
-        }
-      }
-
-      effectiveAdjustments.masks = masks;
+      const masks = Array.isArray(effectiveAdjustments.masks) ? effectiveAdjustments.masks : [];
+      effectiveAdjustments.masks = applyMaskOverrides(masks as any[], maskOverrides as any[]) as any;
     }
 
     // Apply global adjustment overrides (e.g., grain, vignette) if present
@@ -989,28 +911,29 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               setProcessDescription((modifications as any).description);
                             }
                             // Apply mask overrides even when they are the only change (store operations)
-                            if (Array.isArray((modifications as any).maskOverrides)) {
-                              const ops = (modifications as any).maskOverrides as any[];
+                            const modAny = modifications as any;
+                            const incomingOps: any[] | undefined = Array.isArray(modAny.maskOverrides)
+                              ? (modAny.maskOverrides as any[])
+                              : Array.isArray(modAny.masks)
+                              ? (modAny.masks as any[])
+                              : undefined;
+                            if (Array.isArray(incomingOps)) {
+                              const ops = incomingOps;
                               let next = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
-                              const idOf = (m: any) =>
-                                m?.id ||
-                                (m?.name
-                                  ? `name:${m.name}`
-                                  : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(
-                                      m?.referenceY ?? ''
-                                    )
-                                      .toString()
-                                      .slice(0, 4)}`);
-                              const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
                               for (const op of ops) {
                                 const operation = op.op || 'add';
                                 if (operation === 'remove_all' || operation === 'clear') {
                                   next = [];
                                   continue;
                                 }
-                                const idx = indexOf(next, op);
+                                const idx = findMaskIndexFlexible(next as any[], op);
                                 if (operation === 'remove') {
-                                  if (idx >= 0) next.splice(idx, 1);
+                                  if (idx >= 0) {
+                                    next.splice(idx, 1);
+                                  } else {
+                                    // Persist the intent to remove even if not in overrides yet
+                                    next.push({ ...op, id: (op as any).id || maskIdentifier(op) } as any);
+                                  }
                                   continue;
                                 }
                                 if (operation === 'update') {
@@ -1019,11 +942,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                     next[idx] = {
                                       ...prev,
                                       ...op,
-                                      id: prev.id || op.id,
-                                      adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
-                                    };
+                                      id: (prev as any).id || (op as any).id || maskIdentifier(op),
+                                      adjustments: { ...(prev as any).adjustments || {}, ...(op as any).adjustments || {} },
+                                    } as any;
                                   } else {
-                                    next.push({ ...op, id: op.id || idOf(op) });
+                                    next.push({ ...op, id: (op as any).id || maskIdentifier(op) } as any);
                                   }
                                   continue;
                                 }
@@ -1033,11 +956,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   next[idx] = {
                                     ...prev,
                                     ...op,
-                                    id: prev.id || op.id || idOf(op),
-                                    adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) },
-                                  };
+                                    id: (prev as any).id || (op as any).id || maskIdentifier(op),
+                                    adjustments: { ...(prev as any).adjustments || {}, ...(op as any).adjustments || {} },
+                                  } as any;
                                 } else {
-                                  next.push({ ...op, id: op.id || idOf(op) });
+                                  next.push({ ...op, id: (op as any).id || maskIdentifier(op) } as any);
                                 }
                               }
                               updates.maskOverrides = next;

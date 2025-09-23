@@ -7,6 +7,7 @@ import {
 } from '@mui/icons-material';
 import { Alert, Avatar, Box, Button, CircularProgress, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
+import { applyMaskOverrides } from '../../shared/mask-utils';
 import { Recipe } from '../../shared/types';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
 
@@ -134,41 +135,11 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     // Merge recipe.maskOverrides into latest adjustments for a single, effective masks view
     const effectiveAdjustments = (() => {
         const aiAdj = (latestAdjustments as any) || {};
-        const overrides = (recipe as any)?.maskOverrides as any[] | undefined;
-        const idOf = (m: any) =>
-            m?.id ||
-            (m?.name ? `name:${m.name}` : `${m?.type || 'mask'}:${m?.subCategoryId ?? ''}:${(m?.referenceX ?? '').toString().slice(0, 4)}:${(m?.referenceY ?? '').toString().slice(0, 4)}`);
-        const indexOf = (list: any[], m: any) => list.findIndex(x => idOf(x) === idOf(m));
-        let masks = Array.isArray(aiAdj.masks) ? [...aiAdj.masks] : [];
-        const ops = Array.isArray(overrides) ? overrides : [];
-        for (const op of ops) {
-            const operation = op.op || 'add';
-            if (operation === 'remove_all' || operation === 'clear') {
-                masks = [];
-                continue;
-            }
-            const idx = indexOf(masks, op);
-            if (operation === 'remove') {
-                if (idx >= 0) masks.splice(idx, 1);
-                continue;
-            }
-            if (operation === 'update') {
-                if (idx >= 0) {
-                    const prev = masks[idx] || {};
-                    masks[idx] = { ...prev, ...op, id: prev.id || op.id, adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
-                } else {
-                    masks.push({ ...op, id: op.id || idOf(op) });
-                }
-                continue;
-            }
-            // default add
-            if (idx >= 0) {
-                const prev = masks[idx] || {};
-                masks[idx] = { ...prev, ...op, id: prev.id || op.id || idOf(op), adjustments: { ...(prev.adjustments || {}), ...(op.adjustments || {}) } };
-            } else {
-                masks.push({ ...op, id: op.id || idOf(op) });
-            }
-        }
+        const acceptedOverrides = (recipe as any)?.maskOverrides as any[] | undefined;
+        const pendingOverrides = (pendingModifications as any)?.maskOverrides as any[] | undefined;
+        // Apply accepted overrides, then pending overrides on top for preview
+        const afterAccepted = applyMaskOverrides(aiAdj.masks as any[], acceptedOverrides as any[]);
+        const masks = applyMaskOverrides(afterAccepted as any[], pendingOverrides as any[]);
         const out = { ...aiAdj, masks } as any;
         // Apply any global adjustment overrides (e.g. grain, vignette) stored on recipe
         const globalOverrides = (recipe as any)?.aiAdjustmentOverrides;
