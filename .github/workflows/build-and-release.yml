@@ -137,18 +137,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-
-      - name: Cache build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/.cache/
-            ~/.npm/_cacache/
-          key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
@@ -183,46 +171,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-
-      - name: Cache build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/.cache/
-            ~/.npm/_cacache/
-          key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json', 'src/**/*.ts', 'src/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
-
-      - name: Cache Sharp binaries
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/sharp/
-          key: ${{ runner.os }}-sharp-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-sharp-
 
       - name: Rebuild Sharp for current platform
         run: npm rebuild sharp --silent
 
       - name: Build application
         run: npm run prepare:build
-
-      # Cache electron-builder cache
-      - name: Cache electron-builder
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/electron-builder/
-          key: ${{ runner.os }}-electron-builder-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-builder-
 
       # macOS builds
       - name: Build macOS app
@@ -271,7 +228,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
