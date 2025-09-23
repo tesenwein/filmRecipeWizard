@@ -83,7 +83,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
       setSaving(true);
       await useAppStore.getState().updateRecipeInStorage(processId, { name: newName } as any);
       setSavedName(newName);
-      try { onNameChange?.(newName); } catch { /* noop */ }
+      onNameChange?.(newName);
       setEditing(false);
     } catch (e) {
       console.error('Failed to save recipe name:', e);

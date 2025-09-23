@@ -22,7 +22,6 @@ export interface StyleOptions {
   contrast?: number;
   vibrance?: number;
   saturationBias?: number;
-  vibe?: string; // e.g., Cinematic, Soft Pastel (legacy support)
   styleCategories?: string[]; // Multiple style categories like ['Cinematic', 'Portrait', 'Street']
   
   // Soft parameters for mood and style

@@ -79,17 +79,17 @@ export class ChatHandlers {
                 // Extract current masks from the latest result
                 const currentMasks = (() => {
                     try {
-                        const results = Array.isArray(recipe.results) ? recipe.results.filter((r: any) => r && r.success) : [];
+                        const results = recipe.results?.filter((r: any) => r && r.success) || [];
                         const lastResult = results.length > 0 ? results[results.length - 1] : null;
                         const aiAdjustments = lastResult?.metadata?.aiAdjustments;
-                        return Array.isArray(aiAdjustments?.masks) ? aiAdjustments.masks : [];
+                        return aiAdjustments?.masks || [];
                     } catch {
                         return [];
                     }
                 })();
 
                 // Extract existing mask overrides
-                const existingOverrides = Array.isArray((recipe as any).maskOverrides) ? (recipe as any).maskOverrides : [];
+                const existingOverrides = (recipe as any).maskOverrides || [];
 
                 // Create system message with recipe context
                 const systemMessage = `You are a photo editing assistant. Help modify this recipe:

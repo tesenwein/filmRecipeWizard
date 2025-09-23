@@ -195,7 +195,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         // Reload the image data after adding
         const [data, proc] = await Promise.all([window.electronAPI.getImageDataUrls(processId), window.electronAPI.getProcess(processId)]);
         if (data.success) {
-          setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
+          setBaseImageUrls(data.baseImageUrls || []);
           setActiveBase(0);
         }
         if (proc.success && proc.process) {
@@ -262,7 +262,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       }
       const [data, proc] = await Promise.all([window.electronAPI.getImageDataUrls(processId), window.electronAPI.getProcess(processId)]);
       if (data.success) {
-        setBaseImageUrls(Array.isArray(data.baseImageUrls) ? data.baseImageUrls : []);
+        setBaseImageUrls(data.baseImageUrls || []);
         setActiveBase(0);
       }
       if (proc.success && proc.process) {
@@ -318,7 +318,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
         // Handle image data response - even if process not found, we get empty arrays
         if (imgResponse.success) {
-          setBaseImageUrls(Array.isArray(imgResponse.baseImageUrls) ? imgResponse.baseImageUrls : []);
+          setBaseImageUrls(imgResponse.baseImageUrls || []);
           setActiveBase(0);
         } else {
           console.warn('[RESULTS] Failed to load image data URLs:', imgResponse.error);
@@ -442,7 +442,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
     // Apply mask overrides if they exist
     if (Array.isArray(maskOverrides) && maskOverrides.length > 0) {
-      const masks = Array.isArray(effectiveAdjustments.masks) ? effectiveAdjustments.masks : [];
+      const masks = effectiveAdjustments.masks || [];
       effectiveAdjustments.masks = applyMaskOverrides(masks as any[], maskOverrides as any[]) as any;
     }
 
@@ -918,7 +918,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               : undefined;
                             if (Array.isArray(incomingOps)) {
                               const ops = incomingOps;
-                              let next = Array.isArray(maskOverrides) ? [...maskOverrides] : [];
+                              let next = maskOverrides ? [...maskOverrides] : [];
                               for (const op of ops) {
                                 const operation = op.op || 'add';
                                 if (operation === 'remove_all' || operation === 'clear') {

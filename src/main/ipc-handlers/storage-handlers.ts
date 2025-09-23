@@ -124,7 +124,7 @@ export class StorageHandlers {
             name: (processData as any)?.name,
             prompt: (processData as any)?.prompt,
             userOptions: (processData as any)?.userOptions,
-            results: Array.isArray(processData.results) ? processData.results : [],
+            results: processData.results || [],
             recipeImageData,
             status: 'generating',
             author: authorProfile,
@@ -152,7 +152,7 @@ export class StorageHandlers {
           try {
             const payload = { processId, updates };
             for (const win of BrowserWindow.getAllWindows()) {
-              try { win.webContents.send('process-updated', payload); } catch { /* ignore IPC send errors */ }
+              win.webContents.send('process-updated', payload);
             }
           } catch {
             // Ignore IPC send errors

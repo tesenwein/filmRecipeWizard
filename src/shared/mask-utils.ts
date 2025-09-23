@@ -61,8 +61,8 @@ export function applyMaskOverrides(
   baseMasksInput: MaskLike[] | undefined,
   opsInput: MaskLike[] | undefined
 ): MaskLike[] {
-  let baseMasks: MaskLike[] = Array.isArray(baseMasksInput) ? [...baseMasksInput] : [];
-  const ops: MaskLike[] = Array.isArray(opsInput) ? opsInput : [];
+  let baseMasks: MaskLike[] = baseMasksInput ? [...baseMasksInput] : [];
+  const ops: MaskLike[] = opsInput || [];
 
   for (const op of ops) {
     const operation = (op.op as string) || 'add';

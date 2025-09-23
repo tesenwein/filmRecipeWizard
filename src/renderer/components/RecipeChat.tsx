@@ -53,7 +53,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     }, [messages]);
 
     const handleSendMessage = async (e?: React.FormEvent | React.KeyboardEvent) => {
-        try { (e as any)?.preventDefault?.(); } catch { /* ignore preventDefault errors */ }
+        (e as any)?.preventDefault?.();
         if (!input.trim() || isProcessing) return;
 
         const userMessage = input.trim();
@@ -112,7 +112,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
             // Persist changes upstream
             await Promise.resolve(onRecipeModification(mods));
             // Fire apply (reprocess) without blocking UI clearing
-            try { await Promise.resolve(onAcceptChanges()); } catch { /* ignore */ }
+            await Promise.resolve(onAcceptChanges());
         }
     };
 
@@ -124,7 +124,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
 
     const latestAdjustments = (() => {
         try {
-            const res = Array.isArray(recipe.results) ? recipe.results.filter(r => r && r.success) : [];
+            const res = recipe.results?.filter(r => r && r.success) || [];
             const last = res.length > 0 ? res[res.length - 1] : undefined;
             return last?.metadata?.aiAdjustments as any | undefined;
         } catch {

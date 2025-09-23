@@ -167,88 +167,16 @@ export class StorageService {
     }
   }
 
-  private async loadFromBackups(): Promise<ProcessHistory[] | null> {
-    try {
-      const entries = await fs.readdir(this.backupDir);
-      const backups = entries
-        .filter(f => f.startsWith('history-') && f.endsWith('.json'))
-        .sort()
-        .reverse();
-      for (const f of backups) {
-        try {
-          const data = await fs.readFile(path.join(this.backupDir, f), 'utf8');
-          const parsed = JSON.parse(data);
-          if (Array.isArray(parsed)) {
-            console.warn('[STORAGE] Restored history from backup:', f);
-            // Restore backup to primary file for future use
-            await fs.writeFile(this.storageFile, JSON.stringify(parsed, null, 2), 'utf8');
-            return parsed as ProcessHistory[];
-          }
-        } catch {
-          // Try next backup
-        }
-      }
-    } catch {
-      // No backups yet
-    }
-    return null;
-  }
 
   async loadRecipes(): Promise<ProcessHistory[]> {
     try {
       await this.initialize();
 
       const data = await fs.readFile(this.storageFile, 'utf8');
-      const raw: any[] = JSON.parse(data);
-      const history: ProcessHistory[] = (raw || []).map((p: any) => ({
-        id: p.id,
-        timestamp: p.timestamp,
-        name: p.name,
-        prompt: p.prompt,
-        description: p.description,
-        userOptions: p.userOptions,
-        results: Array.isArray(p.results) ? p.results : [],
-        author: p.author,
-        // Persisted mask overrides from chat edits
-        maskOverrides: Array.isArray(p.maskOverrides) ? p.maskOverrides : undefined,
-        // Persisted global AI adjustment overrides (grain, vignette, etc.)
-        aiAdjustmentOverrides: p && typeof p.aiAdjustmentOverrides === 'object' ? p.aiAdjustmentOverrides : undefined,
-        // Persisted recipe image (single)
-        recipeImageData: typeof p.recipeImageData === 'string' ? p.recipeImageData : undefined,
-        // Optional embedded XMP preset
-        xmpPreset: typeof p.xmpPreset === 'string' ? p.xmpPreset : undefined,
-        xmpCreatedAt: typeof p.xmpCreatedAt === 'string' ? p.xmpCreatedAt : undefined,
-        status: p.status,
-      }));
-      // Normalize entries (backfill missing ids or timestamps)
-      let changed = false;
-      const nowIso = new Date().toISOString();
-      for (let i = 0; i < history.length; i++) {
-        const rec = history[i];
-        if (!rec.id || typeof rec.id !== 'string' || rec.id.trim().length === 0) {
-          rec.id = this.generateProcessId();
-          changed = true;
-        }
-        if (!rec.timestamp || typeof rec.timestamp !== 'string') {
-          rec.timestamp = nowIso;
-          changed = true;
-        }
-        if (!rec.status) {
-          rec.status = 'completed';
-          changed = true;
-        }
-      }
-      if (changed) {
-        await this.saveRecipes(history);
-      }
+      const history: ProcessHistory[] = JSON.parse(data);
       return history;
     } catch {
-      // File doesn't exist or is invalid, try backups
-      console.warn('[STORAGE] Failed to load history; attempting backup restore');
-      const fromBackup = await this.loadFromBackups();
-      if (fromBackup) {
-        return fromBackup;
-      }
+      // File doesn't exist or is invalid, return empty array
       return [];
     }
   }

@@ -152,7 +152,7 @@ export class ExportHandlers {
 
         // Optionally include XMP presets for each successful result
         try {
-          const results = Array.isArray(process.results) ? process.results : [];
+          const results = process.results || [];
           results.forEach((r, idx) => {
             const adj = r?.metadata?.aiAdjustments;
             if (!adj) return;
@@ -260,7 +260,7 @@ export class ExportHandlers {
 
           // Add XMP presets for each result
           try {
-            const results = Array.isArray(recipe.results) ? recipe.results : [];
+            const results = recipe.results || [];
             results.forEach((r, idx) => {
               const adj = r?.metadata?.aiAdjustments;
               if (!adj) return;

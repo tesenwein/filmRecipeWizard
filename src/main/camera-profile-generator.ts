@@ -55,7 +55,7 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   };
   const autoSelectCameraProfile = (): string => {
     if (isBW) return 'Adobe Monochrome';
-    const masks = Array.isArray((adjustments as any).masks) ? ((adjustments as any).masks as any[]) : [];
+    const masks = (adjustments as any).masks || [];
     let faceCount = 0;
     let landscapeLike = 0;
     let hasSky = false;

@@ -483,7 +483,7 @@ const AppContent: React.FC = () => {
             if (res?.success && res.process) {
               setBaseImages([]);
               setTargetImages([]);
-              setResults(Array.isArray(res.process.results) ? res.process.results : []);
+              setResults(res.process.results || []);
               setCurrentProcessId(res.process.id);
               setCurrentStep('results');
             }

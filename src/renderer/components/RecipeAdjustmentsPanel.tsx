@@ -136,7 +136,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
       </Section>
 
       <Section title="Style & Options">
-        <Row label="Vibe" cur={<ValueChip label={str(current.vibe)} />} next={<ValueChip label={str(proposed.vibe)} color={hasChange(current.vibe, proposed.vibe) ? 'warning' : 'default'} />} isChanged={hasChange(current.vibe, proposed.vibe)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Artist Style" cur={<ValueChip label={str(current.artistStyle?.name)} />} next={<ValueChip label={str(proposed.artistStyle?.name)} color={hasChange(current.artistStyle?.key, proposed.artistStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.artistStyle?.key, proposed.artistStyle?.key)} />
         <Divider sx={{ my: 1 }} />

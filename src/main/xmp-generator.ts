@@ -43,7 +43,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   // Heuristic auto-selection based on masks/scene if AI didn't specify
   const autoSelectCameraProfile = (): string => {
     if (isBW) return 'Adobe Monochrome';
-    const masks = Array.isArray((aiAdjustments as any).masks) ? ((aiAdjustments as any).masks as any[]) : [];
+    const masks = (aiAdjustments as any).masks || [];
     let faceCount = 0;
     let landscapeLike = 0;
     let hasSky = false;
@@ -245,7 +245,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   // Masks block (skipped unless disabled). Emits Lightroom MaskGroupBasedCorrections.
   const masksBlock = inc.masks
     ? (() => {
-        const masks = Array.isArray((aiAdjustments as any).masks) ? ((aiAdjustments as any).masks as any[]) : [];
+        const masks = (aiAdjustments as any).masks || [];
         if (!masks.length) return '';
         const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
         const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
@@ -283,7 +283,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         const randomHex32 = () => Array.from({ length: 32 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)]).join('');
 
         const correctionLis = masks
-          .map((m, i) => {
+          .map((m: any, i: number) => {
             const name = typeof m?.name === 'string' ? m.name : `Mask ${i + 1}`;
             const adj = m?.adjustments || {};
 
