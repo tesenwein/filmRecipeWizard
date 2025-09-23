@@ -7,7 +7,6 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import HomeIcon from '@mui/icons-material/Home';
-import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -1163,158 +1162,119 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       LUT Export
                     </Typography>
 
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gap: 3,
-                        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                      }}
-                    >
-                      {/* LUT Export Options */}
-                      <Paper elevation={1} sx={{ p: 4 }}>
-                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                          3D LUT Creation
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-                          Generate a 3D LUT file that captures the color transformations from this processing session.
-                        </Typography>
+                    {/* Single column layout like Lightroom */}
+                    <Paper elevation={1} sx={{ p: 4 }}>
+                      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                        3D LUT Creation
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+                        Generate a 3D LUT file that captures the color transformations from this processing session.
+                      </Typography>
 
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
-                          <Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                              LUT Size
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              {[
-                                { value: '17', label: '17³ (Small)' },
-                                { value: '33', label: '33³ (Standard)' },
-                                { value: '65', label: '65³ (High Quality)' },
-                              ].map(option => (
-                                <Chip
-                                  key={option.value}
-                                  label={option.label}
-                                  variant={lutSize === option.value ? 'filled' : 'outlined'}
-                                  color={lutSize === option.value ? 'primary' : 'default'}
-                                  clickable
-                                  onClick={() => setLutSize(option.value as '17' | '33' | '65')}
-                                  sx={{ cursor: 'pointer' }}
-                                />
-                              ))}
-                            </Box>
-                          </Box>
-
-                          <Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                              Format
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              {[
-                                { value: 'cube', label: '.cube (Adobe)' },
-                                { value: '3dl', label: '.3dl (Autodesk)' },
-                                { value: 'lut', label: '.lut (DaVinci)' },
-                              ].map(format => (
-                                <Chip
-                                  key={format.value}
-                                  label={format.label}
-                                  variant={lutFormat === format.value ? 'filled' : 'outlined'}
-                                  color={lutFormat === format.value ? 'primary' : 'default'}
-                                  clickable
-                                  onClick={() => setLutFormat(format.value as 'cube' | '3dl' | 'lut')}
-                                  sx={{ cursor: 'pointer' }}
-                                />
-                              ))}
-                            </Box>
-                          </Box>
-
-                          <Paper variant="outlined" sx={{ p: 2, backgroundColor: 'grey.50' }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                              Export Strength
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Slider
-                                value={lutStrength}
-                                onChange={(_e, val) => {
-                                  const pct = Array.isArray(val) ? val[0] : (val as number);
-                                  setLutStrength(Math.max(0, Math.min(200, pct)));
-                                }}
-                                min={0}
-                                max={200}
-                                step={5}
-                                valueLabelDisplay="auto"
-                                valueLabelFormat={v => `${v}%`}
-                                sx={{ flex: 1, maxWidth: 300 }}
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                            LUT Size
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {[
+                              { value: '17', label: '17³ (Small)' },
+                              { value: '33', label: '33³ (Standard)' },
+                              { value: '65', label: '65³ (High Quality)' },
+                            ].map(option => (
+                              <Chip
+                                key={option.value}
+                                label={option.label}
+                                variant={lutSize === option.value ? 'filled' : 'outlined'}
+                                color={lutSize === option.value ? 'primary' : 'default'}
+                                clickable
+                                onClick={() => setLutSize(option.value as '17' | '33' | '65')}
+                                sx={{ cursor: 'pointer' }}
                               />
-                              <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
-                                {lutStrength}%
-                              </Typography>
-                            </Box>
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              Tip: 100% applies the full AI adjustments. Lower values create more subtle effects.
+                            ))}
+                          </Box>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Format
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {[
+                              { value: 'cube', label: '.cube (Adobe)' },
+                              { value: '3dl', label: '.3dl (Autodesk)' },
+                              { value: 'lut', label: '.lut (DaVinci)' },
+                            ].map(format => (
+                              <Chip
+                                key={format.value}
+                                label={format.label}
+                                variant={lutFormat === format.value ? 'filled' : 'outlined'}
+                                color={lutFormat === format.value ? 'primary' : 'default'}
+                                clickable
+                                onClick={() => setLutFormat(format.value as 'cube' | '3dl' | 'lut')}
+                                sx={{ cursor: 'pointer' }}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      </Box>
+
+                      {/* Export Strength and Button - Lightroom style layout */}
+                      <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box sx={{ flex: 1, maxWidth: 400 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Export Strength
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Slider
+                              value={lutStrength}
+                              onChange={(_e, val) => {
+                                const pct = Array.isArray(val) ? val[0] : (val as number);
+                                setLutStrength(Math.max(0, Math.min(200, pct)));
+                              }}
+                              min={0}
+                              max={200}
+                              step={5}
+                              valueLabelDisplay="auto"
+                              valueLabelFormat={v => `${v}%`}
+                              sx={{ flex: 1 }}
+                            />
+                            <Typography variant="body2" sx={{ width: 56, textAlign: 'right', fontWeight: 600 }}>
+                              {lutStrength}%
                             </Typography>
-                          </Paper>
+                          </Box>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
+                            Tip: 100% applies the full AI adjustments. Lower values create more subtle effects.
+                          </Typography>
                         </Box>
 
                         <Button
                           variant="contained"
                           size="large"
                           startIcon={<PaletteIcon />}
-                          fullWidth
                           onClick={() => handleExportLUT(result)}
                           sx={{
                             textTransform: 'none',
                             fontWeight: 600,
                             py: 1.5,
+                            px: 3,
+                            minWidth: 200,
                           }}
                         >
                           Generate {lutSize}³ .{lutFormat} LUT
                         </Button>
-                      </Paper>
+                      </Box>
 
-                      {/* LUT Information */}
-                      <Paper elevation={1} sx={{ p: 4 }}>
-                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                          About LUTs
+                      {/* LUT Information - moved below in a more compact format */}
+                      <Box sx={{ mt: 4, p: 3, backgroundColor: 'grey.50', borderRadius: 2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
+                          About 3D LUTs
                         </Typography>
-
-                        <Box sx={{ mb: 3 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'primary.main' }}>
-                            What is a 3D LUT?
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                            A 3D Lookup Table captures the exact color transformations applied by the AI, allowing you to recreate this look
-                            in other software.
-                          </Typography>
-                        </Box>
-
-                        {/* Compatible software list removed — no longer necessary. */}
-
-                        <Box
-                          sx={{
-                            p: 2,
-                            backgroundColor: 'info.light',
-                            borderRadius: 1,
-                            color: 'info.contrastText',
-                          }}
-                        >
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: 600,
-                              mb: 0.5,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                            }}
-                          >
-                            <LightbulbIcon sx={{ fontSize: '16px' }} />
-                            Pro Tip
-                          </Typography>
-                          <Typography variant="body2">
-                            33³ LUTs offer the best balance of quality and file size for most applications.
-                          </Typography>
-                        </Box>
-                      </Paper>
-                    </Box>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          A 3D Lookup Table captures the exact color transformations applied by the AI, allowing you to recreate this look in other software.
+                        </Typography>
+                      </Box>
+                    </Paper>
                   </Box>
                 )}
 
