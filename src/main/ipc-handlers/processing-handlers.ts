@@ -230,8 +230,8 @@ export class ProcessingHandlers {
           const targetImageData = providedTargets[targetIndex];
 
           // If no target image is provided, we'll still do AI analysis using just the base image
-          if (!targetImageData) {
-          }
+          // if (!targetImageData) {
+          // }
 
           // Emit initial progress
           try {
@@ -268,7 +268,7 @@ export class ProcessingHandlers {
                 }
               },
             });
-            const duration = Date.now() - startTime;
+            // const duration = Date.now() - startTime;
           } catch (error) {
             const duration = Date.now() - startTime;
             console.error(`[IPC] Image processor failed after ${duration}ms:`, error);

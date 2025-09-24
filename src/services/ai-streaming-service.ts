@@ -135,8 +135,9 @@ export class AIStreamingService {
             // Ensure preset name is always present - only use fallback if truly empty
             if (!finalResult.preset_name || finalResult.preset_name.trim().length === 0) {
                 finalResult.preset_name = 'Custom Recipe';
-            } else {
             }
+            // else {
+            // }
 
             const ensuredProfile = this.normalizeCameraProfileName(finalResult.camera_profile) || this.autoSelectProfileFromResult(finalResult);
             finalResult.camera_profile = ensuredProfile;
