@@ -1,13 +1,17 @@
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import { z } from 'zod';
+import { getCoreSystemPrompt, getMaskOperationInstructions, getParameterInstructions } from '../../services/ai-prompt-shared';
 import { maskEditSchemaChat } from '../../services/ai-shared';
+import { logError } from '../../shared/error-utils';
 import { maskIdentifier } from '../../shared/mask-utils';
 import { SettingsService } from '../settings-service';
+import { StorageService } from '../storage-service';
 
 export class ChatHandlers {
     private settingsService = new SettingsService();
+    private storageService = new StorageService();
 
     constructor() { }
 
@@ -25,55 +29,60 @@ export class ChatHandlers {
                 const apiKey = settings.openaiKey || process.env.OPENAI_API_KEY;
                 if (!apiKey) throw new Error('OpenAI API key not configured');
 
-                // Create tools for recipe modification
-                // Reuse mask structure similar to AIStreamingService for consistency
+                // Re-introduce separate tools and keep legacy combined tool; we'll aggregate and persist
                 const maskEditSchema = maskEditSchemaChat;
-
                 const tools = {
-                    modify_recipe: tool({
-                        description: 'Modify recipe parameters based on user request',
+                    set_user_options: tool({
+                        description: 'Update only user-facing options (contrast, vibrance, vibe, styles).',
                         inputSchema: z.object({
-                            message: z.string().describe('Explanation of the changes made'),
-                            modifications: z.object({
-                                userOptions: z.object({
-                                    contrast: z.number().min(-100).max(100).optional(),
-                                    vibrance: z.number().min(-100).max(100).optional(),
-                                    saturationBias: z.number().min(-100).max(100).optional(),
-                                    vibe: z.string().optional(),
-                                    artistStyle: z.object({
-                                        key: z.string(),
-                                        name: z.string(),
-                                        category: z.string(),
-                                        blurb: z.string()
-                                    }).optional(),
-                                    filmStyle: z.object({
-                                        key: z.string(),
-                                        name: z.string(),
-                                        category: z.string(),
-                                        blurb: z.string()
-                                    }).optional(),
-                                }).optional(),
-                                aiAdjustments: z.object({
-                                    // Film grain adjustments
-                                    grain_amount: z.number().min(0).max(100).optional(),
-                                    grain_size: z.number().min(0).max(100).optional(),
-                                    grain_frequency: z.number().min(0).max(100).optional(),
-                                    // Vignette adjustments
-                                    vignette_amount: z.number().min(-100).max(100).optional(),
-                                    vignette_midpoint: z.number().min(0).max(100).optional(),
-                                    vignette_feather: z.number().min(0).max(100).optional(),
-                                    vignette_roundness: z.number().min(-100).max(100).optional(),
-                                    vignette_style: z.number().min(0).max(2).optional(),
-                                    vignette_highlight_contrast: z.number().min(0).max(100).optional(),
-                                }).optional(),
-                                prompt: z.string().optional(),
-                                description: z.string().optional(),
-                                // Mask edits allow adding/updating/removing masks to be applied in next generation
-                                maskOverrides: z.array(maskEditSchema).optional(),
+                            message: z.string().optional(),
+                            userOptions: z.object({
+                                contrast: z.number().min(-100).max(100).optional(),
+                                vibrance: z.number().min(-100).max(100).optional(),
+                                saturationBias: z.number().min(-100).max(100).optional(),
+                                vibe: z.string().optional(),
+                                styleCategories: z.array(z.string()).optional(),
+                                artistStyle: z.object({ key: z.string(), name: z.string(), category: z.string(), blurb: z.string() }).optional(),
+                                filmStyle: z.object({ key: z.string(), name: z.string(), category: z.string(), blurb: z.string() }).optional(),
                             })
                         }),
-                        execute: async (input) => input, // Placeholder - AI will call this
-                    })
+                        execute: async (input) => input,
+                    }),
+                    set_ai_adjustments: tool({
+                        description: 'Update only AI adjustment overrides like grain_* and vignette_*.',
+                        inputSchema: z.object({
+                            message: z.string().optional(),
+                            aiAdjustments: z.object({
+                                grain_amount: z.number().min(0).max(100).optional(),
+                                grain_size: z.number().min(0).max(100).optional(),
+                                grain_frequency: z.number().min(0).max(100).optional(),
+                                vignette_amount: z.number().min(-100).max(100).optional(),
+                                vignette_midpoint: z.number().min(0).max(100).optional(),
+                                vignette_feather: z.number().min(0).max(100).optional(),
+                                vignette_roundness: z.number().min(-100).max(100).optional(),
+                                vignette_style: z.number().min(0).max(2).optional(),
+                                vignette_highlight_contrast: z.number().min(0).max(100).optional(),
+                            })
+                        }),
+                        execute: async (input) => input,
+                    }),
+                    update_prompt_and_description: tool({
+                        description: 'Update the prompt and/or description text.',
+                        inputSchema: z.object({
+                            message: z.string().optional(),
+                            prompt: z.string().optional(),
+                            description: z.string().optional(),
+                        }),
+                        execute: async (input) => input,
+                    }),
+                    edit_masks: tool({
+                        description: 'Edit mask overrides: add, update, remove, or clear.',
+                        inputSchema: z.object({
+                            message: z.string().optional(),
+                            maskOverrides: z.array(maskEditSchema),
+                        }),
+                        execute: async (input) => input,
+                    }),
                 };
 
                 // Extract current masks from the latest result
@@ -91,9 +100,16 @@ export class ChatHandlers {
                 // Extract existing mask overrides
                 const existingOverrides = (recipe as any).maskOverrides || [];
 
-                // Create system message with recipe context
-                const systemMessage = `You are a photo editing assistant. Help modify this recipe:
+                // Create system message with recipe context using shared prompt
+                const basePrompt = getCoreSystemPrompt({
+                    includeMaskTypes: false,
+                    includeTechniques: false,
+                    includeRequirements: false
+                });
 
+                const systemMessage = `${basePrompt}
+
+RECIPE CONTEXT:
 Recipe: ${recipe.name || 'Unnamed'} (ID: ${recipe.id})
 Prompt: ${recipe.prompt || 'No prompt provided'}
 Options: ${JSON.stringify(recipe.userOptions, null, 2)}
@@ -116,22 +132,14 @@ You can modify:
 - Prompt text and description
 - Masks: add, update, remove, or remove_all
 
-RESPONSE FORMAT:
-Call modify_recipe once with:
-- message: summary of changes
-- modifications: { userOptions?, aiAdjustments?, prompt?, description?, maskOverrides? }
+TOOL USAGE (STRICT):
+- Always call at least one tool; prefer specific tools for targeted changes.
+- You may call multiple tools in one response. If you use modify_recipe, call it once.
+- Do not answer with plain text only.
 
-MASK OPERATIONS:
-- To delete a specific mask: { id: "mask_id", op: "remove" }
-- To delete all masks: { op: "remove_all" }
-- To add a new mask: { op: "add", type: "face_skin", name: "Skin", adjustments: {...} }
-- To update a mask: { id: "mask_id", op: "update", adjustments: {...} }
+${getMaskOperationInstructions()}
 
-Key parameters:
-- contrast/vibrance/saturationBias: -100 to 100
-- Soft params (0-100): moodiness, warmth, drama, softness, intensity, vintage, cinematic, faded
-- Grain: amount/size/frequency (0-100)
-- Vignette: amount (-100 to 100), midpoint/feather/roundness (0-100)`;
+${getParameterInstructions()}`;
 
                 // Prepare messages for OpenAI
                 const openaiMessages = [
@@ -148,23 +156,62 @@ Key parameters:
                     model: openai('gpt-5'),
                     messages: openaiMessages,
                     tools,
+                    toolChoice: 'required',
                     temperature: 0.7,
                 });
+                try {
+                } catch { /* ignore */ }
 
                 // Extract structured result from tool calls and also prepare human-friendly chat text
                 let contentText = result.text || '';
                 let messageText: string | undefined;
-                let modifications: any | undefined;
+                let modifications: any = {};
 
                 if (result.toolResults && result.toolResults.length > 0) {
+                    let masks: any[] | undefined;
                     for (const toolResult of result.toolResults) {
-                        if (toolResult.toolName === 'modify_recipe' && toolResult.output) {
-                            const output: any = toolResult.output;
-                            messageText = typeof output.message === 'string' ? output.message : undefined;
-                            modifications = output.modifications;
-                            break;
+                        const name = toolResult.toolName;
+                        const output: any = toolResult.output;
+                        if (!name || !output) continue;
+                        if (typeof output.message === 'string') messageText = output.message;
+
+                        if (name === 'set_user_options' && output.userOptions) {
+                            modifications.userOptions = { ...(modifications.userOptions || {}), ...output.userOptions };
+                        } else if (name === 'set_ai_adjustments' && output.aiAdjustments) {
+                            modifications.aiAdjustments = { ...(modifications.aiAdjustments || {}), ...output.aiAdjustments };
+                        } else if (name === 'update_prompt_and_description') {
+                            if (typeof output.prompt === 'string') modifications.prompt = output.prompt;
+                            if (typeof output.description === 'string') modifications.description = output.description;
+                        } else if (name === 'edit_masks' && Array.isArray(output.maskOverrides)) {
+                            masks = output.maskOverrides;
+                        } else if (name === 'modify_recipe' && output.modifications) {
+                            const mod = output.modifications || {};
+                            if (mod.userOptions) modifications.userOptions = { ...(modifications.userOptions || {}), ...mod.userOptions };
+                            if (mod.aiAdjustments) modifications.aiAdjustments = { ...(modifications.aiAdjustments || {}), ...mod.aiAdjustments };
+                            if (mod.prompt) modifications.prompt = mod.prompt;
+                            if (mod.description) modifications.description = mod.description;
+                            if (Array.isArray(mod.maskOverrides)) masks = mod.maskOverrides;
                         }
                     }
+                    if (masks) modifications.maskOverrides = masks;
+                }
+
+
+                // Persist pending modifications to storage so UI can display and approve
+                try {
+                    if (modifications && recipe?.id) {
+                        const stamp = new Date().toISOString();
+                        await this.storageService.updateProcess(recipe.id, { pendingModifications: modifications, pendingModificationsUpdatedAt: stamp } as any);
+                        // Broadcast update so any open views can refresh
+                        try {
+                            const payload = { processId: recipe.id, updates: { pendingModifications: modifications, pendingModificationsUpdatedAt: stamp } };
+                            for (const win of BrowserWindow.getAllWindows()) {
+                                win.webContents.send('process-updated', payload);
+                            }
+                        } catch { /* ignore */ }
+                    }
+                } catch (e) {
+                    console.warn('[IPC] chat-recipe: failed to persist pending modifications', e);
                 }
 
                 return {
@@ -173,7 +220,7 @@ Key parameters:
                     modifications,
                 };
             } catch (error) {
-                console.error('[IPC] Error in chat-recipe:', error);
+                logError('IPC', 'Error in chat-recipe', error);
                 return {
                     success: false,
                     error: error instanceof Error ? error.message : 'Unknown error',

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { logError } from '../../shared/error-utils';
 import { AppSettings, Recipe } from '../../shared/types';
 
 interface AppState {
@@ -217,7 +218,7 @@ export const useAppStore = create<AppState>()(
             );
           }
         } catch (error) {
-          console.error('[STORE] Error loading settings:', error);
+          logError('STORE', 'Error loading settings', error);
           set(
             {
               settings: {},
@@ -254,11 +255,11 @@ export const useAppStore = create<AppState>()(
               'saveSettings/success'
             );
           } else {
-            console.error('[STORE] Failed to save settings:', result.error);
+            logError('STORE', 'Failed to save settings', result.error);
             throw new Error(result.error || 'Failed to save settings');
           }
         } catch (error) {
-          console.error('[STORE] Error saving settings:', error);
+          logError('STORE', 'Error saving settings', error);
           throw error;
         }
       },
@@ -296,7 +297,7 @@ export const useAppStore = create<AppState>()(
             );
           }
         } catch (error) {
-          console.error('[STORE] Error loading recipes:', error);
+          logError('STORE', 'Error loading recipes', error);
           set(
             {
               recipes: [],
@@ -320,7 +321,7 @@ export const useAppStore = create<AppState>()(
             return { success: false, error: result.error || 'Failed to save recipe' };
           }
         } catch (error) {
-          console.error('[STORE] Error saving recipe:', error);
+          logError('STORE', 'Error saving recipe', error);
           return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -337,7 +338,7 @@ export const useAppStore = create<AppState>()(
             get().setGeneratingStatus(processId, false);
           }
         } catch (error) {
-          console.error('[STORE] Error updating recipe:', error);
+          logError('STORE', 'Error updating recipe', error);
           throw error;
         }
       },
@@ -347,7 +348,7 @@ export const useAppStore = create<AppState>()(
           await window.electronAPI.deleteProcess(id);
           get().removeRecipe(id);
         } catch (error) {
-          console.error('[STORE] Error deleting recipe:', error);
+          logError('STORE', 'Error deleting recipe', error);
           throw error;
         }
       },
@@ -362,7 +363,7 @@ export const useAppStore = create<AppState>()(
             throw new Error(result.error || 'Failed to delete recipes');
           }
         } catch (error) {
-          console.error('[STORE] Error deleting multiple recipes:', error);
+          logError('STORE', 'Error deleting multiple recipes', error);
           throw error;
         }
       },
@@ -378,7 +379,7 @@ export const useAppStore = create<AppState>()(
             return { success: false, error: result.error || 'Failed to duplicate recipe' };
           }
         } catch (error) {
-          console.error('[STORE] Error duplicating recipe:', error);
+          logError('STORE', 'Error duplicating recipe', error);
           return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -413,7 +414,7 @@ export const useAppStore = create<AppState>()(
           }
           return result;
         } catch (error) {
-          console.error('[STORE] Error importing recipes:', error);
+          logError('STORE', 'Error importing recipes', error);
           throw error;
         }
       },
@@ -445,7 +446,7 @@ export const useAppStore = create<AppState>()(
           }
           return result;
         } catch (error) {
-          console.error('[STORE] Error importing XMP:', error);
+          logError('STORE', 'Error importing XMP', error);
           throw error;
         }
       },
@@ -455,7 +456,7 @@ export const useAppStore = create<AppState>()(
           const result = await window.electronAPI.exportRecipe(id);
           return result;
         } catch (error) {
-          console.error('[STORE] Error exporting recipe:', error);
+          logError('STORE', 'Error exporting recipe', error);
           throw error;
         }
       },
@@ -465,7 +466,7 @@ export const useAppStore = create<AppState>()(
           const result = await window.electronAPI.exportAllRecipes();
           return result;
         } catch (error) {
-          console.error('[STORE] Error exporting all recipes:', error);
+          logError('STORE', 'Error exporting all recipes', error);
           throw error;
         }
       },
@@ -526,7 +527,7 @@ export const useAppStore = create<AppState>()(
             console.warn('Failed to navigate to setup route:', error);
           }
         } catch (error) {
-          console.error('[STORE] Error resetting app:', error);
+          logError('STORE', 'Error resetting app', error);
           throw error;
         }
       },

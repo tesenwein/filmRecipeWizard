@@ -105,7 +105,6 @@ export function buildBaseAdjustmentsSchema(aiFunctions: AIFunctionToggles) {
             vignette_roundness: z.number().min(-100).max(100).optional(),
             vignette_style: z.number().min(0).max(2).optional(),
             vignette_highlight_contrast: z.number().min(0).max(100).optional(),
-            override_look_vignette: z.boolean().optional(),
         });
     }
 
@@ -146,22 +145,22 @@ export function buildBaseAdjustmentsSchema(aiFunctions: AIFunctionToggles) {
     return baseSchema;
 }
 
-// Chat-specific mask adjustments schema (wider ranges)
-export const maskAdjustmentsSchemaChat = z.object({
-    local_exposure: z.number().min(-5).max(5).optional(),
-    local_contrast: z.number().min(-100).max(100).optional(),
-    local_highlights: z.number().min(-100).max(100).optional(),
-    local_shadows: z.number().min(-100).max(100).optional(),
-    local_whites: z.number().min(-100).max(100).optional(),
-    local_blacks: z.number().min(-100).max(100).optional(),
-    local_clarity: z.number().min(-100).max(100).optional(),
-    local_dehaze: z.number().min(-100).max(100).optional(),
-    local_texture: z.number().min(-100).max(100).optional(),
-    local_saturation: z.number().min(-100).max(100).optional(),
+// Unified mask adjustments schema (used by both chat and streaming)
+export const maskAdjustmentsSchema = z.object({
+    local_exposure: z.number().min(-0.3).max(0.3).optional(),
+    local_contrast: z.number().min(-0.3).max(0.3).optional(),
+    local_highlights: z.number().min(-0.3).max(0.3).optional(),
+    local_shadows: z.number().min(-0.3).max(0.3).optional(),
+    local_whites: z.number().min(-0.3).max(0.3).optional(),
+    local_blacks: z.number().min(-0.3).max(0.3).optional(),
+    local_clarity: z.number().min(-0.3).max(0.3).optional(),
+    local_dehaze: z.number().min(-0.3).max(0.3).optional(),
+    local_texture: z.number().min(-0.3).max(0.3).optional(),
+    local_saturation: z.number().min(-0.3).max(0.3).optional(),
 }).partial();
 
-// Chat-specific mask edit schema
-export const maskEditSchemaChat = z.object({
+// Unified mask edit schema (used by both chat and streaming)
+export const maskEditSchema = z.object({
     id: z.string().optional(),
     op: z.enum(['add', 'update', 'remove', 'remove_all', 'clear']).optional(),
     name: z.string().optional(),
@@ -169,7 +168,7 @@ export const maskEditSchemaChat = z.object({
         'radial', 'linear', 'person', 'subject', 'background', 'sky', 'range_color', 'range_luminance', 'brush', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object'
     ]).optional(),
     subCategoryId: z.number().optional(),
-    adjustments: maskAdjustmentsSchemaChat.optional(),
+    adjustments: maskAdjustmentsSchema.optional(),
     // Geometry / reference fields
     top: z.number().optional(), left: z.number().optional(), bottom: z.number().optional(), right: z.number().optional(),
     angle: z.number().optional(), midpoint: z.number().optional(), roundness: z.number().optional(), feather: z.number().optional(),
@@ -178,25 +177,16 @@ export const maskEditSchemaChat = z.object({
     referenceX: z.number().optional(), referenceY: z.number().optional(),
 });
 
-// Streaming-specific mask schema builder (normalized types and unit ranges)
-export function createStreamingMaskSchema() {
-    const localAdjustmentsSchema = z.object({
-        local_exposure: z.number().min(-1).max(1).optional(),
-        local_contrast: z.number().min(-1).max(1).optional(),
-        local_highlights: z.number().min(-1).max(1).optional(),
-        local_shadows: z.number().min(-1).max(1).optional(),
-        local_whites: z.number().min(-1).max(1).optional(),
-        local_blacks: z.number().min(-1).max(1).optional(),
-        local_clarity: z.number().min(-1).max(1).optional(),
-        local_dehaze: z.number().min(-1).max(1).optional(),
-        local_texture: z.number().min(-1).max(1).optional(),
-        local_saturation: z.number().min(-1).max(1).optional(),
-    });
+// Legacy aliases for backward compatibility
+export const maskAdjustmentsSchemaChat = maskAdjustmentsSchema;
+export const maskEditSchemaChat = maskEditSchema;
 
+// Streaming-specific mask schema builder (now uses unified schema)
+export function createStreamingMaskSchema() {
     return z.object({
         name: z.string().optional(),
         type: z.enum(getAllMaskTypes() as [string, ...string[]]),
-        adjustments: localAdjustmentsSchema.optional(),
+        adjustments: maskAdjustmentsSchema.optional(),
         // Optional sub-category for background masks and other AI masks
         subCategoryId: z.number().optional().describe('For background masks, use 22 for general background detection. For person masks: 1=face, 2=eye, 3=skin, 4=hair, 5=clothing, 6=person'),
         // Radial geometry

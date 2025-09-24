@@ -1,6 +1,7 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { createErrorResponse, logError } from '../../shared/error-utils';
 
 export class FileHandlers {
   constructor(private getMainWindow: () => BrowserWindow | null) {}
@@ -21,7 +22,7 @@ export class FileHandlers {
         if (result.canceled) return [];
         return result.filePaths;
       } catch (error) {
-        console.error('[IPC] Error selecting files:', error);
+        logError('IPC', 'Error selecting files', error);
         throw error;
       }
     });
@@ -32,7 +33,7 @@ export class FileHandlers {
         const content = await fs.readFile(filePath, 'utf8');
         return content;
       } catch (error) {
-        console.error('[IPC] Error reading file:', error);
+        logError('IPC', 'Error reading file', error);
         throw error;
       }
     });
@@ -43,8 +44,8 @@ export class FileHandlers {
         shell.showItemInFolder(path);
         return { success: true };
       } catch (error) {
-        console.error('[IPC] Error opening path:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error opening path', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -67,7 +68,7 @@ export class FileHandlers {
 
         return paths;
       } catch (error) {
-        console.error('[IPC] Error processing dropped files:', error);
+        logError('IPC', 'Error processing dropped files', error);
         throw error;
       }
     });
@@ -78,8 +79,8 @@ export class FileHandlers {
         await shell.openExternal(url);
         return { success: true };
       } catch (error) {
-        console.error('[IPC] Error opening external URL:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error opening external URL', error);
+        return createErrorResponse(error);
       }
     });
   }

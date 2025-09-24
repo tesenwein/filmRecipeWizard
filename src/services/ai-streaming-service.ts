@@ -1,7 +1,8 @@
 import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
-import { getMaskConfig, getMaskTypesByCategory, normalizeMaskType } from '../shared/mask-types';
+import { getMaskConfig, normalizeMaskType } from '../shared/mask-types';
+import { getCoreSystemPrompt } from './ai-prompt-shared';
 import { AIFunctionToggles, buildBaseAdjustmentsSchema, createStreamingMaskSchema, getDefaultAIFunctionToggles } from './ai-shared';
 import { AIColorAdjustments } from './types';
 
@@ -39,7 +40,7 @@ export class AIStreamingService {
         baseImageBase64?: string | string[],
         targetImageBase64?: string,
         hint?: string,
-        options?: StreamingOptions
+        options?: StreamingOptions & { styleOptions?: any }
     ): Promise<AIColorAdjustments> {
         const { onUpdate } = options || {};
 
@@ -47,7 +48,7 @@ export class AIStreamingService {
             // Build the user content with images
             const userContent = await this.buildUserContent(baseImageBase64, targetImageBase64, hint, options);
 
-            // Create tools for the AI to use
+            // Create tools for the AI to use (separate tools per operation)
             const tools = this.createTools(options);
 
             // Use AI SDK v5 generateText for non-streaming API calls
@@ -63,37 +64,46 @@ export class AIStreamingService {
                     },
                 ],
                 tools,
+                toolChoice: 'required',
             });
 
             let finalResult: AIColorAdjustments | null = null;
 
-            // Extract result from tool calls
+            // Aggregate outputs from separate tools
             if (result.toolResults && result.toolResults.length > 0) {
+                const aggregated: any = {};
+                let masks: any[] | undefined;
                 for (const toolResult of result.toolResults) {
-                    if (toolResult.toolName === 'generate_color_adjustments' && toolResult.output) {
-                        finalResult = toolResult.output as AIColorAdjustments;
-                        console.log('[AI] Tool result received:', {
-                            hasDescription: !!finalResult.description,
-                            description: finalResult.description,
-                            presetName: finalResult.preset_name
-                        });
-                        break;
+                    const name = toolResult.toolName;
+                    const output = toolResult.output as any;
+                    if (!name || !output) continue;
+
+                    if (name === 'generate_global_adjustments') {
+                        Object.assign(aggregated, output);
+                    } else if (name === 'generate_masks') {
+                        if (Array.isArray(output.masks)) masks = output.masks;
+                    } else if (name === 'name_and_describe') {
+                        if (typeof output.preset_name === 'string') aggregated.preset_name = output.preset_name;
+                        if (typeof output.description === 'string') aggregated.description = output.description;
+                    } else if (name === 'generate_color_adjustments') {
+                        // Backward compatibility: some older prompts may still call this combined tool
+                        Object.assign(aggregated, output);
+                        if ((output as any).masks && Array.isArray((output as any).masks)) {
+                            masks = (output as any).masks;
+                        }
                     }
+                }
+
+                if (masks && masks.length > 0) (aggregated as any).masks = masks;
+                if (Object.keys(aggregated).length > 0) {
+                    finalResult = aggregated as AIColorAdjustments;
                 }
             }
 
             // Removed streaming code since we're using generateText instead of streamText
 
             if (!finalResult) {
-                console.log('[AI] No tool results found, attempting to parse from text');
                 finalResult = this.parseResultFromText(result.text);
-                if (finalResult) {
-                    console.log('[AI] Parsed result from text:', {
-                        hasDescription: !!finalResult.description,
-                        description: finalResult.description,
-                        presetName: finalResult.preset_name
-                    });
-                }
             }
 
             // Complete the finalization step
@@ -126,7 +136,6 @@ export class AIStreamingService {
             if (!finalResult.preset_name || finalResult.preset_name.trim().length === 0) {
                 finalResult.preset_name = 'Custom Recipe';
             } else {
-                console.log('[AI] Generated preset name:', finalResult.preset_name);
             }
 
             const ensuredProfile = this.normalizeCameraProfileName(finalResult.camera_profile) || this.autoSelectProfileFromResult(finalResult);
@@ -150,7 +159,7 @@ export class AIStreamingService {
         baseImageBase64?: string | string[],
         targetImageBase64?: string,
         hint?: string,
-        _options?: StreamingOptions
+        options?: StreamingOptions & { styleOptions?: any }
     ): Promise<any[]> {
         const content: any[] = [];
 
@@ -191,97 +200,128 @@ export class AIStreamingService {
             });
         }
 
+        // Add detailed style instructions from artist and film styles
+        if (options?.styleOptions) {
+            const styleInstructions: string[] = [];
+            
+            if (options.styleOptions.artistStyle?.prompt) {
+                styleInstructions.push(`ARTIST STYLE INSTRUCTIONS (${options.styleOptions.artistStyle.name}): ${options.styleOptions.artistStyle.prompt}`);
+            }
+            
+            if (options.styleOptions.filmStyle?.prompt) {
+                styleInstructions.push(`FILM STYLE INSTRUCTIONS (${options.styleOptions.filmStyle.name}): ${options.styleOptions.filmStyle.prompt}`);
+            }
+            
+            if (styleInstructions.length > 0) {
+                content.push({
+                    type: 'text',
+                    text: `DETAILED STYLE INSTRUCTIONS:\n${styleInstructions.join('\n\n')}`
+                });
+            }
+        }
+
         return content;
     }
 
     private getSystemPrompt(_options: StreamingOptions): string {
-        // Generate mask type descriptions dynamically from configuration
-        const faceMasks = getMaskTypesByCategory('face');
-        const landscapeMasks = getMaskTypesByCategory('landscape');
-        const subjectMasks = getMaskTypesByCategory('subject');
-        const backgroundMasks = getMaskTypesByCategory('background');
-        const otherMasks = getMaskTypesByCategory('other');
+        const base = getCoreSystemPrompt({
+            includeMaskTypes: true,
+            includeTechniques: true,
+            includeRequirements: true
+        });
+        return `${base}
 
-        const faceMaskList = faceMasks.map(m => m.type).join(', ');
-        const landscapeMaskList = landscapeMasks.map(m => m.type).join(', ');
-        const subjectMaskList = subjectMasks.map(m => m.type).join(', ');
-        const backgroundMaskList = backgroundMasks.map(m => m.type).join(', ');
-        const otherMaskList = otherMasks.map(m => m.type).join(', ');
-
-        return `You are a professional photo editor. Create bold, impactful Lightroom/Camera Raw adjustments to match the target image to the reference style.
-
-TASK:
-- REFERENCE IMAGES: Style to achieve
-- TARGET IMAGE: Photo to modify  
-- STYLE DESCRIPTION: Text description of desired look
-- GOAL: Create professional, dramatic, presets that transform the image to match the reference style and configuration
-
-REQUIREMENTS:
-- Generate preset_name (2-4 words, Title Case) - REQUIRED
-- Include description (1-2 sentences) of style and mood - REQUIRED
-- Set camera_profile: 'Adobe Color', 'Adobe Portrait', 'Adobe Landscape', or 'Adobe Monochrome'
-- Use 'Adobe Monochrome' for B&W, 'Adobe Portrait' for people, 'Adobe Landscape' for nature/sky
-- For portrait use masks to optimize and do not use radial masks for portrait. Be very suttle with face lighting and watch out to use sepaarate mask for face lighting.
-- Use tone curves to match contrast and style characteristics
-- Use color grading to match color temperature and mood
-- Analyze reference image's contrast curve and color grading, then replicate
-
-AVAILABLE MASKS:
-- Face: ${faceMaskList}
-- Landscape: ${landscapeMaskList}  
-- Subject: ${subjectMaskList}
-- Background: ${backgroundMaskList}
-- Other: ${otherMaskList}
-
-TECHNIQUES:
-- Apply significant mask adjustments to achieve the target style
-- Use color grading for shadows/midtones/highlights with noticeable changes
-- Fine-tune with HSL adjustments using the full range (-100 to +100)
-- **PRIORITIZE TONE CURVES** - Use tone_curve, tone_curve_red, tone_curve_green, tone_curve_blue to create dramatic contrast and style matching
-- **USE COLOR GRADING** - Apply color_grade_shadow/midtone/highlight adjustments to shift color temperature and mood
-- Use point_colors for targeted corrections
-- For B&W: include gray_* values for each color channel
-- For film/artist styles: **ESSENTIAL** - match HSL and tone curve characteristics from reference
-- **TONE CURVES ARE KEY** - Create S-curves, lift shadows, compress highlights to match reference style
-- **COLOR GRADING IS POWERFUL** - Shift shadows to warm/cool, midtones to match skin tones, highlights for atmosphere
-- **TONE CURVE EXAMPLES**: Film look = lift shadows (0,0 to 30,20), compress highlights (200,200 to 255,240)
-- **COLOR GRADING EXAMPLES**: Warm shadows (+20 hue, +10 sat), cool highlights (-15 hue, +5 sat)
-- **ESSENTIAL**: Match the reference's contrast curve and color temperature shifts
-- Don't be afraid to use strong adjustments - the goal is to match the reference style
-- Use the full range of available values to create impactful changes`;
+TOOL USAGE GUIDELINES:
+- Use generate_global_adjustments for ALL global color/tone changes (no masks). Call this once.
+- Use generate_masks to propose up to 3 targeted local masks with adjustments.
+- Use name_and_describe to provide the preset_name and a short description. Always call this exactly once so the recipe has a title and description.
+- You may also use analyze_color_palette, assess_lighting, and evaluate_style to reason before proposing adjustments.`;
     }
 
     private createTools(_options?: StreamingOptions) {
         const aiFunctions: AIFunctionToggles = getDefaultAIFunctionToggles();
 
-        // Build base schema using Zod
-        let baseSchema = buildBaseAdjustmentsSchema(aiFunctions);
+        // Build schemas using shared helpers
+        // Full base contains meta fields preset_name/description which we will separate for a dedicated tool
+        const fullBaseSchema = buildBaseAdjustmentsSchema(aiFunctions);
+        // Global adjustments schema excludes naming/description and masks; focused purely on global params
+        const globalAdjustmentsSchema = fullBaseSchema
+            .omit({ preset_name: true, description: true });
 
-        // Add conditional properties based on enabled functions
-        // base schema now built via shared helper
-
-        // Add masks (always enabled)
+        // Masks schema (kept separate)
         const maskSchema = createStreamingMaskSchema();
-        baseSchema = baseSchema.extend({ masks: z.array(maskSchema).max(3).optional() });
 
         // Create tools using AI SDK v5's tool function with Zod schemas
         const tools: any = {};
 
-        // Main function for generating color adjustments
-        tools.generate_color_adjustments = tool({
-            description: 'Generate bold, impactful Lightroom/Camera Raw adjustments to transform the target image to match the reference style. ALWAYS use tone curves and color grading as primary tools. Use the full range of available values to create dramatic, noticeable changes.',
-            inputSchema: baseSchema,
-            execute: async (input) => input, // Placeholder - AI will call this
+        // Analysis tools - these help the AI understand the images
+        tools.analyze_color_palette = tool({
+            description: 'Analyze the color palette, dominant colors, and color relationships in the reference images. Identify the key color characteristics that define the style.',
+            inputSchema: z.object({
+                dominant_colors: z.array(z.string()).describe('Primary colors found in the reference images'),
+                color_temperature: z.enum(['warm', 'cool', 'neutral']).describe('Overall color temperature'),
+                color_saturation: z.enum(['muted', 'moderate', 'vibrant', 'oversaturated']).describe('Overall saturation level'),
+                color_contrast: z.enum(['low', 'medium', 'high']).describe('Color contrast level'),
+                color_relationships: z.string().describe('How colors relate to each other and create harmony'),
+                style_notes: z.string().describe('Key observations about the color style')
+            }),
+            execute: async (input) => input,
         });
 
-        // Report global adjustments function
-        tools.report_global_adjustments = tool({
-            description: 'Report only global Lightroom/ACR adjustments (do not include masks here). Call once.',
-            inputSchema: baseSchema,
-            execute: async (input) => input, // Placeholder - AI will call this
+        tools.assess_lighting = tool({
+            description: 'Assess the lighting conditions, exposure, and tonal characteristics of the reference images.',
+            inputSchema: z.object({
+                exposure_level: z.enum(['underexposed', 'correct', 'overexposed']).describe('Overall exposure level'),
+                contrast_level: z.enum(['low', 'medium', 'high']).describe('Overall contrast level'),
+                shadow_detail: z.enum(['crushed', 'preserved', 'lifted']).describe('Shadow detail preservation'),
+                highlight_detail: z.enum(['blown', 'preserved', 'reduced']).describe('Highlight detail preservation'),
+                lighting_quality: z.enum(['soft', 'hard', 'mixed']).describe('Quality of lighting'),
+                mood: z.enum(['bright', 'neutral', 'moody', 'dramatic']).describe('Overall lighting mood'),
+                lighting_notes: z.string().describe('Key observations about lighting and exposure')
+            }),
+            execute: async (input) => input,
         });
 
-        // Note: Individual mask functions removed - masks are now included in the main generate_color_adjustments function
+        tools.evaluate_style = tool({
+            description: 'Evaluate the overall style, mood, and aesthetic characteristics of the reference images.',
+            inputSchema: z.object({
+                style_category: z.enum(['portrait', 'landscape', 'street', 'fashion', 'documentary', 'artistic', 'commercial', 'cinematic']).describe('Primary style category'),
+                mood: z.enum(['bright', 'neutral', 'moody', 'dramatic', 'vintage', 'modern', 'ethereal']).describe('Overall mood'),
+                aesthetic: z.enum(['clean', 'gritty', 'soft', 'harsh', 'warm', 'cool', 'vintage', 'modern']).describe('Aesthetic quality'),
+                treatment: z.enum(['color', 'black_and_white', 'sepia', 'split_toned']).describe('Color treatment'),
+                complexity: z.enum(['simple', 'moderate', 'complex']).describe('Visual complexity'),
+                style_notes: z.string().describe('Key observations about the overall style and aesthetic')
+            }),
+            execute: async (input) => input,
+        });
+
+        // Global adjustments tool (no masks)
+        tools.generate_global_adjustments = tool({
+            description: 'Generate ONLY global Lightroom/Camera Raw adjustments (no masks). Use bold, noticeable changes. Include treatment, camera_profile if relevant.',
+            inputSchema: globalAdjustmentsSchema,
+            execute: async (input) => input,
+        });
+
+        // Mask generation tool
+        tools.generate_masks = tool({
+            description: 'Generate local adjustment masks for targeted editing. Use this to create precise local adjustments for specific areas like faces, skies, subjects, or backgrounds.',
+            inputSchema: z.object({
+                masks: z.array(maskSchema).max(3).describe('Array of masks to apply (max 3 masks)'),
+                mask_strategy: z.string().describe('Strategy for mask placement and selection'),
+                mask_notes: z.string().describe('Notes about why these masks were chosen')
+            }),
+            execute: async (input) => input,
+        });
+
+        // Separate naming/description tool
+        tools.name_and_describe = tool({
+            description: 'Propose a short, friendly preset name (2-4 Title Case words) and a 1-2 sentence description of the recipe style and mood.',
+            inputSchema: z.object({
+                preset_name: z.string().min(1),
+                description: z.string(),
+            }),
+            execute: async (input) => input,
+        });
 
         return tools;
     }
@@ -369,10 +409,13 @@ TECHNIQUES:
 
     private getToolDescription(toolName: string): string {
         const descriptions: Record<string, string> = {
-            'generate_color_adjustments': 'color characteristics and creating the recipe',
+            'generate_global_adjustments': 'global color/tone adjustments',
+            'generate_color_adjustments': 'color characteristics and creating the recipe', // backward compat
             'analyze_color_palette': 'color palette and tonal relationships',
             'assess_lighting': 'lighting conditions and exposure',
-            'evaluate_style': 'overall style and mood'
+            'evaluate_style': 'overall style and mood',
+            'generate_masks': 'local masks and targeted edits',
+            'name_and_describe': 'naming and description of the recipe',
         };
         return descriptions[toolName] || 'image characteristics';
     }

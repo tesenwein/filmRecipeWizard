@@ -1,5 +1,6 @@
 import { dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
+import { createErrorResponse, logError } from '../../shared/error-utils';
 import { ImportResult } from '../../shared/types';
 import { StorageService } from '../storage-service';
 import { parseXMPContent } from '../xmp-parser';
@@ -165,8 +166,8 @@ export class ImportHandlers {
           }
         }
       } catch (error) {
-        console.error('[IPC] Error importing recipe:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error importing recipe', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -236,8 +237,8 @@ export class ImportHandlers {
         await this.storageService.addProcess(recipe);
         return { success: true, count: 1 };
       } catch (error) {
-        console.error('[IPC] Error importing XMP:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error importing XMP', error);
+        return createErrorResponse(error);
       }
     });
   }

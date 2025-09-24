@@ -1,5 +1,6 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
+import { createErrorResponse, logError } from '../../shared/error-utils';
 import { ImageProcessor } from '../image-processor';
 import { generateLUTContent } from '../lut-generator';
 import { StorageService } from '../storage-service';
@@ -21,11 +22,8 @@ export class ProcessingHandlers {
           const result = await this.imageProcessor.generatePreview(args);
           return result;
         } catch (error) {
-          console.error('[IPC] Error generating preview:', error);
-          return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          };
+          logError('IPC', 'Error generating preview', error);
+          return createErrorResponse(error);
         }
       }
     );
@@ -233,7 +231,6 @@ export class ProcessingHandlers {
 
           // If no target image is provided, we'll still do AI analysis using just the base image
           if (!targetImageData) {
-            console.log('[IPC] No target image provided, doing AI analysis with base image only');
           }
 
           // Emit initial progress
@@ -250,12 +247,6 @@ export class ProcessingHandlers {
 
           // Process using the image processor
           let result;
-          console.log('[IPC] Starting image processor with:', {
-            hasBaseImage: !!baseImageData,
-            hasTargetImage: !!targetImageData,
-            hasPrompt: !!prompt,
-            hasStyleOptions: !!options,
-          });
 
           const startTime = Date.now();
           try {
@@ -278,11 +269,6 @@ export class ProcessingHandlers {
               },
             });
             const duration = Date.now() - startTime;
-            console.log(`[IPC] Image processor completed in ${duration}ms:`, {
-              success: result.success,
-              hasMetadata: !!result.metadata,
-              hasError: !!result.error,
-            });
           } catch (error) {
             const duration = Date.now() - startTime;
             console.error(`[IPC] Image processor failed after ${duration}ms:`, error);
@@ -406,7 +392,6 @@ export class ProcessingHandlers {
 
           // Emit completion event
           try {
-            console.log('[IPC] Sending processing-complete event with result:', result.success);
             mainWindow?.webContents.send('processing-complete', [result]);
           } catch (error) {
             console.error('[IPC] Failed to send processing-complete event:', error);
@@ -438,75 +423,8 @@ export class ProcessingHandlers {
     // Handle LUT generation and download
     ipcMain.handle('generate-lut', async (_event, data) => {
       try {
-        // Apply strength multiplier to adjustments if provided
-        let adjustments = data.adjustments;
-
-        if (data.strength !== undefined && data.strength !== 1.0) {
-          // Create a copy of adjustments with strength applied
-          adjustments = { ...data.adjustments };
-          // Apply strength to numeric adjustment values
-          const numericFields = [
-            'exposure',
-            'contrast',
-            'highlights',
-            'shadows',
-            'whites',
-            'blacks',
-            'vibrance',
-            'saturation',
-            'clarity',
-            // HSL hue/sat/lum (Lightroom scale -100..100)
-            'hue_red',
-            'hue_orange',
-            'hue_yellow',
-            'hue_green',
-            'hue_aqua',
-            'hue_blue',
-            'hue_purple',
-            'hue_magenta',
-            'sat_red',
-            'sat_orange',
-            'sat_yellow',
-            'sat_green',
-            'sat_aqua',
-            'sat_blue',
-            'sat_purple',
-            'sat_magenta',
-            'lum_red',
-            'lum_orange',
-            'lum_yellow',
-            'lum_green',
-            'lum_aqua',
-            'lum_blue',
-            'lum_purple',
-            'lum_magenta',
-            // Color grading saturations and luminances (0..100 or -100..100)
-            'color_grade_shadow_sat',
-            'color_grade_shadow_lum',
-            'color_grade_midtone_sat',
-            'color_grade_midtone_lum',
-            'color_grade_highlight_sat',
-            'color_grade_highlight_lum',
-            'color_grade_global_sat',
-            'color_grade_global_lum',
-            // Balance is an amount (-100..100) we scale toward 0
-            'color_grade_balance',
-          ];
-
-          // Hues in color grading are angles (0..360) and should NOT be scaled; leave as-is
-
-          for (const field of numericFields) {
-            if (typeof adjustments[field] === 'number') {
-              if (field.startsWith('hue_')) {
-                // HSL hue shifts: scale toward 0
-                adjustments[field] = adjustments[field] * data.strength;
-              } else {
-                // Other fields: apply strength directly
-                adjustments[field] = adjustments[field] * data.strength;
-              }
-            }
-          }
-        }
+        // Use adjustments directly without strength scaling
+        const adjustments = data.adjustments;
 
         // Generate LUT content
         const lutContent = generateLUTContent(adjustments, data.size, data.format);
@@ -526,11 +444,7 @@ export class ProcessingHandlers {
           .replace(/\s+/g, ' ')
           .trim()
           .replace(/\s/g, '-');
-        const strengthSuffix =
-          data.strength !== undefined && data.strength !== 1.0
-            ? `-${Math.round(data.strength * 100)}pct`
-            : '';
-        const safeName = baseName ? `${baseName}-LUT-${data.size}${strengthSuffix}` : `LUT-${data.size}${strengthSuffix}`;
+        const safeName = baseName ? `${baseName}-LUT-${data.size}` : `LUT-${data.size}`;
 
         const result = await dialog.showSaveDialog({
           title: 'Save LUT File',

@@ -11,12 +11,14 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Avatar, Box, Button, Chip, Divider, IconButton, Paper, Slider, Tab, Tabs, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, IconButton, Paper, Tab, Tabs, TextField, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
-import { applyMaskOverrides, findMaskIndexFlexible, maskIdentifier } from '../../shared/mask-utils';
+import { applyMaskOverrides } from '../../shared/mask-utils';
+import { filterFailedResults, filterSuccessfulResults } from '../../shared/result-utils';
 import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
+import { RecipeModificationService } from '../services/recipeModificationService';
 import { useAppStore } from '../store/appStore';
 import ConfirmDialog from './ConfirmDialog';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
@@ -88,8 +90,6 @@ const getAvailableFeatures = (adjustments: any): string[] => {
 
 interface ResultsViewProps {
   results: ProcessingResult[];
-  baseImage: string | null;
-  targetImages: string[];
   onReset: () => void;
   processId?: string; // Optional process ID to load base64 image data
   prompt?: string; // Optional prompt provided in this session
@@ -97,8 +97,6 @@ interface ResultsViewProps {
 
 const ResultsView: React.FC<ResultsViewProps> = ({
   results,
-  baseImage: _baseImage,
-  targetImages: _targetImages,
   onReset,
   processId,
   prompt,
@@ -108,7 +106,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // Base64 image data URLs for display
   const [baseImageUrls, setBaseImageUrls] = useState<string[]>([]);
   const [activeBase, setActiveBase] = useState(0);
-  const [exportOptions, setExportOptions] = useState<
+  const [exportOptions] = useState<
     Record<
       number,
       {
@@ -121,14 +119,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         vignette: boolean;
         pointColor?: boolean;
         grain?: boolean;
-        // Export strength multiplier (0.0–2.0). 1.0 = 100%.
-        strength?: number;
       }
     >
   >({});
 
-  const successfulResults = results.filter(result => result.success);
-  const failedResults = results.filter(result => !result.success && result.error);
+  const successfulResults = filterSuccessfulResults(results);
+  const failedResults = filterFailedResults(results);
   const [processPrompt, setProcessPrompt] = useState<string | undefined>(undefined);
   const [processOptions, setProcessOptions] = useState<any | undefined>(undefined);
   const [author, setAuthor] = useState<UserProfile | undefined>(undefined);
@@ -147,7 +143,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // LUT export state
   const [lutSize, setLutSize] = useState<'17' | '33' | '65'>('33');
   const [lutFormat, setLutFormat] = useState<'cube' | '3dl' | 'lut'>('cube');
-  const [lutStrength, setLutStrength] = useState(100);
   const [profileExportStatus, setProfileExportStatus] = useState<{
     ok: boolean;
     msg: string;
@@ -205,7 +200,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             } as any);
           } catch {
             // Ignore store update errors
-            console.debug('Store update error ignored');
           }
         }
       }
@@ -226,7 +220,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     setDescriptionInput('');
   };
 
-  const saveDescription = async (_resultIndex: number) => {
+  const saveDescription = async () => {
     try {
       if (!processId) return;
 
@@ -297,8 +291,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [adjustmentOverrides, setAdjustmentOverrides] = useState<Record<string, number> | undefined>(undefined);
   const [processDescription, setProcessDescription] = useState<string | undefined>(undefined);
   
-  // State for chat preview updates and pending modifications
-  const [pendingChatModifications, setPendingChatModifications] = useState<any>(null);
+  // Note: Pending modifications are now handled by the useChatModifications hook
+  // No local state management needed here
 
   // Load base64 image data when processId is provided
   useEffect(() => {
@@ -340,6 +334,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setMaskOverrides(Array.isArray(masks) ? masks : undefined);
           const adjOv = (processResponse.process as any).aiAdjustmentOverrides;
           setAdjustmentOverrides(adjOv && typeof adjOv === 'object' ? adjOv : undefined);
+          // Note: Pending modifications are now handled by the useChatModifications hook
           // name is handled in header component
         } else {
           console.warn('[RESULTS] Process not found or failed to load:', processResponse.error);
@@ -349,6 +344,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setProcessDescription(undefined);
           setMaskOverrides(undefined);
           setAdjustmentOverrides(undefined);
+          // Note: Pending modifications are now handled by the useChatModifications hook
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
@@ -383,7 +379,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       });
     } catch {
       // Ignore subscription errors
-      console.debug('Subscription error ignored');
     }
   }, []);
 
@@ -406,13 +401,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       pointColor: true,
       grain: false, // Keep grain off by default as per user preference
       masks: true,
-      // Start export strength at 100%
-      strength: 1.0,
     } as const);
 
   const defaultOptions = getDefaultOptions();
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
+
+  // Note: Process updates are now handled by the useChatModifications hook
+  // This useEffect was removed to prevent duplicate event listeners
 
   // Create effective adjustments by applying chat modifications to original aiAdjustments
   const getEffectiveAdjustments = (result: ProcessingResult) => {
@@ -420,7 +416,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     if (!originalAdjustments) return null;
 
     // Start with a copy of the original adjustments
-    const effectiveAdjustments = { ...originalAdjustments };
+    const effectiveAdjustments: any = { ...originalAdjustments };
 
     // Apply userOptions modifications if they exist
     if (processOptions) {
@@ -489,7 +485,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
         adjustments: adjForExport,
         size: parseInt(lutSize),
         format: lutFormat,
-        strength: lutStrength / 100, // Convert percentage to 0-1 range
       });
       if (!res.success) {
         showError(`LUT export failed: ${res.error}`);
@@ -584,7 +579,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 setProcessName(n);
               } catch {
                 // Ignore name update errors
-                console.debug('Name update error ignored');
               }
             }}
           />
@@ -601,7 +595,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             }}
           >
             <Tab icon={<CompareArrowsIcon />} label="Overview" iconPosition="start" />
-            <Tab icon={<TuneIcon />} label="Adjustments Details" iconPosition="start" />
+            <Tab icon={<TuneIcon />} label="Recipe Analysis" iconPosition="start" />
             <Tab icon={<ChatIcon />} label="AI Chat" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
@@ -664,7 +658,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 onKeyDown={e => {
                                   if (e.key === 'Enter' && e.ctrlKey) {
                                     e.preventDefault();
-                                    saveDescription(selectedResult);
+                                    saveDescription();
                                   } else if (e.key === 'Escape') {
                                     e.preventDefault();
                                     cancelEditingDescription();
@@ -672,7 +666,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 }}
                               />
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                <IconButton size="small" onClick={() => saveDescription(selectedResult)} title="Save description">
+                                <IconButton size="small" onClick={() => saveDescription()} title="Save description">
                                   <CheckIcon fontSize="small" />
                                 </IconButton>
                                 <IconButton size="small" onClick={cancelEditingDescription} title="Cancel editing">
@@ -821,7 +815,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   <Box>
                     <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TuneIcon color="primary" />
-                      Applied Adjustments
+                      Recipe Analysis
                       <Chip
                         label={`${Math.round((result.metadata.aiAdjustments.confidence || 0) * 100)}% Confidence`}
                         size="medium"
@@ -850,7 +844,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 ...(maskOverrides ? { maskOverrides } : {}),
                               } as any
                             }
-                            pendingModifications={pendingChatModifications}
+                            pendingModifications={null}
                             aiAdjustments={effective}
                             showOnlyCurrent
                           />
@@ -885,139 +879,73 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         onRecipeModification={async modifications => {
                           if (!processId) return;
                           try {
-                            const updates: any = {};
+                            // Note: Suppression is now handled by the useChatModifications hook
+                            
+                            const updates = await RecipeModificationService.applyModifications(
+                              processId,
+                              modifications,
+                              {
+                                processOptions,
+                                processPrompt,
+                                processDescription,
+                                adjustmentOverrides,
+                                maskOverrides,
+                                successfulResults,
+                                selectedResult,
+                                processName,
+                              }
+                            );
+
+                            // Update local state based on modifications
                             if (modifications.userOptions) {
-                              const merged = { ...(processOptions || {}), ...modifications.userOptions } as any;
-                              updates.userOptions = merged;
+                              const merged = { ...(processOptions || {}), ...modifications.userOptions };
                               setProcessOptions(merged);
                             }
                             if ((modifications as any).aiAdjustments && typeof (modifications as any).aiAdjustments === 'object') {
                               const cur = adjustmentOverrides || {};
-                              const merged = { ...cur, ...(modifications as any).aiAdjustments } as Record<string, number>;
-                              updates.aiAdjustmentOverrides = merged;
+                              const merged = { ...cur, ...(modifications as any).aiAdjustments };
                               setAdjustmentOverrides(merged);
                             }
                             if (typeof modifications.prompt === 'string' && modifications.prompt !== processPrompt) {
-                              updates.prompt = modifications.prompt;
                               setProcessPrompt(modifications.prompt);
                             }
-                            // Name changes are not accepted from AI chat
-                            if (
-                              typeof (modifications as any).description === 'string' &&
-                              (modifications as any).description !== processDescription
-                            ) {
-                              updates.description = (modifications as any).description;
+                            if (typeof (modifications as any).description === 'string' && (modifications as any).description !== processDescription) {
                               setProcessDescription((modifications as any).description);
                             }
-                            // Apply mask overrides even when they are the only change (store operations)
                             const modAny = modifications as any;
                             const incomingOps: any[] | undefined = Array.isArray(modAny.maskOverrides)
-                              ? (modAny.maskOverrides as any[])
+                              ? modAny.maskOverrides
                               : Array.isArray(modAny.masks)
-                              ? (modAny.masks as any[])
-                              : undefined;
+                                ? modAny.masks
+                                : undefined;
                             if (Array.isArray(incomingOps)) {
-                              const ops = incomingOps;
-                              let next = maskOverrides ? [...maskOverrides] : [];
-                              for (const op of ops) {
-                                const operation = op.op || 'add';
-                                if (operation === 'remove_all' || operation === 'clear') {
-                                  next = [];
-                                  continue;
-                                }
-                                const idx = findMaskIndexFlexible(next as any[], op);
-                                if (operation === 'remove') {
-                                  if (idx >= 0) {
-                                    next.splice(idx, 1);
-                                  } else {
-                                    // Persist the intent to remove even if not in overrides yet
-                                    next.push({ ...op, id: (op as any).id || maskIdentifier(op) } as any);
-                                  }
-                                  continue;
-                                }
-                                if (operation === 'update') {
-                                  if (idx >= 0) {
-                                    const prev = next[idx] || {};
-                                    next[idx] = {
-                                      ...prev,
-                                      ...op,
-                                      id: (prev as any).id || (op as any).id || maskIdentifier(op),
-                                      adjustments: { ...(prev as any).adjustments || {}, ...(op as any).adjustments || {} },
-                                    } as any;
-                                  } else {
-                                    next.push({ ...op, id: (op as any).id || maskIdentifier(op) } as any);
-                                  }
-                                  continue;
-                                }
-                                // default add
-                                if (idx >= 0) {
-                                  const prev = next[idx] || {};
-                                  next[idx] = {
-                                    ...prev,
-                                    ...op,
-                                    id: (prev as any).id || (op as any).id || maskIdentifier(op),
-                                    adjustments: { ...(prev as any).adjustments || {}, ...(op as any).adjustments || {} },
-                                  } as any;
-                                } else {
-                                  next.push({ ...op, id: (op as any).id || maskIdentifier(op) } as any);
-                                }
-                              }
-                              updates.maskOverrides = next;
-                              setMaskOverrides(next);
+                              setMaskOverrides(incomingOps);
                             }
-                            if (Object.keys(updates).length > 0) {
-                              await window.electronAPI.updateProcess(processId, updates);
-                            }
+
+                            // Update the process with all changes
+                            await RecipeModificationService.updateProcess(processId, updates);
                           } catch (e) {
                             console.error('[RESULTS] Failed to apply recipe modifications', e);
+                            throw e; // Re-throw to let the hook handle the error
                           }
                         }}
                         onAcceptChanges={async () => {
-                          // Accept: save changes only and generate XMP locally (no new AI call)
-                          if (!processId) return;
-                          try {
-                            // Clear pending changes immediately for snappy UI
-                            setPendingChatModifications(null);
-
-                            const current = successfulResults[selectedResult];
-                            const adjustments = getEffectiveAdjustments(current);
-                            if (!adjustments) {
-                              console.warn('[RESULTS] No adjustments available to generate XMP');
-                              return;
-                            }
-                            const adjForExport = { ...adjustments } as any;
-                            if (processName) adjForExport.preset_name = processName;
-                            if (processDescription) adjForExport.description = processDescription;
-
-                            const gen = await (window.electronAPI as any).generateXmpContent({
-                              adjustments: adjForExport,
-                              include: { strength: 1.0 },
-                              recipeName: processName,
-                            });
-                            if (!gen?.success || !gen?.content) {
-                              showError(`Failed to create XMP${gen?.error ? `: ${gen.error}` : ''}`);
-                              return;
-                            }
-
-                            await window.electronAPI.updateProcess(processId, {
-                              xmpPreset: gen.content,
-                              xmpCreatedAt: new Date().toISOString(),
-                              // Ensure status reflects completed state (no generating spinner)
-                              status: 'completed',
-                            } as any);
-                          } catch (error) {
-                            console.error('[RESULTS] Failed to create/store XMP:', error);
-                            showError('Failed to apply and store XMP');
-                          }
+                          // Accept: UI state clearing is handled by the hook
+                          // This function is called after onRecipeModification completes
+                          // No additional work needed here
+                          return Promise.resolve();
                         }}
                         onRejectChanges={() => {
                           // Clear pending modifications when rejecting changes
-                          setPendingChatModifications(null);
+                          if (processId) {
+                            try { window.electronAPI.updateProcess(processId, { pendingModifications: null } as any); } catch { /* ignore */ }
+                          }
+                          // Note: Pending modifications are now handled by the useChatModifications hook
                           // Handle rejecting changes
-                          console.log('Changes rejected');
                         }}
-                        onPendingModifications={(modifications) => {
-                          setPendingChatModifications(modifications);
+                        onPendingModifications={(_modifications) => {
+                          // Note: Pending modifications are now handled by the useChatModifications hook
+                          // This callback is no longer needed
                         }}
                       />
                     </Box>
@@ -1056,58 +984,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Box>
                           );
                         })()}
-                        {/* Export Strength and Button - 50/50 Layout */}
-                        <Box sx={{ display: 'flex', gap: 3, mt: 3, alignItems: 'stretch' }}>
-                          <Paper variant="outlined" sx={{ p: 3, flex: 1, backgroundColor: 'grey.50' }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                              Export Strength
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Slider
-                                value={Math.round((getOptions(index).strength ?? 1.0) * 100)}
-                                onChange={(_e, val) => {
-                                  const pct = Array.isArray(val) ? val[0] : (val as number);
-                                  setExportOptions(prev => ({
-                                    ...prev,
-                                    [index]: {
-                                      ...(prev[index] || defaultOptions),
-                                      strength: Math.max(0, Math.min(200, pct)) / 100,
-                                    },
-                                  }));
-                                }}
-                                min={0}
-                                max={200}
-                                step={5}
-                                valueLabelDisplay="auto"
-                                valueLabelFormat={v => `${v}%`}
-                                sx={{ flex: 1 }}
-                              />
-                              <Typography variant="body2" sx={{ width: 56, textAlign: 'right' }}>
-                                {Math.round((getOptions(index).strength ?? 1.0) * 100)}%
-                              </Typography>
-                            </Box>
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              Tip: 100% applies the full AI adjustments. Lower values create softer effects.
-                            </Typography>
-                          </Paper>
-                          <Box
-                            sx={{
-                              flex: 1,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'flex-end',
-                            }}
+                        {/* Export Button */}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => handleExportXMP(index, result)}
+                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                            size="large"
                           >
-                            <Button
-                              variant="contained"
-                              startIcon={<DownloadIcon />}
-                              onClick={() => handleExportXMP(index, result)}
-                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                              size="large"
-                            >
-                              Export Preset (.xmp)
-                            </Button>
-                          </Box>
+                            Export Preset (.xmp)
+                          </Button>
                         </Box>
                       </Paper>
 
@@ -1220,34 +1107,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                       </Box>
 
                       {/* Export Strength and Button - Lightroom style layout */}
-                      <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ flex: 1, maxWidth: 400 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                            Export Strength
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Slider
-                              value={lutStrength}
-                              onChange={(_e, val) => {
-                                const pct = Array.isArray(val) ? val[0] : (val as number);
-                                setLutStrength(Math.max(0, Math.min(200, pct)));
-                              }}
-                              min={0}
-                              max={200}
-                              step={5}
-                              valueLabelDisplay="auto"
-                              valueLabelFormat={v => `${v}%`}
-                              sx={{ flex: 1 }}
-                            />
-                            <Typography variant="body2" sx={{ width: 56, textAlign: 'right', fontWeight: 600 }}>
-                              {lutStrength}%
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
-                            Tip: 100% applies the full AI adjustments. Lower values create more subtle effects.
-                          </Typography>
-                        </Box>
-
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <Button
                           variant="contained"
                           size="large"

@@ -9,15 +9,15 @@ import { Alert, Avatar, Box, Button, CircularProgress, IconButton, Paper, Stack,
 import React, { useEffect, useRef, useState } from 'react';
 import { applyMaskOverrides } from '../../shared/mask-utils';
 import { Recipe } from '../../shared/types';
+import { useChatModifications } from '../hooks/useChatModifications';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
 
 interface RecipeChatProps {
     recipe: Recipe;
     isReprocessing?: boolean;
-    onRecipeModification: (modifiedRecipe: Partial<Recipe>) => void | Promise<void>;
-    onAcceptChanges: () => void;
+    onRecipeModification: (modifiedRecipe: Partial<Recipe>) => Promise<void>;
+    onAcceptChanges: () => Promise<void>;
     onRejectChanges: () => void;
-    onPreviewUpdate?: (previewDataUrl: string) => void;
     onPendingModifications?: (modifications: any) => void;
 }
 
@@ -28,13 +28,11 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     onRecipeModification,
     onAcceptChanges,
     onRejectChanges,
-    onPreviewUpdate: _onPreviewUpdate,
     onPendingModifications,
 }) => {
     const [input, setInput] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [pendingModifications, setPendingModifications] = useState<Partial<Recipe> | null>(null);
     const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; id: string }>>([
         {
             id: 'welcome',
@@ -44,6 +42,22 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     ]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Use the new chat modifications hook
+    const {
+        pendingModifications,
+        isApplying,
+        error: modificationError,
+        setPendingModifications,
+        handleAcceptModifications,
+        handleRejectModifications,
+        handleProcessUpdate,
+    } = useChatModifications({
+        processId: recipe.id,
+        onRecipeModification,
+        onAcceptChanges,
+        onRejectChanges,
+    });
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -51,6 +65,26 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Initialize pending mods from recipe if provided (from storage)
+    useEffect(() => {
+        const pend: any = (recipe as any)?.pendingModifications;
+        if (pend && typeof pend === 'object') {
+            setPendingModifications(pend);
+        }
+    }, [recipe, setPendingModifications]);
+
+    // Listen to process updates for pending modifications
+    useEffect(() => {
+        try { 
+            window.electronAPI.onProcessUpdated?.(handleProcessUpdate); 
+        } catch { /* ignore */ }
+        return () => {
+            try { 
+                window.electronAPI.removeAllListeners('process-updated'); 
+            } catch { /* ignore */ }
+        };
+    }, [handleProcessUpdate]);
 
     const handleSendMessage = async (e?: React.FormEvent | React.KeyboardEvent) => {
         (e as any)?.preventDefault?.();
@@ -104,22 +138,6 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
         }
     };
 
-    const handleAcceptModifications = async () => {
-        if (pendingModifications) {
-            const mods = pendingModifications;
-            // Clear banner immediately for responsive UX
-            setPendingModifications(null);
-            // Persist changes upstream
-            await Promise.resolve(onRecipeModification(mods));
-            // Fire apply (reprocess) without blocking UI clearing
-            await Promise.resolve(onAcceptChanges());
-        }
-    };
-
-    const handleRejectModifications = () => {
-        setPendingModifications(null);
-        onRejectChanges();
-    };
 
 
     const latestAdjustments = (() => {
@@ -174,7 +192,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                                 </Box>
                             ))}
 
-                            {(isProcessing || isReprocessing) && (
+                            {(isProcessing || isReprocessing || isApplying) && (
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                                     <Avatar sx={{ bgcolor: '#6c757d', width: 32, height: 32 }}>
                                         <BotIcon />
@@ -183,7 +201,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                             <CircularProgress size={16} />
                                             <Typography variant="body2" sx={{ fontSize: 13, color: '#6c757d' }}>
-                                                {isReprocessing ? 'Applying changes with AI…' : 'AI is thinking...'}
+                                                {isReprocessing ? 'Applying changes with AI…' : isApplying ? 'Applying changes...' : 'AI is thinking...'}
                                             </Typography>
                                         </Box>
                                     </Paper>
@@ -210,9 +228,9 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                             </Box>
                         )}
 
-                        {error && (
+                        {(error || modificationError) && (
                             <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>
-                                {error}
+                                {error || modificationError}
                             </Alert>
                         )}
 
@@ -234,11 +252,11 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
                                             }
                                         }}
                                         placeholder="Ask me to modify your recipe... (e.g., 'Make it warmer and more cinematic')"
-                                        disabled={isProcessing || !!isReprocessing}
+                                        disabled={isProcessing || !!isReprocessing || isApplying}
                                         size="small"
                                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: 13 } }}
                                     />
-                                    <IconButton type="submit" disabled={!input.trim() || isProcessing || !!isReprocessing} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
+                                    <IconButton type="submit" disabled={!input.trim() || isProcessing || !!isReprocessing || isApplying} color="primary" sx={{ alignSelf: 'flex-end', backgroundColor: 'primary.main', color: 'white', '&:hover': { backgroundColor: 'primary.dark' }, '&:disabled': { backgroundColor: '#e9ecef', color: '#6c757d' } }}>
                                         {isProcessing ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
                                     </IconButton>
                                 </Box>

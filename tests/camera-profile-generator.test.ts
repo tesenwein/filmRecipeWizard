@@ -315,7 +315,6 @@ describe('Camera Profile Generator', () => {
         vignette_roundness: 25,
         vignette_style: 1,
         vignette_highlight_contrast: 30,
-        override_look_vignette: true,
       };
 
       const result = generateCameraProfileXMP('Vignette Profile', adjustments);
@@ -326,7 +325,6 @@ describe('Camera Profile Generator', () => {
       expect(result).toContain('<crs:PostCropVignetteRoundness>25</crs:PostCropVignetteRoundness>');
       expect(result).toContain('<crs:PostCropVignetteStyle>1</crs:PostCropVignetteStyle>');
       expect(result).toContain('<crs:PostCropVignetteHighlightContrast>30</crs:PostCropVignetteHighlightContrast>');
-      expect(result).toContain('<crs:OverrideLookVignette>True</crs:OverrideLookVignette>');
     });
   });
 
@@ -380,7 +378,6 @@ describe('Camera Profile Generator', () => {
         vignette_roundness: 25,
         vignette_style: 1,
         vignette_highlight_contrast: 30,
-        override_look_vignette: true,
       };
 
       const result = generateCameraProfileXMP('Complete Profile', adjustments);

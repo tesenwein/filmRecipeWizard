@@ -69,38 +69,91 @@ export interface AIColorAdjustments {
   vignette_roundness?: number; // -100..100
   vignette_style?: number; // 0..2 (0=Highlight Priority, 1=Color Priority, 2=Paint Overlay)
   vignette_highlight_contrast?: number; // 0..100
-  override_look_vignette?: boolean;
 
-  // Local masks proposed by AI
+  // Local masks - simplified structure
   masks?: Array<{
-    name?: string;
-    // Mask type: geometric, AI-detected subjects, scene parts, or range masks
-    // 'person' or 'subject' -> Lightroom Subject/People (MaskSubType=1)
-    // 'background' -> Background (MaskSubType=0)
-    // 'sky' -> Sky (MaskSubType=2)
-    // 'range_color' and 'range_luminance' -> CorrectionRangeMask structures
-    type: 'radial' | 'linear' | 'person' | 'subject' | 'background' | 'sky' | 'range_color' | 'range_luminance' | 'brush' | 'face' | 'eye' | 'skin' | 'hair' | 'clothing' | 'landscape' | 'water' | 'vegetation' | 'mountain' | 'building' | 'vehicle' | 'animal' | 'object';
-    adjustments?: {
-      local_exposure?: number; local_contrast?: number; local_highlights?: number; local_shadows?: number;
-      local_whites?: number; local_blacks?: number; local_clarity?: number; local_dehaze?: number;
-      local_texture?: number; local_saturation?: number;
+    name: string;
+    type: 'face_skin' | 'iris_pupil' | 'eye_whites' | 'eyebrows' | 'lips' | 'teeth' | 'hair' | 'clothing' | 'body_skin' | 'sky' | 'vegetation' | 'water' | 'architecture' | 'natural_ground' | 'artificial_ground' | 'mountains' | 'background' | 'subject' | 'person' | 'radial' | 'linear' | 'brush' | 'range_color' | 'range_luminance';
+    adjustments: {
+      local_exposure?: number;
+      local_contrast?: number;
+      local_highlights?: number;
+      local_shadows?: number;
+      local_whites?: number;
+      local_blacks?: number;
+      local_clarity?: number;
+      local_dehaze?: number;
+      local_texture?: number;
+      local_saturation?: number;
     };
-    // Optional sub-category for background masks and other AI masks
-    subCategoryId?: number;
+    // Common top-level geometry/params (supported in our generators/tests)
     // Radial geometry
-    top?: number; left?: number; bottom?: number; right?: number; angle?: number; midpoint?: number; roundness?: number; feather?: number;
-    inverted?: boolean; flipped?: boolean;
+    top?: number;
+    left?: number;
+    bottom?: number;
+    right?: number;
+    angle?: number;
+    midpoint?: number;
+    roundness?: number;
+    feather?: number;
     // Linear geometry
-    zeroX?: number; zeroY?: number; fullX?: number; fullY?: number;
-    // Person/subject reference point
-    referenceX?: number; referenceY?: number;
+    zeroX?: number;
+    zeroY?: number;
+    fullX?: number;
+    fullY?: number;
+    // Reference point for AI masks
+    referenceX?: number;
+    referenceY?: number;
+    // Scene mask sub-category id
+    subCategoryId?: number;
     // Range mask parameters
-    colorAmount?: number; invert?: boolean; pointModels?: number[][];
-    lumRange?: number[]; luminanceDepthSampleInfo?: number[];
+    colorAmount?: number;
+    invert?: boolean;
+    pointModels?: number[][];
+    lumRange?: number[];
+    luminanceDepthSampleInfo?: number[];
+    // Brush parameters
+    brushSize?: number;
+    brushFlow?: number;
+    brushDensity?: number;
+    // Geometry for radial/linear masks
+    geometry?: {
+      // Radial
+      top?: number;
+      left?: number;
+      bottom?: number;
+      right?: number;
+      angle?: number;
+      midpoint?: number;
+      roundness?: number;
+      feather?: number;
+      // Linear
+      zeroX?: number;
+      zeroY?: number;
+      fullX?: number;
+      fullY?: number;
+      // Reference point for AI masks
+      referenceX?: number;
+      referenceY?: number;
+    };
+    // Range mask parameters
+    rangeParams?: {
+      colorAmount?: number;
+      invert?: boolean;
+      pointModels?: number[][];
+      lumRange?: number[];
+      luminanceDepthSampleInfo?: number[];
+    };
     // Brush mask parameters
-    brushSize?: number; brushFlow?: number; brushDensity?: number;
-    // AI mask specific parameters
-    confidence?: number; detectionQuality?: number;
+    brushParams?: {
+      size?: number;
+      flow?: number;
+      density?: number;
+    };
+    // Common properties
+    inverted?: boolean;
+    flipped?: boolean;
+    confidence?: number;
   }>;
 }
 

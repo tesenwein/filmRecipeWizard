@@ -30,7 +30,8 @@ export interface RecipeAdjustmentsPanelProps {
 }
 
 function fmtNum(v: any): string {
-  if (v === undefined || v === null || Number.isNaN(Number(v))) return '—';
+  if (v === undefined || v === null) return 'Not set';
+  if (Number.isNaN(Number(v))) return 'Invalid';
   const n = Number(v);
   if (Number.isInteger(n)) return String(n);
   return n.toFixed(1);
@@ -115,9 +116,7 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
-      <Typography variant="h6" sx={{ fontWeight: 700 }}>Adjustments Overview</Typography>
-
-  <Section title="Description">
+      <Section title="Description">
         <Row
           label="Description"
           cur={<LongValue text={(recipe as any).description} />}
@@ -126,44 +125,46 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         />
       </Section>
 
-      <Section title="Basic Adjustments">
-        {/* Unify white balance to Kelvin selection only */}
-        <Row label="Contrast" cur={<ValueChip label={fmtNum(current.contrast)} />} next={<ValueChip label={fmtNum(proposed.contrast)} color={hasChange(current.contrast, proposed.contrast) ? 'warning' : 'default'} />} isChanged={hasChange(current.contrast, proposed.contrast)} />
-        <Divider sx={{ my: 1 }} />
-        <Row label="Vibrance" cur={<ValueChip label={fmtNum(current.vibrance)} />} next={<ValueChip label={fmtNum(proposed.vibrance)} color={hasChange(current.vibrance, proposed.vibrance) ? 'warning' : 'default'} />} isChanged={hasChange(current.vibrance, proposed.vibrance)} />
-        <Divider sx={{ my: 1 }} />
-        <Row label="Saturation Bias" cur={<ValueChip label={fmtNum(current.saturationBias)} />} next={<ValueChip label={fmtNum(proposed.saturationBias)} color={hasChange(current.saturationBias, proposed.saturationBias) ? 'warning' : 'default'} />} isChanged={hasChange(current.saturationBias, proposed.saturationBias)} />
-      </Section>
+      {aiAdjustments && (
+        <Section title="Tone Adjustments">
+          <Row label="Exposure" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.exposure)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.exposure)} color="default" />} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Contrast" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.contrast)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.contrast)} color="default" />} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Highlights" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.highlights)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.highlights)} color="default" />} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Shadows" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.shadows)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.shadows)} color="default" />} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Whites" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.whites)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.whites)} color="default" />} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Blacks" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.blacks)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.blacks)} color="default" />} />
+        </Section>
+      )}
+
+      {aiAdjustments && (
+        <Section title="Color Adjustments">
+          <Row label="Vibrance" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.vibrance)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.vibrance)} color="default" />} />
+          <Divider sx={{ my: 1 }} />
+          <Row label="Saturation" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.saturation)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.saturation)} color="default" />} />
+        </Section>
+      )}
 
       <Section title="Style & Options">
-        <Divider sx={{ my: 1 }} />
         <Row label="Artist Style" cur={<ValueChip label={str(current.artistStyle?.name)} />} next={<ValueChip label={str(proposed.artistStyle?.name)} color={hasChange(current.artistStyle?.key, proposed.artistStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.artistStyle?.key, proposed.artistStyle?.key)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Film Style" cur={<ValueChip label={str(current.filmStyle?.name)} />} next={<ValueChip label={str(proposed.filmStyle?.name)} color={hasChange(current.filmStyle?.key, proposed.filmStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmStyle?.key, proposed.filmStyle?.key)} />
       </Section>
 
       {aiAdjustments && (
-        <Section title="Applied Adjustments">
+        <Section title="Camera Profile">
           <Row label="Profile" cur={<ValueChip label={str(aiAdjustments.camera_profile)} />} next={<ValueChip label={str(aiAdjustments.camera_profile)} />} isChanged={false} />
           <Divider sx={{ my: 1 }} />
           <Row label="Treatment" cur={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} next={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Exposure" cur={<ValueChip label={fmtNum(aiAdjustments.exposure)} />} next={<ValueChip label={fmtNum(aiAdjustments.exposure)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Contrast" cur={<ValueChip label={fmtNum(aiAdjustments.contrast)} />} next={<ValueChip label={fmtNum(aiAdjustments.contrast)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Vibrance" cur={<ValueChip label={fmtNum(aiAdjustments.vibrance)} />} next={<ValueChip label={fmtNum(aiAdjustments.vibrance)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Saturation" cur={<ValueChip label={fmtNum(aiAdjustments.saturation)} />} next={<ValueChip label={fmtNum(aiAdjustments.saturation)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Highlights" cur={<ValueChip label={fmtNum(aiAdjustments.highlights)} />} next={<ValueChip label={fmtNum(aiAdjustments.highlights)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Shadows" cur={<ValueChip label={fmtNum(aiAdjustments.shadows)} />} next={<ValueChip label={fmtNum(aiAdjustments.shadows)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Whites" cur={<ValueChip label={fmtNum(aiAdjustments.whites)} />} next={<ValueChip label={fmtNum(aiAdjustments.whites)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Blacks" cur={<ValueChip label={fmtNum(aiAdjustments.blacks)} />} next={<ValueChip label={fmtNum(aiAdjustments.blacks)} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
+        </Section>
+      )}
+
+      {aiAdjustments && (
+        <Section title="Advanced Features">
           <Row
             label="Curves Present"
             cur={<ValueChip label={((((aiAdjustments as any).tone_curve?.length || 0) > 0) || ['red', 'green', 'blue'].some(c => (((aiAdjustments as any)[`tone_curve_${c}`]?.length || 0) > 0)) || ['parametric_shadows', 'parametric_darks', 'parametric_lights', 'parametric_highlights'].some(k => (aiAdjustments as any)[k] !== undefined)) ? 'Yes' : 'No'} />}
@@ -184,13 +185,21 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
             next={<ValueChip label={Object.keys(aiAdjustments).some(k => /^(hue|sat|lum)_(red|orange|yellow|green|aqua|blue|purple|magenta)$/.test(k)) ? 'Yes' : 'No'} />}
             isChanged={false}
           />
-          <Divider sx={{ my: 1 }} />
+        </Section>
+      )}
+
+      {aiAdjustments && (
+        <Section title="Film Grain">
           <Row label="Grain Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_amount)} color={hasChange((aiAdjustments as any).grain_amount, (effectiveAiAdjustments as any).grain_amount) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_amount, (effectiveAiAdjustments as any).grain_amount)} />
           <Divider sx={{ my: 1 }} />
           <Row label="Grain Size" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_size)} color={hasChange((aiAdjustments as any).grain_size, (effectiveAiAdjustments as any).grain_size) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_size, (effectiveAiAdjustments as any).grain_size)} />
           <Divider sx={{ my: 1 }} />
           <Row label="Grain Frequency" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_frequency)} color={hasChange((aiAdjustments as any).grain_frequency, (effectiveAiAdjustments as any).grain_frequency) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_frequency, (effectiveAiAdjustments as any).grain_frequency)} />
-          <Divider sx={{ my: 1 }} />
+        </Section>
+      )}
+
+      {aiAdjustments && (
+        <Section title="Vignette">
           <Row label="Vignette Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_amount)} color={hasChange((aiAdjustments as any).vignette_amount, (effectiveAiAdjustments as any).vignette_amount) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_amount, (effectiveAiAdjustments as any).vignette_amount)} />
           <Divider sx={{ my: 1 }} />
           <Row label="Vignette Midpoint" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_midpoint)} color={hasChange((aiAdjustments as any).vignette_midpoint, (effectiveAiAdjustments as any).vignette_midpoint) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_midpoint, (effectiveAiAdjustments as any).vignette_midpoint)} />
@@ -202,9 +211,11 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
           <Row label="Vignette Style" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_style)} color={hasChange((aiAdjustments as any).vignette_style, (effectiveAiAdjustments as any).vignette_style) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_style, (effectiveAiAdjustments as any).vignette_style)} />
           <Divider sx={{ my: 1 }} />
           <Row label="Vignette Highlight Contrast" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_highlight_contrast)} color={hasChange((aiAdjustments as any).vignette_highlight_contrast, (effectiveAiAdjustments as any).vignette_highlight_contrast) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_highlight_contrast, (effectiveAiAdjustments as any).vignette_highlight_contrast)} />
-          <Divider sx={{ my: 1 }} />
-          <Row label="Override Look Vignette" cur={<ValueChip label={(aiAdjustments as any).override_look_vignette ? 'True' : 'False'} />} next={<ValueChip label={(aiAdjustments as any).override_look_vignette ? 'True' : 'False'} />} isChanged={false} />
-          <Divider sx={{ my: 1 }} />
+        </Section>
+      )}
+
+      {aiAdjustments && (
+        <Section title="Local Adjustments">
           <Row label="Masks" cur={<ValueChip label={`${Array.isArray((aiAdjustments as any).masks) ? (aiAdjustments as any).masks.length : 0}`} />} next={<ValueChip label={`${Array.isArray((aiAdjustments as any).masks) ? (aiAdjustments as any).masks.length : 0}`} />} isChanged={false} />
 
           {Array.isArray((aiAdjustments as any).masks) && (aiAdjustments as any).masks.length > 0 && (

@@ -1,25 +1,25 @@
 import {
-    AutoAwesome as AutoAwesomeIcon,
-    CheckCircle as CheckCircleIcon,
-    Palette as PaletteIcon,
-    PhotoCamera as PhotoCameraIcon,
-    Search as SearchIcon,
-    Settings as SettingsIcon,
-    Tune as TuneIcon
+  AutoAwesome as AutoAwesomeIcon,
+  CheckCircle as CheckCircleIcon,
+  Palette as PaletteIcon,
+  PhotoCamera as PhotoCameraIcon,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  Tune as TuneIcon
 } from '@mui/icons-material';
 import {
-    Avatar,
-    Box,
-    Card,
-    CardContent,
-    Chip,
-    Grow,
-    LinearProgress,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    Typography
+  Avatar,
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Grow,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
@@ -264,10 +264,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
           }}
         >
           <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: 'text.primary' }}>
-              Recipe Generation Progress
-            </Typography>
-
             <Box sx={{ width: '100%' }}>
               {recipeSteps.map((step, _index) => (
                 <Grow in={true} timeout={600} key={step.id}>

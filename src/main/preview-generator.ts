@@ -2,6 +2,7 @@ import { app } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { imageProcessingService } from '../services/image-processing-service';
+import { logError } from '../shared/error-utils';
 
 export async function generatePreviewFile(args: {
   path?: string;
@@ -49,7 +50,7 @@ export async function generatePreviewFile(args: {
 
     return outPath;
   } catch (error) {
-    console.error('[PREVIEW] Error generating preview:', error);
+    logError('PREVIEW', 'Error generating preview', error);
     throw new Error(`Failed to generate preview: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

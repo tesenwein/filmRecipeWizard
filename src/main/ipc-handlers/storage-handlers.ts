@@ -2,6 +2,7 @@ import { BrowserWindow, dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
+import { createErrorResponse, logError } from '../../shared/error-utils';
 import { AppSettings, DEFAULT_STORAGE_FOLDER, ProcessHistory } from '../../shared/types';
 import { ImageProcessor } from '../image-processor';
 import { SettingsService } from '../settings-service';
@@ -48,10 +49,10 @@ export class StorageHandlers {
           }
         }
         return { success: true, recipes: normalized };
-      } catch (error) {
-        console.error('[IPC] Error loading recipes:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
+        } catch (error) {
+          logError('IPC', 'Error loading recipes', error);
+          return createErrorResponse(error);
+        }
     });
 
     // Save a new process/recipe
@@ -173,10 +174,10 @@ export class StorageHandlers {
       try {
         await this.storageService.deleteProcess(processId);
         return { success: true };
-      } catch (error) {
-        console.error('[IPC] Error deleting process:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
+        } catch (error) {
+          logError('IPC', 'Error deleting process', error);
+          return createErrorResponse(error);
+        }
     });
 
     // Delete multiple processes
@@ -184,10 +185,10 @@ export class StorageHandlers {
       try {
         await this.storageService.deleteMultipleProcesses(processIds);
         return { success: true };
-      } catch (error) {
-        console.error('[IPC] Error deleting multiple processes:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
+        } catch (error) {
+          logError('IPC', 'Error deleting multiple processes', error);
+          return createErrorResponse(error);
+        }
     });
 
     // Duplicate a process
@@ -214,8 +215,8 @@ export class StorageHandlers {
         await this.storageService.addProcess(duplicatedProcess);
         return { success: true, process: duplicatedProcess };
       } catch (error) {
-        console.error('[IPC] Error duplicating process:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error duplicating process', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -228,8 +229,8 @@ export class StorageHandlers {
         }
         return { success: true, process };
       } catch (error) {
-        console.error('[IPC] Error getting process:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error getting process', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -272,8 +273,8 @@ export class StorageHandlers {
 
         return { success: true, ...result };
       } catch (error) {
-        console.error('[IPC] Error getting image data URLs:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error getting image data URLs', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -307,8 +308,8 @@ export class StorageHandlers {
         } as any);
         return { success: true };
       } catch (error) {
-        console.error('[IPC] Error setting base image:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error setting base image', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -335,8 +336,8 @@ export class StorageHandlers {
         await this.storageService.updateProcess(processId, { recipeImageData: merged[0] } as any);
         return { success: true, count: merged.length };
       } catch (error) {
-        console.error('[IPC] Error adding base images:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error adding base images', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -358,8 +359,8 @@ export class StorageHandlers {
         await this.storageService.updateProcess(processId, updates);
         return { success: true };
       } catch (error) {
-        console.error('[IPC] Error removing base image:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error removing base image', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -377,8 +378,8 @@ export class StorageHandlers {
         }
         return { success: false, error: 'Selection canceled' };
       } catch (error) {
-        console.error('[IPC] Error selecting storage folder:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error selecting storage folder', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -388,8 +389,8 @@ export class StorageHandlers {
         await this.storageService.clearRecipes();
         return { success: true };
       } catch (error) {
-        console.error('[IPC] Error clearing recipes:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error clearing recipes', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -399,8 +400,8 @@ export class StorageHandlers {
         await this.storageService.clearPendingRecipes();
         return { success: true };
       } catch (error) {
-        console.error('[IPC] Error clearing pending recipes:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error clearing pending recipes', error);
+        return createErrorResponse(error);
       }
     });
   }

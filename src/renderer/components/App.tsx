@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { filterFailedResults, hasErrors } from '../../shared/result-utils';
 import { ProcessingResult, Recipe, StyleOptions } from '../../shared/types';
 import { AlertProvider, useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -194,13 +195,7 @@ const AppContent: React.FC = () => {
 
     // Add periodic status logging for debugging
     statusIntervalRef.current = setInterval(() => {
-      console.log('[APP] Processing status check:', {
-        isProcessing: processingState.isProcessing,
-        progress: processingState.progress,
-        status: processingState.status,
-        currentStep,
-        startingRef: startingRef.current,
-      });
+      // Status logging removed for cleaner code
     }, 30000); // Every 30 seconds
 
     // Kick off processing using stored base64 data
@@ -214,17 +209,6 @@ const AppContent: React.FC = () => {
           prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
           styleOptions: styleOptions,
         };
-        console.log('[APP] Calling processWithStoredImages with:', {
-          hasProcessId: !!processingData.processId,
-          targetIndex: processingData.targetIndex,
-          hasBaseImageData: !!processingData.baseImageData,
-          hasTargetImageData: !!processingData.targetImageData,
-          targetImageDataLength: Array.isArray(processingData.targetImageData)
-            ? processingData.targetImageData.length
-            : 'not array',
-          hasPrompt: !!processingData.prompt,
-          hasStyleOptions: !!processingData.styleOptions,
-        });
 
         await window.electronAPI.processWithStoredImages(processingData);
       } catch (error) {
@@ -260,7 +244,6 @@ const AppContent: React.FC = () => {
   };
 
   const handleProcessingComplete = async (processingResults: any[]) => {
-    console.log('[RENDERER] Processing complete received:', processingResults);
     startingRef.current = false;
 
     // Clear the interval since processing completed successfully
@@ -280,8 +263,8 @@ const AppContent: React.FC = () => {
 
     // Check for errors and show error dialog if any processing failed
     const anySuccess = results.some(r => r.success);
-    const anyErrors = results.some(r => !r.success && r.error);
-    const failedResults = results.filter(r => !r.success && r.error);
+    const anyErrors = hasErrors(results);
+    const failedResults = filterFailedResults(results);
 
     if (anyErrors) {
       // Show error dialog for any processing failures
@@ -320,7 +303,6 @@ const AppContent: React.FC = () => {
       }
     }
 
-    console.log('[RENDERER] Transitioning to results step');
     setCurrentStep('results');
   };
 
@@ -383,16 +365,12 @@ const AppContent: React.FC = () => {
 
       // Listen for processing completion
       const onComplete = (results: ProcessingResult[]) => {
-        console.log('[RENDERER] Processing complete callback triggered with results:', results);
         handleProcessingComplete(results);
       };
-      console.log('[RENDERER] Setting up processing complete listener');
       window.electronAPI.onProcessingComplete?.(onComplete);
 
       // Test if the listener is working
-      console.log('[RENDERER] Testing IPC connection...');
       setTimeout(() => {
-        console.log('[RENDERER] IPC test - listeners should be active now');
       }, 1000);
 
       // Listen for background process updates (e.g., status flip to completed)

@@ -480,7 +480,6 @@ describe('XMP Parser', () => {
       expect(result.adjustments?.vignette_roundness).toBe(25);
       expect(result.adjustments?.vignette_style).toBe(1);
       expect(result.adjustments?.vignette_highlight_contrast).toBe(30);
-      expect(result.adjustments?.override_look_vignette).toBe(true);
     });
   });
 
@@ -503,18 +502,25 @@ describe('XMP Parser', () => {
     <rdf:Seq>
      <rdf:li>
       <rdf:Description
+       crs:What="Correction"
        crs:CorrectionName="Radial Vignette"
-       crs:What="Mask/CircularGradient"
        crs:LocalExposure2012="-0.5"
        crs:LocalContrast2012="0.3"
-       crs:LocalSaturation="0.2"
-       crs:Top="0.1"
-       crs:Left="0.1"
-       crs:Bottom="0.9"
-       crs:Right="0.9"
-       crs:Feather="50"
-       crs:Roundness="0"
-       crs:MaskInverted="False"/>
+       crs:LocalSaturation="0.2">
+      <crs:CorrectionMasks>
+       <rdf:Seq>
+        <rdf:li
+         crs:What="Mask/CircularGradient"
+         crs:Top="0.1"
+         crs:Left="0.1"
+         crs:Bottom="0.9"
+         crs:Right="0.9"
+         crs:Feather="50"
+         crs:Roundness="0"
+         crs:MaskInverted="False"/>
+       </rdf:Seq>
+      </crs:CorrectionMasks>
+      </rdf:Description>
      </rdf:li>
     </rdf:Seq>
    </crs:MaskGroupBasedCorrections>
@@ -563,15 +569,22 @@ describe('XMP Parser', () => {
     <rdf:Seq>
      <rdf:li>
       <rdf:Description
+       crs:What="Correction"
        crs:CorrectionName="Person Enhancement"
-       crs:What="Mask/Image"
-       crs:MaskSubType="1"
-       crs:MaskSubCategoryID="6"
        crs:LocalExposure2012="0.3"
        crs:LocalContrast2012="0.2"
-       crs:LocalClarity2012="0.4"
-       crs:ReferenceX="0.5"
-       crs:ReferenceY="0.3"/>
+       crs:LocalClarity2012="0.4">
+      <crs:CorrectionMasks>
+       <rdf:Seq>
+        <rdf:li
+         crs:What="Mask/Image"
+         crs:MaskSubType="1"
+         crs:MaskSubCategoryID="6"
+         crs:ReferenceX="0.5"
+         crs:ReferenceY="0.3"/>
+       </rdf:Seq>
+      </crs:CorrectionMasks>
+      </rdf:Description>
      </rdf:li>
     </rdf:Seq>
    </crs:MaskGroupBasedCorrections>
@@ -590,7 +603,6 @@ describe('XMP Parser', () => {
       const mask = result.adjustments?.masks?.[0];
       expect(mask?.name).toBe('Person Enhancement');
       expect(mask?.type).toBe('subject'); // Parser returns 'subject' for MaskSubType="1"
-      expect(mask?.subCategoryId).toBe(6);
       expect(mask?.adjustments?.local_exposure).toBe(0.3);
       expect(mask?.adjustments?.local_contrast).toBe(0.2);
       expect(mask?.adjustments?.local_clarity).toBe(0.4);

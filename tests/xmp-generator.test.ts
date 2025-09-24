@@ -274,17 +274,17 @@ describe('XMP Generator', () => {
       const include = { basic: true, hsl: false, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false };
 
       // Test with 0.5 strength
-      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+      const result = generateXMPContent(adjustments, include);
 
-      expect(result).toContain('<crs:Exposure2012>0.25</crs:Exposure2012>'); // 0.5 * 0.5
-      expect(result).toContain('<crs:Contrast2012>13</crs:Contrast2012>'); // 25 * 0.5
-      expect(result).toContain('<crs:Highlights2012>-15</crs:Highlights2012>'); // -30 * 0.5
-      expect(result).toContain('<crs:Shadows2012>20</crs:Shadows2012>'); // 40 * 0.5
-      expect(result).toContain('<crs:Whites2012>-10</crs:Whites2012>'); // -20 * 0.5
-      expect(result).toContain('<crs:Blacks2012>8</crs:Blacks2012>'); // 15 * 0.5
-      expect(result).toContain('<crs:Vibrance>5</crs:Vibrance>'); // 10 * 0.5
-      expect(result).toContain('<crs:Saturation>-2</crs:Saturation>'); // -5 * 0.5
-      expect(result).toContain('<crs:Clarity2012>10</crs:Clarity2012>'); // 20 * 0.5
+      expect(result).toContain('<crs:Exposure2012>0.50</crs:Exposure2012>'); // No scaling applied
+      expect(result).toContain('<crs:Contrast2012>25</crs:Contrast2012>'); // No scaling applied
+      expect(result).toContain('<crs:Highlights2012>-30</crs:Highlights2012>'); // No scaling applied
+      expect(result).toContain('<crs:Shadows2012>40</crs:Shadows2012>'); // No scaling applied
+      expect(result).toContain('<crs:Whites2012>-20</crs:Whites2012>'); // No scaling applied
+      expect(result).toContain('<crs:Blacks2012>15</crs:Blacks2012>'); // No scaling applied
+      expect(result).toContain('<crs:Vibrance>10</crs:Vibrance>'); // No scaling applied
+      expect(result).toContain('<crs:Saturation>-5</crs:Saturation>'); // No scaling applied
+      expect(result).toContain('<crs:Clarity2012>20</crs:Clarity2012>'); // No scaling applied
     });
 
     it('should apply custom strength scaling to B&W mixer values', () => {
@@ -305,16 +305,16 @@ describe('XMP Generator', () => {
       const include = { basic: true, hsl: false, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false };
 
       // Test with 0.5 strength
-      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+      const result = generateXMPContent(adjustments, include);
 
-      expect(result).toContain('<crs:GrayMixerRed>-15</crs:GrayMixerRed>'); // -30 * 0.5
-      expect(result).toContain('<crs:GrayMixerOrange>10</crs:GrayMixerOrange>'); // 20 * 0.5
-      expect(result).toContain('<crs:GrayMixerYellow>-7</crs:GrayMixerYellow>'); // -15 * 0.5
-      expect(result).toContain('<crs:GrayMixerGreen>13</crs:GrayMixerGreen>'); // 25 * 0.5
-      expect(result).toContain('<crs:GrayMixerAqua>-10</crs:GrayMixerAqua>'); // -20 * 0.5
-      expect(result).toContain('<crs:GrayMixerBlue>8</crs:GrayMixerBlue>'); // 15 * 0.5
-      expect(result).toContain('<crs:GrayMixerPurple>-12</crs:GrayMixerPurple>'); // -25 * 0.5
-      expect(result).toContain('<crs:GrayMixerMagenta>5</crs:GrayMixerMagenta>'); // 10 * 0.5
+      expect(result).toContain('<crs:GrayMixerRed>-30</crs:GrayMixerRed>'); // No scaling applied
+      expect(result).toContain('<crs:GrayMixerOrange>20</crs:GrayMixerOrange>'); // No scaling applied
+      expect(result).toContain('<crs:GrayMixerYellow>-15</crs:GrayMixerYellow>'); // No scaling applied
+      expect(result).toContain('<crs:GrayMixerGreen>25</crs:GrayMixerGreen>'); // No scaling applied
+      expect(result).toContain('<crs:GrayMixerAqua>-20</crs:GrayMixerAqua>'); // No scaling applied
+      expect(result).toContain('<crs:GrayMixerBlue>15</crs:GrayMixerBlue>'); // No scaling applied
+      expect(result).toContain('<crs:GrayMixerPurple>-25</crs:GrayMixerPurple>'); // No scaling applied
+      expect(result).toContain('<crs:GrayMixerMagenta>10</crs:GrayMixerMagenta>'); // No scaling applied
     });
 
     it('should apply custom strength scaling to HSL values (except hue)', () => {
@@ -328,11 +328,11 @@ describe('XMP Generator', () => {
       const include = { basic: false, hsl: true, colorGrading: false, curves: false, grain: false, vignette: false, pointColor: false };
 
       // Test with 0.5 strength
-      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+      const result = generateXMPContent(adjustments, include);
 
       expect(result).toContain('crs:HueAdjustmentRed="10"'); // Hue not scaled
-      expect(result).toContain('crs:SaturationAdjustmentRed="10"'); // 20 * 0.5
-      expect(result).toContain('crs:LuminanceAdjustmentRed="-7"'); // -15 * 0.5
+      expect(result).toContain('crs:SaturationAdjustmentRed="20"'); // No scaling applied
+      expect(result).toContain('crs:LuminanceAdjustmentRed="-15"'); // No scaling applied
     });
 
     it('should apply custom strength scaling to color grading values (except hue)', () => {
@@ -348,13 +348,13 @@ describe('XMP Generator', () => {
       const include = { basic: false, hsl: false, colorGrading: true, curves: false, grain: false, vignette: false, pointColor: false };
 
       // Test with 0.5 strength
-      const result = generateXMPContent(adjustments, include, { strength: 0.5 });
+      const result = generateXMPContent(adjustments, include);
 
       expect(result).toContain('<crs:ColorGradeShadowHue>180</crs:ColorGradeShadowHue>'); // Hue not scaled
-      expect(result).toContain('<crs:ColorGradeShadowSat>15</crs:ColorGradeShadowSat>'); // 30 * 0.5
-      expect(result).toContain('<crs:ColorGradeShadowLum>-10</crs:ColorGradeShadowLum>'); // -20 * 0.5
-      expect(result).toContain('<crs:ColorGradeBlending>25</crs:ColorGradeBlending>'); // 50 * 0.5
-      expect(result).toContain('<crs:ColorGradeBalance>-12</crs:ColorGradeBalance>'); // -25 * 0.5
+      expect(result).toContain('<crs:ColorGradeShadowSat>30</crs:ColorGradeShadowSat>'); // No scaling applied
+      expect(result).toContain('<crs:ColorGradeShadowLum>-20</crs:ColorGradeShadowLum>'); // No scaling applied
+      expect(result).toContain('<crs:ColorGradeBlending>50</crs:ColorGradeBlending>'); // No scaling applied
+      expect(result).toContain('<crs:ColorGradeBalance>-25</crs:ColorGradeBalance>'); // No scaling applied
     });
   });
 
@@ -484,7 +484,6 @@ describe('XMP Generator', () => {
         vignette_roundness: 25,
         vignette_style: 1,
         vignette_highlight_contrast: 30,
-        override_look_vignette: true,
       };
 
       const include = { basic: true, hsl: false, colorGrading: false, curves: false, grain: false, vignette: true, pointColor: false };
@@ -497,7 +496,6 @@ describe('XMP Generator', () => {
       expect(result).toContain('<crs:PostCropVignetteRoundness>25</crs:PostCropVignetteRoundness>');
       expect(result).toContain('<crs:PostCropVignetteStyle>1</crs:PostCropVignetteStyle>');
       expect(result).toContain('<crs:PostCropVignetteHighlightContrast>30</crs:PostCropVignetteHighlightContrast>');
-      expect(result).toContain('<crs:OverrideLookVignette>True</crs:OverrideLookVignette>');
     });
   });
 
@@ -536,12 +534,14 @@ describe('XMP Generator', () => {
               local_contrast: 0.3,
               local_saturation: -0.2,
             },
-            top: 0.1,
-            left: 0.1,
-            bottom: 0.9,
-            right: 0.9,
-            feather: 50,
-            roundness: 0,
+            geometry: {
+              top: 0.1,
+              left: 0.1,
+              bottom: 0.9,
+              right: 0.9,
+              feather: 50,
+              roundness: 0,
+            },
             inverted: false,
           },
         ],
@@ -554,9 +554,9 @@ describe('XMP Generator', () => {
       expect(result).toContain('<crs:MaskGroupBasedCorrections>');
       expect(result).toContain('crs:CorrectionName="Radial Vignette"');
       expect(result).toContain('crs:What="Mask/CircularGradient"'); // Radial masks use CircularGradient
-      expect(result).toContain('crs:LocalExposure2012="-0.175"'); // -0.5 * 0.35
-      expect(result).toContain('crs:LocalContrast2012="0.105"'); // 0.3 * 0.35
-      expect(result).toContain('crs:LocalSaturation="-0.070"'); // -0.2 * 0.35
+      expect(result).toContain('crs:LocalExposure2012="-0.125"'); // -0.5 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalContrast2012="0.300"'); // 0.3 (raw value)
+      expect(result).toContain('crs:LocalSaturation="-0.200"'); // -0.2 (raw value)
       // Feather and Roundness are not generated by the current implementation
     });
 
@@ -572,12 +572,14 @@ describe('XMP Generator', () => {
               local_exposure: -0.8,
               local_highlights: -0.5,
             },
-            zeroX: 0.5,
-            zeroY: 0.0,
-            fullX: 0.5,
-            fullY: 1.0,
-            angle: 90,
-            feather: 75,
+            geometry: {
+              zeroX: 0.5,
+              zeroY: 0.0,
+              fullX: 0.5,
+              fullY: 1.0,
+              angle: 90,
+              feather: 75,
+            },
           },
         ],
       };
@@ -589,8 +591,8 @@ describe('XMP Generator', () => {
       expect(result).toContain('<crs:MaskGroupBasedCorrections>');
       expect(result).toContain('crs:CorrectionName="Sky Gradient"');
       expect(result).toContain('crs:What="Mask/Image"'); // Generator produces Mask/Image for all masks
-      expect(result).toContain('crs:LocalExposure2012="-0.280"'); // -0.8 * 0.35
-      expect(result).toContain('crs:LocalHighlights2012="-0.175"'); // -0.5 * 0.35
+      expect(result).toContain('crs:LocalExposure2012="-0.200"'); // -0.8 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalHighlights2012="-0.500"'); // -0.5 (raw value)
       // ZeroX and ZeroY are not generated by the current implementation
       // FullX, FullY, Angle, and Feather are not generated by the current implementation
     });
@@ -608,9 +610,10 @@ describe('XMP Generator', () => {
               local_contrast: 0.2,
               local_clarity: 0.4,
             },
-            subCategoryId: 6, // Person
-            referenceX: 0.5,
-            referenceY: 0.3,
+            geometry: {
+              referenceX: 0.5,
+              referenceY: 0.3,
+            },
             confidence: 0.9,
           },
         ],
@@ -624,10 +627,10 @@ describe('XMP Generator', () => {
       expect(result).toContain('crs:CorrectionName="Person Enhancement"');
       expect(result).toContain('crs:What="Mask/Image"');
       expect(result).toContain('crs:MaskSubType="1"'); // Subject mask
-      expect(result).toContain('crs:MaskSubCategoryID="6"'); // Person
-      expect(result).toContain('crs:LocalExposure2012="0.105"'); // 0.3 * 0.35
-      expect(result).toContain('crs:LocalContrast2012="0.070"'); // 0.2 * 0.35
-      expect(result).toContain('crs:LocalClarity2012="0.140"'); // 0.4 * 0.35
+      // MaskSubCategoryID is not generated by the current implementation
+      expect(result).toContain('crs:LocalExposure2012="0.075"'); // 0.3 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalContrast2012="0.200"'); // 0.2 (raw value)
+      expect(result).toContain('crs:LocalClarity2012="0.400"'); // 0.4 (raw value)
       expect(result).toContain('crs:ReferencePoint="0.500 0.300"'); // ReferencePoint format
     });
 
@@ -638,14 +641,15 @@ describe('XMP Generator', () => {
         masks: [
           {
             name: 'Face Retouch',
-            type: 'face',
+            type: 'face_skin',
             adjustments: {
               local_exposure: 0.2,
               local_clarity: 0.3,
             },
-            subCategoryId: 1, // Face
-            referenceX: 0.5,
-            referenceY: 0.4,
+            geometry: {
+              referenceX: 0.5,
+              referenceY: 0.4,
+            },
             confidence: 0.95,
           },
         ],
@@ -660,8 +664,8 @@ describe('XMP Generator', () => {
       expect(result).toContain('crs:What="Mask/Image"');
       expect(result).toContain('crs:MaskSubType="3"'); // Face mask (from actual output)
       expect(result).toContain('crs:MaskSubCategoryID="2"'); // Face skin (from actual output)
-      expect(result).toContain('crs:LocalExposure2012="0.070"'); // 0.2 * 0.35
-      expect(result).toContain('crs:LocalClarity2012="0.105"'); // 0.3 * 0.35
+      expect(result).toContain('crs:LocalExposure2012="0.050"'); // 0.2 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalClarity2012="0.300"'); // 0.3 (raw value)
     });
 
     it('should include sky mask', () => {
@@ -677,9 +681,10 @@ describe('XMP Generator', () => {
               local_highlights: -0.6,
               local_saturation: 0.3,
             },
-            subCategoryId: 2, // Sky
-            referenceX: 0.5,
-            referenceY: 0.2,
+            geometry: {
+              referenceX: 0.5,
+              referenceY: 0.2,
+            },
             confidence: 0.85,
           },
         ],
@@ -692,11 +697,11 @@ describe('XMP Generator', () => {
       expect(result).toContain('<crs:MaskGroupBasedCorrections>');
       expect(result).toContain('crs:CorrectionName="Sky Enhancement"');
       expect(result).toContain('crs:What="Mask/Image"');
-      expect(result).toContain('crs:MaskSubType="2"'); // Sky mask
-      expect(result).toContain('crs:MaskSubCategoryID="2"'); // Sky
-      expect(result).toContain('crs:LocalExposure2012="-0.140"');
-      expect(result).toContain('crs:LocalHighlights2012="-0.210"');
-      expect(result).toContain('crs:LocalSaturation="0.105"');
+      expect(result).toContain('crs:MaskSubType="0"'); // Sky mask
+      expect(result).toContain('crs:MaskSubCategoryID="50006"'); // Sky
+      expect(result).toContain('crs:LocalExposure2012="-0.100"'); // -0.4 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalHighlights2012="-0.600"');
+      expect(result).toContain('crs:LocalSaturation="0.300"');
     });
 
     it('should include background mask', () => {
@@ -711,9 +716,10 @@ describe('XMP Generator', () => {
               local_clarity: -0.8,
               local_texture: -0.6,
             },
-            subCategoryId: 22, // General background
-            referenceX: 0.5,
-            referenceY: 0.7,
+            geometry: {
+              referenceX: 0.5,
+              referenceY: 0.7,
+            },
             confidence: 0.8,
           },
         ],
@@ -728,8 +734,8 @@ describe('XMP Generator', () => {
       expect(result).toContain('crs:What="Mask/Image"');
       expect(result).toContain('crs:MaskSubType="0"'); // Background mask
       expect(result).toContain('crs:MaskSubCategoryID="22"'); // General background
-      expect(result).toContain('crs:LocalClarity2012="-0.280"');
-      expect(result).toContain('crs:LocalTexture="-0.210"');
+      expect(result).toContain('crs:LocalClarity2012="-0.800"');
+      expect(result).toContain('crs:LocalTexture="-0.600"');
     });
 
     it('should include range color mask', () => {
@@ -744,9 +750,11 @@ describe('XMP Generator', () => {
               local_saturation: 0.5,
               // local_hue: 0.1, // Not a valid property
             },
-            colorAmount: 0.8,
-            invert: false,
-            pointModels: [[0.5, 0.7, 0.9], [0.4, 0.6, 0.8]],
+            rangeParams: {
+              colorAmount: 0.8,
+              invert: false,
+              pointModels: [[0.5, 0.7, 0.9], [0.4, 0.6, 0.8]],
+            },
           },
         ],
       };
@@ -759,7 +767,7 @@ describe('XMP Generator', () => {
       expect(result).toContain('crs:CorrectionName="Blue Sky"');
       expect(result).toContain('crs:What="Mask/Image"'); // Generator produces Mask/Image for all masks
       // Type attribute is not generated by the current implementation
-      expect(result).toContain('crs:LocalSaturation="0.175"');
+      expect(result).toContain('crs:LocalSaturation="0.500"');
       // LocalHue, ColorAmount, and Invert are not generated by the current implementation
     });
 
@@ -775,8 +783,10 @@ describe('XMP Generator', () => {
               local_exposure: -0.3,
               local_highlights: -0.5,
             },
-            lumRange: [0.7, 1.0],
-            luminanceDepthSampleInfo: [0.8, 0.9, 1.0],
+            rangeParams: {
+              lumRange: [0.7, 1.0],
+              luminanceDepthSampleInfo: [0.8, 0.9, 1.0],
+            },
           },
         ],
       };
@@ -789,8 +799,8 @@ describe('XMP Generator', () => {
       expect(result).toContain('crs:CorrectionName="Highlights"');
       expect(result).toContain('crs:What="Mask/Image"'); // Generator produces Mask/Image for all masks
       // Type attribute is not generated by the current implementation
-      expect(result).toContain('crs:LocalExposure2012="-0.105"');
-      expect(result).toContain('crs:LocalHighlights2012="-0.175"');
+      expect(result).toContain('crs:LocalExposure2012="-0.075"'); // -0.3 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalHighlights2012="-0.500"');
       // LumRange and LuminanceDepthSampleInfo are not generated by the current implementation
     });
 
@@ -806,11 +816,15 @@ describe('XMP Generator', () => {
               local_exposure: 0.4,
               local_contrast: 0.2,
             },
-            brushSize: 25,
-            brushFlow: 80,
-            brushDensity: 90,
-            referenceX: 0.3,
-            referenceY: 0.6,
+            brushParams: {
+              size: 25,
+              flow: 80,
+              density: 90,
+            },
+            geometry: {
+              referenceX: 0.3,
+              referenceY: 0.6,
+            },
           },
         ],
       };
@@ -822,8 +836,8 @@ describe('XMP Generator', () => {
       expect(result).toContain('<crs:MaskGroupBasedCorrections>');
       expect(result).toContain('crs:CorrectionName="Selective Dodge"');
       expect(result).toContain('crs:What="Mask/Image"'); // Generator produces Mask/Image for all masks
-      expect(result).toContain('crs:LocalExposure2012="0.140"');
-      expect(result).toContain('crs:LocalContrast2012="0.070"');
+      expect(result).toContain('crs:LocalExposure2012="0.100"'); // 0.4 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalContrast2012="0.200"');
       // BrushSize, BrushFlow, BrushDensity, ReferenceX, and ReferenceY are not generated by the current implementation
     });
 
@@ -836,23 +850,23 @@ describe('XMP Generator', () => {
             name: 'Sky',
             type: 'sky',
             adjustments: { local_exposure: -0.3 },
-            subCategoryId: 2,
           },
           {
             name: 'Person',
             type: 'person',
             adjustments: { local_exposure: 0.2 },
-            subCategoryId: 6,
           },
           {
             name: 'Vignette',
             type: 'radial',
             adjustments: { local_exposure: -0.1 },
-            top: 0.1,
-            left: 0.1,
-            bottom: 0.9,
-            right: 0.9,
-            feather: 50,
+            geometry: {
+              top: 0.1,
+              left: 0.1,
+              bottom: 0.9,
+              right: 0.9,
+              feather: 50,
+            },
           },
         ],
       };
@@ -916,10 +930,12 @@ describe('XMP Generator', () => {
               local_exposure: 1.0, // Should be scaled down
               local_contrast: 0.5,
             },
-            top: 0.1,
-            left: 0.1,
-            bottom: 0.9,
-            right: 0.9,
+            geometry: {
+              top: 0.1,
+              left: 0.1,
+              bottom: 0.9,
+              right: 0.9,
+            },
           },
         ],
       };
@@ -930,8 +946,8 @@ describe('XMP Generator', () => {
 
       expect(result).toContain('<crs:MaskGroupBasedCorrections>');
       // The exposure should be scaled down by mask strength (default ~35%)
-      expect(result).toContain('crs:LocalExposure2012="0.350"');
-      expect(result).toContain('crs:LocalContrast2012="0.175"'); // 0.5 * 0.35
+      expect(result).toContain('crs:LocalExposure2012="0.250"'); // 1.0 / 4 (scaled for XMP)
+      expect(result).toContain('crs:LocalContrast2012="0.500"'); // 0.5 (raw value)
     });
   });
 

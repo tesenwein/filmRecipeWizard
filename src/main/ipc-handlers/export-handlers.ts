@@ -1,5 +1,6 @@
 import { dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
+import { createErrorResponse, logError } from '../../shared/error-utils';
 import { ExportResult } from '../../shared/types';
 import { ImageProcessor } from '../image-processor';
 import { StorageService } from '../storage-service';
@@ -15,25 +16,26 @@ export class ExportHandlers {
     // Generate XMP content (no save dialog) and return the string
     ipcMain.handle('generate-xmp-content', async (_event, data: { adjustments: any; include?: any; recipeName?: string }) => {
       try {
+        // Merge caller prefs with sensible defaults
         const include = {
-          wbBasic: true,
-          hsl: true,
-          colorGrading: true,
-          curves: true,
-          pointColor: true,
-          grain: true,
-          vignette: true,
-          masks: true,
-          exposure: false,
+          basic: data?.include?.basic ?? true,
+          hsl: data?.include?.hsl ?? true,
+          colorGrading: data?.include?.colorGrading ?? true,
+          curves: data?.include?.curves ?? true,
+          pointColor: data?.include?.pointColor ?? true,
+          grain: data?.include?.grain ?? true,
+          vignette: data?.include?.vignette ?? true,
+          masks: data?.include?.masks ?? true,
+          // Exposure: respect caller if provided; default to false here
+          exposure: data?.include?.exposure ?? false,
           sharpenNoise: false,
-          strength: data?.include?.strength ?? 1.0,
         } as any;
         if (data?.recipeName) (include as any).recipeName = String(data.recipeName);
         const xmpContent = generateXMPContent(data.adjustments, include);
         return { success: true, content: xmpContent };
       } catch (error) {
-        console.error('[IPC] Error generating XMP content:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error generating XMP content', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -42,17 +44,16 @@ export class ExportHandlers {
       try {
         // Always include all features - use strength slider to control intensity
         const include = {
-          wbBasic: true,
-          hsl: true,
-          colorGrading: true,
-          curves: true,
-          pointColor: true,
-          grain: true,
-          masks: true,
-          exposure: false, // Keep exposure separate and disabled by default
+          basic: data?.include?.basic ?? true,
+          hsl: data?.include?.hsl ?? true,
+          colorGrading: data?.include?.colorGrading ?? true,
+          curves: data?.include?.curves ?? true,
+          pointColor: data?.include?.pointColor ?? true,
+          grain: data?.include?.grain ?? true,
+          masks: data?.include?.masks ?? true,
+          exposure: data?.include?.exposure ?? false, // Default disabled unless caller enables
           sharpenNoise: false, // Not implemented in XMP
-          vignette: true, // Enable vignette support
-          strength: (data?.include && typeof data.include.strength === 'number') ? data.include.strength : 1.0, // Use strength slider (0-1, default 1.0)
+          vignette: data?.include?.vignette ?? true,
         } as any;
 
         // Generate XMP content
@@ -84,8 +85,8 @@ export class ExportHandlers {
           return { success: false, error: 'Save canceled' };
         }
       } catch (error) {
-        console.error('[IPC] Error downloading XMP:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error downloading XMP', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -159,7 +160,7 @@ export class ExportHandlers {
 
             // Always export all available features from AI adjustments
             const include = {
-              wbBasic: true,
+              basic: true,
               hsl: true,
               colorGrading: true,
               curves: true,
@@ -194,8 +195,8 @@ export class ExportHandlers {
         zip.writeZip(saveRes.filePath);
         return { success: true, filePath: saveRes.filePath };
       } catch (error) {
-        console.error('[IPC] Error exporting recipe:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error exporting recipe', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -265,7 +266,7 @@ export class ExportHandlers {
               const adj = r?.metadata?.aiAdjustments;
               if (!adj) return;
               const include = {
-                wbBasic: true,
+                basic: true,
                 hsl: true,
                 colorGrading: true,
                 curves: true,
@@ -274,7 +275,7 @@ export class ExportHandlers {
                 pointColor: true,
                 grain: true,
                 exposure: false,
-                masks: false,
+                masks: true,
               } as any;
               // Ensure internal XMP uses the recipe's canonical name (with index suffix when multiple)
               (include as any).recipeName = `${recipe.name || 'Recipe'}${results.length > 1 ? `-${idx + 1}` : ''}`;
@@ -299,8 +300,8 @@ export class ExportHandlers {
         zip.writeZip(saveRes.filePath);
         return { success: true, filePath: saveRes.filePath, count: recipes.length };
       } catch (error) {
-        console.error('[IPC] Error exporting all recipes:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error exporting all recipes', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -311,8 +312,8 @@ export class ExportHandlers {
         const result = await this.imageProcessor.generateCameraProfile(data);
         return result;
       } catch (error) {
-        console.error('[IPC] Error generating camera profile:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error generating camera profile', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -354,8 +355,8 @@ export class ExportHandlers {
           return { success: false, error: 'Save canceled' };
         }
       } catch (error) {
-        console.error('[IPC] Error exporting profile:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error exporting profile', error);
+        return createErrorResponse(error);
       }
     });
   }

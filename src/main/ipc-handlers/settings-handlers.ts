@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+import { createErrorResponse, logError } from '../../shared/error-utils';
 import { AppSettings } from '../../shared/types';
 import { ImageProcessor } from '../image-processor';
 import { SettingsService } from '../settings-service';
@@ -22,8 +23,8 @@ export class SettingsHandlers {
           settings: { ...settings, openaiKey: settings.openaiKey ? '***' : undefined },
         };
       } catch (error) {
-        console.error('[IPC] Error loading settings:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error loading settings', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -44,8 +45,8 @@ export class SettingsHandlers {
           settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined },
         };
       } catch (error) {
-        console.error('[IPC] Error saving settings:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error saving settings', error);
+        return createErrorResponse(error);
       }
     });
 
@@ -62,8 +63,8 @@ export class SettingsHandlers {
           settings: { ...saved, openaiKey: saved.openaiKey ? '***' : undefined },
         };
       } catch (error) {
-        console.error('[IPC] Error updating settings:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        logError('IPC', 'Error updating settings', error);
+        return createErrorResponse(error);
       }
     });
   }

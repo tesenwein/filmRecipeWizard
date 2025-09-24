@@ -324,7 +324,7 @@ const Settings: React.FC = () => {
             label="Recipe Storage Folder"
             value={storageLocation}
             onChange={e => setStorageLocation(e.target.value)}
-            helperText="Where your recipes and backups are stored"
+            helperText="Where your recipes are stored"
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -336,7 +336,7 @@ const Settings: React.FC = () => {
             }}
           />
           <Typography variant="caption" color="text.secondary">
-            This folder stores all your recipes and automatic backups. Changes take effect after saving.
+            This folder stores all your recipes. Changes take effect after saving.
           </Typography>
         </Stack>
       </Paper>

@@ -361,14 +361,20 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
       mask.name = nameMatch[1];
     }
 
-    // Extract mask type from the mask definition
-    const maskTypeMatch = maskMatch.match(/crs:What="Mask\/([^"]*)"/);
+    // Extract mask type from the CorrectionMasks section
+    const correctionMasksMatch = maskMatch.match(/<crs:CorrectionMasks>[\s\S]*?<\/crs:CorrectionMasks>/);
+    let correctionMasksContent = '';
+    let maskTypeMatch = null;
+    if (correctionMasksMatch) {
+      correctionMasksContent = correctionMasksMatch[0];
+      maskTypeMatch = correctionMasksContent.match(/crs:What="Mask\/([^"]*)"/);
+    }
     if (maskTypeMatch) {
       const maskType = maskTypeMatch[1];
       if (maskType === 'Image') {
         // Check for AI mask subtypes and subcategories
-        const subTypeMatch = maskMatch.match(/crs:MaskSubType="([^"]*)"/);
-        const subCategoryMatch = maskMatch.match(/crs:MaskSubCategoryID="([^"]*)"/);
+        const subTypeMatch = correctionMasksContent.match(/crs:MaskSubType="([^"]*)"/);
+        const subCategoryMatch = correctionMasksContent.match(/crs:MaskSubCategoryID="([^"]*)"/);
 
         if (subTypeMatch) {
           const subType = subTypeMatch[1];
@@ -461,7 +467,7 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
     // Extract geometry for radial masks
     if (mask.type === 'radial') {
       const parseGeometry = (pattern: string, key: string): void => {
-        const match = maskMatch.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+        const match = correctionMasksContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
         if (match) {
           const value = parseFloat(match[1]);
           if (!isNaN(value)) {
@@ -483,7 +489,7 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
     // Extract geometry for linear masks
     if (mask.type === 'linear') {
       const parseGeometry = (pattern: string, key: string): void => {
-        const match = maskMatch.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+        const match = correctionMasksContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
         if (match) {
           const value = parseFloat(match[1]);
           if (!isNaN(value)) {
@@ -516,8 +522,8 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
     }
 
     // Extract reference point for AI masks
-    if (['subject', 'background', 'sky', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object'].includes(mask.type)) {
-      const refMatch = maskMatch.match(/crs:ReferencePoint="([^"]*)"/);
+    if (['subject', 'background', 'sky', 'face', 'eye', 'skin', 'hair', 'clothing', 'landscape', 'water', 'vegetation', 'mountain', 'building', 'vehicle', 'animal', 'object', 'person'].includes(mask.type)) {
+      const refMatch = correctionMasksContent.match(/crs:ReferencePoint="([^"]*)"/);
       if (refMatch) {
         const coords = refMatch[1].split(' ').map(s => parseFloat(s.trim()));
         if (coords.length >= 2) {
@@ -616,17 +622,6 @@ function parseVignette(xmpContent: string, adjustments: AIColorAdjustments): voi
     }
   };
 
-  const parseVignetteBoolean = (pattern: string, key: keyof AIColorAdjustments): void => {
-    // Try both element format and attribute format
-    let match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
-    if (!match) {
-      match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
-    }
-    if (match) {
-      const value = match[1].toLowerCase() === 'true';
-      (adjustments as any)[key] = value;
-    }
-  };
 
   parseVignetteValue('PostCropVignetteAmount', 'vignette_amount');
   parseVignetteValue('PostCropVignetteMidpoint', 'vignette_midpoint');
@@ -634,7 +629,6 @@ function parseVignette(xmpContent: string, adjustments: AIColorAdjustments): voi
   parseVignetteValue('PostCropVignetteRoundness', 'vignette_roundness');
   parseVignetteValue('PostCropVignetteStyle', 'vignette_style');
   parseVignetteValue('PostCropVignetteHighlightContrast', 'vignette_highlight_contrast');
-  parseVignetteBoolean('OverrideLookVignette', 'override_look_vignette');
 }
 
 function parsePointColor(xmpContent: string, adjustments: AIColorAdjustments): void {

@@ -3,11 +3,11 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { imageProcessingService } from '../services/image-processing-service';
+import { logError } from '../shared/error-utils';
 import { AppSettings, DEFAULT_STORAGE_FOLDER, ProcessHistory } from '../shared/types';
 
 export class StorageService {
   private storageFile: string;
-  private backupDir: string;
   private initialized = false;
   private settingsFile: string | null = null;
   private storageLocation: string;
@@ -26,25 +26,21 @@ export class StorageService {
     const homeDir = os.homedir();
     this.storageLocation = path.join(homeDir, DEFAULT_STORAGE_FOLDER);
     this.storageFile = path.join(this.storageLocation, 'recipes.json');
-    this.backupDir = path.join(this.storageLocation, 'backups');
   }
 
   async setStorageLocation(location: string): Promise<void> {
     this.storageLocation = location;
     this.storageFile = path.join(this.storageLocation, 'recipes.json');
-    this.backupDir = path.join(this.storageLocation, 'backups');
 
-    // Ensure the new directories exist
+    // Ensure the new directory exists
     try {
       await fs.mkdir(this.storageLocation, { recursive: true });
-      await fs.mkdir(this.backupDir, { recursive: true });
 
-      // Verify directories were created
+      // Verify directory was created
       await fs.access(this.storageLocation);
-      await fs.access(this.backupDir);
     } catch (error) {
-      console.error('[STORAGE] Failed to create storage location directories:', { location, error });
-      throw new Error(`Failed to create storage location directories: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logError('STORAGE', 'Failed to create storage location directory', { location, error });
+      throw new Error(`Failed to create storage location directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -86,27 +82,23 @@ export class StorageService {
       // Load settings to get storage location
       await this.getSettings();
 
-      // Ensure both the main storage directory and backup directory exist
+      // Ensure the main storage directory exists
       const storageDir = path.dirname(this.storageFile);
-      console.log('[STORAGE] Creating storage directory:', storageDir);
 
-      // Create directories with explicit error handling
+      // Create directory with explicit error handling
       try {
         await fs.mkdir(storageDir, { recursive: true });
-        await fs.mkdir(this.backupDir, { recursive: true });
       } catch (mkdirError) {
-        console.error('[STORAGE] Failed to create directories:', mkdirError);
-        throw new Error(`Failed to create storage directories: ${mkdirError instanceof Error ? mkdirError.message : 'Unknown error'}`);
+        console.error('[STORAGE] Failed to create directory:', mkdirError);
+        throw new Error(`Failed to create storage directory: ${mkdirError instanceof Error ? mkdirError.message : 'Unknown error'}`);
       }
 
-      // Verify directories were created and are accessible
+      // Verify directory was created and is accessible
       try {
         await fs.access(storageDir);
-        await fs.access(this.backupDir);
-        console.log('[STORAGE] Storage directories verified:', { storageDir, backupDir: this.backupDir });
       } catch (error) {
-        console.error('[STORAGE] Failed to access created directories:', { storageDir, backupDir: this.backupDir }, error);
-        throw new Error(`Failed to access storage directories: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        logError('STORAGE', 'Failed to access created directory', { storageDir, error });
+        throw new Error(`Failed to access storage directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
 
       // Clean up any stale temp history file from a previous interrupted save
@@ -119,53 +111,11 @@ export class StorageService {
 
       this.initialized = true;
     } catch (error) {
-      console.error('[STORAGE] Initialization failed:', error);
+      logError('STORAGE', 'Initialization failed', error);
       throw error;
     }
   }
 
-  private async backupHistoryFile(): Promise<void> {
-    try {
-      // Create a timestamped backup of the current history file, if it exists
-      try {
-        await fs.stat(this.storageFile);
-      } catch {
-        return; // Nothing to back up
-      }
-
-      const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupPath = path.join(this.backupDir, `history-${ts}.json`);
-      const contents = await fs.readFile(this.storageFile);
-      await fs.writeFile(backupPath, contents);
-
-      // Prune old backups, keep the most recent N
-      const maxBackups = 20;
-      try {
-        const entries = await fs.readdir(this.backupDir);
-        const files = entries
-          .filter(f => f.startsWith('history-') && f.endsWith('.json'))
-          .map(f => ({
-            name: f,
-            time: (() => {
-              const m = f.match(/history-(.*)\.json$/);
-              return m ? m[1] : f;
-            })(),
-          }))
-          .sort((a, b) => (a.time < b.time ? 1 : -1));
-        for (let i = maxBackups; i < files.length; i++) {
-          try {
-            await fs.rm(path.join(this.backupDir, files[i].name));
-          } catch {
-            // Ignore errors when removing old backups
-          }
-        }
-      } catch {
-        // Ignore errors when accessing backup directory
-      }
-    } catch (e) {
-      console.warn('[STORAGE] Failed to create history backup:', e);
-    }
-  }
 
 
   async loadRecipes(): Promise<ProcessHistory[]> {
@@ -184,14 +134,12 @@ export class StorageService {
   async saveRecipes(history: ProcessHistory[]): Promise<void> {
     // Prevent recursive calls
     if (this.savingInProgress) {
-      console.log('[STORAGE] Save already in progress, skipping recursive call');
       return;
     }
 
     this.savingInProgress = true;
     try {
       await this.initialize();
-      await this.backupHistoryFile();
 
       // Ensure the target directory exists before any file operations
       const storageDir = path.dirname(this.storageFile);
@@ -201,7 +149,7 @@ export class StorageService {
       try {
         await fs.access(storageDir);
       } catch (error) {
-        console.error('[STORAGE] Storage directory does not exist after creation:', storageDir, error);
+        logError('STORAGE', 'Storage directory does not exist after creation', { storageDir, error });
         throw new Error(`Failed to create storage directory: ${storageDir}`);
       }
 
@@ -209,23 +157,19 @@ export class StorageService {
       // Atomic write: write to temp then rename
       const tmp = `${this.storageFile}.tmp`;
 
-      console.log('[STORAGE] Writing temporary file:', tmp);
       await fs.writeFile(tmp, data, 'utf8');
 
       // Verify the temp file was created
       try {
         await fs.access(tmp);
-        console.log('[STORAGE] Temporary file created successfully:', tmp);
       } catch (error) {
-        console.error('[STORAGE] Temporary file was not created:', tmp, error);
+        logError('STORAGE', 'Temporary file was not created', { tmp, error });
         throw new Error(`Failed to create temporary file: ${tmp}`);
       }
 
-      console.log('[STORAGE] Renaming temporary file to:', this.storageFile);
       await fs.rename(tmp, this.storageFile);
-      console.log('[STORAGE] File rename completed successfully');
     } catch (error) {
-      console.error('[STORAGE] Failed to save history:', error);
+      logError('STORAGE', 'Failed to save history', error);
       // Clean up temp file if it exists
       try {
         await fs.rm(`${this.storageFile}.tmp`, { force: true });
@@ -292,7 +236,6 @@ export class StorageService {
 
   async clearRecipes(): Promise<void> {
     await this.initialize();
-    await this.backupHistoryFile();
 
     // Write empty history
     const emptyHistory: ProcessHistory[] = [];
@@ -311,7 +254,6 @@ export class StorageService {
     const filteredHistory = history.filter(recipe => recipe.status !== 'generating');
 
     if (filteredHistory.length !== history.length) {
-      console.log(`[STORAGE] Clearing ${history.length - filteredHistory.length} pending recipes`);
       await this.saveRecipes(filteredHistory);
     }
   }
@@ -322,7 +264,7 @@ export class StorageService {
       // Use the centralized image processing service
       return await imageProcessingService.convertToBase64Jpeg(imagePath);
     } catch (error) {
-      console.error(`[STORAGE] Failed to convert image to base64: ${imagePath}`, error);
+      logError('STORAGE', `Failed to convert image to base64: ${imagePath}`, error);
       throw new Error(
         `Failed to convert image to base64: ${error instanceof Error ? error.message : 'Unknown error'
         }`
