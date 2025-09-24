@@ -117,6 +117,8 @@ Camera profiles use a different structure with `crs:Look` elements:
 crs:PresetType="Look"
 crs:ProfileName="Adobe Monochrome"
 crs:Look="Adobe Monochrome"
+crs:Cluster=""
+crs:ClusterGroup=""
 crs:SupportsAmount="True"
 crs:SupportsAmount2="True"
 crs:SupportsColor="True"
@@ -324,6 +326,7 @@ if (key === 'local_exposure') {
 3. **Look Element**: Include proper `crs:Look` structure
 4. **SupportsAmount**: Set to `"True"` for profiles (not "false")
 5. **No Masks**: Profiles cannot include masks in Lightroom
+6. **Critical - Cluster Attributes**: Set `crs:Cluster=""` and `crs:ClusterGroup=""` to empty strings for profiles to appear in Lightroom
 
 ### Issue: Presets vs Profiles Confusion
 
@@ -344,6 +347,28 @@ if (key === 'local_exposure') {
 2. Include `crs:SupportsAmount2="True"`
 3. Verify `crs:Look` element is properly nested
 4. Check that profile name matches `crs:ProfileName`
+
+### Issue: Cluster/ClusterGroup Attributes for Profiles
+
+**Problem**: Camera profiles don't appear in Lightroom's Profile Browser despite correct structure.
+
+**Root Cause**: The `crs:Cluster` and `crs:ClusterGroup` attributes must be empty strings for camera profiles to be recognized by Lightroom.
+
+**Solution**: 
+```xml
+<!-- CORRECT for camera profiles -->
+crs:Cluster=""
+crs:ClusterGroup=""
+
+<!-- INCORRECT - will prevent profiles from showing -->
+crs:Cluster="film-recipe-wizard"
+crs:ClusterGroup="film-recipe-wizard"
+```
+
+**Important Notes**:
+- This only applies to **camera profiles** (`crs:PresetType="Look"`)
+- **Presets** (`crs:PresetType="Normal"`) can have non-empty Cluster values for organization
+- This is a Lightroom-specific requirement for Profile Browser recognition
 
 ## Testing
 
