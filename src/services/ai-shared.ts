@@ -147,7 +147,7 @@ export function buildBaseAdjustmentsSchema(aiFunctions: AIFunctionToggles) {
 
 // Unified mask adjustments schema (used by both chat and streaming)
 export const maskAdjustmentsSchema = z.object({
-    local_exposure: z.number().min(-0.3).max(0.3).optional(),
+    local_exposure: z.number().min(-0.1).max(0.1).optional(),
     local_contrast: z.number().min(-0.3).max(0.3).optional(),
     local_highlights: z.number().min(-0.3).max(0.3).optional(),
     local_shadows: z.number().min(-0.3).max(0.3).optional(),
