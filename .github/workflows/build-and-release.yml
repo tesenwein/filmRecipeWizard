@@ -20,7 +20,7 @@ on:
 
 # Cancel previous runs if new commits are pushed
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -128,6 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-release
     if: needs.check-release.outputs.should_release == 'true'
+    timeout-minutes: 15
     
     steps:
       - name: Checkout code
@@ -153,6 +154,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [check-release, test]
     if: needs.check-release.outputs.should_release == 'true'
+    timeout-minutes: 45
 
     strategy:
       fail-fast: false
@@ -181,6 +183,12 @@ jobs:
       - name: Build application
         run: npm run prepare:build
 
+      - name: Clean up blockmap files
+        run: |
+          find release/ -name "*.blockmap" -delete || true
+          find release/ -name "*.yml" -delete || true
+          find release/ -name "*.yaml" -delete || true
+
       # macOS builds
       - name: Build macOS app
         if: matrix.platform == 'mac'
@@ -208,6 +216,9 @@ jobs:
             release/
             !release/.icon-ico
             !release/.icon-icns
+            !release/*.blockmap
+            !release/*.yml
+            !release/*.yaml
           retention-days: 30
           compression-level: 6
 
@@ -217,6 +228,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check-release, build]
     if: needs.check-release.outputs.should_release == 'true'
+    timeout-minutes: 30
     
     steps:
       - name: Checkout code
@@ -305,6 +317,8 @@ jobs:
           body_path: release_notes.md
           draft: false
           prerelease: false
+          generate_release_notes: false
+          make_latest: true
           files: |
             artifacts/build-mac/*.dmg
             artifacts/build-win/*.exe

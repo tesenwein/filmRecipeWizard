@@ -102,6 +102,9 @@
       "owner": "tesenwein",
       "repo": "filmRecipeWizard"
     },
+    "compression": "maximum",
+    "removePackageScripts": true,
+    "generateUpdatesFilesForAllChannels": false,
     "files": [
       "dist/**/*",
       "node_modules/**/*",
@@ -120,10 +123,6 @@
       "target": [
         {
           "target": "dmg",
-          "arch": "universal"
-        },
-        {
-          "target": "zip",
           "arch": "universal"
         }
       ]
