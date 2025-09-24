@@ -91,10 +91,8 @@ interface ProcessedImageCardProps {
   processPrompt?: string;
   processOptions?: any;
   processId?: string;
-  _exportOptions: Record<string, any>;
   onAttachBaseImage: () => void;
   onExportXMP: (index: number, result: ProcessingResult) => void;
-  _onToggleOption: (index: number, key: string) => void;
   onSetAllOptions: (index: number, value: boolean) => void;
   isAllSelected: (index: number) => boolean;
 }
@@ -107,10 +105,8 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
   processPrompt,
   processOptions,
   processId,
-  _exportOptions,
   onAttachBaseImage,
   onExportXMP,
-  _onToggleOption,
   onSetAllOptions,
   isAllSelected,
 }) => {
@@ -327,10 +323,10 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                     p: 1.25,
                   }}
                 >
-                  <div>Vibe: {processOptions.vibe || '—'}</div>
-                  <div>Contrast: {processOptions.contrast ?? '—'}</div>
-                  <div>Vibrance: {processOptions.vibrance ?? '—'}</div>
-                  <div>Saturation Bias: {processOptions.saturationBias ?? '—'}</div>
+                  <div>Vibe: {processOptions.vibe || 'Not set'}</div>
+                  <div>Contrast: {processOptions.contrast ?? 'Not set'}</div>
+                  <div>Vibrance: {processOptions.vibrance ?? 'Not set'}</div>
+                  <div>Saturation Bias: {processOptions.saturationBias ?? 'Not set'}</div>
                 </Box>
               </>
             )}

@@ -1,8 +1,8 @@
 import type { AIColorAdjustments } from '../services/types';
 import { extractCurveData, generateAllToneCurvesXML } from '../shared/curve-utils';
+import { convertRecipeToMasks } from '../shared/mask-converter';
 import { getAllMaskTypes, getMaskConfig, normalizeMaskType } from '../shared/mask-types';
-import { getDefaultStrength } from '../shared/scaling-constants';
-import { scaleBasicToneValues, scaleBWMixerValues, scaleColorGradingValues, scaleHSLValues } from '../shared/scaling-utils';
+// Using raw values directly - no scaling needed
 
 // Example B&W mixer derived from example-bw.xmp (available for optional use elsewhere)
 export function getExampleBWMixer(): Pick<
@@ -21,7 +21,7 @@ export function getExampleBWMixer(): Pick<
   };
 }
 
-export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any, options: { strength?: number } = {}): string {
+export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
   // Generate XMP content for Lightroom based on AI adjustments
   const isBW =
     !!aiAdjustments.monochrome ||
@@ -79,20 +79,25 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
   const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
 
-  // Apply scaling using shared utilities
-  const strength = typeof options?.strength === 'number' && Number.isFinite(options.strength) 
-    ? Math.max(0, Math.min(2, options.strength)) 
-    : getDefaultStrength('xmp');
-  
-  const scalingOptions = { strength, exportType: 'xmp' as const };
-  const basicToneValues = scaleBasicToneValues(aiAdjustments, scalingOptions);
+  // Use raw values directly - no scaling needed
+  const basicToneValues = {
+    exposure: aiAdjustments.exposure,
+    contrast: aiAdjustments.contrast,
+    highlights: aiAdjustments.highlights,
+    shadows: aiAdjustments.shadows,
+    whites: aiAdjustments.whites,
+    blacks: aiAdjustments.blacks,
+    clarity: aiAdjustments.clarity,
+    vibrance: aiAdjustments.vibrance,
+    saturation: aiAdjustments.saturation,
+  };
 
   const presetName = aiAdjustments.preset_name || (include?.recipeName as string) || 'Custom Recipe';
   const groupName = 'film-recipe-wizard';
   // Inclusion flags: only include sections when explicitly enabled.
   const inc = {
     wbBasic: include?.basic === true,
-    exposure: include?.basic === true,
+    exposure: include?.exposure === true,
     hsl: include?.hsl === true,
     colorGrading: include?.colorGrading === true,
     curves: include?.curves === true,
@@ -116,15 +121,17 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  const shouldIncludeExposure = inc.exposure && typeof basicToneValues.exposure === 'number' && Number.isFinite(basicToneValues.exposure);
+  // Include exposure when explicitly enabled, or when basic block is on and not explicitly disabled
+  const includeExposure = (include?.exposure === true) || (inc.wbBasic && include?.exposure !== false);
+  const shouldIncludeExposure = includeExposure && typeof basicToneValues.exposure === 'number' && Number.isFinite(basicToneValues.exposure);
   const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(basicToneValues.exposure)) : '';
 
   const parametricCurvesBlock = inc.curves
     ? [
-        tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows * strength, -100, 100))),
-        tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks * strength, -100, 100))),
-        tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights * strength, -100, 100))),
-        tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights * strength, -100, 100))),
+        tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows, -100, 100))),
+        tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks, -100, 100))),
+        tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights, -100, 100))),
+        tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights, -100, 100))),
         tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))),
         tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))),
         tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))),
@@ -137,7 +144,32 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
 
   // HSL only applies to color treatment; B&W uses GrayMixer tags
   // HSL values should be attributes on the rdf:Description element, not separate elements
-  const hslValues = inc.hsl && !isBW ? scaleHSLValues(aiAdjustments, scalingOptions) : {};
+  const hslValues = inc.hsl && !isBW ? {
+    hue_red: aiAdjustments.hue_red,
+    hue_orange: aiAdjustments.hue_orange,
+    hue_yellow: aiAdjustments.hue_yellow,
+    hue_green: aiAdjustments.hue_green,
+    hue_aqua: aiAdjustments.hue_aqua,
+    hue_blue: aiAdjustments.hue_blue,
+    hue_purple: aiAdjustments.hue_purple,
+    hue_magenta: aiAdjustments.hue_magenta,
+    sat_red: aiAdjustments.sat_red,
+    sat_orange: aiAdjustments.sat_orange,
+    sat_yellow: aiAdjustments.sat_yellow,
+    sat_green: aiAdjustments.sat_green,
+    sat_aqua: aiAdjustments.sat_aqua,
+    sat_blue: aiAdjustments.sat_blue,
+    sat_purple: aiAdjustments.sat_purple,
+    sat_magenta: aiAdjustments.sat_magenta,
+    lum_red: aiAdjustments.lum_red,
+    lum_orange: aiAdjustments.lum_orange,
+    lum_yellow: aiAdjustments.lum_yellow,
+    lum_green: aiAdjustments.lum_green,
+    lum_aqua: aiAdjustments.lum_aqua,
+    lum_blue: aiAdjustments.lum_blue,
+    lum_purple: aiAdjustments.lum_purple,
+    lum_magenta: aiAdjustments.lum_magenta,
+  } : {};
   const hslAttrs = inc.hsl && !isBW
     ? [
         attrIf('HueAdjustmentRed', hslValues.hue_red),
@@ -168,7 +200,22 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // Color Grading block
-  const colorGradingValues = inc.colorGrading ? scaleColorGradingValues(aiAdjustments, scalingOptions) : {};
+  const colorGradingValues = inc.colorGrading ? {
+    color_grade_shadow_hue: aiAdjustments.color_grade_shadow_hue,
+    color_grade_shadow_sat: aiAdjustments.color_grade_shadow_sat,
+    color_grade_shadow_lum: aiAdjustments.color_grade_shadow_lum,
+    color_grade_midtone_hue: aiAdjustments.color_grade_midtone_hue,
+    color_grade_midtone_sat: aiAdjustments.color_grade_midtone_sat,
+    color_grade_midtone_lum: aiAdjustments.color_grade_midtone_lum,
+    color_grade_highlight_hue: aiAdjustments.color_grade_highlight_hue,
+    color_grade_highlight_sat: aiAdjustments.color_grade_highlight_sat,
+    color_grade_highlight_lum: aiAdjustments.color_grade_highlight_lum,
+    color_grade_global_hue: aiAdjustments.color_grade_global_hue,
+    color_grade_global_sat: aiAdjustments.color_grade_global_sat,
+    color_grade_global_lum: aiAdjustments.color_grade_global_lum,
+    color_grade_blending: aiAdjustments.color_grade_blending,
+    color_grade_balance: aiAdjustments.color_grade_balance,
+  } : {};
   const colorGradingBlock = inc.colorGrading
     ? [
         tag('ColorGradeMidtoneHue', colorGradingValues.color_grade_midtone_hue),
@@ -189,7 +236,16 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // Black & White Mix block (GrayMixer*) when in monochrome
-  const bwMixerValues = isBW ? scaleBWMixerValues(aiAdjustments, scalingOptions) : {};
+  const bwMixerValues = isBW ? {
+    gray_red: aiAdjustments.gray_red,
+    gray_orange: aiAdjustments.gray_orange,
+    gray_yellow: aiAdjustments.gray_yellow,
+    gray_green: aiAdjustments.gray_green,
+    gray_aqua: aiAdjustments.gray_aqua,
+    gray_blue: aiAdjustments.gray_blue,
+    gray_purple: aiAdjustments.gray_purple,
+    gray_magenta: aiAdjustments.gray_magenta,
+  } : {};
   const bwMixerBlock = isBW
     ? [
         tag('GrayMixerRed', bwMixerValues.gray_red),
@@ -238,43 +294,33 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         tag('PostCropVignetteRoundness', round(clamp((aiAdjustments as any).vignette_roundness, -100, 100))),
         tag('PostCropVignetteStyle', round(clamp((aiAdjustments as any).vignette_style, 0, 2))),
         tag('PostCropVignetteHighlightContrast', round(clamp((aiAdjustments as any).vignette_highlight_contrast, 0, 100))),
-        (aiAdjustments as any).override_look_vignette ? tag('OverrideLookVignette', 'True') : '',
       ].join('')
     : '';
 
   // Masks block (skipped unless disabled). Emits Lightroom MaskGroupBasedCorrections.
   const masksBlock = inc.masks
     ? (() => {
-        const masks = (aiAdjustments as any).masks || [];
+        // Convert recipe format to simple masks
+        const masks = convertRecipeToMasks(aiAdjustments);
         if (!masks.length) return '';
         const f3 = (v: any) => (typeof v === 'number' && Number.isFinite(v) ? Number(v).toFixed(3) : undefined);
         const n0_1 = (v: any) => (typeof v === 'number' ? Math.max(0, Math.min(1, v)) : undefined);
-        // Apply reduced strength for mask adjustments to make them less strong (user feedback)
-        const maskStrength = 0.35; // default ~35% intensity for masks
-        // Normalize local adjustments to Lightroom units and apply mask strength
+        // Normalize local adjustments to Lightroom units
+        // Notes:
+        // - Lightroom stores most local params in normalized units [-1,1]. UI shows [-100,100].
+        // - LocalExposure2012 in XMP appears to be normalized to the full exposure span (±4 EV in UI),
+        //   i.e. UI_stops = XMP_value * 4. To target S stops in UI, write XMP_value = S / 4.
         const normalizeLocal = (key: string, val: any): number | undefined => {
           if (typeof val !== 'number' || !Number.isFinite(val)) return undefined;
-          const abs = Math.abs(val);
+          
+          // LocalExposure2012 in XMP is normalized to full exposure span (±4 EV in UI)
+          // UI_stops = XMP_value * 4, so XMP_value = UI_stops / 4
           if (key === 'local_exposure') {
-            // Treat small numbers as stops directly; handle percent-like inputs too.
-            let stops: number;
-            if (abs <= 5) {
-              // value already in stops (e.g., 0.1..2.0)
-              stops = val;
-            } else if (abs <= 100) {
-              // looks like percent (-100..100): map to a conservative +/-2 stops
-              stops = (val / 100) * 2.0;
-            } else {
-              // out-of-range; clamp to a conservative value
-              stops = Math.sign(val) * 2.0;
-            }
-            const scaled = stops * maskStrength;
-            return Math.max(-5, Math.min(5, scaled));
+            return val / 4;
           }
-          // Other locals typically in [-1,1] for XMP; if value looks like -100..100, normalize
-          const normalized = abs > 1 ? val / 100 : val;
-          const scaled = normalized * maskStrength;
-          return Math.max(-1, Math.min(1, scaled));
+          
+          // Use raw values for other adjustments
+          return val;
         };
         const attrIf = (k: string, val?: string | number) =>
           val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
@@ -450,13 +496,13 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
                 // range_luminance
                 const lum = Array.isArray(m?.lumRange) && m.lumRange.length === 4 ? m.lumRange : undefined;
                 const lumStr = lum
-                  ? lum.map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ')
-                  : '0.000000 1.000000 1.000000 1.000000';
+                  ? lum.map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000')).join(' ')
+                  : '0.000 1.000 1.000 1.000';
                 const lds =
                   Array.isArray(m?.luminanceDepthSampleInfo) && m.luminanceDepthSampleInfo.length === 3
                     ? m.luminanceDepthSampleInfo
                     : [0, 0.5, 0.5];
-                const ldsStr = (lds as any[]).map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000000')).join(' ');
+                const ldsStr = (lds as any[]).map((v: any) => (typeof v === 'number' ? Number(v).toFixed(6) : '0.000')).join(' ');
                 maskLi = `<rdf:li>
          <rdf:Description
           crs:What="Mask/RangeMask"
@@ -515,35 +561,88 @@ ${correctionLis}
       })()
     : '';
 
+  // Generate UUID for the preset
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16).toUpperCase();
+    });
+  };
+
   const xmp = `<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00        ">
  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
   <rdf:Description rdf:about=""
     xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
-   crs:Version="17.5"
-   crs:ProcessVersion="15.4"
-   crs:ProfileName="${profileName}"
-   crs:Look=""
-   crs:HasSettings="True"
    crs:PresetType="Normal"
    crs:Cluster="${groupName}"
    crs:ClusterGroup="${groupName}"
-   crs:PresetSubtype="Normal"
-   crs:SupportsAmount="True"
+   crs:UUID="${generateUUID()}"
    crs:SupportsAmount2="True"
+   crs:SupportsAmount="True"
    crs:SupportsColor="True"
    crs:SupportsMonochrome="True"
-   crs:WhiteBalance="As Shot"
-   crs:Name="${presetName}"${hslAttrs}>
+   crs:SupportsHighDynamicRange="True"
+   crs:SupportsNormalDynamicRange="True"
+   crs:SupportsSceneReferred="True"
+   crs:SupportsOutputReferred="True"
+   crs:RequiresRGBTables="False"
+   crs:ShowInPresets="True"
+   crs:ShowInQuickActions="False"
+   crs:CameraModelRestriction=""
+   crs:Copyright=""
+   crs:ContactInfo=""
+   crs:Version="17.5"
+   crs:CompatibleVersion="251854848"
+   crs:ProcessVersion="15.4"
+   crs:HasSettings="True"
+   crs:ProfileName="${profileName}"
+   crs:Look="${isBW ? 'Adobe Monochrome' : ''}"
+   crs:PresetSubtype="Normal"
+    crs:WhiteBalance="As Shot"
+    crs:Name="${presetName}"${hslAttrs}>
    <crs:Name>
     <rdf:Alt>
      <rdf:li xml:lang="x-default">${presetName}</rdf:li>
     </rdf:Alt>
    </crs:Name>
+   <crs:ShortName>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default"/>
+    </rdf:Alt>
+   </crs:ShortName>
+   <crs:SortName>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default"/>
+    </rdf:Alt>
+   </crs:SortName>
    <crs:Group>
     <rdf:Alt>
      <rdf:li xml:lang="x-default">Film Recipe Wizard</rdf:li>
     </rdf:Alt>
    </crs:Group>
+   <crs:Description>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default"/>
+    </rdf:Alt>
+   </crs:Description>
+   ${isBW ? `<crs:Look>
+     <rdf:Description
+      crs:Name="Adobe Monochrome"
+      crs:Amount="1"
+      crs:UUID="0CFE8F8AB5F63B2A73CE0B0077D20817"
+      crs:SupportsAmount="true"
+      crs:SupportsMonochrome="false"
+      crs:SupportsOutputReferred="false"
+      crs:Copyright="© 2018 Adobe Systems, Inc."
+      crs:Stubbed="true">
+     <crs:Group>
+      <rdf:Alt>
+       <rdf:li xml:lang="x-default">Profiles</rdf:li>
+      </rdf:Alt>
+     </crs:Group>
+     </rdf:Description>
+    </crs:Look>` : ''}
    ${treatmentTag}
 ${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}${vignetteBlock}
    <!-- Masks (optional) -->

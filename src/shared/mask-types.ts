@@ -144,8 +144,8 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   },
   {
     type: 'sky',
-    subType: '2', // Correct value from working mask-exmaple.xmp
-    subCategoryId: '',
+    subType: '0', // Correct value from working landscape.xmp
+    subCategoryId: '50006',
     description: 'Sky',
     category: 'landscape'
   },
@@ -161,14 +161,14 @@ export const MASK_TYPE_CONFIGS: MaskTypeConfig[] = [
   {
     type: 'subject',
     subType: '1',
-    subCategoryId: '',
+    subCategoryId: '0',
     description: 'Subject or person',
     category: 'subject'
   },
   {
     type: 'person',
     subType: '1',
-    subCategoryId: '',
+    subCategoryId: '0',
     description: 'Person',
     category: 'subject'
   },

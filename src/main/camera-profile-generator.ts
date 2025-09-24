@@ -18,10 +18,9 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     (typeof adjustments.camera_profile === 'string' && /monochrome/i.test(adjustments.camera_profile || '')) ||
     (typeof adjustments.saturation === 'number' && adjustments.saturation <= -100);
 
-  // Apply strength scaling (same as preset export - default 1.0 for full intensity)
-  const strength = 1.0; // Default strength multiplier
+  // No scaling - use raw values
   const scale = (v: any): number | undefined =>
-    typeof v === 'number' && Number.isFinite(v) ? v * strength : undefined;
+    typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 
   // Clamp helpers to keep values within Lightroom-expected ranges
   const clamp = (v: any, min: number, max: number): number | undefined => {
@@ -30,8 +29,10 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   };
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
   const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
+  // const attrIf = (k: string, val?: string | number) =>
+  //   val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
 
-  // Extract and scale color adjustments (only include exposure if it's actually set and non-zero)
+  // Extract raw color adjustments (only include exposure if it's actually set and non-zero)
   const exposure = adjustments.exposure !== undefined && adjustments.exposure !== 0 ? clamp(scale(adjustments.exposure), -5, 5) : undefined;
   const contrast = round(clamp(scale(adjustments.contrast), -100, 100));
   const highlights = round(clamp(scale(adjustments.highlights), -100, 100));
@@ -195,12 +196,12 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     tag('PostCropVignetteRoundness', round(clamp(adjustments.vignette_roundness, -100, 100))),
     tag('PostCropVignetteStyle', round(clamp(adjustments.vignette_style, 0, 2))),
     tag('PostCropVignetteHighlightContrast', round(clamp(adjustments.vignette_highlight_contrast, 0, 100))),
-    adjustments.override_look_vignette ? tag('OverrideLookVignette', 'True') : '',
   ].join('');
 
   // Note: Local adjustment masks are not supported in camera profiles; omitted intentionally
 
-  // Generate proper camera profile XMP (Look type, not Normal preset)
+
+  // Generate proper camera profile XMP (Look type, not Normal preset) for color profiles
   return `<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about=""
@@ -235,6 +236,23 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
           <rdf:li xml:lang="x-default">${adjustments.description || 'Camera profile generated from Film Recipe Wizard'}</rdf:li>
         </rdf:Alt>
       </crs:Description>
+      ${isBW ? `<crs:Look>
+        <rdf:Description
+         crs:Name="Adobe Monochrome"
+         crs:Amount="1"
+         crs:UUID="0CFE8F8AB5F63B2A73CE0B0077D20817"
+         crs:SupportsAmount="false"
+         crs:SupportsMonochrome="false"
+         crs:SupportsOutputReferred="false"
+         crs:Copyright="© 2018 Adobe Systems, Inc."
+         crs:Stubbed="true">
+        <crs:Group>
+         <rdf:Alt>
+          <rdf:li xml:lang="x-default">Profiles</rdf:li>
+         </rdf:Alt>
+        </crs:Group>
+        </rdf:Description>
+       </crs:Look>` : ''}
       ${tag('Treatment', isBW ? 'Black &amp; White' : 'Color')}
       ${(() => {
       // Match preset generator behavior: exclude Exposure by default unless explicitly requested

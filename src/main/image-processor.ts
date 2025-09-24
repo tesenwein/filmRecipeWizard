@@ -2,6 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { AIStreamingService } from '../services/ai-streaming-service';
 import type { AIColorAdjustments } from '../services/types';
+import { createErrorResponse, logError } from '../shared/error-utils';
 import { ProcessingResult, StyleOptions } from '../shared/types';
 import { generateCameraProfileXMP } from './camera-profile-generator';
 import { generateLUTContent as generateLUTContentImpl } from './lut-generator';
@@ -34,29 +35,17 @@ export class ImageProcessor {
 
   private async ensureAIStreamingService(): Promise<AIStreamingService> {
     if (!this.aiStreamingService) {
-      console.log('[PROCESSOR] Creating new AI streaming service...');
       const settings = await this.settingsService.loadSettings();
-      console.log('[PROCESSOR] Settings loaded, has API key:', !!settings.openaiKey);
       this.aiStreamingService = new AIStreamingService(settings.openaiKey || '', 'gpt-5');
     }
     return this.aiStreamingService;
   }
 
   async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
-    console.log('[PROCESSOR] Starting matchStyle with data:', {
-      hasBaseImagePath: !!data.baseImagePath,
-      hasTargetImagePath: !!data.targetImagePath,
-      hasPrompt: !!data.prompt,
-      hasBaseImageBase64: !!data.baseImageBase64,
-      hasTargetImageBase64: !!data.targetImageBase64,
-      hasStyleOptions: !!data.styleOptions,
-    });
 
     const streamingService = await this.ensureAIStreamingService();
-    console.log('[PROCESSOR] AI Streaming Service available');
 
     try {
-      console.log('[PROCESSOR] Calling AI streaming service...');
       const aiAdjustments = await streamingService.analyzeColorMatchWithStreaming(
         data.baseImageBase64,
         data.targetImageBase64,
@@ -68,13 +57,9 @@ export class ImageProcessor {
               data.onStreamUpdate(update);
             }
           },
+          styleOptions: data.styleOptions, // Pass style options to AI
         }
       );
-      console.log('[PROCESSOR] AI analyzer returned:', {
-        hasAdjustments: !!aiAdjustments,
-        presetName: aiAdjustments?.preset_name,
-        confidence: aiAdjustments?.confidence,
-      });
 
       // No longer generating processed images - just return analysis
       return {
@@ -86,7 +71,7 @@ export class ImageProcessor {
         },
       };
     } catch (error) {
-      console.error('[PROCESSOR] AI style matching failed:', error);
+      logError('PROCESSOR', 'AI style matching failed', error);
       throw error;
     }
   }
@@ -101,7 +86,7 @@ export class ImageProcessor {
     try {
       return await generatePreviewFile(args);
     } catch (error) {
-      console.error('[PROCESSOR] Failed to generate preview:', error);
+      logError('PROCESSOR', 'Failed to generate preview', error);
       throw error;
     }
   }
@@ -135,11 +120,8 @@ export class ImageProcessor {
         },
       };
     } catch (error) {
-      console.error('[PROCESSOR] Preset generation failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+        logError('PROCESSOR', 'Preset generation failed', error);
+        return createErrorResponse(error);
     }
   }
 
@@ -158,8 +140,8 @@ export class ImageProcessor {
         metadata: { presetName: result.metadata?.profileName, groupFolder: 'profiles' },
       };
     } catch (error) {
-      console.error('[PROCESSOR] Profile export failed:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      logError('PROCESSOR', 'Profile export failed', error);
+      return createErrorResponse(error);
     }
   }
 
@@ -179,8 +161,8 @@ export class ImageProcessor {
         xmpContent,
       };
     } catch (error) {
-      console.error('[PROCESSOR] Camera profile generation failed:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      logError('PROCESSOR', 'Camera profile generation failed', error);
+      return createErrorResponse(error);
     }
   }
 

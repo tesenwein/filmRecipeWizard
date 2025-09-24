@@ -98,7 +98,6 @@ class FilmRecipeWizardApp {
 
     if (isDev) {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-      console.log('[MAIN] Development mode detected, use Ctrl+Shift+I to open dev tools');
     } else {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 

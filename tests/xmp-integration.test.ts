@@ -93,7 +93,6 @@ describe('XMP Integration Tests', () => {
         vignette_roundness: 25,
         vignette_style: 1,
         vignette_highlight_contrast: 30,
-        override_look_vignette: true,
       };
 
       const include = {
@@ -166,7 +165,6 @@ describe('XMP Integration Tests', () => {
       expect(parsedAdjustments.vignette_roundness).toBe(originalAdjustments.vignette_roundness);
       expect(parsedAdjustments.vignette_style).toBe(originalAdjustments.vignette_style);
       expect(parsedAdjustments.vignette_highlight_contrast).toBe(originalAdjustments.vignette_highlight_contrast);
-      expect(parsedAdjustments.override_look_vignette).toBe(originalAdjustments.override_look_vignette);
 
       // Verify metadata flags
       expect(parseResult.metadata?.hasHSL).toBe(true);
@@ -255,12 +253,14 @@ describe('XMP Integration Tests', () => {
               local_contrast: 0.3,
               local_saturation: -0.2,
             },
-            top: 0.1,
-            left: 0.1,
-            bottom: 0.9,
-            right: 0.9,
-            feather: 50,
-            roundness: 0,
+            geometry: {
+              top: 0.1,
+              left: 0.1,
+              bottom: 0.9,
+              right: 0.9,
+              feather: 50,
+              roundness: 0,
+            },
             inverted: false,
           },
           {
@@ -271,9 +271,10 @@ describe('XMP Integration Tests', () => {
               local_contrast: 0.2,
               local_clarity: 0.4,
             },
-            subCategoryId: 6,
-            referenceX: 0.5,
-            referenceY: 0.3,
+            geometry: {
+              referenceX: 0.5,
+              referenceY: 0.3,
+            },
             confidence: 0.9,
           },
         ],
@@ -308,9 +309,9 @@ describe('XMP Integration Tests', () => {
       const radialMask = parsedMasks[0];
       expect(radialMask.name).toBe('Radial Vignette');
       expect(radialMask.type).toBe('radial'); // Parser should detect radial from mask name
-      expect(radialMask.adjustments?.local_exposure).toBe(-0.175); // Scaled by 0.35
-      expect(radialMask.adjustments?.local_contrast).toBe(0.105); // Scaled by 0.35
-      expect(radialMask.adjustments?.local_saturation).toBe(-0.070); // Scaled by 0.35
+      expect(radialMask.adjustments?.local_exposure).toBe(-0.125); // -0.5 / 4 (scaled for XMP)
+      expect(radialMask.adjustments?.local_contrast).toBe(0.3); // Raw value
+      expect(radialMask.adjustments?.local_saturation).toBe(-0.2); // Raw value
       expect(radialMask.top).toBe(0.1);
       expect(radialMask.left).toBe(0.1);
       expect(radialMask.bottom).toBe(0.9);
@@ -322,11 +323,10 @@ describe('XMP Integration Tests', () => {
       // Verify second mask (person)
       const personMask = parsedMasks[1];
       expect(personMask.name).toBe('Person Enhancement');
-      expect(personMask.type).toBe('subject'); // Parser maps to subject
-      expect(personMask.subCategoryId).toBe(6);
-      expect(personMask.adjustments?.local_exposure).toBe(0.105); // Scaled by 0.35
-      expect(personMask.adjustments?.local_contrast).toBe(0.070); // Scaled by 0.35
-      expect(personMask.adjustments?.local_clarity).toBe(0.140); // Scaled by 0.35
+      expect(personMask.type).toBe('person'); // Parser maps to person
+      expect(personMask.adjustments?.local_exposure).toBe(0.075); // 0.3 / 4 (scaled for XMP)
+      expect(personMask.adjustments?.local_contrast).toBe(0.2); // Raw value
+      expect(personMask.adjustments?.local_clarity).toBe(0.4); // Raw value
       expect(personMask.referenceX).toBe(0.5);
       expect(personMask.referenceY).toBe(0.3);
     });

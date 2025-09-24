@@ -36,8 +36,8 @@ export interface StyleOptions {
   faded?: number; // 0-100: 0=vibrant, 50=balanced, 100=very faded/washed out
   
   // Optional artist and film selections
-  artistStyle?: { key: string; name: string; category: string; blurb: string };
-  filmStyle?: { key: string; name: string; category: string; blurb: string };
+  artistStyle?: { key: string; name: string; category: string; blurb: string; prompt?: string };
+  filmStyle?: { key: string; name: string; category: string; blurb: string; prompt?: string };
 }
 
 export interface Recipe {
@@ -57,6 +57,10 @@ export interface Recipe {
   maskOverrides?: any[];
   // Optional global adjustment overrides accepted via chat (e.g., grain, vignette)
   aiAdjustmentOverrides?: { [key: string]: number };
+  // Pending modifications proposed via chat awaiting user approval
+  pendingModifications?: any;
+  // Timestamp when pendingModifications was last updated (ISO)
+  pendingModificationsUpdatedAt?: string;
   // Optional embedded XMP preset generated from the current effective adjustments
   xmpPreset?: string;
   xmpCreatedAt?: string;

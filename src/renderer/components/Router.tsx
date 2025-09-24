@@ -101,8 +101,6 @@ const Router: React.FC<RouterProps> = ({
           <div className="fade-in">
             <ResultsView
               results={results}
-              baseImage={baseImages[0] || null}
-              targetImages={targetImages}
               prompt={prompt}
               processId={currentProcessId || undefined}
               onReset={() => {
@@ -122,8 +120,6 @@ const Router: React.FC<RouterProps> = ({
         {currentProcessId ? (
           <ResultsView
             results={results}
-            baseImage={baseImages[0] || null}
-            targetImages={targetImages}
             prompt={prompt}
             processId={currentProcessId || undefined}
             onReset={() => {

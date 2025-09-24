@@ -1,4 +1,4 @@
-import { SCALING_CONSTANTS, getDefaultStrength, getRange, isValidNumber } from './scaling-constants';
+import { SCALING_CONSTANTS, getRange, isValidNumber } from './scaling-constants';
 
 /**
  * Shared scaling utilities for Film Recipe Wizard
@@ -8,7 +8,6 @@ import { SCALING_CONSTANTS, getDefaultStrength, getRange, isValidNumber } from '
  */
 
 export interface ScalingOptions {
-  strength?: number;
   exportType?: 'xmp' | 'camera-profile' | 'mask' | 'lut';
   clamp?: boolean;
   round?: boolean;
@@ -27,13 +26,12 @@ export function scaleValue(
   }
 
   const {
-    strength = getDefaultStrength(options.exportType || 'xmp'),
     clamp = true,
     round = true,
     fixedDecimals
   } = options;
 
-  let scaled = value * strength;
+  let scaled = value;
 
   if (clamp) {
     // For now, use tone adjustments range as default
@@ -66,13 +64,12 @@ export function scaleValueWithRange(
   }
 
   const {
-    strength = getDefaultStrength(options.exportType || 'xmp'),
     round = true,
     fixedDecimals
   } = options;
 
   const range = getRange(rangeType);
-  let scaled = value * strength;
+  let scaled = value;
   scaled = Math.max(range.min, Math.min(range.max, scaled));
 
   if (round) {
@@ -161,10 +158,7 @@ export function scaleHSLValues(
   // Hue adjustments (not scaled, just clamped)
   const hueKeys = Object.keys(values).filter(key => key.startsWith('hue_'));
   for (const key of hueKeys) {
-    result[key] = scaleValueWithRange(values[key as keyof typeof values], 'HUE_ADJUSTMENTS', {
-      ...options,
-      strength: 1.0 // Hue adjustments are not scaled, only clamped
-    });
+    result[key] = scaleValueWithRange(values[key as keyof typeof values], 'HUE_ADJUSTMENTS', options);
   }
   
   // Saturation and luminance adjustments (scaled)
@@ -205,10 +199,7 @@ export function scaleColorGradingValues(
   // Hue values (not scaled, just clamped)
   const hueKeys = Object.keys(values).filter(key => key.includes('_hue'));
   for (const key of hueKeys) {
-    result[key] = scaleValueWithRange(values[key as keyof typeof values], 'COLOR_GRADE_HUE', {
-      ...options,
-      strength: 1.0 // Hue values are not scaled, only clamped
-    });
+    result[key] = scaleValueWithRange(values[key as keyof typeof values], 'COLOR_GRADE_HUE', options);
   }
   
   // Saturation values (scaled)

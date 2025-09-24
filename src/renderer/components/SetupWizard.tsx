@@ -301,7 +301,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   Choose Storage Location
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
-                  Select where your recipes and backups will be stored. This folder will be created if it doesn't exist.
+                  Select where your recipes will be stored. This folder will be created if it doesn't exist.
                 </Typography>
                 <div style={{ marginBottom: 24 }}>
                   <TextField
@@ -310,7 +310,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     value={storageLocation}
                     onChange={e => setStorageLocation(e.target.value)}
                     placeholder="e.g., /Users/yourname/.film-recipes-wizard"
-                    helperText="This folder will store all your recipes and backups"
+                    helperText="This folder will store all your recipes"
                   />
                   <Button variant="outlined" onClick={handleSelectStorageFolder} sx={{ mt: 2, display: 'block' }}>
                     Browse Folder...

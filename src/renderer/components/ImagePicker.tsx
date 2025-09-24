@@ -3,6 +3,7 @@ import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 import { Box, Button, Chip, IconButton, Paper, Tooltip } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
+import { logError } from '../../shared/error-utils';
 import ImageGrid from './ImageGrid';
 import SingleImage from './SingleImage';
 
@@ -126,7 +127,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
           onDropFiles(paths);
         }
       } catch (error) {
-        console.error('[ImagePicker] Error processing dropped files:', error);
+        logError('ImagePicker', 'Error processing dropped files', error);
       }
     },
     [onDropFiles]

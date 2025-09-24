@@ -6,18 +6,6 @@
  */
 
 export const SCALING_CONSTANTS = {
-  // Default strength scaling for XMP presets
-  // 1.0 for full intensity - users can adjust strength as needed
-  XMP_PRESET_DEFAULT_STRENGTH: 1.0,
-  
-  // Default strength scaling for camera profiles
-  // 1.0 for full intensity since camera profiles are meant to be more subtle
-  CAMERA_PROFILE_DEFAULT_STRENGTH: 1.0,
-  
-  // Mask adjustment scaling
-  // 0.35 for local adjustments to make them less aggressive
-  MASK_ADJUSTMENT_STRENGTH: 0.35,
-  
   // LUT generation scaling
   // Different scaling for LUT generation to match expected output
   LUT_EXPOSURE_SCALING: 0.25, // Map 4 UI units ≈ 1 stop
@@ -42,23 +30,6 @@ export const SCALING_CONSTANTS = {
   }
 } as const;
 
-/**
- * Get the appropriate default strength for a given export type
- */
-export function getDefaultStrength(exportType: 'xmp' | 'camera-profile' | 'mask' | 'lut'): number {
-  switch (exportType) {
-    case 'xmp':
-      return SCALING_CONSTANTS.XMP_PRESET_DEFAULT_STRENGTH;
-    case 'camera-profile':
-      return SCALING_CONSTANTS.CAMERA_PROFILE_DEFAULT_STRENGTH;
-    case 'mask':
-      return SCALING_CONSTANTS.MASK_ADJUSTMENT_STRENGTH;
-    case 'lut':
-      return 1.0; // LUT uses different scaling approach
-    default:
-      return SCALING_CONSTANTS.XMP_PRESET_DEFAULT_STRENGTH;
-  }
-}
 
 /**
  * Check if a value is a valid number for scaling

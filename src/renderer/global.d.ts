@@ -1,4 +1,55 @@
-import { ExportResult, ImportResult } from '../shared/types';
+import { ExportResult, ImportResult, ProcessingResult, StyleOptions } from '../shared/types';
+
+// Additional type definitions for better type safety
+interface ProcessingRequest {
+  baseImagePath: string;
+  targetImagePaths: string[];
+  hint?: string;
+  options: StyleOptions;
+  processId?: string;
+}
+
+interface ColorAnalysis {
+  dominantColors: string[];
+  colorPalette: string[];
+  brightness: number;
+  contrast: number;
+}
+
+interface StyleMatchRequest {
+  imagePath: string;
+  targetStyle: string;
+}
+
+interface StyleMatchResult {
+  confidence: number;
+  matchedStyle: string;
+  adjustments: Record<string, number>;
+}
+
+interface PresetGenerationRequest {
+  adjustments: Record<string, number>;
+  name: string;
+  description?: string;
+}
+
+interface PresetResult {
+  success: boolean;
+  presetPath?: string;
+  error?: string;
+}
+
+interface XMPDownloadRequest {
+  adjustments: Record<string, number>;
+  include: Record<string, boolean>;
+  recipeName?: string;
+}
+
+interface XMPResult {
+  success: boolean;
+  filePath?: string;
+  error?: string;
+}
 
 export { };
 
@@ -29,7 +80,7 @@ declare global {
         baseImagePath: string;
         targetImagePaths: string[];
         hint?: string;
-        options: any;
+        options: StyleOptions;
         processId?: string;
       }) => Promise<any[]>;
       processWithStoredImages: (data: {
@@ -38,14 +89,14 @@ declare global {
         baseImageData?: string | string[];
         targetImageData?: string[];
         prompt?: string;
-        styleOptions?: any;
+        styleOptions?: StyleOptions;
       }) => Promise<any>;
 
-      processImage: (data: any) => Promise<any>;
-      analyzeColors: (imagePath: string) => Promise<any>;
-      matchStyle: (data: any) => Promise<any>;
-      generatePreset: (data: any) => Promise<any>;
-      downloadXMP: (data: any) => Promise<any>;
+      processImage: (data: ProcessingRequest) => Promise<ProcessingResult>;
+      analyzeColors: (imagePath: string) => Promise<ColorAnalysis>;
+      matchStyle: (data: StyleMatchRequest) => Promise<StyleMatchResult>;
+      generatePreset: (data: PresetGenerationRequest) => Promise<PresetResult>;
+      downloadXMP: (data: XMPDownloadRequest) => Promise<XMPResult>;
       importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => Promise<any>;
       readFile: (filePath: string) => Promise<string>;
       generateLUT: (data: any) => Promise<any>;
