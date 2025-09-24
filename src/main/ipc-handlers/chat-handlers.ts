@@ -3,7 +3,7 @@ import { generateText, tool } from 'ai';
 import { BrowserWindow, ipcMain } from 'electron';
 import { z } from 'zod';
 import { getCoreSystemPrompt, getMaskOperationInstructions, getParameterInstructions } from '../../services/ai-prompt-shared';
-import { maskEditSchemaChat } from '../../services/ai-shared';
+import { maskEditSchema } from '../../services/ai-shared';
 import { logError } from '../../shared/error-utils';
 import { maskIdentifier } from '../../shared/mask-utils';
 import { SettingsService } from '../settings-service';
@@ -30,7 +30,6 @@ export class ChatHandlers {
                 if (!apiKey) throw new Error('OpenAI API key not configured');
 
                 // Re-introduce separate tools and keep legacy combined tool; we'll aggregate and persist
-                const maskEditSchema = maskEditSchemaChat;
                 const tools = {
                     set_user_options: tool({
                         description: 'Update only user-facing options (contrast, vibrance, vibe, styles).',
