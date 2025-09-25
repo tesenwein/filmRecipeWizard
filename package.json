@@ -95,7 +95,7 @@
     "productName": "Film Recipe Wizard",
     "directories": {
       "output": "release",
-      "buildResources": "build"
+      "buildResources": "assets"
     },
     "publish": {
       "provider": "github",
@@ -112,10 +112,10 @@
       "!**/.env*",
       "!**/.*"
     ],
-    "icon": "build/icons/icon",
+    "icon": "assets/icons/icon",
     "mac": {
       "category": "public.app-category.photography",
-      "icon": "build/icons/icon.png",
+      "icon": "assets/icons/icon.png",
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
@@ -158,7 +158,7 @@
           ]
         }
       ],
-      "icon": "build/icons/icon.ico",
+      "icon": "assets/icons/icon.ico",
       "artifactName": "Film-Recipe-Wizard-${version}-${os}-${arch}.${ext}",
       "requestedExecutionLevel": "asInvoker",
       "verifyUpdateCodeSignature": false
@@ -178,7 +178,7 @@
           ]
         }
       ],
-      "icon": "build/icons/icon.png",
+      "icon": "assets/icons/icon.png",
       "artifactName": "Film-Recipe-Wizard-${version}-${os}-${arch}.${ext}",
       "category": "Graphics"
     },
@@ -191,8 +191,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Film Recipe Wizard",
       "artifactName": "${productName}-${version}-Setup.${ext}",
-      "installerIcon": "build/icons/icon.ico",
-      "uninstallerIcon": "build/icons/icon.ico",
+      "installerIcon": "assets/icons/icon.ico",
+      "uninstallerIcon": "assets/icons/icon.ico",
       "license": "LICENSE",
       "warningsAsErrors": false
     }

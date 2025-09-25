@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const distDir = path.join(__dirname, '../dist');
-const buildDir = path.join(__dirname, '../build');
+const assetsDir = path.join(__dirname, '../assets');
 
 
 // Check if dist directory exists and has required files
@@ -31,15 +31,15 @@ if (!fs.existsSync(distDir)) {
   }
 }
 
-// Check build directory (icons)
-if (!fs.existsSync(buildDir)) {
-  console.error('❌ build/ directory not found');
+// Check assets directory (icons)
+if (!fs.existsSync(assetsDir)) {
+  console.error('❌ assets/ directory not found');
   validationPassed = false;
 } else {
   
-  const iconsDir = path.join(buildDir, 'icons');
+  const iconsDir = path.join(assetsDir, 'icons');
   if (!fs.existsSync(iconsDir)) {
-    console.error('❌ build/icons/ directory not found');
+    console.error('❌ assets/icons/ directory not found');
     validationPassed = false;
   } else {
     
