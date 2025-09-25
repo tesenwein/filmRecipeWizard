@@ -228,6 +228,7 @@ declare global {
         openaiKey?: string;
         setupCompleted?: boolean;
         storageLocation?: string;
+        lightroomProfilePath?: string;
         userProfile?: {
           firstName: string;
           lastName: string;
@@ -241,6 +242,7 @@ declare global {
           openaiKey?: string;
           setupCompleted?: boolean;
           storageLocation?: string;
+          lightroomProfilePath?: string;
           userProfile?: {
             firstName: string;
             lastName: string;
@@ -255,6 +257,7 @@ declare global {
         openaiKey?: string;
         setupCompleted?: boolean;
         storageLocation?: string;
+        lightroomProfilePath?: string;
         userProfile?: {
           firstName: string;
           lastName: string;
@@ -268,6 +271,7 @@ declare global {
           openaiKey?: string;
           setupCompleted?: boolean;
           storageLocation?: string;
+          lightroomProfilePath?: string;
           userProfile?: {
             firstName: string;
             lastName: string;

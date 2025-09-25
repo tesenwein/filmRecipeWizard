@@ -26,6 +26,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   });
   const [isProfileValid, setIsProfileValid] = useState(true);
   const [storageLocation, setStorageLocation] = useState(`~/${DEFAULT_STORAGE_FOLDER}`);
+  const [lightroomProfilePath, setLightroomProfilePath] = useState('');
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDetails, setErrorDetails] = useState('');
@@ -51,6 +52,11 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             setStorageLocation(res.settings.storageLocation);
           }
           // If no storageLocation from backend, keep the initial default
+          
+          // Load Lightroom profile path if available
+          if ((res.settings as any)?.lightroomProfilePath) {
+            setLightroomProfilePath((res.settings as any).lightroomProfilePath);
+          }
         }
       } catch {
         // Ignore settings load errors
@@ -335,6 +341,73 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             {currentStep === 4 && (
               <div>
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                  Lightroom Integration (Optional)
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6 }}>
+                  Configure your Lightroom folder to enable direct export of presets and camera profiles. This allows you to save recipes directly to your Lightroom installation.
+                </Typography>
+                
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, mt: 4 }}>
+                  How to find your Lightroom folder:
+                </Typography>
+                
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary', lineHeight: 1.6 }}>
+                  <strong>macOS:</strong> ~/Library/Application Support/Adobe/CameraRaw/ImportedSettings
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary', lineHeight: 1.6 }}>
+                  <strong>Windows:</strong> %APPDATA%\Adobe\CameraRaw\ImportedSettings
+                </Typography>
+                
+                <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6 }}>
+                  <strong>Alternative locations:</strong><br/>
+                  • ~/Library/Application Support/Adobe/Lightroom/Develop Presets/ (macOS)<br/>
+                  • %APPDATA%\Adobe\Lightroom\Develop Presets\ (Windows)
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  label="Lightroom Profile/Preset Folder Path"
+                  value={lightroomProfilePath}
+                  onChange={(e) => setLightroomProfilePath(e.target.value)}
+                  placeholder="~/Library/Application Support/Adobe/CameraRaw/ImportedSettings"
+                  helperText="Leave empty to skip Lightroom integration. You can configure this later in Settings."
+                  sx={{ mb: 3 }}
+                />
+
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setCurrentStep(3)}
+                    disabled={isLoading}
+                    sx={{ minWidth: 120 }}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      try {
+                        await saveSettings({ lightroomProfilePath: lightroomProfilePath.trim() || undefined });
+                        setCurrentStep(5);
+                      } catch (error) {
+                        console.error('Failed to save Lightroom path:', error);
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    disabled={isLoading}
+                    sx={{ minWidth: 120 }}
+                  >
+                    {isLoading ? 'Saving...' : 'Continue'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 5 && (
+              <div>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Your Profile (optional)
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
@@ -375,8 +448,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                             website: nWebsite || undefined,
                             instagram: ig.handle || undefined,
                           },
+                          lightroomProfilePath: lightroomProfilePath.trim() || undefined,
                         });
-                        setCurrentStep(5);
+                        setCurrentStep(6);
                       } finally {
                         setIsLoading(false);
                       }
@@ -390,7 +464,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
               </div>
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 6 && (
               <div>
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                   Setup Complete!

@@ -44,7 +44,7 @@ if (!fs.existsSync(buildDir)) {
   } else {
     
     const iconFiles = fs.readdirSync(iconsDir);
-    const requiredIcons = ['icon.png', '16x16.png', '32x32.png', '128x128.png', '256x256.png', '512x512.png'];
+    const requiredIcons = ['icon.png', 'icon.ico', '16x16.png', '32x32.png', '128x128.png', '256x256.png', '512x512.png'];
     
     for (const icon of requiredIcons) {
       if (!iconFiles.includes(icon)) {

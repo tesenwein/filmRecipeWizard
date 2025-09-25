@@ -61,6 +61,16 @@ async function generateWithSharp(svgBuffer) {
       fs.writeFileSync(path.join(iconsDir, 'icon.ico'), icoBuffer);
     } catch (error) {
       console.warn('Failed to generate ICO file:', error.message);
+      // Fallback: copy existing ICO file from assets
+      const existingIcoPath = path.join(assetsIconsDir, 'icon.ico');
+      if (fs.existsSync(existingIcoPath)) {
+        try {
+          fs.copyFileSync(existingIcoPath, path.join(iconsDir, 'icon.ico'));
+          console.log('Copied existing icon.ico from assets');
+        } catch (copyError) {
+          console.warn('Failed to copy existing ICO file:', copyError.message);
+        }
+      }
     }
   }
 }
@@ -73,7 +83,7 @@ function copyExistingIcons() {
   }
 
   ensureIconsDir();
-  const files = fs.readdirSync(assetsIconsDir).filter(file => file.endsWith('.png') || file.endsWith('.svg'));
+  const files = fs.readdirSync(assetsIconsDir).filter(file => file.endsWith('.png') || file.endsWith('.svg') || file.endsWith('.ico'));
   for (const file of files) {
     const src = path.join(assetsIconsDir, file);
     const dest = path.join(iconsDir, file);
