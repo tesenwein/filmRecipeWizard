@@ -34,7 +34,8 @@ CORE PRINCIPLES:
 - Prioritize tone curves and color grading for dramatic style matching
 - Use the full range of available values for global adjustments to create noticeable changes
 - Focus on matching the reference style with impactful adjustments
-- IMPORTANT: Keep all mask adjustments subtle and natural - avoid over-processing with masks`;
+- IMPORTANT: Keep all mask adjustments subtle and natural - avoid over-processing with masks
+- ALWAYS provide descriptive names for masks (e.g., "Face Skin", "Eye Pop", "Sky Soften", "Background Blur")`;
 
   if (includeRequirements) {
     prompt += `
@@ -114,7 +115,8 @@ export function getMaskOperationInstructions(): string {
 - To delete all masks: { op: "remove_all" }
 - To add a new mask: { op: "add", type: "face_skin", name: "Skin", adjustments: {...} }
 - To update a mask: { id: "mask_id", op: "update", adjustments: {...} }
-- IMPORTANT: Use masks VERY subtly for natural results (max ±0.3 range), but apply strong global adjustments. Avoid over-processing with masks. Keep all mask adjustments gentle and natural.`;
+- IMPORTANT: Use masks VERY subtly for natural results (max ±0.3 range), but apply strong global adjustments. Avoid over-processing with masks. Keep all mask adjustments gentle and natural.
+- ALWAYS provide descriptive names for masks (e.g., "Face Skin", "Eye Pop", "Sky Soften", "Background Blur")`;
 }
 
 /**

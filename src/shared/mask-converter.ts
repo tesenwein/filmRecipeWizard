@@ -19,6 +19,38 @@ export interface SimpleMask {
  * Convert recipe format to simple mask array
  * Handles both base masks and mask overrides
  */
+// Generate a descriptive name based on mask type
+function generateMaskName(type: string, index: number): string {
+  const typeNames: Record<string, string> = {
+    'face_skin': 'Face Skin',
+    'iris_pupil': 'Eye Pop',
+    'eye_whites': 'Eye Whites',
+    'eyebrows': 'Eyebrows',
+    'lips': 'Lips',
+    'teeth': 'Teeth',
+    'hair': 'Hair',
+    'clothing': 'Clothing',
+    'body_skin': 'Body Skin',
+    'sky': 'Sky',
+    'vegetation': 'Vegetation',
+    'water': 'Water',
+    'architecture': 'Architecture',
+    'natural_ground': 'Ground',
+    'artificial_ground': 'Ground',
+    'mountains': 'Mountains',
+    'background': 'Background',
+    'subject': 'Subject',
+    'person': 'Person',
+    'radial': 'Radial Mask',
+    'linear': 'Linear Mask',
+    'brush': 'Brush Mask',
+    'range_color': 'Color Range',
+    'range_luminance': 'Luminance Range'
+  };
+  
+  return typeNames[type] || `Mask ${index + 1}`;
+}
+
 export function convertRecipeToMasks(recipeData: any): SimpleMask[] {
   const masks: SimpleMask[] = [];
   
@@ -27,7 +59,7 @@ export function convertRecipeToMasks(recipeData: any): SimpleMask[] {
   for (const mask of baseMasks) {
     // Flatten geometry values to top level
     const flattenedMask = {
-      name: mask.name || 'Unnamed Mask',
+      name: mask.name || generateMaskName(mask.type || 'subject', masks.length),
       type: mask.type || 'subject',
       adjustments: mask.adjustments || {},
       ...mask
@@ -85,7 +117,7 @@ export function convertRecipeToMasks(recipeData: any): SimpleMask[] {
         } else {
           // Add if not found
           const newMask = {
-            name: override.name || 'Unnamed Mask',
+            name: override.name || generateMaskName(override.type || 'subject', masks.length),
             type: override.type || 'subject',
             adjustments: override.adjustments || {},
             ...override
@@ -102,7 +134,7 @@ export function convertRecipeToMasks(recipeData: any): SimpleMask[] {
     
     // Default: add
     const newMask = {
-      name: override.name || 'Unnamed Mask',
+      name: override.name || generateMaskName(override.type || 'subject', masks.length),
       type: override.type || 'subject',
       adjustments: override.adjustments || {},
       ...override

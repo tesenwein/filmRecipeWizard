@@ -184,7 +184,7 @@ export const maskEditSchema = z.object({
 // Streaming-specific mask schema builder (now uses unified schema)
 export function createStreamingMaskSchema() {
     return z.object({
-        name: z.string().optional(),
+        name: z.string().min(1).describe('Descriptive name for the mask (e.g., "Face Skin", "Eye Pop", "Sky Soften")'),
         type: z.enum(getAllMaskTypes() as [string, ...string[]]),
         adjustments: maskAdjustmentsSchema.optional(),
         // Optional sub-category for background masks and other AI masks
