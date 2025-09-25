@@ -105,6 +105,8 @@ declare global {
         recipeIndex?: number;
         recipeName?: string;
       }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+      exportPresetToLightroom: (data: { adjustments: any; recipeName?: string }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+      exportProfileToLightroom: (data: { adjustments: any; recipeName?: string }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
 
       // Recipe import/export
       exportRecipe: (processId: string) => Promise<ExportResult>;

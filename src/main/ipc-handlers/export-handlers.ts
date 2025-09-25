@@ -1,15 +1,18 @@
 import { dialog, ipcMain } from 'electron';
 import * as fs from 'fs/promises';
+import * as path from 'path';
 import { createErrorResponse, logError } from '../../shared/error-utils';
 import { ExportResult } from '../../shared/types';
 import { ImageProcessor } from '../image-processor';
+import { SettingsService } from '../settings-service';
 import { StorageService } from '../storage-service';
 import { generateXMPContent } from '../xmp-generator';
 
 export class ExportHandlers {
   constructor(
     private imageProcessor: ImageProcessor,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private settingsService: SettingsService
   ) { }
 
   setupHandlers(): void {
@@ -356,6 +359,92 @@ export class ExportHandlers {
         }
       } catch (error) {
         logError('IPC', 'Error exporting profile', error);
+        return createErrorResponse(error);
+      }
+    });
+
+    // Direct export preset to Lightroom folder
+    ipcMain.handle('export-preset-to-lightroom', async (_event, data: { adjustments: any; recipeName?: string }) => {
+      try {
+        // Get Lightroom profile path from settings
+        const settings = await this.settingsService.loadSettings();
+        if (!settings.lightroomProfilePath) {
+          return { success: false, error: 'Lightroom profile path not configured. Please set it in Settings.' };
+        }
+
+        // Generate XMP content
+        const include = {
+          basic: true,
+          hsl: true,
+          colorGrading: true,
+          curves: true,
+          pointColor: true,
+          grain: true,
+          vignette: true,
+          masks: true,
+          exposure: false,
+          sharpenNoise: false,
+        } as any;
+        if (data?.recipeName) (include as any).recipeName = String(data.recipeName);
+        const xmpContent = generateXMPContent(data.adjustments, include);
+
+        // Create safe filename
+        const presetName = data?.recipeName || 'Custom Recipe';
+        const safeName = presetName
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
+
+        // Ensure directory exists
+        await fs.mkdir(settings.lightroomProfilePath, { recursive: true });
+
+        // Write file to Lightroom folder (overwrite if exists)
+        const filePath = path.join(settings.lightroomProfilePath, `${safeName}.xmp`);
+        await fs.writeFile(filePath, xmpContent, { encoding: 'utf8', flag: 'w' });
+
+        return { success: true, outputPath: filePath };
+      } catch (error) {
+        logError('IPC', 'Error exporting preset to Lightroom', error);
+        return createErrorResponse(error);
+      }
+    });
+
+    // Direct export camera profile to Lightroom folder
+    ipcMain.handle('export-profile-to-lightroom', async (_event, data: { adjustments: any; recipeName?: string }) => {
+      try {
+        // Get Lightroom profile path from settings
+        const settings = await this.settingsService.loadSettings();
+        if (!settings.lightroomProfilePath) {
+          return { success: false, error: 'Lightroom profile path not configured. Please set it in Settings.' };
+        }
+
+        // Generate camera profile XMP content
+        const profileResult = await this.imageProcessor.generateCameraProfile(data);
+        if (!profileResult.success || !profileResult.xmpContent) {
+          return { success: false, error: profileResult.error || 'Failed to generate profile' };
+        }
+
+        // Create safe filename
+        const aiPresetName = (data.adjustments?.preset_name as string | undefined);
+        const recipeName = (data?.recipeName as string | undefined);
+        const presetName = (aiPresetName && aiPresetName !== 'Custom Recipe') ? aiPresetName : (recipeName || 'Camera Profile');
+        const safeName = presetName
+          .replace(/[^A-Za-z0-9 _-]+/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\s/g, '-');
+
+        // Ensure directory exists
+        await fs.mkdir(settings.lightroomProfilePath, { recursive: true });
+
+        // Write file to Lightroom folder (overwrite if exists)
+        const filePath = path.join(settings.lightroomProfilePath, `${safeName}-Profile.xmp`);
+        await fs.writeFile(filePath, profileResult.xmpContent, { encoding: 'utf8', flag: 'w' });
+
+        return { success: true, outputPath: filePath };
+      } catch (error) {
+        logError('IPC', 'Error exporting profile to Lightroom', error);
         return createErrorResponse(error);
       }
     });

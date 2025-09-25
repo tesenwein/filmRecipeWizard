@@ -11,7 +11,7 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Avatar, Box, Button, Chip, Divider, IconButton, Paper, Tab, Tabs, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, IconButton, Paper, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
 import { applyMaskOverrides } from '../../shared/mask-utils';
@@ -101,8 +101,25 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   processId,
   prompt,
 }) => {
-  const { showError } = useAlert();
-  const { deleteRecipe } = useAppStore();
+  const { showError, showSuccess } = useAlert();
+  const { deleteRecipe, settings, loadSettings } = useAppStore();
+  
+  // Check if Lightroom path is configured
+  const lightroomPathConfigured = !!(settings as any)?.lightroomProfilePath;
+  
+  // Debug log to see what settings are available
+  console.log('ResultsView settings:', settings);
+  console.log('lightroomProfilePath:', (settings as any)?.lightroomProfilePath);
+  console.log('lightroomPathConfigured:', lightroomPathConfigured);
+  
+  // Load settings if they're not available
+  useEffect(() => {
+    if (!settings || Object.keys(settings).length === 0) {
+      console.log('Loading settings in ResultsView...');
+      loadSettings();
+    }
+  }, [settings, loadSettings]);
+  
   // Base64 image data URLs for display
   const [baseImageUrls, setBaseImageUrls] = useState<string[]>([]);
   const [activeBase, setActiveBase] = useState(0);
@@ -519,6 +536,62 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       }
     } catch (e) {
       setProfileExportStatus({ ok: false, msg: e instanceof Error ? e.message : 'Export failed' });
+    }
+  };
+
+  const handleExportPresetToLightroom = async (index: number, result: any) => {
+    try {
+      // Extract adjustments same way as preset export
+      const adjustments = getEffectiveAdjustments(result);
+      if (!adjustments) return;
+
+      // Generate and export preset directly to Lightroom folder
+      const adjForExport = { ...adjustments } as any;
+      if (processName) adjForExport.preset_name = processName;
+      if (processDescription) adjForExport.description = processDescription;
+      const res = await (window.electronAPI as any).exportPresetToLightroom({
+        adjustments: adjForExport,
+        recipeName: processName,
+      });
+
+      if (res?.success) {
+        showSuccess(
+          'Preset successfully saved to Lightroom folder!',
+          { title: 'Export Successful' }
+        );
+      } else {
+        showError(res?.error || 'Export failed', { title: 'Export Failed' });
+      }
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Export failed', { title: 'Export Failed' });
+    }
+  };
+
+  const handleExportProfileToLightroom = async (index: number, result: any) => {
+    try {
+      // Extract adjustments same way as preset export
+      const adjustments = getEffectiveAdjustments(result);
+      if (!adjustments) return;
+
+      // Generate and export camera profile directly to Lightroom folder
+      const adjForExport = { ...adjustments } as any;
+      if (processName) adjForExport.preset_name = processName;
+      if (processDescription) adjForExport.description = processDescription;
+      const res = await (window.electronAPI as any).exportProfileToLightroom({
+        adjustments: adjForExport,
+        recipeName: processName,
+      });
+
+      if (res?.success) {
+        showSuccess(
+          'Camera profile successfully saved to Lightroom folder!',
+          { title: 'Export Successful' }
+        );
+      } else {
+        showError(res?.error || 'Export failed', { title: 'Export Failed' });
+      }
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Export failed', { title: 'Export Failed' });
     }
   };
 
@@ -984,10 +1057,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Box>
                           );
                         })()}
-                        {/* Export Button */}
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                        {/* Export Buttons */}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
                           <Button
-                            variant="contained"
+                            variant="outlined"
                             startIcon={<DownloadIcon />}
                             onClick={() => handleExportXMP(index, result)}
                             sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
@@ -995,6 +1068,31 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           >
                             Export Preset (.xmp)
                           </Button>
+                          {lightroomPathConfigured ? (
+                            <Button
+                              variant="contained"
+                              startIcon={<DownloadIcon />}
+                              onClick={() => handleExportPresetToLightroom(index, result)}
+                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                              size="large"
+                            >
+                              Save to Lightroom
+                            </Button>
+                          ) : (
+                            <Tooltip title="Configure Lightroom folder path in Settings to enable direct export">
+                              <span>
+                                <Button
+                                  variant="contained"
+                                  startIcon={<DownloadIcon />}
+                                  disabled
+                                  sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                                  size="large"
+                                >
+                                  Save to Lightroom
+                                </Button>
+                              </span>
+                            </Tooltip>
+                          )}
                         </Box>
                       </Paper>
 
@@ -1025,9 +1123,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Typography>
                           </Paper>
                         )}
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                           <Button
-                            variant="contained"
+                            variant="outlined"
                             startIcon={<DownloadIcon />}
                             onClick={() => handleExportProfile(index, result)}
                             sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
@@ -1035,6 +1133,31 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           >
                             Export Profile (.xmp)
                           </Button>
+                          {lightroomPathConfigured ? (
+                            <Button
+                              variant="contained"
+                              startIcon={<DownloadIcon />}
+                              onClick={() => handleExportProfileToLightroom(index, result)}
+                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                              size="large"
+                            >
+                              Save to Lightroom
+                            </Button>
+                          ) : (
+                            <Tooltip title="Configure Lightroom folder path in Settings to enable direct export">
+                              <span>
+                                <Button
+                                  variant="contained"
+                                  startIcon={<DownloadIcon />}
+                                  disabled
+                                  sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                                  size="large"
+                                >
+                                  Save to Lightroom
+                                </Button>
+                              </span>
+                            </Tooltip>
+                          )}
                         </Box>
                       </Paper>
                     </Box>

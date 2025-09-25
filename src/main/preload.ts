@@ -29,6 +29,10 @@ const electronAPI = {
     ipcRenderer.invoke('generate-xmp-content', data),
   exportProfile: (data: { adjustments: any; recipeIndex?: number }) =>
     ipcRenderer.invoke('export-profile', data),
+  exportPresetToLightroom: (data: { adjustments: any; recipeName?: string }) =>
+    ipcRenderer.invoke('export-preset-to-lightroom', data),
+  exportProfileToLightroom: (data: { adjustments: any; recipeName?: string }) =>
+    ipcRenderer.invoke('export-profile-to-lightroom', data),
   // Recipe import/export
   exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
   exportAllRecipes: () => ipcRenderer.invoke('export-all-recipes'),

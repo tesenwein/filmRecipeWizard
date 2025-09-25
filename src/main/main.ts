@@ -48,7 +48,7 @@ class FilmRecipeWizardApp {
       this.imageProcessor,
       this.storageService
     );
-    this.exportHandlers = new ExportHandlers(this.imageProcessor, this.storageService);
+    this.exportHandlers = new ExportHandlers(this.imageProcessor, this.storageService, this.settingsService);
     this.importHandlers = new ImportHandlers(this.storageService);
     this.chatHandlers = new ChatHandlers();
 

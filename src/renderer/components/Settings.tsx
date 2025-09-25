@@ -25,6 +25,7 @@ const Settings: React.FC = () => {
   });
   const [isProfileValid, setIsProfileValid] = useState(true);
   const [storageLocation, setStorageLocation] = useState('');
+  const [lightroomProfilePath, setLightroomProfilePath] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -38,6 +39,7 @@ const Settings: React.FC = () => {
           }
           setSetupCompleted(!!settingsRes.settings.setupCompleted);
           setStorageLocation(settingsRes.settings.storageLocation || '');
+          setLightroomProfilePath((settingsRes.settings as any).lightroomProfilePath || '');
           const u = (settingsRes.settings as any).userProfile || {};
           setProfileData({
             firstName: u.firstName || '',
@@ -140,6 +142,18 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleSelectLightroomFolder = async () => {
+    try {
+      const result = await window.electronAPI.selectStorageFolder();
+      if (result?.success && result.path) {
+        setLightroomProfilePath(result.path);
+      }
+    } catch (error) {
+      console.error('Failed to select Lightroom folder:', error);
+      setStatus({ type: 'error', msg: 'Failed to select Lightroom folder' });
+    }
+  };
+
   const handleSave = async () => {
     setStatus(null);
     setIsValidating(true);
@@ -161,17 +175,31 @@ const Settings: React.FC = () => {
       const nWebsite = normalizeUrl(profileData.website);
       const ig = normalizeInstagram(profileData.instagram);
 
-      const res = await window.electronAPI.saveSettings({
-        openaiKey: openaiKey.trim() || undefined,
-        storageLocation: storageLocation.trim() || undefined,
-        userProfile: {
-          firstName: profileData.firstName.trim(),
-          lastName: profileData.lastName.trim(),
-          email: profileData.email.trim() ? profileData.email.trim() : undefined,
-          website: nWebsite || undefined,
-          instagram: ig.handle || undefined,
-        },
-      } as any);
+      // Only include fields that have values to avoid overwriting existing settings
+      const settingsToSave: any = {};
+      
+      if (openaiKey.trim()) {
+        settingsToSave.openaiKey = openaiKey.trim();
+      }
+      
+      if (storageLocation.trim()) {
+        settingsToSave.storageLocation = storageLocation.trim();
+      }
+      
+      if (lightroomProfilePath.trim()) {
+        settingsToSave.lightroomProfilePath = lightroomProfilePath.trim();
+      }
+      
+      // Always include userProfile as it's a complete object
+      settingsToSave.userProfile = {
+        firstName: profileData.firstName.trim(),
+        lastName: profileData.lastName.trim(),
+        email: profileData.email.trim() ? profileData.email.trim() : undefined,
+        website: nWebsite || undefined,
+        instagram: ig.handle || undefined,
+      };
+
+      const res = await window.electronAPI.saveSettings(settingsToSave);
       if (res.success) {
         setMasked(!!openaiKey);
         setOpenaiKey('');
@@ -337,6 +365,33 @@ const Settings: React.FC = () => {
           />
           <Typography variant="caption" color="text.secondary">
             This folder stores all your recipes. Changes take effect after saving.
+          </Typography>
+        </Stack>
+      </Paper>
+
+      <Typography variant="h6" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
+        Lightroom Integration
+      </Typography>
+      <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+        <Stack spacing={1.5}>
+          <TextField
+            fullWidth
+            label="Lightroom Profile/Preset Folder"
+            value={lightroomProfilePath}
+            onChange={e => setLightroomProfilePath(e.target.value)}
+            helperText="Where to save Lightroom profiles and presets for direct import"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button variant="outlined" size="small" onClick={handleSelectLightroomFolder}>
+                    Browse...
+                  </Button>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            Set this to your Lightroom presets folder to enable direct export. Usually located at: ~/Library/Application Support/Adobe/Lightroom/Develop Presets/ (macOS) or %APPDATA%\Adobe\Lightroom\Develop Presets\ (Windows).
           </Typography>
         </Stack>
       </Paper>
