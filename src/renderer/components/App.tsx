@@ -193,9 +193,9 @@ const AppContent: React.FC = () => {
       status: 'Starting AI analysis...',
     });
 
-    // Add periodic status logging for debugging
+    // Periodic status check
     statusIntervalRef.current = setInterval(() => {
-      // Status logging removed for cleaner code
+      // Status check interval
     }, 30000); // Every 30 seconds
 
     // Kick off processing using stored base64 data

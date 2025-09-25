@@ -371,10 +371,6 @@ export class StorageHandlers {
         const homeDir = os.homedir();
         const defaultPath = path.join(homeDir, DEFAULT_STORAGE_FOLDER);
         
-        // Debug logging to help diagnose path resolution issues
-        console.log('[STORAGE] Home directory:', homeDir);
-        console.log('[STORAGE] Default path:', defaultPath);
-        console.log('[STORAGE] Current working directory:', process.cwd());
         
         const result = await dialog.showOpenDialog({
           title: 'Select Recipe Storage Folder',

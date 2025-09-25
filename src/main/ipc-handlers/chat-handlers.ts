@@ -29,7 +29,7 @@ export class ChatHandlers {
                 const apiKey = settings.openaiKey || process.env.OPENAI_API_KEY;
                 if (!apiKey) throw new Error('OpenAI API key not configured');
 
-                // Re-introduce separate tools and keep legacy combined tool; we'll aggregate and persist
+                // Create separate tools for different operations
                 const tools = {
                     set_user_options: tool({
                         description: 'Update only user-facing options (contrast, vibrance, vibe, styles).',

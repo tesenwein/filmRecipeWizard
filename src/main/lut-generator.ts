@@ -163,7 +163,6 @@ function applyColorTransform(r: number, g: number, b: number, A: any): [number, 
 
   let R = r, G = g, B = b;
 
-  // White balance removed - using neutral values
 
   // 2) Exposure in stops (map 4 UI units ≈ 1 stop)
   if (Math.abs(A.exposure) > 1e-3) {

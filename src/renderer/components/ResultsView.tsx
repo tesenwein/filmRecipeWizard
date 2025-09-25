@@ -108,15 +108,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   // Check if Lightroom path is configured
   const lightroomPathConfigured = !!(settings as any)?.lightroomProfilePath;
   
-  // Debug log to see what settings are available
-  console.log('ResultsView settings:', settings);
-  console.log('lightroomProfilePath:', (settings as any)?.lightroomProfilePath);
-  console.log('lightroomPathConfigured:', lightroomPathConfigured);
   
   // Load settings if they're not available
   useEffect(() => {
     if (!settings || Object.keys(settings).length === 0) {
-      console.log('Loading settings in ResultsView...');
       loadSettings();
     }
   }, [settings, loadSettings]);
@@ -510,8 +505,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   const getOptions = (index: number) => exportOptions[index] || defaultOptions;
 
-  // Note: Process updates are now handled by the useChatModifications hook
-  // This useEffect was removed to prevent duplicate event listeners
 
   // Create effective adjustments by applying chat modifications to original aiAdjustments
   const getEffectiveAdjustments = (result: ProcessingResult) => {

@@ -85,12 +85,6 @@ export class AIStreamingService {
                     } else if (name === 'name_and_describe') {
                         if (typeof output.preset_name === 'string') aggregated.preset_name = output.preset_name;
                         if (typeof output.description === 'string') aggregated.description = output.description;
-                    } else if (name === 'generate_color_adjustments') {
-                        // Backward compatibility: some older prompts may still call this combined tool
-                        Object.assign(aggregated, output);
-                        if ((output as any).masks && Array.isArray((output as any).masks)) {
-                            masks = (output as any).masks;
-                        }
                     }
                 }
 
@@ -100,7 +94,6 @@ export class AIStreamingService {
                 }
             }
 
-            // Removed streaming code since we're using generateText instead of streamText
 
             if (!finalResult) {
                 finalResult = this.parseResultFromText(result.text);
@@ -411,7 +404,6 @@ TOOL USAGE GUIDELINES:
     private getToolDescription(toolName: string): string {
         const descriptions: Record<string, string> = {
             'generate_global_adjustments': 'global color/tone adjustments',
-            'generate_color_adjustments': 'color characteristics and creating the recipe', // backward compat
             'analyze_color_palette': 'color palette and tonal relationships',
             'assess_lighting': 'lighting conditions and exposure',
             'evaluate_style': 'overall style and mood',

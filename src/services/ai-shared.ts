@@ -177,9 +177,6 @@ export const maskEditSchema = z.object({
     referenceX: z.number().optional(), referenceY: z.number().optional(),
 });
 
-// Legacy aliases for backward compatibility
-// export const maskAdjustmentsSchemaChat = maskAdjustmentsSchema;
-// export const maskEditSchemaChat = maskEditSchema;
 
 // Streaming-specific mask schema builder (now uses unified schema)
 export function createStreamingMaskSchema() {
