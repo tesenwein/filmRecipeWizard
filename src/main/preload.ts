@@ -82,6 +82,20 @@ const electronAPI = {
     ipcRenderer.invoke('chat-recipe', data),
   clearPendingRecipes: () => ipcRenderer.invoke('clear-pending-recipes'),
 
+  // AI Image generation
+  generateAIRecipeImage: (options: {
+    recipeName?: string;
+    prompt?: string;
+    artistStyle?: { name: string; description?: string };
+    filmStyle?: { name: string; description?: string };
+    userOptions?: {
+      contrast?: number;
+      vibrance?: number;
+      saturationBias?: number;
+    };
+  }) => ipcRenderer.invoke('generate-ai-recipe-image', options),
+  saveBase64ToTempFile: (base64Data: string, filename: string) => ipcRenderer.invoke('save-base64-to-temp-file', base64Data, filename),
+
   // Settings operations
   selectStorageFolder: () => ipcRenderer.invoke('select-storage-folder'),
   getSettings: () => ipcRenderer.invoke('get-settings'),

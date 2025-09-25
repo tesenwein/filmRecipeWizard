@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import * as path from 'path';
 import { ImageProcessor } from './image-processor';
+import { AIImageHandlers } from './ipc-handlers/ai-image-handlers';
 import { ChatHandlers } from './ipc-handlers/chat-handlers';
 import { ExportHandlers } from './ipc-handlers/export-handlers';
 import { FileHandlers } from './ipc-handlers/file-handlers';
@@ -18,6 +19,7 @@ class FilmRecipeWizardApp {
   private settingsService: SettingsService;
 
   // IPC handlers
+  private aiImageHandlers: AIImageHandlers;
   private fileHandlers: FileHandlers;
   private processingHandlers: ProcessingHandlers;
   private storageHandlers: StorageHandlers;
@@ -32,6 +34,7 @@ class FilmRecipeWizardApp {
     this.settingsService = new SettingsService();
 
     // Initialize IPC handlers
+    this.aiImageHandlers = new AIImageHandlers();
     this.fileHandlers = new FileHandlers(() => this.mainWindow);
     this.processingHandlers = new ProcessingHandlers(
       () => this.mainWindow,
@@ -240,6 +243,7 @@ class FilmRecipeWizardApp {
 
   private setupIPC(): void {
     // Setup all IPC handlers
+    this.aiImageHandlers.setupHandlers();
     this.fileHandlers.setupHandlers();
     this.processingHandlers.setupHandlers();
     this.storageHandlers.setupHandlers();

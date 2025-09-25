@@ -113,6 +113,20 @@ declare global {
       exportAllRecipes: () => Promise<ExportResult>;
       importRecipe: () => Promise<ImportResult>;
 
+      // AI Image generation
+      generateAIRecipeImage: (options: {
+        recipeName?: string;
+        prompt?: string;
+        artistStyle?: { name: string; description?: string };
+        filmStyle?: { name: string; description?: string };
+        userOptions?: {
+          contrast?: number;
+          vibrance?: number;
+          saturationBias?: number;
+        };
+      }) => Promise<{ success: boolean; imageUrl?: string; error?: string }>;
+      saveBase64ToTempFile: (base64Data: string, filename: string) => Promise<string | null>;
+
       // Chat operations
       chatRecipe: (data: { messages: Array<{ role: string; content: string }>; recipe: any }) => Promise<{
         success: boolean;

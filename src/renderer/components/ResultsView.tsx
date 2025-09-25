@@ -1,4 +1,5 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChatIcon from '@mui/icons-material/Chat';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -11,7 +12,7 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Avatar, Box, Button, Chip, Divider, IconButton, Paper, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, CircularProgress, Divider, IconButton, Paper, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
 import { applyMaskOverrides } from '../../shared/mask-utils';
@@ -225,6 +226,88 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
+  const handleGenerateAIRecipeImage = async () => {
+    try {
+      if (!processId || isGeneratingAI) return;
+      
+      setIsGeneratingAI(true);
+      
+      // Get the current recipe data to build context for AI generation
+      const proc = await window.electronAPI.getProcess(processId);
+      if (!proc.success || !proc.process) {
+        showError('Failed to get recipe data for AI generation');
+        return;
+      }
+
+      const recipe = proc.process;
+      
+      // Build options for AI image generation
+      const aiOptions = {
+        recipeName: recipe.name,
+        prompt: recipe.prompt,
+        artistStyle: recipe.userOptions?.artistStyle,
+        filmStyle: recipe.userOptions?.filmStyle,
+        userOptions: {
+          contrast: recipe.userOptions?.contrast,
+          vibrance: recipe.userOptions?.vibrance,
+          saturationBias: recipe.userOptions?.saturationBias,
+        },
+      };
+
+      // Generate AI image
+      const result = await window.electronAPI.generateAIRecipeImage(aiOptions);
+      
+      if (!result.success) {
+        showError(result.error || 'Failed to generate AI recipe image');
+        return;
+      }
+
+      // Save the generated image and add it as a recipe image
+      if (result.imageUrl) {
+        // The imageUrl is already a data URL from our service
+        const base64Data = result.imageUrl.split(',')[1]; // Remove the data:image/png;base64, prefix
+        
+        // Save the base64 data to a temporary file first
+        const tempFilePath = await window.electronAPI.saveBase64ToTempFile(base64Data, 'ai-generated-recipe.png');
+        if (!tempFilePath) {
+          showError('Failed to save AI-generated image to temporary file');
+          return;
+        }
+        
+        // Add the temporary file as a base image
+        const res = await window.electronAPI.addBaseImages(processId, [tempFilePath]);
+        if (!res?.success) {
+          showError(res?.error || 'Failed to add AI-generated recipe image');
+          return;
+        }
+
+        // Reload the image data after adding
+        const data = await window.electronAPI.getImageDataUrls(processId);
+        if (data.success) {
+          setBaseImageUrls(data.baseImageUrls || []);
+          setActiveBase(0);
+        }
+
+        // Update the store to reflect the new image in the gallery
+        try {
+          const proc = await window.electronAPI.getProcess(processId);
+          if (proc.success && proc.process) {
+            useAppStore.getState().updateRecipe(processId, {
+              recipeImageData: (proc.process as any).recipeImageData,
+            } as any);
+          }
+        } catch {
+          // Ignore store update errors
+        }
+      }
+    } catch (e) {
+      console.error('Failed to generate AI recipe image:', e);
+      showError('Failed to generate AI recipe image. Please try again.');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   // Description editing functions
   const startEditingDescription = (resultIndex: number) => {
     const currentDescription = processDescription || '';
@@ -295,6 +378,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const openRemoveDialog = () => setRemoveDialogOpen(true);
   const closeRemoveDialog = () => setRemoveDialogOpen(false);
+
+  // AI image generation loading state
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const confirmRemoveRecipeImage = async () => {
     try {
       await handleRemoveRecipeImage();
@@ -831,6 +917,45 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 }}
                               >
                                 <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                            {baseImageUrls.length === 0 && (
+                              <IconButton
+                                aria-label={isGeneratingAI ? "Generating AI recipe image..." : "Generate AI recipe image"}
+                                title={isGeneratingAI ? "Generating AI recipe image..." : "Generate AI recipe image"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isGeneratingAI) {
+                                    handleGenerateAIRecipeImage();
+                                  }
+                                }}
+                                size="small"
+                                disabled={isGeneratingAI}
+                                sx={{
+                                  position: 'absolute',
+                                  top: 8,
+                                  right: 8,
+                                  zIndex: 2,
+                                  bgcolor: 'rgba(255,255,255,0.7)',
+                                  backdropFilter: 'blur(8px)',
+                                  WebkitBackdropFilter: 'blur(8px)',
+                                  border: '1px solid rgba(0,0,0,0.06)',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                  color: 'primary.main',
+                                  '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.9)',
+                                  },
+                                  '&:disabled': {
+                                    color: 'primary.main',
+                                    opacity: 0.7,
+                                  },
+                                }}
+                              >
+                                {isGeneratingAI ? (
+                                  <CircularProgress size={16} color="inherit" />
+                                ) : (
+                                  <AutoAwesomeIcon fontSize="small" />
+                                )}
                               </IconButton>
                             )}
                             {baseImageUrls.length > 1 && (
