@@ -1,7 +1,6 @@
 import { Button, Card, CardContent, LinearProgress, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import IconSvg from '../../../assets/icons/icon.svg';
-import { DEFAULT_STORAGE_FOLDER } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
 import ErrorDialog from './ErrorDialog';
 import ProfileEdit, { ProfileData } from './ProfileEdit';
@@ -25,7 +24,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     instagram: '',
   });
   const [isProfileValid, setIsProfileValid] = useState(true);
-  const [storageLocation, setStorageLocation] = useState(`~/${DEFAULT_STORAGE_FOLDER}`);
+  const [storageLocation, setStorageLocation] = useState('');
   const [lightroomProfilePath, setLightroomProfilePath] = useState('');
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -50,8 +49,11 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
           // Storage location will have a default from backend or user's setting
           if (res.settings?.storageLocation) {
             setStorageLocation(res.settings.storageLocation);
+          } else {
+            // If no storage location is set, the backend should provide a default
+            // This should not happen as StorageService.getSettings() always returns a storageLocation
+            console.warn('No storage location found in settings');
           }
-          // If no storageLocation from backend, keep the initial default
           
           // Load Lightroom profile path if available
           if ((res.settings as any)?.lightroomProfilePath) {
@@ -358,11 +360,6 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   <strong>Windows:</strong> %APPDATA%\Adobe\CameraRaw\ImportedSettings
                 </Typography>
                 
-                <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6 }}>
-                  <strong>Alternative locations:</strong><br/>
-                  • ~/Library/Application Support/Adobe/Lightroom/Develop Presets/ (macOS)<br/>
-                  • %APPDATA%\Adobe\Lightroom\Develop Presets\ (Windows)
-                </Typography>
 
                 <TextField
                   fullWidth
@@ -411,7 +408,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   Your Profile (optional)
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', lineHeight: 1.6, textAlign: 'left' }}>
-                  These details are attached to your recipes and included in exports.
+                  These details are attached to your recipes and included in exports. You can skip this step and continue without providing profile information.
                 </Typography>
                 <ProfileEdit
                   initialData={profileData}
@@ -425,8 +422,14 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   <Button variant="outlined" onClick={() => setCurrentStep(3)} disabled={isLoading}>
                     Back
                   </Button>
-                  <Button variant="text" onClick={() => setCurrentStep(5)} disabled={isLoading}>
-                    Skip
+                  <Button 
+                    variant="outlined" 
+                    color="secondary"
+                    onClick={() => setCurrentStep(5)} 
+                    disabled={isLoading}
+                    sx={{ minWidth: 120 }}
+                  >
+                    Skip & Continue
                   </Button>
                   <Button
                     variant="contained"
@@ -458,7 +461,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     disabled={isLoading}
                     sx={{ minWidth: 120 }}
                   >
-                    Continue
+                    Save & Continue
                   </Button>
                 </div>
               </div>

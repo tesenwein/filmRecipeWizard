@@ -75,7 +75,7 @@ const electronAPI = {
     ipcRenderer.invoke('add-base-images', processId, filePaths),
   removeBaseImage: (processId: string, index: number) =>
     ipcRenderer.invoke('remove-base-image', processId, index),
-  clearHistory: () => ipcRenderer.invoke('clear-history'),
+  clearHistory: () => ipcRenderer.invoke('clear-recipes'),
 
   // Chat operations
   chatRecipe: (data: { messages: Array<{ role: string; content: string }>; recipe: any }) =>

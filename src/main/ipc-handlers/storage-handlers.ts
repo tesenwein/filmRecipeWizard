@@ -367,10 +367,19 @@ export class StorageHandlers {
     // Handle folder selection for storage location
     ipcMain.handle('select-storage-folder', async () => {
       try {
+        // Ensure we get the correct home directory path
+        const homeDir = os.homedir();
+        const defaultPath = path.join(homeDir, DEFAULT_STORAGE_FOLDER);
+        
+        // Debug logging to help diagnose path resolution issues
+        console.log('[STORAGE] Home directory:', homeDir);
+        console.log('[STORAGE] Default path:', defaultPath);
+        console.log('[STORAGE] Current working directory:', process.cwd());
+        
         const result = await dialog.showOpenDialog({
           title: 'Select Recipe Storage Folder',
           properties: ['openDirectory', 'createDirectory'],
-          defaultPath: path.join(os.homedir(), DEFAULT_STORAGE_FOLDER),
+          defaultPath: defaultPath,
         });
 
         if (!result.canceled && result.filePaths.length > 0) {
