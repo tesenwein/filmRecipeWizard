@@ -16,7 +16,7 @@
     "lint": "eslint 'src/**/*.ts' 'src/**/*.tsx' --fix",
     "lint:check": "eslint 'src/**/*.ts' 'src/**/*.tsx'",
     "typecheck": "tsc -p src/main/tsconfig.json --noEmit && tsc -p src/renderer/tsconfig.json --noEmit",
-    "clean": "rimraf dist release build",
+    "clean": "rimraf dist release",
     "prepare:build": "npm run clean && npm run build && npm run validate-build",
     "package": "npm run prepare:build && electron-builder",
     "package:mac": "npm run prepare:build && electron-builder --mac",

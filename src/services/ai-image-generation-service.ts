@@ -73,7 +73,7 @@ export class AIImageGenerationService {
       parts.push(`the "${options.recipeName}" color grading style`);
     } else {
       parts.push('color grading and film emulation');
-    }
+    ∏
 
     // Add artist style context
     if (options.artistStyle?.name) {
