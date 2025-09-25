@@ -319,6 +319,7 @@ jobs:
           prerelease: false
           generate_release_notes: false
           make_latest: true
+          discussion_category_name: 'Announcements'
           files: |
             artifacts/build-mac/*.dmg
             artifacts/build-win/*.exe
@@ -331,5 +332,23 @@ jobs:
           TAG_NAME="${{ steps.changelog.outputs.TAG_NAME }}"
           echo "Release $TAG_NAME already exists. Skipping creation to avoid conflicts."
           echo "If you need to update the release, please delete it first or use a different version."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Release
+        if: steps.check_release.outputs.release_exists == 'false'
+        run: |
+          TAG_NAME="${{ steps.changelog.outputs.TAG_NAME }}"
+          echo "Ensuring release $TAG_NAME is published (not draft)..."
+          
+          # Check if release exists and is draft
+          RELEASE_INFO=$(gh release view "$TAG_NAME" --json isDraft,isPrerelease 2>/dev/null || echo '{"isDraft":false,"isPrerelease":false}')
+          IS_DRAFT=$(echo "$RELEASE_INFO" | jq -r '.isDraft // false')
+          IS_PRERELEASE=$(echo "$RELEASE_INFO" | jq -r '.isPrerelease // false')
+          
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "Release is draft, publishing it..."
+            gh release edit "$TAG_NAME" --draft=false --prerelease=false
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

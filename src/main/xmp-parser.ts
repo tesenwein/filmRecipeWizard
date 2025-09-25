@@ -173,11 +173,7 @@ function parseHSLAdjustments(xmpContent: string, adjustments: AIColorAdjustments
   let hasHSL = false;
 
   const parseHSLValue = (pattern: string, key: keyof AIColorAdjustments): void => {
-    // Try attribute format first (new format), then element format (old format)
-    let match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
-    if (!match) {
-      match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
-    }
+    const match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
     if (match) {
       const value = parseFloat(match[1]);
       if (!isNaN(value)) {

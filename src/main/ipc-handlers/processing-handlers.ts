@@ -174,7 +174,7 @@ export class ProcessingHandlers {
             );
           }
           
-          // Add style categories (handle both legacy vibe and new styleCategories)
+          // Add style categories
           const styleCategories = options.styleCategories || (options.vibe ? [options.vibe] : []);
           if (styleCategories.length > 0) {
             optionsHintParts.push(`Style Categories: ${styleCategories.join(', ')}`);

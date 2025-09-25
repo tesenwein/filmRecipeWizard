@@ -33,7 +33,7 @@ const StyleDescriptionCard: React.FC<StyleDescriptionCardProps> = ({
   selectedStyleCategories = [],
   onStyleCategoriesChange
 }) => {
-  // Unified style categories (merged from legacy vibe options and new categories)
+  // Style categories for recipe customization
   const styleCategories = [
     // Photography Types
     { icon: <PersonIcon sx={{ fontSize: 16 }} />, label: 'Portrait', category: 'photography' },
