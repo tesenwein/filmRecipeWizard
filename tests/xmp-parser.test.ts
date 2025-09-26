@@ -155,36 +155,36 @@ describe('XMP Parser', () => {
     xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
    crs:PresetType="Normal"
    crs:Version="17.5"
-   crs:HasSettings="True">
+   crs:HasSettings="True"
+   crs:HueAdjustmentRed="-20"
+   crs:HueAdjustmentOrange="15"
+   crs:HueAdjustmentYellow="-10"
+   crs:HueAdjustmentGreen="25"
+   crs:HueAdjustmentAqua="-15"
+   crs:HueAdjustmentBlue="30"
+   crs:HueAdjustmentPurple="-25"
+   crs:HueAdjustmentMagenta="20"
+   crs:SaturationAdjustmentRed="-30"
+   crs:SaturationAdjustmentOrange="20"
+   crs:SaturationAdjustmentYellow="-15"
+   crs:SaturationAdjustmentGreen="35"
+   crs:SaturationAdjustmentAqua="-20"
+   crs:SaturationAdjustmentBlue="25"
+   crs:SaturationAdjustmentPurple="-35"
+   crs:SaturationAdjustmentMagenta="15"
+   crs:LuminanceAdjustmentRed="-25"
+   crs:LuminanceAdjustmentOrange="15"
+   crs:LuminanceAdjustmentYellow="-20"
+   crs:LuminanceAdjustmentGreen="30"
+   crs:LuminanceAdjustmentAqua="-15"
+   crs:LuminanceAdjustmentBlue="20"
+   crs:LuminanceAdjustmentPurple="-30"
+   crs:LuminanceAdjustmentMagenta="10">
    <crs:Name>
     <rdf:Alt>
      <rdf:li xml:lang="x-default">HSL Test</rdf:li>
     </rdf:Alt>
    </crs:Name>
-   <crs:HueAdjustmentRed>-20</crs:HueAdjustmentRed>
-   <crs:HueAdjustmentOrange>15</crs:HueAdjustmentOrange>
-   <crs:HueAdjustmentYellow>-10</crs:HueAdjustmentYellow>
-   <crs:HueAdjustmentGreen>25</crs:HueAdjustmentGreen>
-   <crs:HueAdjustmentAqua>-15</crs:HueAdjustmentAqua>
-   <crs:HueAdjustmentBlue>30</crs:HueAdjustmentBlue>
-   <crs:HueAdjustmentPurple>-25</crs:HueAdjustmentPurple>
-   <crs:HueAdjustmentMagenta>20</crs:HueAdjustmentMagenta>
-   <crs:SaturationAdjustmentRed>-30</crs:SaturationAdjustmentRed>
-   <crs:SaturationAdjustmentOrange>20</crs:SaturationAdjustmentOrange>
-   <crs:SaturationAdjustmentYellow>-15</crs:SaturationAdjustmentYellow>
-   <crs:SaturationAdjustmentGreen>35</crs:SaturationAdjustmentGreen>
-   <crs:SaturationAdjustmentAqua>-20</crs:SaturationAdjustmentAqua>
-   <crs:SaturationAdjustmentBlue>25</crs:SaturationAdjustmentBlue>
-   <crs:SaturationAdjustmentPurple>-35</crs:SaturationAdjustmentPurple>
-   <crs:SaturationAdjustmentMagenta>15</crs:SaturationAdjustmentMagenta>
-   <crs:LuminanceAdjustmentRed>-25</crs:LuminanceAdjustmentRed>
-   <crs:LuminanceAdjustmentOrange>15</crs:LuminanceAdjustmentOrange>
-   <crs:LuminanceAdjustmentYellow>-20</crs:LuminanceAdjustmentYellow>
-   <crs:LuminanceAdjustmentGreen>30</crs:LuminanceAdjustmentGreen>
-   <crs:LuminanceAdjustmentAqua>-15</crs:LuminanceAdjustmentAqua>
-   <crs:LuminanceAdjustmentBlue>20</crs:LuminanceAdjustmentBlue>
-   <crs:LuminanceAdjustmentPurple>-30</crs:LuminanceAdjustmentPurple>
-   <crs:LuminanceAdjustmentMagenta>10</crs:LuminanceAdjustmentMagenta>
   </rdf:Description>
  </rdf:RDF>
 </x:xmpmeta>`;

@@ -173,7 +173,19 @@ function parseHSLAdjustments(xmpContent: string, adjustments: AIColorAdjustments
   let hasHSL = false;
 
   const parseHSLValue = (pattern: string, key: keyof AIColorAdjustments): void => {
-    const match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+    // Try attribute format first (for presets): crs:HueAdjustmentRed="-20"
+    let match = xmpContent.match(new RegExp(`crs:${pattern}="([^"]*)"`));
+    if (match) {
+      const value = parseFloat(match[1]);
+      if (!isNaN(value)) {
+        (adjustments as any)[key] = value;
+        hasHSL = true;
+        return;
+      }
+    }
+    
+    // Try element format (for camera profiles): <crs:HueAdjustmentRed>-20</crs:HueAdjustmentRed>
+    match = xmpContent.match(new RegExp(`<crs:${pattern}>([^<]*)</crs:${pattern}>`));
     if (match) {
       const value = parseFloat(match[1]);
       if (!isNaN(value)) {
