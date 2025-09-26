@@ -183,9 +183,8 @@ jobs:
       - name: Build application
         run: npm run prepare:build
 
-      - name: Clean up blockmap files
+      - name: Clean up unnecessary files
         run: |
-          find release/ -name "*.blockmap" -delete || true
           find release/ -name "*.yml" -delete || true
           find release/ -name "*.yaml" -delete || true
 
@@ -216,7 +215,6 @@ jobs:
             release/
             !release/.icon-ico
             !release/.icon-icns
-            !release/*.blockmap
             !release/*.yml
             !release/*.yaml
           retention-days: 30
