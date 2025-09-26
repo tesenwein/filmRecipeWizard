@@ -1590,72 +1590,48 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             Choose Image Style
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-            <Chip
-              label="Portrait"
+            <Button
+              variant="outlined"
               onClick={() => handleStyleSelect('portrait')}
               sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                fontSize: '0.875rem',
+                minWidth: 100,
+                py: 1.5,
+                px: 3,
                 fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                  transform: 'scale(1.05)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                },
-                '&:active': {
-                  transform: 'scale(0.95)',
-                },
+                textTransform: 'none',
+                borderRadius: 0,
               }}
+            >
+              Portrait
+            </Button>
+            <Button
               variant="outlined"
-            />
-            <Chip
-              label="Landscape"
               onClick={() => handleStyleSelect('landscape')}
               sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                fontSize: '0.875rem',
+                minWidth: 100,
+                py: 1.5,
+                px: 3,
                 fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                  transform: 'scale(1.05)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                },
-                '&:active': {
-                  transform: 'scale(0.95)',
-                },
+                textTransform: 'none',
+                borderRadius: 0,
               }}
+            >
+              Landscape
+            </Button>
+            <Button
               variant="outlined"
-            />
-            <Chip
-              label="Street"
               onClick={() => handleStyleSelect('street')}
               sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                fontSize: '0.875rem',
+                minWidth: 100,
+                py: 1.5,
+                px: 3,
                 fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                  transform: 'scale(1.05)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                },
-                '&:active': {
-                  transform: 'scale(0.95)',
-                },
+                textTransform: 'none',
+                borderRadius: 0,
               }}
-              variant="outlined"
-            />
+            >
+              Street
+            </Button>
           </Box>
         </Box>
       </Popover>
