@@ -56,6 +56,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     }
   }, [settings, loadSettings]);
 
+  // Debug settings
+  useEffect(() => {
+    console.log('RecipeGallery settings:', settings);
+    console.log('lightroomProfilePath:', settings?.lightroomProfilePath);
+    console.log('lightroomPathConfigured:', !!settings?.lightroomProfilePath);
+  }, [settings]);
+
   // Recipes are loaded during splash screen, no need to load here
 
   // Helper function to get recipe name for sorting and searching
@@ -333,21 +340,40 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   };
 
   const handleBulkSavePresetsToLightroom = async () => {
-    if (selectedRecipes.size === 0) return;
+    console.log('handleBulkSavePresetsToLightroom called');
+    console.log('selectedRecipes.size:', selectedRecipes.size);
+    console.log('settings?.lightroomProfilePath:', settings?.lightroomProfilePath);
+    
+    if (selectedRecipes.size === 0) {
+      console.log('No recipes selected, showing error');
+      showError('No recipes selected. Please select recipes first.');
+      return;
+    }
+
+    if (!settings?.lightroomProfilePath) {
+      console.log('Lightroom path not configured, showing error');
+      showError('Lightroom folder path not configured. Please set it in Settings first.');
+      return;
+    }
     
     try {
       const selectedRecipeIds = Array.from(selectedRecipes);
       let successCount = 0;
       let errorCount = 0;
       
+      console.log('Starting bulk save presets to Lightroom for recipes:', selectedRecipeIds);
+      
       for (const recipeId of selectedRecipeIds) {
         try {
           // Get the recipe data
           const recipe = recipes.find(r => r.id === recipeId);
           if (!recipe) {
+            console.error('Recipe not found:', recipeId);
             errorCount++;
             continue;
           }
+          
+          console.log('Saving preset for recipe:', recipe.name, 'with adjustments:', recipe.results?.[0]?.metadata?.aiAdjustments);
           
           // Export preset to Lightroom for each recipe
           const res = await window.electronAPI.exportPresetToLightroom({
@@ -355,12 +381,16 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             recipeName: recipe.name || 'Custom Recipe'
           });
           
+          console.log('Export preset result:', res);
+          
           if (res.success) {
             successCount++;
           } else {
+            console.error('Export preset failed:', res.error);
             errorCount++;
           }
-        } catch {
+        } catch (error) {
+          console.error('Error in bulk save preset:', error);
           errorCount++;
         }
       }
@@ -371,13 +401,28 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       if (errorCount > 0) {
         showError(`Failed to save ${errorCount} preset${errorCount !== 1 ? 's' : ''} to Lightroom`);
       }
-    } catch {
+    } catch (error) {
+      console.error('Bulk save presets to Lightroom failed:', error);
       showError('Bulk save presets to Lightroom failed');
     }
   };
 
   const handleBulkSaveProfilesToLightroom = async () => {
-    if (selectedRecipes.size === 0) return;
+    console.log('handleBulkSaveProfilesToLightroom called');
+    console.log('selectedRecipes.size:', selectedRecipes.size);
+    console.log('settings?.lightroomProfilePath:', settings?.lightroomProfilePath);
+    
+    if (selectedRecipes.size === 0) {
+      console.log('No recipes selected, showing error');
+      showError('No recipes selected. Please select recipes first.');
+      return;
+    }
+
+    if (!settings?.lightroomProfilePath) {
+      console.log('Lightroom path not configured, showing error');
+      showError('Lightroom folder path not configured. Please set it in Settings first.');
+      return;
+    }
     
     try {
       const selectedRecipeIds = Array.from(selectedRecipes);

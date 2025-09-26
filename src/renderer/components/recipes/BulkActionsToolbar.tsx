@@ -1,6 +1,7 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
-import { Box, Button, FormControl, ListItemIcon, ListItemText, MenuItem, Select, Toolbar, Tooltip, Typography } from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import { Box, Button, FormControl, ListItemIcon, ListItemText, MenuItem, Select, Toolbar, Typography } from '@mui/material';
 import React from 'react';
 
 interface BulkActionsToolbarProps {
@@ -26,6 +27,8 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
   onSaveProfilesToLightroom,
   lightroomPathConfigured = false 
 }) => {
+  console.log('BulkActionsToolbar: lightroomPathConfigured:', lightroomPathConfigured);
+  console.log('BulkActionsToolbar: selectedCount:', selectedCount);
   return (
     <Toolbar
       sx={{
@@ -68,15 +71,22 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
             disabled={selectedCount === 0}
             onChange={(e) => {
               const value = e.target.value as string;
+              console.log('BulkActionsToolbar: onChange called with value:', value);
               if (value === 'export-presets') {
+                console.log('Calling onExportPresets');
                 onExportPresets();
               } else if (value === 'export-profiles') {
+                console.log('Calling onExportProfiles');
                 onExportProfiles();
               } else if (value === 'save-presets') {
+                console.log('Calling onSavePresetsToLightroom');
                 onSavePresetsToLightroom();
               } else if (value === 'save-profiles') {
+                console.log('Calling onSaveProfilesToLightroom');
                 onSaveProfilesToLightroom();
               }
+              // Reset the select value after action
+              e.target.value = '';
             }}
             sx={{
               color: 'primary.contrastText',
@@ -118,31 +128,18 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
               </ListItemIcon>
               <ListItemText>Export as Profiles</ListItemText>
             </MenuItem>
-            {lightroomPathConfigured ? (
-              <>
-                <MenuItem value="save-presets">
-                  <ListItemIcon>
-                    <DownloadIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>Save Presets to Lightroom</ListItemText>
-                </MenuItem>
-                <MenuItem value="save-profiles">
-                  <ListItemIcon>
-                    <DownloadIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>Save Profiles to Lightroom</ListItemText>
-                </MenuItem>
-              </>
-            ) : (
-              <Tooltip title="Configure Lightroom folder path in Settings to enable direct export">
-                <MenuItem value="save-presets" disabled>
-                  <ListItemIcon>
-                    <DownloadIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>Save Presets to Lightroom</ListItemText>
-                </MenuItem>
-              </Tooltip>
-            )}
+            <MenuItem value="save-presets">
+              <ListItemIcon>
+                <SaveIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Save Presets to Lightroom</ListItemText>
+            </MenuItem>
+            <MenuItem value="save-profiles">
+              <ListItemIcon>
+                <SaveIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Save Profiles to Lightroom</ListItemText>
+            </MenuItem>
           </Select>
         </FormControl>
         
