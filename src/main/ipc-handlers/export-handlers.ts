@@ -15,6 +15,100 @@ export class ExportHandlers {
     private settingsService: SettingsService
   ) { }
 
+  // Helper function to create ZIP file with recipes
+  private async createRecipesZip(recipes: any[], title: string, defaultFilename: string): Promise<ExportResult> {
+    const saveRes = await dialog.showSaveDialog({
+      title,
+      defaultPath: defaultFilename,
+      filters: [
+        { name: 'Film Recipe Wizard Zip', extensions: ['zip'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+    });
+    if (saveRes.canceled || !saveRes.filePath) {
+      return { success: false, error: 'Export canceled' };
+    }
+
+    // Build ZIP contents
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip();
+
+    // Clean up recipes to remove absolute paths
+    const cleanedRecipes = recipes.map(recipe => {
+      const cleaned = { ...recipe };
+      if (cleaned.results) {
+        cleaned.results = cleaned.results.map((result: any) => {
+          const cleanedResult = { ...result };
+          // Remove absolute paths - these are temporary/local paths that won't be valid on import
+          delete cleanedResult.inputPath;
+          delete cleanedResult.outputPath;
+          return cleanedResult;
+        });
+      }
+      return cleaned;
+    });
+
+    // Write manifest with processes
+    const manifest = {
+      schema: 'film-recipe-wizard-bulk@1',
+      exportedAt: new Date().toISOString(),
+      count: cleanedRecipes.length,
+      processes: cleanedRecipes,
+    };
+    zip.addFile('all-recipes.json', Buffer.from(JSON.stringify(manifest, null, 2), 'utf8'));
+
+    // Export recipe images and XMP presets for each process
+    for (let i = 0; i < recipes.length; i++) {
+      const recipe = recipes[i];
+      const recipeDir = `recipe-${i + 1}-${recipe.id}`;
+
+      // Add recipe image if available
+      if ((recipe as any).recipeImageData) {
+        const buf = Buffer.from((recipe as any).recipeImageData, 'base64');
+        zip.addFile(`${recipeDir}/recipe.jpg`, buf);
+      }
+
+      // Add XMP presets for each result
+      try {
+        const results = recipe.results || [];
+        results.forEach((r: any) => {
+          const adj = r?.metadata?.aiAdjustments;
+          if (adj) {
+            const include = {
+              basic: true,
+              hsl: true,
+              colorGrading: true,
+              curves: true,
+              pointColor: true,
+              grain: true,
+              vignette: true,
+              masks: true,
+              exposure: false,
+              sharpenNoise: false,
+            } as any;
+            if (recipe.name) (include as any).recipeName = String(recipe.name);
+            const xmp = generateXMPContent(adj, include);
+            const safePreset = (recipe.name || 'Custom Recipe')
+              .replace(/[^A-Za-z0-9 _-]+/g, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .replace(/\s/g, '-');
+            zip.addFile(
+              `presets/${safePreset || 'Custom-Recipe'}.xmp`,
+              Buffer.from(xmp, 'utf8')
+            );
+          }
+        });
+      } catch (e) {
+        console.warn('[IPC] createRecipesZip: failed to add XMP presets for recipe:', recipe.id, e);
+      }
+    }
+
+    // Write out the zip
+    zip.writeZip(saveRes.filePath);
+    return { success: true, filePath: saveRes.filePath };
+  }
+
   setupHandlers(): void {
     // Generate XMP content (no save dialog) and return the string
     ipcMain.handle('generate-xmp-content', async (_event, data: { adjustments: any; include?: any; recipeName?: string }) => {
@@ -157,7 +251,7 @@ export class ExportHandlers {
         // Optionally include XMP presets for each successful result
         try {
           const results = process.results || [];
-          results.forEach((r, idx) => {
+          results.forEach((r: any, idx: number) => {
             const adj = r?.metadata?.aiAdjustments;
             if (!adj) return;
 
@@ -203,6 +297,31 @@ export class ExportHandlers {
       }
     });
 
+    // Export selected recipes to a ZIP file
+    ipcMain.handle('export-selected-recipes', async (_event, recipeIds: string[]): Promise<ExportResult> => {
+      try {
+        if (!recipeIds || recipeIds.length === 0) {
+          throw new Error('No recipes selected for export');
+        }
+
+        const allRecipes = await this.storageService.loadRecipes();
+        const selectedRecipes = allRecipes.filter(recipe => recipeIds.includes(recipe.id));
+        
+        if (selectedRecipes.length === 0) {
+          throw new Error('No matching recipes found');
+        }
+
+        return await this.createRecipesZip(
+          selectedRecipes,
+          'Export Selected Recipes (ZIP)',
+          `Selected-Recipes-${new Date().toISOString().split('T')[0]}.frw.zip`
+        );
+      } catch (error) {
+        logError('IPC', 'Error exporting selected recipes', error);
+        return createErrorResponse(error);
+      }
+    });
+
     // Export all recipes to a ZIP file
     ipcMain.handle('export-all-recipes', async (): Promise<ExportResult> => {
       try {
@@ -231,7 +350,7 @@ export class ExportHandlers {
         const cleanedRecipes = recipes.map(recipe => {
           const cleaned = { ...recipe };
           if (cleaned.results) {
-            cleaned.results = cleaned.results.map(result => {
+            cleaned.results = cleaned.results.map((result: any) => {
               const cleanedResult = { ...result };
               // Remove absolute paths - these are temporary/local paths that won't be valid on import
               delete cleanedResult.inputPath;
@@ -265,7 +384,7 @@ export class ExportHandlers {
           // Add XMP presets for each result
           try {
             const results = recipe.results || [];
-            results.forEach((r, idx) => {
+            results.forEach((r: any, idx: number) => {
               const adj = r?.metadata?.aiAdjustments;
               if (!adj) return;
               const include = {

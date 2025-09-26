@@ -164,19 +164,24 @@ export class AIImageGenerationService {
     parts.push(`The image should depict ${sceneSuggestion}`);
     parts.push('with architectural details, natural textures, soft natural lighting');
     parts.push('and a variety of surface materials that would benefit from color grading adjustments');
+    
+    // Prefer portrait orientation for better color grading reference
+    parts.push('The image should be composed in portrait orientation (vertical)');
+    parts.push('unless the scene clearly benefits from landscape orientation');
+    parts.push('as portrait format provides better reference for color grading techniques');
 
     return parts.join(' ');
   }
 
   private getSceneSuggestion(): string {
     const scenes = [
-      'a modern urban landscape with glass buildings and concrete surfaces',
-      'a natural outdoor setting with trees, rocks, and organic textures',
-      'an interior space with mixed lighting and various materials',
-      'a street scene with architectural elements and natural lighting',
-      'a landscape with varied terrain and natural lighting conditions',
-      'an industrial setting with metal surfaces and dramatic lighting',
-      'a residential area with diverse architectural styles and materials'
+      'a tall modern building with glass facades and concrete surfaces',
+      'a vertical natural setting with tall trees, rock formations, and organic textures',
+      'an interior space with vertical elements, mixed lighting and various materials',
+      'a street scene with tall architectural elements and natural lighting',
+      'a vertical landscape with varied terrain and natural lighting conditions',
+      'an industrial setting with vertical metal structures and dramatic lighting',
+      'a residential area with tall buildings and diverse architectural styles'
     ];
     
     return scenes[Math.floor(Math.random() * scenes.length)];
@@ -267,7 +272,8 @@ export class AIImageGenerationService {
     }
 
     parts.push('showing a clean, professional photograph with good lighting');
-    parts.push('perfect for color grading reference and film emulation');
+    parts.push('composed in portrait orientation for optimal color grading reference');
+    parts.push('perfect for film emulation and color correction techniques');
 
     return parts.join(' ');
   }

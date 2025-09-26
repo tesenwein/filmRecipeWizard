@@ -2,7 +2,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import BoltIcon from '@mui/icons-material/Bolt';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, Card, Typography } from '@mui/material';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
@@ -30,7 +30,9 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     importRecipes,
     importXMP,
     exportRecipe,
-    exportAllRecipes
+    exportAllRecipes,
+    settings,
+    loadSettings
   } = useAppStore();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -46,6 +48,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [selectedRecipes, setSelectedRecipes] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const { showSuccess, showError } = useAlert();
+
+  // Load settings when component mounts
+  useEffect(() => {
+    if (!settings || Object.keys(settings).length === 0) {
+      loadSettings();
+    }
+  }, [settings, loadSettings]);
 
   // Recipes are loaded during splash screen, no need to load here
 
@@ -263,6 +272,155 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     }
   };
 
+
+  const handleSaveRecipeToLightroom = async (recipeId: string) => {
+    try {
+      const recipe = recipes.find(r => r.id === recipeId);
+      if (!recipe) {
+        showError('Recipe not found');
+        return;
+      }
+      
+      // Export camera profile to Lightroom for the recipe
+      const res = await window.electronAPI.exportProfileToLightroom({
+        adjustments: recipe.results?.[0]?.metadata?.aiAdjustments,
+        recipeName: recipe.name || 'Custom Recipe'
+      });
+      
+      if (res.success) {
+        showSuccess('Camera profile successfully saved to Lightroom');
+      } else {
+        showError(`Failed to save profile: ${res.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Save to Lightroom failed:', error);
+      showError('Save to Lightroom failed');
+    }
+  };
+
+  const handleBulkExportPresets = async () => {
+    if (selectedRecipes.size === 0) return;
+    
+    try {
+      // Use the existing exportSelectedRecipes function which creates a ZIP file with only selected recipes
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      const res = await window.electronAPI.exportSelectedRecipes(selectedRecipeIds);
+      if (res.success) {
+        showSuccess(`Successfully exported ${selectedRecipes.size} recipe${selectedRecipes.size !== 1 ? 's' : ''} as presets ZIP file`);
+      } else if (res.error && res.error !== 'Export canceled') {
+        showError(`Export failed: ${res.error}`);
+      }
+    } catch {
+      showError('Bulk export failed');
+    }
+  };
+
+  const handleBulkExportProfiles = async () => {
+    if (selectedRecipes.size === 0) return;
+    
+    try {
+      // Use the existing exportSelectedRecipes function which creates a ZIP file with only selected recipes
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      const res = await window.electronAPI.exportSelectedRecipes(selectedRecipeIds);
+      if (res.success) {
+        showSuccess(`Successfully exported ${selectedRecipes.size} recipe${selectedRecipes.size !== 1 ? 's' : ''} as profiles ZIP file`);
+      } else if (res.error && res.error !== 'Export canceled') {
+        showError(`Export failed: ${res.error}`);
+      }
+    } catch {
+      showError('Bulk export failed');
+    }
+  };
+
+  const handleBulkSavePresetsToLightroom = async () => {
+    if (selectedRecipes.size === 0) return;
+    
+    try {
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const recipeId of selectedRecipeIds) {
+        try {
+          // Get the recipe data
+          const recipe = recipes.find(r => r.id === recipeId);
+          if (!recipe) {
+            errorCount++;
+            continue;
+          }
+          
+          // Export preset to Lightroom for each recipe
+          const res = await window.electronAPI.exportPresetToLightroom({
+            adjustments: recipe.results?.[0]?.metadata?.aiAdjustments,
+            recipeName: recipe.name || 'Custom Recipe'
+          });
+          
+          if (res.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        showSuccess(`Successfully saved ${successCount} preset${successCount !== 1 ? 's' : ''} to Lightroom`);
+      }
+      if (errorCount > 0) {
+        showError(`Failed to save ${errorCount} preset${errorCount !== 1 ? 's' : ''} to Lightroom`);
+      }
+    } catch {
+      showError('Bulk save presets to Lightroom failed');
+    }
+  };
+
+  const handleBulkSaveProfilesToLightroom = async () => {
+    if (selectedRecipes.size === 0) return;
+    
+    try {
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const recipeId of selectedRecipeIds) {
+        try {
+          // Get the recipe data
+          const recipe = recipes.find(r => r.id === recipeId);
+          if (!recipe) {
+            errorCount++;
+            continue;
+          }
+          
+          // Export camera profile to Lightroom for each recipe
+          const res = await window.electronAPI.exportProfileToLightroom({
+            adjustments: recipe.results?.[0]?.metadata?.aiAdjustments,
+            recipeName: recipe.name || 'Custom Recipe'
+          });
+          
+          if (res.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        showSuccess(`Successfully saved ${successCount} camera profile${successCount !== 1 ? 's' : ''} to Lightroom`);
+      }
+      if (errorCount > 0) {
+        showError(`Failed to save ${errorCount} camera profile${errorCount !== 1 ? 's' : ''} to Lightroom`);
+      }
+    } catch {
+      showError('Bulk save profiles to Lightroom failed');
+    }
+  };
+
+
   // Drag and drop handlers for XMP files
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -380,6 +538,11 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           totalCount={sortedRecipes.length}
           onSelectAll={handleSelectAll}
           onDeleteSelected={handleMultiDelete}
+          onExportPresets={handleBulkExportPresets}
+          onExportProfiles={handleBulkExportProfiles}
+          onSavePresetsToLightroom={handleBulkSavePresetsToLightroom}
+          onSaveProfilesToLightroom={handleBulkSaveProfilesToLightroom}
+          lightroomPathConfigured={!!settings?.lightroomProfilePath}
         />
       )}
 
@@ -427,8 +590,15 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         onExport={handleExportRecipe}
+        onSaveToLightroom={() => {
+          if (selectedRecipeId) {
+            handleSaveRecipeToLightroom(selectedRecipeId);
+            handleMenuClose();
+          }
+        }}
         onDuplicate={handleDuplicateRecipe}
         onDelete={handleDeleteRecipe}
+        lightroomPathConfigured={!!settings?.lightroomProfilePath}
       />
       <ConfirmDialog
         open={deleteDialogOpen}

@@ -1,5 +1,6 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { Box, Button, Toolbar, Typography } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import { Box, Button, FormControl, ListItemIcon, ListItemText, MenuItem, Select, Toolbar, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 
 interface BulkActionsToolbarProps {
@@ -7,9 +8,24 @@ interface BulkActionsToolbarProps {
   totalCount: number;
   onSelectAll: () => void;
   onDeleteSelected: () => void;
+  onExportPresets: () => void;
+  onExportProfiles: () => void;
+  onSavePresetsToLightroom: () => void;
+  onSaveProfilesToLightroom: () => void;
+  lightroomPathConfigured?: boolean;
 }
 
-const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({ selectedCount, totalCount, onSelectAll, onDeleteSelected }) => {
+const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({ 
+  selectedCount, 
+  totalCount, 
+  onSelectAll, 
+  onDeleteSelected, 
+  onExportPresets, 
+  onExportProfiles,
+  onSavePresetsToLightroom,
+  onSaveProfilesToLightroom,
+  lightroomPathConfigured = false 
+}) => {
   return (
     <Toolbar
       sx={{
@@ -44,6 +60,92 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({ selectedCount, 
         >
           {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
         </Button>
+        
+        <FormControl size="small" sx={{ minWidth: 200}}>
+          <Select
+            value=""
+            displayEmpty
+            disabled={selectedCount === 0}
+            onChange={(e) => {
+              const value = e.target.value as string;
+              if (value === 'export-presets') {
+                onExportPresets();
+              } else if (value === 'export-profiles') {
+                onExportProfiles();
+              } else if (value === 'save-presets') {
+                onSavePresetsToLightroom();
+              } else if (value === 'save-profiles') {
+                onSaveProfilesToLightroom();
+              }
+            }}
+            sx={{
+              color: 'primary.contrastText',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255, 255, 255, 0.5)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.contrastText',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.contrastText',
+              },
+              '& .MuiSelect-select': {
+                color: 'primary.contrastText',
+                py: 1.5,
+                px: 2
+              },
+              '& .MuiSvgIcon-root': {
+                color: 'primary.contrastText',
+              }
+            }}
+            MenuProps={{
+              transitionDuration: 0,
+              disableAutoFocusItem: true,
+            }}
+          >
+            <MenuItem value="" disabled>
+              <em>Export Selected</em>
+            </MenuItem>
+            <MenuItem value="export-presets">
+              <ListItemIcon>
+                <DownloadIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Export as Presets</ListItemText>
+            </MenuItem>
+            <MenuItem value="export-profiles">
+              <ListItemIcon>
+                <DownloadIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Export as Profiles</ListItemText>
+            </MenuItem>
+            {lightroomPathConfigured ? (
+              <>
+                <MenuItem value="save-presets">
+                  <ListItemIcon>
+                    <DownloadIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Save Presets to Lightroom</ListItemText>
+                </MenuItem>
+                <MenuItem value="save-profiles">
+                  <ListItemIcon>
+                    <DownloadIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Save Profiles to Lightroom</ListItemText>
+                </MenuItem>
+              </>
+            ) : (
+              <Tooltip title="Configure Lightroom folder path in Settings to enable direct export">
+                <MenuItem value="save-presets" disabled>
+                  <ListItemIcon>
+                    <DownloadIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Save Presets to Lightroom</ListItemText>
+                </MenuItem>
+              </Tooltip>
+            )}
+          </Select>
+        </FormControl>
+        
         <Button
           variant="contained"
           size="small"

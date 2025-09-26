@@ -9,11 +9,13 @@ interface RecipeContextMenuProps {
   open: boolean;
   onClose: () => void;
   onExport: () => void;
+  onSaveToLightroom: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  lightroomPathConfigured?: boolean;
 }
 
-const RecipeContextMenu: React.FC<RecipeContextMenuProps> = ({ anchorEl, open, onClose, onExport, onDuplicate, onDelete }) => {
+const RecipeContextMenu: React.FC<RecipeContextMenuProps> = ({ anchorEl, open, onClose, onExport, onSaveToLightroom, onDuplicate, onDelete, lightroomPathConfigured = false }) => {
   return (
     <Menu
       anchorEl={anchorEl}
@@ -29,6 +31,21 @@ const RecipeContextMenu: React.FC<RecipeContextMenuProps> = ({ anchorEl, open, o
         </ListItemIcon>
         <ListItemText>Export Recipe</ListItemText>
       </MenuItem>
+      {lightroomPathConfigured ? (
+        <MenuItem onClick={onSaveToLightroom}>
+          <ListItemIcon>
+            <DownloadIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Save to Lightroom</ListItemText>
+        </MenuItem>
+      ) : (
+        <MenuItem disabled>
+          <ListItemIcon>
+            <DownloadIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Save to Lightroom</ListItemText>
+        </MenuItem>
+      )}
       <MenuItem onClick={onDuplicate}>
         <ListItemIcon>
           <FileCopyIcon fontSize="small" />
