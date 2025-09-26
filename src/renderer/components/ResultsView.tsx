@@ -12,7 +12,7 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Avatar, Box, Button, Chip, CircularProgress, Divider, IconButton, Paper, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, CircularProgress, Divider, IconButton, Paper, Popover, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
 import { applyMaskOverrides } from '../../shared/mask-utils';
@@ -221,7 +221,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
-  const handleGenerateAIRecipeImage = async () => {
+  const handleGenerateAIRecipeImage = async (orientation: 'portrait' | 'landscape' | 'street' = 'portrait') => {
     try {
       if (!processId || isGeneratingAI) return;
       
@@ -236,12 +236,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
       const recipe = proc.process;
       
+      // Get the full color adjustments from the recipe results
+      const colorAdjustments = recipe.results?.[0]?.metadata?.aiAdjustments;
+
       // Build options for AI image generation
       const aiOptions = {
         recipeName: recipe.name,
         prompt: recipe.prompt,
         artistStyle: recipe.userOptions?.artistStyle,
         filmStyle: recipe.userOptions?.filmStyle,
+        orientation,
+        colorAdjustments, // Pass the full color adjustments
         userOptions: {
           contrast: recipe.userOptions?.contrast,
           vibrance: recipe.userOptions?.vibrance,
@@ -376,6 +381,21 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
   // AI image generation loading state
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleWizardClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleStyleSelect = (orientation: 'portrait' | 'landscape' | 'street') => {
+    handleGenerateAIRecipeImage(orientation);
+    handleClose();
+  };
   const confirmRemoveRecipeImage = async () => {
     try {
       await handleRemoveRecipeImage();
@@ -919,7 +939,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (!isGeneratingAI) {
-                                    handleGenerateAIRecipeImage();
+                                    handleWizardClick(e);
                                   }
                                 }}
                                 size="small"
@@ -1543,6 +1563,102 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           </Box>
         </Paper>
       )}
+      
+      {/* Style Selection Popover */}
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        PaperProps={{
+          sx: {
+            p: 3,
+            borderRadius: 3,
+            minWidth: 300,
+          }
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ mb: 3, color: 'text.primary' }}>
+            Choose Image Style
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Chip
+              label="Portrait"
+              onClick={() => handleStyleSelect('portrait')}
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                },
+                '&:active': {
+                  transform: 'scale(0.95)',
+                },
+              }}
+              variant="outlined"
+            />
+            <Chip
+              label="Landscape"
+              onClick={() => handleStyleSelect('landscape')}
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                },
+                '&:active': {
+                  transform: 'scale(0.95)',
+                },
+              }}
+              variant="outlined"
+            />
+            <Chip
+              label="Street"
+              onClick={() => handleStyleSelect('street')}
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                },
+                '&:active': {
+                  transform: 'scale(0.95)',
+                },
+              }}
+              variant="outlined"
+            />
+          </Box>
+        </Box>
+      </Popover>
     </Box>
   );
 };

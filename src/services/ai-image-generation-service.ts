@@ -6,6 +6,8 @@ export interface RecipeImageGenerationOptions {
   prompt?: string;
   artistStyle?: { name: string; description?: string };
   filmStyle?: { name: string; description?: string };
+  orientation?: 'portrait' | 'landscape' | 'street';
+  colorAdjustments?: any; // Full color adjustments from recipe
   userOptions?: {
     contrast?: number;
     vibrance?: number;
@@ -101,8 +103,16 @@ export class AIImageGenerationService {
   private buildImagePrompt(options: RecipeImageGenerationOptions): string {
     const parts: string[] = [];
 
-    // Enhanced base description with more specific photography terminology
-    parts.push('A stunning professional photography reference image that showcases');
+    // Orientation-specific base description
+    if (options.orientation === 'portrait') {
+      parts.push('A stunning professional portrait photography reference image that showcases');
+    } else if (options.orientation === 'landscape') {
+      parts.push('A stunning professional landscape photography reference image that showcases');
+    } else if (options.orientation === 'street') {
+      parts.push('A stunning professional street photography reference image that showcases');
+    } else {
+      parts.push('A stunning professional photography reference image that showcases');
+    }
 
     // Add recipe name context (sanitized) with more descriptive language
     if (options.recipeName && options.recipeName.trim()) {
@@ -130,6 +140,14 @@ export class AIImageGenerationService {
       parts.push(`with these specific visual characteristics: ${sanitizedPrompt}`);
     }
 
+    // Add color adjustment information to the prompt
+    if (options.colorAdjustments) {
+      const colorDescription = this.buildColorDescription(options.colorAdjustments);
+      if (colorDescription) {
+        parts.push(colorDescription);
+      }
+    }
+
     // Enhanced technical characteristics with more descriptive language
     const technicalParts: string[] = [];
     if (options.userOptions?.contrast !== undefined) {
@@ -149,31 +167,143 @@ export class AIImageGenerationService {
       parts.push(`featuring ${technicalParts.join(', ')}`);
     }
 
-    // Enhanced composition and lighting description
-    parts.push('The image should display masterful composition with');
-    parts.push('professional lighting that highlights the color grading potential');
-    parts.push('showing a well-balanced photograph with excellent tonal range');
-    parts.push('perfect for demonstrating film emulation and color correction techniques');
-    
-    // Add specific visual elements that work well for color grading reference
-    parts.push('The scene should include varied textures, natural lighting conditions');
-    parts.push('and a range of colors that showcase the grading capabilities');
+    // Add orientation-specific composition guidance FIRST for better AI understanding
+    if (options.orientation === 'portrait') {
+      parts.push('The image should be composed in portrait orientation (vertical)');
+      parts.push('with a tall, vertical composition that emphasizes height and depth');
+      parts.push('perfect for showcasing portrait-style color grading techniques');
+      parts.push('The scene should include varied textures, natural lighting conditions');
+      parts.push('and a range of colors that showcase the grading capabilities');
+    } else if (options.orientation === 'landscape') {
+      parts.push('The image should be composed in landscape orientation (horizontal)');
+      parts.push('with a wide, expansive composition that emphasizes breadth and scope');
+      parts.push('perfect for showcasing landscape-style color grading techniques');
+      parts.push('The scene should include varied textures, natural lighting conditions');
+      parts.push('and a range of colors that showcase the grading capabilities');
+    } else if (options.orientation === 'street') {
+      parts.push('The image should be composed in a dynamic street photography style');
+      parts.push('with urban elements, candid moments, and authentic street scenes');
+      parts.push('perfect for showcasing street photography color grading techniques');
+      parts.push('The scene should include varied textures, natural lighting conditions');
+      parts.push('and a range of colors that showcase the grading capabilities');
+    } else {
+      // Default behavior for backward compatibility
+      parts.push('The image should be composed in portrait orientation (vertical)');
+      parts.push('unless the scene clearly benefits from landscape orientation');
+      parts.push('as portrait format provides better reference for color grading techniques');
+      parts.push('The scene should include varied textures, natural lighting conditions');
+      parts.push('and a range of colors that showcase the grading capabilities');
+    }
     
     // Add specific scene suggestions for better results
-    const sceneSuggestion = this.getSceneSuggestion();
+    const sceneSuggestion = this.getSceneSuggestion(options);
     parts.push(`The image should depict ${sceneSuggestion}`);
-    parts.push('with architectural details, natural textures, soft natural lighting');
-    parts.push('and a variety of surface materials that would benefit from color grading adjustments');
-    
-    // Prefer portrait orientation for better color grading reference
-    parts.push('The image should be composed in portrait orientation (vertical)');
-    parts.push('unless the scene clearly benefits from landscape orientation');
-    parts.push('as portrait format provides better reference for color grading techniques');
+    parts.push('with professional lighting that highlights the color grading potential');
+    parts.push('showing a well-balanced photograph with excellent tonal range');
+    parts.push('perfect for demonstrating film emulation and color correction techniques');
 
     return parts.join(' ');
   }
 
-  private getSceneSuggestion(): string {
+  private buildColorDescription(colorAdjustments: any): string {
+    const colorParts: string[] = [];
+    
+    // Check for monochrome/black and white treatment
+    if (colorAdjustments.treatment === 'black_and_white' || colorAdjustments.monochrome === true) {
+      colorParts.push('in black and white monochrome style');
+      
+      // Add black and white mix information if available
+      const bwMix = [];
+      if (colorAdjustments.gray_red !== undefined) bwMix.push(`red channel: ${colorAdjustments.gray_red}`);
+      if (colorAdjustments.gray_orange !== undefined) bwMix.push(`orange channel: ${colorAdjustments.gray_orange}`);
+      if (colorAdjustments.gray_yellow !== undefined) bwMix.push(`yellow channel: ${colorAdjustments.gray_yellow}`);
+      if (colorAdjustments.gray_green !== undefined) bwMix.push(`green channel: ${colorAdjustments.gray_green}`);
+      if (colorAdjustments.gray_blue !== undefined) bwMix.push(`blue channel: ${colorAdjustments.gray_blue}`);
+      if (colorAdjustments.gray_purple !== undefined) bwMix.push(`purple channel: ${colorAdjustments.gray_purple}`);
+      if (colorAdjustments.gray_magenta !== undefined) bwMix.push(`magenta channel: ${colorAdjustments.gray_magenta}`);
+      
+      if (bwMix.length > 0) {
+        colorParts.push(`with specific black and white channel mixing: ${bwMix.join(', ')}`);
+      }
+    } else {
+      // Color treatment - describe color characteristics
+      if (colorAdjustments.saturation !== undefined) {
+        const satLevel = colorAdjustments.saturation > 0 ? 'enhanced' : 'reduced';
+        colorParts.push(`with ${satLevel} saturation (${colorAdjustments.saturation})`);
+      }
+      
+      if (colorAdjustments.vibrance !== undefined) {
+        const vibLevel = colorAdjustments.vibrance > 0 ? 'enhanced' : 'reduced';
+        colorParts.push(`with ${vibLevel} vibrance (${colorAdjustments.vibrance})`);
+      }
+      
+      // Color grading information
+      if (colorAdjustments.color_grade_shadow_hue !== undefined || 
+          colorAdjustments.color_grade_midtone_hue !== undefined || 
+          colorAdjustments.color_grade_highlight_hue !== undefined) {
+        colorParts.push('with color grading applied to shadows, midtones, and highlights');
+      }
+      
+      // HSL adjustments
+      const hslAdjustments = [];
+      if (colorAdjustments.hue_red !== undefined) hslAdjustments.push(`red hue: ${colorAdjustments.hue_red}`);
+      if (colorAdjustments.hue_orange !== undefined) hslAdjustments.push(`orange hue: ${colorAdjustments.hue_orange}`);
+      if (colorAdjustments.hue_yellow !== undefined) hslAdjustments.push(`yellow hue: ${colorAdjustments.hue_yellow}`);
+      if (colorAdjustments.hue_green !== undefined) hslAdjustments.push(`green hue: ${colorAdjustments.hue_green}`);
+      if (colorAdjustments.hue_blue !== undefined) hslAdjustments.push(`blue hue: ${colorAdjustments.hue_blue}`);
+      if (colorAdjustments.hue_purple !== undefined) hslAdjustments.push(`purple hue: ${colorAdjustments.hue_purple}`);
+      if (colorAdjustments.hue_magenta !== undefined) hslAdjustments.push(`magenta hue: ${colorAdjustments.hue_magenta}`);
+      
+      if (hslAdjustments.length > 0) {
+        colorParts.push(`with specific color channel adjustments: ${hslAdjustments.join(', ')}`);
+      }
+    }
+    
+    // Basic adjustments
+    if (colorAdjustments.exposure !== undefined) {
+      const expLevel = colorAdjustments.exposure > 0 ? 'brightened' : 'darkened';
+      colorParts.push(`with ${expLevel} exposure (${colorAdjustments.exposure})`);
+    }
+    
+    if (colorAdjustments.contrast !== undefined) {
+      const contrastLevel = colorAdjustments.contrast > 0 ? 'enhanced' : 'reduced';
+      colorParts.push(`with ${contrastLevel} contrast (${colorAdjustments.contrast})`);
+    }
+    
+    return colorParts.length > 0 ? colorParts.join(', ') : '';
+  }
+
+  private getSceneSuggestion(options?: RecipeImageGenerationOptions): string {
+    if (options?.orientation === 'portrait') {
+      const portraitScenes = [
+        'a tall modern building with glass facades and concrete surfaces',
+        'a vertical natural setting with tall trees, rock formations, and organic textures',
+        'a person in a well-lit environment with interesting background textures',
+        'a vertical architectural detail with interesting lighting and materials',
+        'a tall structure with varied surface materials and lighting conditions'
+      ];
+      return portraitScenes[Math.floor(Math.random() * portraitScenes.length)];
+    } else if (options?.orientation === 'landscape') {
+      const landscapeScenes = [
+        'a wide natural landscape with varied terrain and lighting',
+        'a horizontal cityscape with buildings and urban elements',
+        'a panoramic view with mountains, water, and sky',
+        'a wide architectural scene with horizontal composition',
+        'an expansive outdoor setting with natural lighting variations'
+      ];
+      return landscapeScenes[Math.floor(Math.random() * landscapeScenes.length)];
+    } else if (options?.orientation === 'street') {
+      const streetScenes = [
+        'a busy urban street with people, vehicles, and city architecture',
+        'a candid street scene with authentic urban atmosphere',
+        'a dynamic city intersection with varied lighting and textures',
+        'an urban environment with street art, signs, and city life',
+        'a bustling city scene with natural street lighting and movement'
+      ];
+      return streetScenes[Math.floor(Math.random() * streetScenes.length)];
+    }
+    
+    // Default scenes for backward compatibility
     const scenes = [
       'a tall modern building with glass facades and concrete surfaces',
       'a vertical natural setting with tall trees, rock formations, and organic textures',
