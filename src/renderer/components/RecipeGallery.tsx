@@ -56,12 +56,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     }
   }, [settings, loadSettings]);
 
-  // Debug settings
-  useEffect(() => {
-    console.log('RecipeGallery settings:', settings);
-    console.log('lightroomProfilePath:', settings?.lightroomProfilePath);
-    console.log('lightroomPathConfigured:', !!settings?.lightroomProfilePath);
-  }, [settings]);
 
   // Recipes are loaded during splash screen, no need to load here
 
@@ -280,30 +274,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   };
 
 
-  const handleSaveRecipeToLightroom = async (recipeId: string) => {
-    try {
-      const recipe = recipes.find(r => r.id === recipeId);
-      if (!recipe) {
-        showError('Recipe not found');
-        return;
-      }
-      
-      // Export camera profile to Lightroom for the recipe
-      const res = await window.electronAPI.exportProfileToLightroom({
-        adjustments: recipe.results?.[0]?.metadata?.aiAdjustments,
-        recipeName: recipe.name || 'Custom Recipe'
-      });
-      
-      if (res.success) {
-        showSuccess('Camera profile successfully saved to Lightroom');
-      } else {
-        showError(`Failed to save profile: ${res.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Save to Lightroom failed:', error);
-      showError('Save to Lightroom failed');
-    }
-  };
 
   const handleBulkExportPresets = async () => {
     if (selectedRecipes.size === 0) return;
@@ -340,18 +310,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   };
 
   const handleBulkSavePresetsToLightroom = async () => {
-    console.log('handleBulkSavePresetsToLightroom called');
-    console.log('selectedRecipes.size:', selectedRecipes.size);
-    console.log('settings?.lightroomProfilePath:', settings?.lightroomProfilePath);
     
     if (selectedRecipes.size === 0) {
-      console.log('No recipes selected, showing error');
       showError('No recipes selected. Please select recipes first.');
       return;
     }
 
     if (!settings?.lightroomProfilePath) {
-      console.log('Lightroom path not configured, showing error');
       showError('Lightroom folder path not configured. Please set it in Settings first.');
       return;
     }
@@ -361,19 +326,16 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       let successCount = 0;
       let errorCount = 0;
       
-      console.log('Starting bulk save presets to Lightroom for recipes:', selectedRecipeIds);
       
       for (const recipeId of selectedRecipeIds) {
         try {
           // Get the recipe data
           const recipe = recipes.find(r => r.id === recipeId);
           if (!recipe) {
-            console.error('Recipe not found:', recipeId);
             errorCount++;
             continue;
           }
           
-          console.log('Saving preset for recipe:', recipe.name, 'with adjustments:', recipe.results?.[0]?.metadata?.aiAdjustments);
           
           // Export preset to Lightroom for each recipe
           const res = await window.electronAPI.exportPresetToLightroom({
@@ -381,16 +343,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             recipeName: recipe.name || 'Custom Recipe'
           });
           
-          console.log('Export preset result:', res);
           
           if (res.success) {
             successCount++;
           } else {
-            console.error('Export preset failed:', res.error);
             errorCount++;
           }
-        } catch (error) {
-          console.error('Error in bulk save preset:', error);
+        } catch {
           errorCount++;
         }
       }
@@ -408,18 +367,13 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   };
 
   const handleBulkSaveProfilesToLightroom = async () => {
-    console.log('handleBulkSaveProfilesToLightroom called');
-    console.log('selectedRecipes.size:', selectedRecipes.size);
-    console.log('settings?.lightroomProfilePath:', settings?.lightroomProfilePath);
     
     if (selectedRecipes.size === 0) {
-      console.log('No recipes selected, showing error');
       showError('No recipes selected. Please select recipes first.');
       return;
     }
 
     if (!settings?.lightroomProfilePath) {
-      console.log('Lightroom path not configured, showing error');
       showError('Lightroom folder path not configured. Please set it in Settings first.');
       return;
     }
@@ -635,12 +589,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         onExport={handleExportRecipe}
-        onSaveToLightroom={() => {
-          if (selectedRecipeId) {
-            handleSaveRecipeToLightroom(selectedRecipeId);
-            handleMenuClose();
-          }
-        }}
         onDuplicate={handleDuplicateRecipe}
         onDelete={handleDeleteRecipe}
         lightroomPathConfigured={!!settings?.lightroomProfilePath}

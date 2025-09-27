@@ -25,10 +25,8 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
   onExportProfiles,
   onSavePresetsToLightroom,
   onSaveProfilesToLightroom,
-  lightroomPathConfigured = false 
+  lightroomPathConfigured: _lightroomPathConfigured = false 
 }) => {
-  console.log('BulkActionsToolbar: lightroomPathConfigured:', lightroomPathConfigured);
-  console.log('BulkActionsToolbar: selectedCount:', selectedCount);
   return (
     <Toolbar
       sx={{
@@ -71,18 +69,13 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
             disabled={selectedCount === 0}
             onChange={(e) => {
               const value = e.target.value as string;
-              console.log('BulkActionsToolbar: onChange called with value:', value);
               if (value === 'export-presets') {
-                console.log('Calling onExportPresets');
                 onExportPresets();
               } else if (value === 'export-profiles') {
-                console.log('Calling onExportProfiles');
                 onExportProfiles();
               } else if (value === 'save-presets') {
-                console.log('Calling onSavePresetsToLightroom');
                 onSavePresetsToLightroom();
               } else if (value === 'save-profiles') {
-                console.log('Calling onSaveProfilesToLightroom');
                 onSaveProfilesToLightroom();
               }
               // Reset the select value after action

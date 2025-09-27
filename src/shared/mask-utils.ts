@@ -35,13 +35,13 @@ export function findMaskIndexFlexible(list: MaskLike[], m: MaskLike): number {
   const strict = findMaskIndex(list, m);
   if (strict >= 0) return strict;
 
-  // Fallback by name
+  // Search by name
   if (m.name) {
     const byName = list.findIndex(x => (x?.name || '').toString() === m.name);
     if (byName >= 0) return byName;
   }
 
-  // Fallback by type and optional subCategoryId (ignore reference coords)
+  // Search by type and optional subCategoryId (ignore reference coords)
   if (m.type) {
     const byType = list.findIndex(x => {
       if ((x?.type || '') !== m.type) return false;

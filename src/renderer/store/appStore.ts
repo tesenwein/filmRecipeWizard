@@ -480,20 +480,8 @@ export const useAppStore = create<AppState>()(
             set({ pollIntervalId: null }, false, 'resetApp/clearInterval');
           }
 
-          // Fast clear all recipes
-          if (window.electronAPI.clearHistory) {
-            await window.electronAPI.clearHistory();
-          } else {
-            // Fallback: iterate deletes if IPC not available
-            const recipesRes = await window.electronAPI.loadHistory();
-            if (recipesRes.success && recipesRes.recipes) {
-              for (const recipe of recipesRes.recipes) {
-                if (recipe.id) {
-                  await window.electronAPI.deleteProcess(recipe.id);
-                }
-              }
-            }
-          }
+          // Clear all recipes
+          await window.electronAPI.clearHistory();
 
           // Reset settings and clear API key
           await window.electronAPI.updateSettings({ setupCompleted: false, openaiKey: '' });

@@ -187,7 +187,6 @@ export class AIImageGenerationService {
       parts.push('The scene should include varied textures, natural lighting conditions');
       parts.push('and a range of colors that showcase the grading capabilities');
     } else {
-      // Default behavior for backward compatibility
       parts.push('The image should be composed in portrait orientation (vertical)');
       parts.push('unless the scene clearly benefits from landscape orientation');
       parts.push('as portrait format provides better reference for color grading techniques');
@@ -303,7 +302,6 @@ export class AIImageGenerationService {
       return streetScenes[Math.floor(Math.random() * streetScenes.length)];
     }
     
-    // Default scenes for backward compatibility
     const scenes = [
       'a tall modern building with glass facades and concrete surfaces',
       'a vertical natural setting with tall trees, rock formations, and organic textures',

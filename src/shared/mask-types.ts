@@ -233,7 +233,7 @@ export function getMaskConfig(type: string): MaskTypeConfig | undefined {
  */
 export function getMaskTypeFromXMP(subType: string, subCategoryId: string | null): string {
   const key = `${subType}:${subCategoryId || ''}`;
-  return XMP_MASK_TYPE_MAP.get(key) || 'subject'; // Default fallback
+  return XMP_MASK_TYPE_MAP.get(key) || 'subject';
 }
 
 /**
