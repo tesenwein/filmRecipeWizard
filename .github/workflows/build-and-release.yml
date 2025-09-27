@@ -208,6 +208,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run package:win
 
+      - name: Verify Windows build output
+        if: matrix.platform == 'win'
+        run: |
+          echo "=== Windows build verification ==="
+          echo "Files in release directory:"
+          ls -la release/ || echo "No release directory"
+          echo "Looking for .exe files:"
+          find release/ -name "*.exe" || echo "No .exe files found"
+          echo "Looking for .zip files:"
+          find release/ -name "*.zip" || echo "No .zip files found"
+
+      - name: List build artifacts
+        run: |
+          echo "=== Build artifacts in release/ ==="
+          ls -la release/ || echo "No release directory found"
+          echo "=== All files in release/ ==="
+          find release/ -type f 2>/dev/null || echo "No files found in release/"
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -245,6 +263,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
+
+      - name: List downloaded artifacts
+        run: |
+          echo "=== Downloaded artifacts structure ==="
+          find artifacts/ -type f 2>/dev/null || echo "No artifacts found"
+          echo "=== Mac artifacts ==="
+          ls -la artifacts/build-mac/ 2>/dev/null || echo "No Mac artifacts"
+          echo "=== Windows artifacts ==="
+          ls -la artifacts/build-win/ 2>/dev/null || echo "No Windows artifacts"
 
       - name: Generate changelog
         id: changelog
@@ -322,6 +349,7 @@ jobs:
           files: |
             artifacts/build-mac/release/*.dmg
             artifacts/build-win/release/*.exe
+            artifacts/build-win/release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
