@@ -183,11 +183,11 @@ jobs:
       - name: Build application
         run: npm run prepare:build
 
-      - name: Clean up unnecessary files
+      - name: Clean up blockmap files
         run: |
+          find release/ -name "*.blockmap" -delete || true
           find release/ -name "*.yml" -delete || true
           find release/ -name "*.yaml" -delete || true
-          find release/ -name "*.blockmap" -delete || true
 
       # macOS builds
       - name: Build macOS app
@@ -208,36 +208,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run package:win
 
-      - name: Verify Windows build output
-        if: matrix.platform == 'win'
-        run: |
-          echo "=== Windows build verification ==="
-          echo "Files in release directory:"
-          if (Test-Path "release") {
-            Get-ChildItem -Path "release" -Recurse
-          } else {
-            echo "No release directory"
-          }
-          echo "Looking for .exe files:"
-          Get-ChildItem -Path "release" -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue
-          echo "Looking for .zip files:"
-          Get-ChildItem -Path "release" -Filter "*.zip" -Recurse -ErrorAction SilentlyContinue
-
-      - name: List build artifacts
-        run: |
-          echo "=== Build artifacts in release/ ==="
-          if (Test-Path "release") {
-            Get-ChildItem -Path "release" -Recurse
-          } else {
-            echo "No release directory found"
-          }
-          echo "=== All files in release/ ==="
-          if (Test-Path "release") {
-            Get-ChildItem -Path "release" -Recurse -File
-          } else {
-            echo "No files found in release/"
-          }
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -246,9 +216,9 @@ jobs:
             release/
             !release/.icon-ico
             !release/.icon-icns
+            !release/*.blockmap
             !release/*.yml
             !release/*.yaml
-            !release/*.blockmap
           retention-days: 30
           compression-level: 6
 
@@ -275,23 +245,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
-
-      - name: List downloaded artifacts
-        run: |
-          echo "=== Downloaded artifacts structure ==="
-          find artifacts/ -type f 2>/dev/null || echo "No artifacts found"
-          echo "=== Mac artifacts ==="
-          if [ -d "artifacts/build-mac" ]; then
-            ls -la artifacts/build-mac/
-          else
-            echo "No Mac artifacts"
-          fi
-          echo "=== Windows artifacts ==="
-          if [ -d "artifacts/build-win" ]; then
-            ls -la artifacts/build-win/
-          else
-            echo "No Windows artifacts"
-          fi
 
       - name: Generate changelog
         id: changelog
@@ -344,8 +297,8 @@ jobs:
         run: |
           TAG_NAME="${{ steps.changelog.outputs.TAG_NAME }}"
           
-          # Check if release already exists with better error handling
-          if gh release view "$TAG_NAME" --json tagName 2>/dev/null | jq -e '.tagName' >/dev/null 2>&1; then
+          # Check if release already exists
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
             echo "Release $TAG_NAME already exists"
             echo "release_exists=true" >> $GITHUB_OUTPUT
           else
@@ -367,9 +320,8 @@ jobs:
           generate_release_notes: false
           make_latest: true
           files: |
-            artifacts/build-mac/release/*.dmg
-            artifacts/build-win/release/*.exe
-            artifacts/build-win/release/*.zip
+            artifacts/build-mac/*.dmg
+            artifacts/build-win/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
