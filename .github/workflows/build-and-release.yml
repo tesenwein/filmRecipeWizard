@@ -226,25 +226,17 @@ jobs:
       - name: List build artifacts
         run: |
           echo "=== Build artifacts in release/ ==="
-          if [ -d "release" ]; then
-            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              Get-ChildItem -Path "release" -Recurse
-            else
-              ls -la release/
-            fi
-          else
+          if (Test-Path "release") {
+            Get-ChildItem -Path "release" -Recurse
+          } else {
             echo "No release directory found"
-          fi
+          }
           echo "=== All files in release/ ==="
-          if [ -d "release" ]; then
-            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              Get-ChildItem -Path "release" -Recurse -File
-            else
-              find release/ -type f 2>/dev/null || echo "No files found in release/"
-            fi
-          else
+          if (Test-Path "release") {
+            Get-ChildItem -Path "release" -Recurse -File
+          } else {
             echo "No files found in release/"
-          fi
+          }
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
