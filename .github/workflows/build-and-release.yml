@@ -187,6 +187,7 @@ jobs:
         run: |
           find release/ -name "*.yml" -delete || true
           find release/ -name "*.yaml" -delete || true
+          find release/ -name "*.blockmap" -delete || true
 
       # macOS builds
       - name: Build macOS app
@@ -217,6 +218,7 @@ jobs:
             !release/.icon-icns
             !release/*.yml
             !release/*.yaml
+            !release/*.blockmap
           retention-days: 30
           compression-level: 6
 
@@ -295,8 +297,8 @@ jobs:
         run: |
           TAG_NAME="${{ steps.changelog.outputs.TAG_NAME }}"
           
-          # Check if release already exists
-          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+          # Check if release already exists with better error handling
+          if gh release view "$TAG_NAME" --json tagName 2>/dev/null | jq -e '.tagName' >/dev/null 2>&1; then
             echo "Release $TAG_NAME already exists"
             echo "release_exists=true" >> $GITHUB_OUTPUT
           else
@@ -317,10 +319,9 @@ jobs:
           prerelease: false
           generate_release_notes: false
           make_latest: true
-          discussion_category_name: 'Announcements'
           files: |
-            artifacts/build-mac/*.dmg
-            artifacts/build-win/*.exe
+            artifacts/build-mac/release/*.dmg
+            artifacts/build-win/release/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -330,23 +331,5 @@ jobs:
           TAG_NAME="${{ steps.changelog.outputs.TAG_NAME }}"
           echo "Release $TAG_NAME already exists. Skipping creation to avoid conflicts."
           echo "If you need to update the release, please delete it first or use a different version."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish Release
-        if: steps.check_release.outputs.release_exists == 'false'
-        run: |
-          TAG_NAME="${{ steps.changelog.outputs.TAG_NAME }}"
-          echo "Ensuring release $TAG_NAME is published (not draft)..."
-          
-          # Check if release exists and is draft
-          RELEASE_INFO=$(gh release view "$TAG_NAME" --json isDraft,isPrerelease 2>/dev/null || echo '{"isDraft":false,"isPrerelease":false}')
-          IS_DRAFT=$(echo "$RELEASE_INFO" | jq -r '.isDraft // false')
-          IS_PRERELEASE=$(echo "$RELEASE_INFO" | jq -r '.isPrerelease // false')
-          
-          if [ "$IS_DRAFT" = "true" ]; then
-            echo "Release is draft, publishing it..."
-            gh release edit "$TAG_NAME" --draft=false --prerelease=false
-          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
