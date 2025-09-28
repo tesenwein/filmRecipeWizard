@@ -1,6 +1,5 @@
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import ChatIcon from '@mui/icons-material/Chat';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
@@ -19,11 +18,9 @@ import { applyMaskOverrides } from '../../shared/mask-utils';
 import { filterFailedResults, filterSuccessfulResults } from '../../shared/result-utils';
 import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
-import { RecipeModificationService } from '../services/recipeModificationService';
 import { useAppStore } from '../store/appStore';
 import ConfirmDialog from './ConfirmDialog';
 import { RecipeAdjustmentsPanel } from './RecipeAdjustmentsPanel';
-import RecipeChat from './RecipeChat';
 import ImageSelectionChips from './results/ImageSelectionChips';
 import RecipeNameHeader from './results/RecipeNameHeader';
 import SingleImage from './SingleImage';
@@ -768,7 +765,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           >
             <Tab icon={<CompareArrowsIcon />} label="Overview" iconPosition="start" />
             <Tab icon={<TuneIcon />} label="Recipe Analysis" iconPosition="start" />
-            <Tab icon={<ChatIcon />} label="AI Chat" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
             <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
             {author && (author.firstName || author.lastName) && <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />}
@@ -1069,102 +1065,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {/* Tab Panel 3: Lightroom Export */}
                 {activeTab === 2 && (
                   <Box>
-                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <ChatIcon color="primary" />
-                      AI Chat
-                    </Typography>
-                    <Box sx={{ height: '600px' }}>
-                      <RecipeChat
-                        recipe={{
-                          id: processId || '',
-                          name: processName || 'Unnamed Recipe',
-                          prompt: processPrompt || '',
-                          description: processDescription,
-                          userOptions: processOptions,
-                          maskOverrides: maskOverrides,
-                          aiAdjustmentOverrides: adjustmentOverrides,
-                          results: successfulResults,
-                          timestamp: new Date().toISOString(),
-                        }}
-                        isReprocessing={isReprocessing}
-                        onRecipeModification={async modifications => {
-                          if (!processId) return;
-                          try {
-                            // Note: Suppression is now handled by the useChatModifications hook
-                            
-                            const updates = await RecipeModificationService.applyModifications(
-                              processId,
-                              modifications,
-                              {
-                                processOptions,
-                                processPrompt,
-                                processDescription,
-                                adjustmentOverrides,
-                                maskOverrides,
-                                successfulResults,
-                                selectedResult,
-                                processName,
-                              }
-                            );
-
-                            // Update local state based on modifications
-                            if (modifications.userOptions) {
-                              const merged = { ...(processOptions || {}), ...modifications.userOptions };
-                              setProcessOptions(merged);
-                            }
-                            if ((modifications as any).aiAdjustments && typeof (modifications as any).aiAdjustments === 'object') {
-                              const cur = adjustmentOverrides || {};
-                              const merged = { ...cur, ...(modifications as any).aiAdjustments };
-                              setAdjustmentOverrides(merged);
-                            }
-                            if (typeof modifications.prompt === 'string' && modifications.prompt !== processPrompt) {
-                              setProcessPrompt(modifications.prompt);
-                            }
-                            if (typeof (modifications as any).description === 'string' && (modifications as any).description !== processDescription) {
-                              setProcessDescription((modifications as any).description);
-                            }
-                            const modAny = modifications as any;
-                            const incomingOps: any[] | undefined = Array.isArray(modAny.maskOverrides)
-                              ? modAny.maskOverrides
-                              : Array.isArray(modAny.masks)
-                                ? modAny.masks
-                                : undefined;
-                            if (Array.isArray(incomingOps)) {
-                              setMaskOverrides(incomingOps);
-                            }
-
-                            // Update the process with all changes
-                            await RecipeModificationService.updateProcess(processId, updates);
-                          } catch (e) {
-                            console.error('[RESULTS] Failed to apply recipe modifications', e);
-                            throw e; // Re-throw to let the hook handle the error
-                          }
-                        }}
-                        onAcceptChanges={async () => {
-                          // Accept: UI state clearing is handled by the hook
-                          // This function is called after onRecipeModification completes
-                          // No additional work needed here
-                          return Promise.resolve();
-                        }}
-                        onRejectChanges={() => {
-                          // Clear pending modifications when rejecting changes
-                          if (processId) {
-                            try { window.electronAPI.updateProcess(processId, { pendingModifications: null } as any); } catch { /* ignore */ }
-                          }
-                          // Note: Pending modifications are now handled by the useChatModifications hook
-                          // Handle rejecting changes
-                        }}
-                        onPendingModifications={(_modifications) => {
-                          // Note: Pending modifications are now handled by the useChatModifications hook
-                          // This callback is no longer needed
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                )}
-
-                {activeTab === 3 && (
-                  <Box>
                     <Typography variant="h5" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <DownloadIcon color="primary" />
                       Lightroom Export
@@ -1303,7 +1203,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 )}
 
                 {/* Tab Panel 4: LUT Export */}
-                {activeTab === 4 && (
+                {activeTab === 3 && (
                   <Box>
                     <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PaletteIcon color="primary" />
@@ -1400,7 +1300,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 )}
 
                 {/* Tab Panel 6: Author */}
-                {author && (author.firstName || author.lastName) && activeTab === 5 && (
+                {author && (author.firstName || author.lastName) && activeTab === 4 && (
                   <Box>
                     <Typography
                       variant="subtitle1"

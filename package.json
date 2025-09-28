@@ -74,7 +74,6 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^2.0.31",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.2",
@@ -82,12 +81,11 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "adm-zip": "^0.5.16",
-    "ai": "^5.0.45",
+    "openai": "^5.23.1",
     "png-to-ico": "^2.1.8",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sharp": "^0.34.4",
-    "zod": "^4.1.9",
     "zustand": "^5.0.8"
   },
   "build": {

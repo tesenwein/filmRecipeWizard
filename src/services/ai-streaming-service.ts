@@ -1,24 +1,8 @@
-import { openai } from '@ai-sdk/openai';
-import { generateText, tool } from 'ai';
-import { z } from 'zod';
+import OpenAI from 'openai';
 import { getMaskConfig, normalizeMaskType } from '../shared/mask-types';
 import { getCoreSystemPrompt } from './ai-prompt-shared';
-import { AIFunctionToggles, buildBaseAdjustmentsSchema, createStreamingMaskSchema, getDefaultAIFunctionToggles } from './ai-shared';
 import { AIColorAdjustments } from './types';
 
-type ToolResultRecord = {
-    toolName?: string;
-    output?: unknown;
-    toolCallId?: string;
-};
-
-interface GenerationRequest {
-    systemPrompt: string;
-    userContent: any[];
-    tools: any;
-}
-
-type GenerationResponse = Awaited<ReturnType<typeof generateText>>;
 
 export interface StreamingUpdate {
     type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete' | 'step_progress' | 'step_transition';
@@ -42,12 +26,12 @@ export interface StreamingOptions {
 }
 
 export class AIStreamingService {
-    private apiKey: string;
-    private model: string;
+    private openai: OpenAI;
 
-    constructor(apiKey: string, model: string = 'gpt-5') {
-        this.apiKey = apiKey;
-        this.model = model;
+    constructor(apiKey: string, _model: string = 'gpt-5') {
+        this.openai = new OpenAI({
+            apiKey: apiKey,
+        });
     }
 
     async analyzeColorMatchWithStreaming(
@@ -58,67 +42,74 @@ export class AIStreamingService {
     ): Promise<AIColorAdjustments> {
         const { onUpdate } = options || {};
 
-        // Validate that reference images are provided and will be processed
-        if (baseImageBase64) {
-            console.log('[AI STREAMING] Reference images detected - enforcing analysis:', {
-                hasBaseImageBase64: !!baseImageBase64,
-                baseImageBase64Type: Array.isArray(baseImageBase64) ? 'array' : typeof baseImageBase64,
-                baseImageBase64Length: Array.isArray(baseImageBase64) ? baseImageBase64.length : (typeof baseImageBase64 === 'string' ? baseImageBase64.length : 0)
+        console.log('[AI STREAMING] Starting analysis with GPT-5 direct API:', {
+            hasBaseImageBase64: !!baseImageBase64,
+            hasTargetImageBase64: !!targetImageBase64,
+            hasHint: !!hint
+        });
+
+        try {
+            // Build messages for OpenAI
+            const messages = await this.buildOpenAIMessages(baseImageBase64, targetImageBase64, hint, options);
+            
+            // Define tools for OpenAI
+            const tools = this.buildOpenAITools(options);
+            
+            // Get system prompt
+            const systemPrompt = this.getSystemPrompt(options || {});
+
+            onUpdate?.({
+                type: 'thinking',
+                content: 'Analyzing images with GPT-5...',
+                step: 'analysis',
+                progress: 20
             });
+
+                        // Call OpenAI directly with GPT-5
+                        const response = await this.openai.chat.completions.create({
+                            model: 'gpt-5',
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                ...messages
+                            ],
+                            tools: tools,
+                            tool_choice: 'auto',
+                            max_completion_tokens: 12000
+                        });
+
+            console.log('[AI STREAMING] GPT-5 response received:', {
+                hasChoices: !!response.choices,
+                choicesLength: response.choices?.length || 0,
+                hasToolCalls: !!response.choices?.[0]?.message?.tool_calls
+            });
+
+            // Extract tool calls and results
+            const toolCalls = response.choices[0]?.message?.tool_calls || [];
+            console.log('[AI STREAMING] Tool calls found:', toolCalls.length);
+
+            if (toolCalls.length === 0) {
+                console.warn('[AI STREAMING] No tool calls made by GPT-5');
+                onUpdate?.({
+                    type: 'thinking',
+                    content: 'Warning: No tools were used - this may result in incomplete results',
+                    step: 'warning',
+                    progress: 90
+                });
+            }
+
+            // Process tool calls to extract adjustments
+            const adjustments = await this.processToolCalls(toolCalls, onUpdate);
             
             onUpdate?.({
                 type: 'thinking',
-                content: 'Reference images detected - analyzing style characteristics...',
-                step: 'reference_analysis',
-                progress: 10
+                content: 'GPT-5 analysis complete!',
+                step: 'complete',
+                progress: 100
             });
-        }
 
-        try {
-            const request = await this.prepareGenerationRequest(
-                baseImageBase64,
-                targetImageBase64,
-                hint,
-                options
-            );
-            const result = await this.executeGenerationRequest(request);
-
-            let finalResult = this.extractAdjustmentsFromTools(result);
-            if (!finalResult) {
-                finalResult = this.parseResultFromText(result.text);
-            }
-
-            // Validate that reference images were actually analyzed
-            if (baseImageBase64 && finalResult) {
-                const toolResults = this.collectAllToolResults(result);
-                const hasAnalysis = toolResults.some(tool => 
-                    ['analyze_color_palette', 'assess_lighting', 'evaluate_style'].includes(tool.toolName || '')
-                );
-                
-                if (!hasAnalysis) {
-                    console.warn('[AI STREAMING] Reference images provided but analysis tools not used - this may indicate the AI ignored the reference images');
-                    onUpdate?.({
-                        type: 'thinking',
-                        content: 'Warning: Reference images were provided but may not have been fully analyzed',
-                        step: 'reference_warning',
-                        progress: 90
-                    });
-                } else {
-                    console.log('[AI STREAMING] Reference images successfully analyzed');
-                    onUpdate?.({
-                        type: 'thinking',
-                        content: 'Reference images analyzed - generating style-matched adjustments...',
-                        step: 'style_matching',
-                        progress: 80
-                    });
-                }
-            }
-
-            this.emitCompletionUpdates(onUpdate);
-
-            return this.ensureAdjustmentMetadata(finalResult);
+            return this.ensureAdjustmentMetadata(adjustments);
         } catch (error) {
-            console.error('AI Streaming Service Error:', error);
+            console.error('GPT-5 Direct API Error:', error);
             onUpdate?.({
                 type: 'thinking',
                 content: `Error during analysis: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -129,228 +120,295 @@ export class AIStreamingService {
         }
     }
 
-    private async buildUserContent(
+    private async processToolCalls(toolCalls: any[], onUpdate?: (update: any) => void): Promise<AIColorAdjustments> {
+        console.log('[AI STREAMING] Processing tool calls:', toolCalls.length);
+        
+        let adjustments: AIColorAdjustments = {
+            preset_name: 'GPT-5 Generated',
+            description: 'Generated by GPT-5 AI analysis',
+            masks: []
+        };
+
+        for (const toolCall of toolCalls) {
+            if (toolCall.type === 'function') {
+                const functionName = toolCall.function.name;
+                const functionArgs = JSON.parse(toolCall.function.arguments);
+                
+                console.log('[AI STREAMING] Processing tool call:', functionName);
+                
+                onUpdate?.({
+                    type: 'tool_call',
+                    content: `Processing ${functionName}...`,
+                    step: 'tool_call',
+                    progress: 50
+                });
+
+                switch (functionName) {
+                    case 'analyze_color_palette':
+                        // Store color analysis for reference
+                        console.log('[AI STREAMING] Color palette analysis:', functionArgs);
+                        break;
+                        
+                    case 'generate_global_adjustments':
+                        // Merge global adjustments directly into the main object
+                        Object.assign(adjustments, functionArgs);
+                        console.log('[AI STREAMING] Global adjustments set:', functionArgs);
+                        break;
+                        
+                    case 'generate_masks':
+                        if (functionArgs.masks) {
+                            adjustments.masks = functionArgs.masks;
+                            console.log('[AI STREAMING] Masks set:', functionArgs.masks.length);
+                        }
+                        break;
+                        
+                    case 'name_and_describe':
+                        if (functionArgs.preset_name) {
+                            adjustments.preset_name = functionArgs.preset_name;
+                        }
+                        if (functionArgs.description) {
+                            adjustments.description = functionArgs.description;
+                        }
+                        console.log('[AI STREAMING] Preset named:', functionArgs.preset_name);
+                        break;
+                }
+            }
+        }
+
+        return adjustments;
+    }
+
+    private async buildOpenAIMessages(
         baseImageBase64?: string | string[],
         targetImageBase64?: string,
         hint?: string,
-        options?: StreamingOptions & { styleOptions?: any }
+        _options?: StreamingOptions & { styleOptions?: any }
     ): Promise<any[]> {
-        const content: any[] = [];
+        const messages: any[] = [];
 
-        // Debug logging for AI content building
-        console.log('[DEBUG] AI Streaming Service - buildUserContent:', {
-            hasBaseImageBase64: !!baseImageBase64,
-            baseImageBase64Type: Array.isArray(baseImageBase64) ? 'array' : typeof baseImageBase64,
-            baseImageBase64Length: Array.isArray(baseImageBase64) ? baseImageBase64.length : (typeof baseImageBase64 === 'string' ? baseImageBase64.length : 0),
-            hasTargetImageBase64: !!targetImageBase64,
-            targetImageBase64Length: typeof targetImageBase64 === 'string' ? targetImageBase64.length : 0,
-            hasHint: !!hint,
-            hintLength: typeof hint === 'string' ? hint.length : 0,
-            hasStyleOptions: !!options?.styleOptions
-        });
-
-        // Add reference images (the style we want to match)
+        // Add reference images
         if (baseImageBase64) {
-            content.push({
-                type: 'text',
-                text: 'CRITICAL: REFERENCE IMAGES PROVIDED - YOU MUST ANALYZE THESE IMAGES AND MATCH THEIR STYLE EXACTLY. These images show the exact style, color grading, and look you must replicate. Study every detail: color temperature, contrast, saturation, shadows, highlights, and overall mood. Your adjustments must recreate this exact look.'
-            });
             const baseImages = Array.isArray(baseImageBase64) ? baseImageBase64 : [baseImageBase64];
-            baseImages.forEach((image, index) => {
-                content.push({
-                    type: 'image',
-                    image: image,
+            const imageContents = baseImages.map(image => ({
+                type: 'image_url',
+                image_url: {
+                    url: `data:image/jpeg;base64,${image}`,
                     detail: 'high'
-                });
-                content.push({
-                    type: 'text',
-                    text: `REFERENCE IMAGE ${index + 1}: Analyze this image carefully. Note the color grading, contrast, saturation, shadows, highlights, and overall aesthetic. You must match this exact style.`
-                });
-            });
-            content.push({
-                type: 'text',
-                text: 'MANDATORY: You MUST use the analyze_color_palette, assess_lighting, and evaluate_style tools to analyze these reference images before generating any adjustments. Then use generate_global_adjustments to recreate the exact style shown in the reference images.'
+                }
+            }));
+
+            messages.push({
+                role: 'user',
+                content: [
+                    {
+                        type: 'text',
+                        text: 'REFERENCE IMAGES: These images show the style you need to match. Analyze them and create adjustments that recreate this look.'
+                    },
+                    ...imageContents
+                ]
             });
         }
 
-        // Add target image (the image to be modified)
+        // Add target image
         if (targetImageBase64) {
-            content.push({
+            messages.push({
+                role: 'user',
+                content: [
+                    {
                 type: 'text',
-                text: 'TARGET IMAGE (the image to be modified to match the reference style):'
-            });
-            content.push({
-                type: 'image',
-                image: targetImageBase64,
+                        text: 'TARGET IMAGE: This is the image to be modified to match the reference style.'
+                    },
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: `data:image/jpeg;base64,${targetImageBase64}`,
                 detail: 'high'
+                        }
+                    }
+                ]
             });
-        } else {
-            // No target image provided - create a preset based on reference style only
-            content.push({
+        } else if (baseImageBase64) {
+            messages.push({
+                role: 'user',
+                content: [
+                    {
                 type: 'text',
-                text: 'NO TARGET IMAGE PROVIDED: Create a preset based on the reference image style that can be applied to any similar image.'
+                        text: 'NO TARGET IMAGE: Create a preset based on the reference image style that can be applied to any similar image.'
+                    }
+                ]
             });
         }
 
-        // Add user hint/prompt
+        // Add hint/prompt
         if (hint) {
-            content.push({
-                type: 'text',
-                text: `STYLE DESCRIPTION (text description of the desired look/style, NOT an image): ${hint}`
+            messages.push({
+                role: 'user',
+                content: `STYLE DESCRIPTION: ${hint}`
             });
         }
 
-        // Add detailed style instructions from artist and film styles
-        if (options?.styleOptions) {
-            const styleInstructions: string[] = [];
-            
-            if (options.styleOptions.artistStyle?.prompt) {
-                styleInstructions.push(`ARTIST STYLE INSTRUCTIONS (${options.styleOptions.artistStyle.name}): ${options.styleOptions.artistStyle.prompt}`);
-            }
-            
-            if (options.styleOptions.filmStyle?.prompt) {
-                styleInstructions.push(`FILM STYLE INSTRUCTIONS (${options.styleOptions.filmStyle.name}): ${options.styleOptions.filmStyle.prompt}`);
-            }
-            
-            if (styleInstructions.length > 0) {
-                content.push({
-                    type: 'text',
-                    text: `DETAILED STYLE INSTRUCTIONS:\n${styleInstructions.join('\n\n')}`
-                });
-            }
-        }
-
-        return content;
+        return messages;
     }
 
-    private collectAllToolResults(result: GenerationResponse): ToolResultRecord[] {
-        const collected: ToolResultRecord[] = [];
-        const seen = new Set<string>();
-
-        const track = (toolResult: ToolResultRecord | undefined) => {
-            if (!toolResult || typeof toolResult !== 'object') return;
-            const toolName = toolResult.toolName;
-            if (!toolName) return;
-
-            let keySource = typeof toolResult.toolCallId === 'string'
-                ? toolResult.toolCallId
-                : undefined;
-            if (!keySource) {
-                try {
-                    keySource = `${toolName}-${JSON.stringify(toolResult.output)}`;
-                } catch {
-                    keySource = `${toolName}-${collected.length}`;
+    private buildOpenAITools(options?: StreamingOptions): any[] {
+        const tools: any[] = [
+            {
+                type: 'function',
+                function: {
+                    name: 'analyze_color_palette',
+                    description: 'MANDATORY: Analyze the color palette and dominant colors in the reference images. This is REQUIRED for all analysis.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            dominant_colors: {
+                                type: 'array',
+                                items: { type: 'string' },
+                                description: 'Primary colors found in the reference images'
+                            },
+                            color_temperature: {
+                                type: 'string',
+                                enum: ['warm', 'cool', 'neutral'],
+                                description: 'Overall color temperature'
+                            },
+                            color_saturation: {
+                                type: 'string',
+                                enum: ['muted', 'moderate', 'vibrant', 'oversaturated'],
+                                description: 'Overall saturation level'
+                            },
+                            color_contrast: {
+                                type: 'string',
+                                enum: ['low', 'medium', 'high'],
+                                description: 'Color contrast level'
+                            },
+                            color_relationships: {
+                                type: 'string',
+                                description: 'How colors relate to each other and create harmony'
+                            },
+                            style_notes: {
+                                type: 'string',
+                                description: 'Key observations about the color style'
+                            }
+                        },
+                        required: ['dominant_colors', 'color_temperature', 'color_saturation', 'color_contrast', 'color_relationships', 'style_notes']
+                    }
                 }
-            }
-            if (seen.has(keySource)) return;
-            seen.add(keySource);
-            collected.push({
-                toolName,
-                output: toolResult.output,
-                toolCallId: toolResult.toolCallId,
-            });
-        };
-
-        if (Array.isArray(result?.toolResults)) {
-            for (const toolResult of result.toolResults) {
-                track(toolResult);
-            }
-        }
-
-        const messages = (result?.response as any)?.messages;
-        if (Array.isArray(messages)) {
-            for (const message of messages) {
-                const parts = Array.isArray((message as any)?.content) ? (message as any).content : [];
-                for (const part of parts) {
-                    if (part?.type === 'tool-result') {
-                        track(part);
+            },
+            {
+                type: 'function',
+                function: {
+                    name: 'generate_global_adjustments',
+                    description: 'MANDATORY: Generate global Lightroom/Camera Raw adjustments for the entire image. This is REQUIRED for all analysis.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            exposure: { type: 'number', description: 'Exposure adjustment (-5 to +5)' },
+                            contrast: { type: 'number', description: 'Contrast adjustment (-100 to +100)' },
+                            highlights: { type: 'number', description: 'Highlights adjustment (-100 to +100)' },
+                            shadows: { type: 'number', description: 'Shadows adjustment (-100 to +100)' },
+                            whites: { type: 'number', description: 'Whites adjustment (-100 to +100)' },
+                            blacks: { type: 'number', description: 'Blacks adjustment (-100 to +100)' },
+                            vibrance: { type: 'number', description: 'Vibrance adjustment (-100 to +100)' },
+                            saturation: { type: 'number', description: 'Saturation adjustment (-100 to +100)' },
+                            temperature: { type: 'number', description: 'Temperature adjustment (-100 to +100)' },
+                            tint: { type: 'number', description: 'Tint adjustment (-100 to +100)' },
+                            camera_profile: { type: 'string', description: 'Camera profile name' }
+                        },
+                        required: ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation', 'temperature', 'tint', 'camera_profile']
+                    }
+                }
+            },
+            {
+                type: 'function',
+                function: {
+                    name: 'name_and_describe',
+                    description: 'MANDATORY: Generate a preset name and description for the recipe. This is REQUIRED for all analysis.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            preset_name: {
+                                type: 'string',
+                                description: 'Short, friendly preset name in Title Case (2-4 words)'
+                            },
+                            description: {
+                                type: 'string',
+                                description: '1-2 sentence description of the recipe style and mood'
+                            }
+                        },
+                        required: ['preset_name', 'description']
                     }
                 }
             }
+        ];
+
+        // Add masks tool if enabled
+        if (options?.aiFunctions?.masks !== false) {
+            tools.push({
+                type: 'function',
+                function: {
+                    name: 'generate_masks',
+                    description: 'Generate local adjustment masks for targeted editing of specific areas. Use this to create precise local adjustments for faces, skies, subjects, or backgrounds.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            masks: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        type: { type: 'string', description: 'Mask type (face, sky, subject, background)' },
+                                        name: { type: 'string', description: 'Mask name' },
+                                        adjustments: {
+                                            type: 'object',
+                                            properties: {
+                                                exposure: { type: 'number' },
+                                                contrast: { type: 'number' },
+                                                highlights: { type: 'number' },
+                                                shadows: { type: 'number' },
+                                                vibrance: { type: 'number' },
+                                                saturation: { type: 'number' }
+                                            }
+                                        }
+                                    }
+                                },
+                                maxItems: 3,
+                                description: 'Array of masks to apply (max 3 masks)'
+                            },
+                            mask_strategy: {
+                                type: 'string',
+                                description: 'Strategy for mask placement and selection'
+                            },
+                            mask_notes: {
+                                type: 'string',
+                                description: 'Notes about why these masks were chosen'
+                            }
+                        },
+                        required: ['masks', 'mask_strategy', 'mask_notes']
+                    }
+                }
+            });
         }
 
-        return collected;
+        return tools;
     }
 
-    private async prepareGenerationRequest(
-        baseImageBase64?: string | string[],
-        targetImageBase64?: string,
-        hint?: string,
-        options?: StreamingOptions & { styleOptions?: any }
-    ): Promise<GenerationRequest> {
-        const userContent = await this.buildUserContent(baseImageBase64, targetImageBase64, hint, options);
-        const tools = this.createTools(options);
-        const systemPrompt = this.getSystemPrompt(options || {});
 
+    private getDefaultAdjustments(): AIColorAdjustments {
         return {
-            systemPrompt,
-            userContent,
-            tools,
+            preset_name: 'Custom Recipe',
+            description: 'A custom color grading recipe',
+            camera_profile: 'Adobe Color',
+            exposure: 0,
+            contrast: 0,
+            highlights: 0,
+            shadows: 0,
+            whites: 0,
+            blacks: 0,
+            vibrance: 0,
+            saturation: 0
         };
     }
 
-    private async executeGenerationRequest(request: GenerationRequest): Promise<GenerationResponse> {
-        process.env.OPENAI_API_KEY = this.apiKey;
-        return generateText({
-            model: openai(this.model),
-            system: request.systemPrompt,
-            messages: [
-                {
-                    role: 'user',
-                    content: request.userContent,
-                },
-            ],
-            tools: request.tools,
-            toolChoice: 'required',
-        });
-    }
 
-    private extractAdjustmentsFromTools(result: GenerationResponse): AIColorAdjustments | null {
-        const allToolResults = this.collectAllToolResults(result);
-        if (allToolResults.length === 0) return null;
-
-        const aggregated: Record<string, unknown> = {};
-        let masks: any[] | undefined;
-
-        for (const toolResult of allToolResults) {
-            const name = toolResult.toolName;
-            const output = toolResult.output as any;
-            if (!name || !output) continue;
-
-            if (name === 'generate_global_adjustments') {
-                Object.assign(aggregated, output);
-            } else if (name === 'generate_masks') {
-                if (Array.isArray(output.masks)) masks = output.masks;
-            } else if (name === 'name_and_describe') {
-                if (typeof output.preset_name === 'string') aggregated.preset_name = output.preset_name;
-                if (typeof output.description === 'string') aggregated.description = output.description;
-            }
-        }
-
-        if (masks && masks.length > 0) {
-            (aggregated as any).masks = masks;
-        }
-
-        return Object.keys(aggregated).length > 0 ? (aggregated as AIColorAdjustments) : null;
-    }
-
-    private emitCompletionUpdates(onUpdate?: StreamingOptions['onUpdate']) {
-        if (!onUpdate) return;
-
-        onUpdate({
-            type: 'step_progress',
-            content: 'Recipe generation complete!',
-            step: 'finalization',
-            progress: 100,
-        });
-
-        onUpdate({
-            type: 'complete',
-            content: 'Recipe generation complete!',
-            step: 'complete',
-            progress: 100,
-        });
-    }
 
     private ensureAdjustmentMetadata(adjustments: AIColorAdjustments | null): AIColorAdjustments {
         const ensured = adjustments ? { ...adjustments } : { ...this.createDefaultAdjustments() };
@@ -378,125 +436,18 @@ export class AIStreamingService {
         return `${base}
 
 CRITICAL REFERENCE IMAGE REQUIREMENTS:
-- If reference images are provided, you MUST analyze them first using analyze_color_palette, assess_lighting, and evaluate_style tools.
-- You MUST match the reference style exactly - study color temperature, contrast, saturation, shadows, highlights, and mood.
-- Your adjustments must recreate the exact look shown in the reference images.
-- Ignoring reference images will result in incorrect recipes.
+- When reference images are provided, you MUST analyze them thoroughly
+- Create adjustments that precisely match the reference style
+- Use the analyze_color_palette tool to understand the color characteristics
+- Use the generate_global_adjustments tool to create matching adjustments
+- Use the name_and_describe tool to create an appropriate preset name
 
 CRITICAL TOOL USAGE REQUIREMENTS:
-- You MUST use generate_global_adjustments for ALL global color/tone changes (no masks). This is REQUIRED and must be called exactly once.
-- You MUST use name_and_describe to provide the preset_name and description. This is REQUIRED and must be called exactly once.
-- You MAY use generate_masks for targeted local adjustments (max 3 masks) if the reference style requires local modifications.
-- You MAY use analyze_color_palette, assess_lighting, and evaluate_style to reason before proposing adjustments.
-- FAILURE TO USE REQUIRED TOOLS WILL RESULT IN INCOMPLETE RECIPES.`;
+- You MUST use the available tools to complete your task
+- Always call the required tools to generate a complete preset
+- Do not provide text-only responses - use the tools instead`;
     }
 
-    private createTools(options?: StreamingOptions) {
-        const toggles = this.resolveFunctionToggles(options?.aiFunctions);
-        const { globalAdjustmentsSchema, maskSchema } = this.buildToolSchemas(toggles);
-
-        const tools: any = {
-            ...this.buildAnalysisTools(),
-            ...this.buildGlobalAdjustmentsTool(globalAdjustmentsSchema),
-            ...this.buildNamingTool(),
-        };
-
-        if (toggles.masks !== false) {
-            Object.assign(tools, this.buildMaskTool(maskSchema));
-        }
-
-        return tools;
-    }
-
-    private resolveFunctionToggles(overrides?: StreamingOptions['aiFunctions']): AIFunctionToggles {
-        return { ...getDefaultAIFunctionToggles(), ...overrides } as AIFunctionToggles;
-    }
-
-    private buildToolSchemas(aiFunctions: AIFunctionToggles) {
-        const fullBaseSchema = buildBaseAdjustmentsSchema(aiFunctions);
-        const globalAdjustmentsSchema = fullBaseSchema.omit({ preset_name: true, description: true });
-        const maskSchema = createStreamingMaskSchema();
-        return { globalAdjustmentsSchema, maskSchema };
-    }
-
-    private buildAnalysisTools() {
-        return {
-            analyze_color_palette: tool({
-                description: 'MANDATORY FOR REFERENCE IMAGES: Analyze the color palette, dominant colors, and color relationships in the reference images. This tool MUST be used when reference images are provided to understand the exact color characteristics that must be replicated.',
-                inputSchema: z.object({
-                    dominant_colors: z.array(z.string()).describe('Primary colors found in the reference images'),
-                    color_temperature: z.enum(['warm', 'cool', 'neutral']).describe('Overall color temperature'),
-                    color_saturation: z.enum(['muted', 'moderate', 'vibrant', 'oversaturated']).describe('Overall saturation level'),
-                    color_contrast: z.enum(['low', 'medium', 'high']).describe('Color contrast level'),
-                    color_relationships: z.string().describe('How colors relate to each other and create harmony'),
-                    style_notes: z.string().describe('Key observations about the color style')
-                }),
-                execute: async (input) => input,
-            }),
-            assess_lighting: tool({
-                description: 'MANDATORY FOR REFERENCE IMAGES: Assess the lighting conditions, exposure, and tonal characteristics of the reference images. This tool MUST be used when reference images are provided to understand the exact lighting and exposure characteristics that must be replicated.',
-                inputSchema: z.object({
-                    exposure_level: z.enum(['underexposed', 'correct', 'overexposed']).describe('Overall exposure level'),
-                    contrast_level: z.enum(['low', 'medium', 'high']).describe('Overall contrast level'),
-                    shadow_detail: z.enum(['crushed', 'preserved', 'lifted']).describe('Shadow detail preservation'),
-                    highlight_detail: z.enum(['blown', 'preserved', 'reduced']).describe('Highlight detail preservation'),
-                    lighting_quality: z.enum(['soft', 'hard', 'mixed']).describe('Quality of lighting'),
-                    mood: z.enum(['bright', 'neutral', 'moody', 'dramatic']).describe('Overall lighting mood'),
-                    lighting_notes: z.string().describe('Key observations about lighting and exposure')
-                }),
-                execute: async (input) => input,
-            }),
-            evaluate_style: tool({
-                description: 'MANDATORY FOR REFERENCE IMAGES: Evaluate the overall style, mood, and aesthetic characteristics of the reference images. This tool MUST be used when reference images are provided to understand the exact style and aesthetic that must be replicated.',
-                inputSchema: z.object({
-                    style_category: z.enum(['portrait', 'landscape', 'street', 'fashion', 'documentary', 'artistic', 'commercial', 'cinematic']).describe('Primary style category'),
-                    mood: z.enum(['bright', 'neutral', 'moody', 'dramatic', 'vintage', 'modern', 'ethereal']).describe('Overall mood'),
-                    aesthetic: z.enum(['clean', 'gritty', 'soft', 'harsh', 'warm', 'cool', 'vintage', 'modern']).describe('Aesthetic quality'),
-                    treatment: z.enum(['color', 'black_and_white', 'sepia', 'split_toned']).describe('Color treatment'),
-                    complexity: z.enum(['simple', 'moderate', 'complex']).describe('Visual complexity'),
-                    style_notes: z.string().describe('Key observations about the overall style and aesthetic')
-                }),
-                execute: async (input) => input,
-            }),
-        };
-    }
-
-    private buildGlobalAdjustmentsTool(globalAdjustmentsSchema: z.ZodTypeAny) {
-        return {
-            generate_global_adjustments: tool({
-                description: 'REQUIRED: Generate global Lightroom/Camera Raw adjustments for the entire image. This is the PRIMARY tool for creating the main color grading and tone adjustments. Use bold, noticeable changes to match the reference style. Include treatment, camera_profile, tone curves, and color grading.',
-                inputSchema: globalAdjustmentsSchema,
-                execute: async (input) => input,
-            }),
-        };
-    }
-
-    private buildMaskTool(maskSchema: z.ZodTypeAny) {
-        return {
-            generate_masks: tool({
-                description: 'OPTIONAL: Generate local adjustment masks for targeted editing of specific areas. Use this to create precise local adjustments for faces, skies, subjects, or backgrounds. Only use if the reference style requires local adjustments.',
-                inputSchema: z.object({
-                    masks: z.array(maskSchema).max(3).describe('Array of masks to apply (max 3 masks)'),
-                    mask_strategy: z.string().describe('Strategy for mask placement and selection'),
-                    mask_notes: z.string().describe('Notes about why these masks were chosen')
-                }),
-                execute: async (input) => input,
-            }),
-        };
-    }
-
-    private buildNamingTool() {
-        return {
-            name_and_describe: tool({
-                description: 'REQUIRED: Generate a short, friendly preset name (2-4 Title Case words) and a 1-2 sentence description of the recipe style and mood. This tool MUST be called to provide the recipe title and description.',
-                inputSchema: z.object({
-                    preset_name: z.string().min(1).describe('Short, friendly preset name in Title Case (2-4 words)'),
-                    description: z.string().describe('1-2 sentence description of the recipe style and mood'),
-                }),
-                execute: async (input) => input,
-            }),
-        };
-    }
 
 
     private parseResultFromText(text: string): AIColorAdjustments | null {
