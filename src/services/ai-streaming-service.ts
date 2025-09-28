@@ -58,6 +58,22 @@ export class AIStreamingService {
     ): Promise<AIColorAdjustments> {
         const { onUpdate } = options || {};
 
+        // Validate that reference images are provided and will be processed
+        if (baseImageBase64) {
+            console.log('[AI STREAMING] Reference images detected - enforcing analysis:', {
+                hasBaseImageBase64: !!baseImageBase64,
+                baseImageBase64Type: Array.isArray(baseImageBase64) ? 'array' : typeof baseImageBase64,
+                baseImageBase64Length: Array.isArray(baseImageBase64) ? baseImageBase64.length : (typeof baseImageBase64 === 'string' ? baseImageBase64.length : 0)
+            });
+            
+            onUpdate?.({
+                type: 'thinking',
+                content: 'Reference images detected - analyzing style characteristics...',
+                step: 'reference_analysis',
+                progress: 10
+            });
+        }
+
         try {
             const request = await this.prepareGenerationRequest(
                 baseImageBase64,
@@ -70,6 +86,32 @@ export class AIStreamingService {
             let finalResult = this.extractAdjustmentsFromTools(result);
             if (!finalResult) {
                 finalResult = this.parseResultFromText(result.text);
+            }
+
+            // Validate that reference images were actually analyzed
+            if (baseImageBase64 && finalResult) {
+                const toolResults = this.collectAllToolResults(result);
+                const hasAnalysis = toolResults.some(tool => 
+                    ['analyze_color_palette', 'assess_lighting', 'evaluate_style'].includes(tool.toolName || '')
+                );
+                
+                if (!hasAnalysis) {
+                    console.warn('[AI STREAMING] Reference images provided but analysis tools not used - this may indicate the AI ignored the reference images');
+                    onUpdate?.({
+                        type: 'thinking',
+                        content: 'Warning: Reference images were provided but may not have been fully analyzed',
+                        step: 'reference_warning',
+                        progress: 90
+                    });
+                } else {
+                    console.log('[AI STREAMING] Reference images successfully analyzed');
+                    onUpdate?.({
+                        type: 'thinking',
+                        content: 'Reference images analyzed - generating style-matched adjustments...',
+                        step: 'style_matching',
+                        progress: 80
+                    });
+                }
             }
 
             this.emitCompletionUpdates(onUpdate);
@@ -111,15 +153,23 @@ export class AIStreamingService {
         if (baseImageBase64) {
             content.push({
                 type: 'text',
-                text: 'REFERENCE IMAGES (the style/look we want to achieve):'
+                text: 'CRITICAL: REFERENCE IMAGES PROVIDED - YOU MUST ANALYZE THESE IMAGES AND MATCH THEIR STYLE EXACTLY. These images show the exact style, color grading, and look you must replicate. Study every detail: color temperature, contrast, saturation, shadows, highlights, and overall mood. Your adjustments must recreate this exact look.'
             });
             const baseImages = Array.isArray(baseImageBase64) ? baseImageBase64 : [baseImageBase64];
-            baseImages.forEach((image, _index) => {
+            baseImages.forEach((image, index) => {
                 content.push({
                     type: 'image',
                     image: image,
                     detail: 'high'
                 });
+                content.push({
+                    type: 'text',
+                    text: `REFERENCE IMAGE ${index + 1}: Analyze this image carefully. Note the color grading, contrast, saturation, shadows, highlights, and overall aesthetic. You must match this exact style.`
+                });
+            });
+            content.push({
+                type: 'text',
+                text: 'MANDATORY: You MUST use the analyze_color_palette, assess_lighting, and evaluate_style tools to analyze these reference images before generating any adjustments. Then use generate_global_adjustments to recreate the exact style shown in the reference images.'
             });
         }
 
@@ -327,11 +377,18 @@ export class AIStreamingService {
         });
         return `${base}
 
-TOOL USAGE GUIDELINES:
-- Use generate_global_adjustments for ALL global color/tone changes (no masks). Call this once.
-- Use generate_masks to propose up to 3 targeted local masks with adjustments.
-- Use name_and_describe to provide the preset_name and a short description. Always call this exactly once so the recipe has a title and description.
-- You may also use analyze_color_palette, assess_lighting, and evaluate_style to reason before proposing adjustments.`;
+CRITICAL REFERENCE IMAGE REQUIREMENTS:
+- If reference images are provided, you MUST analyze them first using analyze_color_palette, assess_lighting, and evaluate_style tools.
+- You MUST match the reference style exactly - study color temperature, contrast, saturation, shadows, highlights, and mood.
+- Your adjustments must recreate the exact look shown in the reference images.
+- Ignoring reference images will result in incorrect recipes.
+
+CRITICAL TOOL USAGE REQUIREMENTS:
+- You MUST use generate_global_adjustments for ALL global color/tone changes (no masks). This is REQUIRED and must be called exactly once.
+- You MUST use name_and_describe to provide the preset_name and description. This is REQUIRED and must be called exactly once.
+- You MAY use generate_masks for targeted local adjustments (max 3 masks) if the reference style requires local modifications.
+- You MAY use analyze_color_palette, assess_lighting, and evaluate_style to reason before proposing adjustments.
+- FAILURE TO USE REQUIRED TOOLS WILL RESULT IN INCOMPLETE RECIPES.`;
     }
 
     private createTools(options?: StreamingOptions) {
@@ -365,7 +422,7 @@ TOOL USAGE GUIDELINES:
     private buildAnalysisTools() {
         return {
             analyze_color_palette: tool({
-                description: 'Analyze the color palette, dominant colors, and color relationships in the reference images. Identify the key color characteristics that define the style.',
+                description: 'MANDATORY FOR REFERENCE IMAGES: Analyze the color palette, dominant colors, and color relationships in the reference images. This tool MUST be used when reference images are provided to understand the exact color characteristics that must be replicated.',
                 inputSchema: z.object({
                     dominant_colors: z.array(z.string()).describe('Primary colors found in the reference images'),
                     color_temperature: z.enum(['warm', 'cool', 'neutral']).describe('Overall color temperature'),
@@ -377,7 +434,7 @@ TOOL USAGE GUIDELINES:
                 execute: async (input) => input,
             }),
             assess_lighting: tool({
-                description: 'Assess the lighting conditions, exposure, and tonal characteristics of the reference images.',
+                description: 'MANDATORY FOR REFERENCE IMAGES: Assess the lighting conditions, exposure, and tonal characteristics of the reference images. This tool MUST be used when reference images are provided to understand the exact lighting and exposure characteristics that must be replicated.',
                 inputSchema: z.object({
                     exposure_level: z.enum(['underexposed', 'correct', 'overexposed']).describe('Overall exposure level'),
                     contrast_level: z.enum(['low', 'medium', 'high']).describe('Overall contrast level'),
@@ -390,7 +447,7 @@ TOOL USAGE GUIDELINES:
                 execute: async (input) => input,
             }),
             evaluate_style: tool({
-                description: 'Evaluate the overall style, mood, and aesthetic characteristics of the reference images.',
+                description: 'MANDATORY FOR REFERENCE IMAGES: Evaluate the overall style, mood, and aesthetic characteristics of the reference images. This tool MUST be used when reference images are provided to understand the exact style and aesthetic that must be replicated.',
                 inputSchema: z.object({
                     style_category: z.enum(['portrait', 'landscape', 'street', 'fashion', 'documentary', 'artistic', 'commercial', 'cinematic']).describe('Primary style category'),
                     mood: z.enum(['bright', 'neutral', 'moody', 'dramatic', 'vintage', 'modern', 'ethereal']).describe('Overall mood'),
@@ -407,7 +464,7 @@ TOOL USAGE GUIDELINES:
     private buildGlobalAdjustmentsTool(globalAdjustmentsSchema: z.ZodTypeAny) {
         return {
             generate_global_adjustments: tool({
-                description: 'Generate ONLY global Lightroom/Camera Raw adjustments (no masks). Use bold, noticeable changes. Include treatment, camera_profile if relevant.',
+                description: 'REQUIRED: Generate global Lightroom/Camera Raw adjustments for the entire image. This is the PRIMARY tool for creating the main color grading and tone adjustments. Use bold, noticeable changes to match the reference style. Include treatment, camera_profile, tone curves, and color grading.',
                 inputSchema: globalAdjustmentsSchema,
                 execute: async (input) => input,
             }),
@@ -417,7 +474,7 @@ TOOL USAGE GUIDELINES:
     private buildMaskTool(maskSchema: z.ZodTypeAny) {
         return {
             generate_masks: tool({
-                description: 'Generate local adjustment masks for targeted editing. Use this to create precise local adjustments for specific areas like faces, skies, subjects, or backgrounds.',
+                description: 'OPTIONAL: Generate local adjustment masks for targeted editing of specific areas. Use this to create precise local adjustments for faces, skies, subjects, or backgrounds. Only use if the reference style requires local adjustments.',
                 inputSchema: z.object({
                     masks: z.array(maskSchema).max(3).describe('Array of masks to apply (max 3 masks)'),
                     mask_strategy: z.string().describe('Strategy for mask placement and selection'),
@@ -431,10 +488,10 @@ TOOL USAGE GUIDELINES:
     private buildNamingTool() {
         return {
             name_and_describe: tool({
-                description: 'Propose a short, friendly preset name (2-4 Title Case words) and a 1-2 sentence description of the recipe style and mood.',
+                description: 'REQUIRED: Generate a short, friendly preset name (2-4 Title Case words) and a 1-2 sentence description of the recipe style and mood. This tool MUST be called to provide the recipe title and description.',
                 inputSchema: z.object({
-                    preset_name: z.string().min(1),
-                    description: z.string(),
+                    preset_name: z.string().min(1).describe('Short, friendly preset name in Title Case (2-4 words)'),
+                    description: z.string().describe('1-2 sentence description of the recipe style and mood'),
                 }),
                 execute: async (input) => input,
             }),

@@ -80,9 +80,7 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
             window.electronAPI.onProcessUpdated?.(handleProcessUpdate); 
         } catch { /* ignore */ }
         return () => {
-            try { 
-                window.electronAPI.removeAllListeners('process-updated'); 
-            } catch { /* ignore */ }
+            window.electronAPI.removeAllListeners('process-updated'); 
         };
     }, [handleProcessUpdate]);
 

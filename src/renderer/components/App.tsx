@@ -419,13 +419,9 @@ const AppContent: React.FC = () => {
 
       // Cleanup to avoid duplicate listeners (dev StrictMode mounts twice)
       return () => {
-        try {
-          window.electronAPI.removeAllListeners?.('processing-progress');
-          window.electronAPI.removeAllListeners?.('processing-complete');
-          window.electronAPI.removeAllListeners?.('process-updated');
-        } catch {
-          // no-op
-        }
+        window.electronAPI.removeAllListeners?.('processing-progress');
+        window.electronAPI.removeAllListeners?.('processing-complete');
+        window.electronAPI.removeAllListeners?.('process-updated');
       };
     }
   }, []);

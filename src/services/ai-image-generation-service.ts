@@ -63,34 +63,10 @@ export class AIImageGenerationService {
       const isSafetyViolation = this.isSafetyViolation(errorMessage);
       
       if (isSafetyViolation) {
-        // Try with a safer fallback prompt
-        try {
-          console.log('Attempting retry with safer prompt...');
-          const fallbackPrompt = this.buildSafeFallbackPrompt(options);
-          
-          const { image } = await generateImage({
-            model: openai.image('gpt-image-1'),
-            prompt: fallbackPrompt,
-            size: '1024x1024',
-            providerOptions: {
-              openai: {
-                quality: 'low'
-              },
-            },
-          });
-
-          const imageDataUrl = `data:image/png;base64,${image.base64}`;
-          return {
-            success: true,
-            imageUrl: imageDataUrl,
-          };
-        } catch (retryError) {
-          console.error('Retry with safe prompt also failed:', retryError);
-          return {
-            success: false,
-            error: 'Content policy violation: The generated prompt violates OpenAI\'s safety guidelines. Please try using more neutral and professional terms in your recipe name, prompt, or style options.',
-          };
-        }
+        return {
+          success: false,
+          error: 'Content policy violation: The generated prompt violates OpenAI\'s safety guidelines. Please try using more neutral and professional terms in your recipe name, prompt, or style options.',
+        };
       }
       
       return {
@@ -371,40 +347,6 @@ export class AIImageGenerationService {
     }
   }
 
-  private buildSafeFallbackPrompt(options: RecipeImageGenerationOptions): string {
-    // Create a very safe, generic prompt that focuses on technical photography aspects
-    const parts: string[] = [];
-    
-    parts.push('A professional photography reference image');
-    parts.push('demonstrating color grading techniques');
-    parts.push('with neutral lighting and composition');
-    parts.push('suitable for film emulation reference');
-    
-    // Add only technical characteristics without any potentially problematic terms
-    const technicalParts: string[] = [];
-    if (options.userOptions?.contrast !== undefined) {
-      const contrastLevel = options.userOptions.contrast > 0 ? 'enhanced' : 'reduced';
-      technicalParts.push(`${contrastLevel} contrast`);
-    }
-    if (options.userOptions?.vibrance !== undefined) {
-      const vibranceLevel = options.userOptions.vibrance > 0 ? 'vibrant' : 'muted';
-      technicalParts.push(`${vibranceLevel} colors`);
-    }
-    if (options.userOptions?.saturationBias !== undefined) {
-      const saturationLevel = options.userOptions.saturationBias > 0 ? 'saturated' : 'desaturated';
-      technicalParts.push(`${saturationLevel} saturation`);
-    }
-
-    if (technicalParts.length > 0) {
-      parts.push(`featuring ${technicalParts.join(', ')}`);
-    }
-
-    parts.push('showing a clean, professional photograph with good lighting');
-    parts.push('composed in portrait orientation for optimal color grading reference');
-    parts.push('perfect for film emulation and color correction techniques');
-
-    return parts.join(' ');
-  }
 
   private sanitizePromptText(text: string): string {
     // Remove or replace potentially problematic terms

@@ -1,5 +1,4 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron';
-import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { createErrorResponse, logError } from '../../shared/error-utils';
@@ -101,20 +100,6 @@ export class StorageHandlers {
               try {
                 const b64 = await this.storageService.convertImageToBase64(t);
                 targetImageDataEphemeral.push(b64);
-                continue;
-              } catch {
-                // Fallback only for targets: generate a JPEG preview and base64 it
-              }
-              try {
-                if (this.imageProcessor) {
-                  const previewPath = await this.imageProcessor.generatePreview({
-                    path: t,
-                    processId,
-                    subdir: 'target',
-                  } as any);
-                  const buf = await fs.readFile(previewPath);
-                  targetImageDataEphemeral.push(buf.toString('base64'));
-                }
               } catch {
                 console.warn('[IPC] save-process: failed to prepare target image');
               }
@@ -296,26 +281,7 @@ export class StorageHandlers {
       try {
         if (!processId || !filePath) throw new Error('Invalid arguments');
         let baseImageData: string | undefined;
-        try {
-          baseImageData = await this.storageService.convertImageToBase64(filePath);
-        } catch (convErr) {
-          // Fallback: generate a JPEG preview then base64 it
-          try {
-            if (this.imageProcessor) {
-              const previewPath = await this.imageProcessor.generatePreview({
-                path: filePath,
-                processId,
-                subdir: 'base',
-              } as any);
-              const buf = await fs.readFile(previewPath);
-              baseImageData = buf.toString('base64');
-            } else {
-              throw convErr instanceof Error ? convErr : new Error('Failed to convert image');
-            }
-          } catch {
-            throw convErr instanceof Error ? convErr : new Error('Failed to convert image');
-          }
-        }
+        baseImageData = await this.storageService.convertImageToBase64(filePath);
         await this.storageService.updateProcess(processId, {
           recipeImageData: baseImageData,
         } as any);
