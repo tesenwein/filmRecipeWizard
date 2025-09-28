@@ -4,7 +4,6 @@ import {
 import {
   Avatar,
   Box,
-  LinearProgress,
   Typography
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -68,7 +67,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
 
   return (
     <Box
-      sx={(theme) => ({
+      sx={{
         width: '100%',
         minHeight: '80vh',
         display: 'flex',
@@ -76,30 +75,24 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
         justifyContent: 'center',
         px: { xs: 3, md: 6 },
         py: { xs: 6, md: 8 },
-        background: `linear-gradient(160deg, ${alpha(theme.palette.grey[100], 0.9)} 0%, ${alpha(theme.palette.grey[200], 0.85)} 55%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-      })}
+        backgroundColor: 'white',
+      }}
     >
-      <Box
-        sx={(theme) => ({
-          position: 'relative',
-          width: '100%',
-          maxWidth: 560,
-          overflow: 'hidden',
-          borderRadius: 3,
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-          backgroundColor: alpha(theme.palette.background.paper, 0.92),
-          boxShadow: `0 28px 60px ${alpha(theme.palette.grey[900], 0.14)}`,
-        })}
-      >
         <Box
           sx={(theme) => ({
+            position: 'relative',
+            width: '100%',
+            maxWidth: 560,
+            overflow: 'hidden',
+            borderRadius: 3,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            backgroundColor: alpha(theme.palette.background.paper, 0.92),
+          })}
+        >
+        <Box
+          sx={() => ({
             position: 'absolute',
             inset: 0,
-            background: `
-              radial-gradient(circle at 12% 18%, ${alpha(theme.palette.primary.light, 0.18)} 0%, transparent 50%),
-              radial-gradient(circle at 88% 26%, ${alpha(theme.palette.secondary.light, 0.16)} 0%, transparent 55%),
-              linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.primary.main, 0.06)} 100%)
-            `,
             opacity: 0.9,
             pointerEvents: 'none',
           })}
@@ -124,7 +117,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               backgroundColor: alpha(theme.palette.primary.main, 0.1),
               color: theme.palette.primary.main,
               border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              boxShadow: `0 16px 36px ${alpha(theme.palette.primary.main, 0.15)}`,
               animation: 'pulse 4s ease-in-out infinite',
               '@keyframes pulse': {
                 '0%, 100%': { transform: 'scale(1)' },
@@ -167,32 +159,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
               py: { xs: 3, md: 4 },
             })}
           >
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={(theme) => ({
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                '& .MuiLinearProgress-bar': {
-                  borderRadius: 5,
-                  background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                },
-              })}
-            />
-
-            <Typography
-              variant="h5"
-              fontWeight={500}
-              sx={(theme) => ({
-                mt: 3,
-                color: theme.palette.text.primary,
-                letterSpacing: '-0.01em',
-              })}
-            >
-              {Math.round(progress)}%
-            </Typography>
-
+        
             <Box
               sx={(theme) => ({
                 display: 'flex',
