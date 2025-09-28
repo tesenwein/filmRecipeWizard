@@ -158,8 +158,6 @@ ${getParameterInstructions()}`;
                     toolChoice: 'required',
                     temperature: 0.7,
                 });
-                // try {
-                // } catch { /* ignore */ }
 
                 // Extract structured result from tool calls and also prepare human-friendly chat text
                 let contentText = result.text || '';
