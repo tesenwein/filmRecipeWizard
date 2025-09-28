@@ -177,9 +177,12 @@ const AppContent: React.FC = () => {
           : [];
           
         // Debug logging for reference image data
-        const baseLength = Array.isArray(returnedBase64.base) 
-          ? returnedBase64.base.length 
-          : (typeof returnedBase64.base === 'string' ? returnedBase64.base.length : 0);
+        let baseLength = 0;
+        if (Array.isArray(returnedBase64.base)) {
+          baseLength = returnedBase64.base.length;
+        } else if (returnedBase64.base) {
+          baseLength = (returnedBase64.base as string).length;
+        }
           
         console.log('[DEBUG] App - Processing data:', {
           hasBaseImages: baseImages.length > 0,
