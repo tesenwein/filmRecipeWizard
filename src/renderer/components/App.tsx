@@ -184,16 +184,6 @@ const AppContent: React.FC = () => {
           baseLength = (returnedBase64.base as string).length;
         }
           
-        console.log('[DEBUG] App - Processing data:', {
-          hasBaseImages: baseImages.length > 0,
-          baseImagesLength: baseImages.length,
-          hasReturnedBase64: !!returnedBase64.base,
-          returnedBase64BaseLength: baseLength,
-          hasReturnedBase64Targets: !!returnedBase64.targets,
-          returnedBase64TargetsLength: Array.isArray(returnedBase64.targets) ? returnedBase64.targets.length : 0,
-          hasPrompt: !!prompt,
-          promptLength: prompt ? prompt.length : 0
-        });
       } else {
         console.warn('[APP] Failed to save process', result.error);
         startingRef.current = false;

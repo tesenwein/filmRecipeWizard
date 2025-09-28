@@ -68,21 +68,10 @@ export class StorageHandlers {
             : undefined;
           const firstBase = baseImages && baseImages.length > 0 ? baseImages[0] : undefined;
           
-          // Debug logging for reference image processing
-          console.log('[DEBUG] Storage - save-process:', {
-            hasBaseImages: !!baseImages,
-            baseImagesLength: baseImages ? baseImages.length : 0,
-            hasFirstBase: !!firstBase,
-            firstBasePath: firstBase
-          });
           
           if (firstBase) {
             try {
               recipeImageData = await this.storageService.convertImageToBase64(firstBase);
-              console.log('[DEBUG] Storage - convertImageToBase64 success:', {
-                hasRecipeImageData: !!recipeImageData,
-                recipeImageDataLength: recipeImageData ? recipeImageData.length : 0
-              });
             } catch (error) {
               console.warn('[IPC] save-process: convertImageToBase64 failed for recipe image:', error);
             }

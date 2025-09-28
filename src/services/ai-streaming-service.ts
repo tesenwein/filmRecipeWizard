@@ -42,11 +42,6 @@ export class AIStreamingService {
     ): Promise<AIColorAdjustments> {
         const { onUpdate } = options || {};
 
-        console.log('[AI STREAMING] Starting analysis with GPT-5 direct API:', {
-            hasBaseImageBase64: !!baseImageBase64,
-            hasTargetImageBase64: !!targetImageBase64,
-            hasHint: !!hint
-        });
 
         try {
             // Build messages for OpenAI
@@ -77,15 +72,8 @@ export class AIStreamingService {
                             max_completion_tokens: 12000
                         });
 
-            console.log('[AI STREAMING] GPT-5 response received:', {
-                hasChoices: !!response.choices,
-                choicesLength: response.choices?.length || 0,
-                hasToolCalls: !!response.choices?.[0]?.message?.tool_calls
-            });
-
             // Extract tool calls and results
             const toolCalls = response.choices[0]?.message?.tool_calls || [];
-            console.log('[AI STREAMING] Tool calls found:', toolCalls.length);
 
             if (toolCalls.length === 0) {
                 console.warn('[AI STREAMING] No tool calls made by GPT-5');
@@ -121,7 +109,6 @@ export class AIStreamingService {
     }
 
     private async processToolCalls(toolCalls: any[], onUpdate?: (update: any) => void): Promise<AIColorAdjustments> {
-        console.log('[AI STREAMING] Processing tool calls:', toolCalls.length);
         
         let adjustments: AIColorAdjustments = {
             preset_name: 'GPT-5 Generated',
@@ -134,7 +121,6 @@ export class AIStreamingService {
                 const functionName = toolCall.function.name;
                 const functionArgs = JSON.parse(toolCall.function.arguments);
                 
-                console.log('[AI STREAMING] Processing tool call:', functionName);
                 
                 onUpdate?.({
                     type: 'tool_call',
@@ -146,19 +132,16 @@ export class AIStreamingService {
                 switch (functionName) {
                     case 'analyze_color_palette':
                         // Store color analysis for reference
-                        console.log('[AI STREAMING] Color palette analysis:', functionArgs);
                         break;
                         
                     case 'generate_global_adjustments':
                         // Merge global adjustments directly into the main object
                         Object.assign(adjustments, functionArgs);
-                        console.log('[AI STREAMING] Global adjustments set:', functionArgs);
                         break;
                         
                     case 'generate_masks':
                         if (functionArgs.masks) {
                             adjustments.masks = functionArgs.masks;
-                            console.log('[AI STREAMING] Masks set:', functionArgs.masks.length);
                         }
                         break;
                         
@@ -169,7 +152,6 @@ export class AIStreamingService {
                         if (functionArgs.description) {
                             adjustments.description = functionArgs.description;
                         }
-                        console.log('[AI STREAMING] Preset named:', functionArgs.preset_name);
                         break;
                 }
             }
