@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { AIStreamingService } from '../services/ai-streaming-service';
+import { AIService } from '../services/ai-service';
 import type { AIColorAdjustments } from '../services/types';
 import { createErrorResponse, logError } from '../shared/error-utils';
 import { ProcessingResult, StyleOptions } from '../shared/types';
@@ -23,40 +23,33 @@ export interface StyleMatchOptions {
   targetImageBase64?: string;
   prompt?: string;
   styleOptions?: StyleOptions;
-  onStreamUpdate?: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => void;
 }
 
 export class ImageProcessor {
-  private aiStreamingService: AIStreamingService | null = null;
+  private aiService: AIService | null = null;
   private settingsService = new SettingsService();
 
   constructor() { }
 
 
-  private async ensureAIStreamingService(): Promise<AIStreamingService> {
-    if (!this.aiStreamingService) {
+  private async ensureAIService(): Promise<AIService> {
+    if (!this.aiService) {
       const settings = await this.settingsService.loadSettings();
-      this.aiStreamingService = new AIStreamingService(settings.openaiKey || '', 'gpt-5');
+      this.aiService = new AIService(settings.openaiKey || '', 'gpt-5');
     }
-    return this.aiStreamingService;
+    return this.aiService;
   }
 
   async matchStyle(data: StyleMatchOptions): Promise<ProcessingResult> {
 
-    const streamingService = await this.ensureAIStreamingService();
+    const aiService = await this.ensureAIService();
 
     try {
-      const aiAdjustments = await streamingService.analyzeColorMatchWithStreaming(
+      const aiAdjustments = await aiService.analyzeColorMatch(
         data.baseImageBase64,
         data.targetImageBase64,
         data.prompt, // hint/prompt
         {
-          onUpdate: (update) => {
-            // Pass the structured streaming update
-            if (data.onStreamUpdate) {
-              data.onStreamUpdate(update);
-            }
-          },
           styleOptions: data.styleOptions, // Pass style options to AI
         }
       );

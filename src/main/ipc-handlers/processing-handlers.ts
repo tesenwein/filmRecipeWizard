@@ -259,15 +259,6 @@ export class ProcessingHandlers {
               aiAdjustments: undefined,
               prompt,
               styleOptions: options,
-              onStreamUpdate: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
-                // Send structured streaming updates to the renderer
-                try {
-                  mainWindow?.webContents.send('streaming-update', update);
-                  mainWindow?.webContents.send('processing-progress', update.progress || 50, update.content);
-                } catch {
-                  /* Ignore IPC send errors */
-                }
-              },
             });
             // const duration = Date.now() - startTime;
           } catch (error) {

@@ -1,26 +1,13 @@
 import {
-  AutoAwesome as AutoAwesomeIcon,
-  CheckCircle as CheckCircleIcon,
-  Palette as PaletteIcon,
-  PhotoCamera as PhotoCameraIcon,
-  Search as SearchIcon,
-  Settings as SettingsIcon,
-  Tune as TuneIcon
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
 import {
   Avatar,
   Box,
-  Card,
-  CardContent,
-  Chip,
-  Grow,
   LinearProgress,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Typography
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import { ProcessingState } from '../../shared/types';
 
@@ -31,367 +18,223 @@ interface ProcessingViewProps {
   prompt?: string;
 }
 
-interface RecipeStep {
-  id: string;
-  type: 'initialization' | 'analysis' | 'color_matching' | 'adjustments' | 'finalization' | 'complete';
-  title: string;
-  description: string;
-  status: 'pending' | 'active' | 'completed' | 'error';
-  progress?: number;
-  timestamp: number;
-  icon?: React.ReactNode;
-  toolName?: string;
-  subSteps?: string[];
-}
-
 
 const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage, targetImages: _targetImages }) => {
-  const [recipeSteps, setRecipeSteps] = useState<RecipeStep[]>([]);
+  const [progress, setProgress] = useState(0);
+  const [loadingText, setLoadingText] = useState('Initializing AI analysis...');
 
-  // Initialize recipe steps when processing starts
+  // Simulate realistic progress during processing
   useEffect(() => {
-    if (processingState.isProcessing && (processingState.progress || 0) <= 5) {
-      const initialSteps: RecipeStep[] = [
-        {
-          id: 'init',
-          type: 'initialization',
-          title: 'Initializing AI Analysis',
-          description: 'Setting up the AI engine and preparing image analysis',
-          status: 'completed',
-          progress: 100,
-          timestamp: Date.now(),
-          icon: <SettingsIcon />
-        },
-        {
-          id: 'analysis',
-          type: 'analysis',
-          title: 'Analyzing Images',
-          description: 'Examining reference and target images to understand color characteristics',
-          status: 'active',
-          progress: undefined, // Show indeterminate progress bar
-          timestamp: Date.now(),
-          icon: <SearchIcon />
-        },
-        {
-          id: 'color_matching',
-          type: 'color_matching',
-          title: 'Color Matching',
-          description: 'Identifying color palettes and tonal relationships between images',
-          status: 'pending',
-          progress: 0,
-          timestamp: Date.now(),
-          icon: <PaletteIcon />
-        },
-        {
-          id: 'adjustments',
-          type: 'adjustments',
-          title: 'Generating Adjustments',
-          description: 'Creating Lightroom/Camera Raw adjustments for exposure, contrast, and color',
-          status: 'pending',
-          progress: 0,
-          timestamp: Date.now(),
-          icon: <TuneIcon />
-        },
-        {
-          id: 'finalization',
-          type: 'finalization',
-          title: 'Finalizing Recipe',
-          description: 'Compiling all adjustments into the final photo recipe',
-          status: 'pending',
-          progress: 0,
-          timestamp: Date.now(),
-          icon: <PhotoCameraIcon />
-        }
+    if (processingState.isProcessing) {
+      const progressMessages = [
+        'Initializing AI analysis...',
+        'Analyzing your images...',
+        'Identifying color patterns...',
+        'Processing color data...',
+        'Generating adjustments...',
+        'Creating photo recipe...',
+        'Finalizing results...'
       ];
-      setRecipeSteps(initialSteps);
+
+      let currentMessageIndex = 0;
+      let currentProgress = 0;
+
+      const interval = setInterval(() => {
+        currentProgress += Math.random() * 15 + 5; // Random progress between 5-20%
+        
+        if (currentProgress >= 100) {
+          currentProgress = 100;
+          setProgress(100);
+          setLoadingText('Complete!');
+          clearInterval(interval);
+          return;
+        }
+
+        setProgress(Math.min(currentProgress, 95)); // Cap at 95% until actually complete
+
+        // Update message every 20-30% progress
+        if (currentProgress > (currentMessageIndex + 1) * 15 && currentMessageIndex < progressMessages.length - 1) {
+          currentMessageIndex++;
+          setLoadingText(progressMessages[currentMessageIndex]);
+        }
+      }, 800); // Update every 800ms for smooth animation
+
+      return () => clearInterval(interval);
+    } else {
+      setProgress(0);
+      setLoadingText('Initializing AI analysis...');
     }
   }, [processingState.isProcessing]);
 
-  // Listen for backend-driven streaming updates
-  useEffect(() => {
-    const handleStreamingUpdate = (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
-      setRecipeSteps(prev => {
-        const updatedSteps = [...prev];
-        const currentProgress = update.progress || 0;
-
-        // Handle backend-driven step updates
-        if (update.type === 'step_progress') {
-          // Update progress for the specified step
-          const stepIndex = updatedSteps.findIndex(step => step.type === update.step);
-          if (stepIndex >= 0 && updatedSteps[stepIndex].status === 'active') {
-            updatedSteps[stepIndex] = {
-              ...updatedSteps[stepIndex],
-              progress: Math.min(currentProgress, 100)
-            };
-          }
-        } else if (update.type === 'step_transition') {
-          // Transition to the specified step
-          const targetStepIndex = updatedSteps.findIndex(step => step.type === update.step);
-          if (targetStepIndex >= 0) {
-            // Complete current active step
-            const currentActiveIndex = updatedSteps.findIndex(step => step.status === 'active');
-            if (currentActiveIndex >= 0) {
-              updatedSteps[currentActiveIndex] = {
-                ...updatedSteps[currentActiveIndex],
-                status: 'completed',
-                progress: 100
-              };
-            }
-
-            // Activate target step immediately
-            updatedSteps[targetStepIndex] = {
-              ...updatedSteps[targetStepIndex],
-              status: 'active',
-              progress: Math.min(currentProgress, 100),
-              toolName: update.toolName
-            };
-          }
-        } else if (update.type === 'tool-result') {
-          // Handle tool results - mark current step as completed
-          const activeStepIndex = updatedSteps.findIndex(step => step.status === 'active');
-          if (activeStepIndex >= 0) {
-            updatedSteps[activeStepIndex] = {
-              ...updatedSteps[activeStepIndex],
-              status: 'completed',
-              progress: 100
-            };
-          }
-        } else if (update.type === 'complete') {
-          // Complete all remaining steps
-          updatedSteps.forEach((step, index) => {
-            if (step.status === 'active' || step.status === 'pending') {
-              updatedSteps[index] = {
-                ...step,
-                status: 'completed',
-                progress: 100
-              };
-            }
-          });
-        }
-
-        return updatedSteps;
-      });
-    };
-
-    // Set up the streaming update listener
-    if (window.electronAPI?.onStreamingUpdate) {
-      window.electronAPI.onStreamingUpdate(handleStreamingUpdate);
-    }
-
-    return () => {
-      // Cleanup
-    };
-  }, []);
-
-  // Helper function to get step status color
-  const getStepStatusColor = (status: RecipeStep['status']) => {
-    switch (status) {
-      case 'completed': return 'primary.main';
-      case 'active': return 'primary.main';
-      case 'error': return 'grey.600';
-      default: return 'grey.400';
-    }
-  };
-
-
   return (
-    <div className="container" style={{ maxWidth: 'none', padding: '20px' }}>
+    <Box
+      sx={(theme) => ({
+        width: '100%',
+        minHeight: '80vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: { xs: 3, md: 6 },
+        py: { xs: 6, md: 8 },
+        background: `linear-gradient(160deg, ${alpha(theme.palette.grey[100], 0.9)} 0%, ${alpha(theme.palette.grey[200], 0.85)} 55%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+      })}
+    >
       <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          minHeight: '80vh',
-          p: 2,
+        sx={(theme) => ({
           position: 'relative',
-        }}
+          width: '100%',
+          maxWidth: 560,
+          overflow: 'hidden',
+          borderRadius: 3,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          backgroundColor: alpha(theme.palette.background.paper, 0.92),
+          boxShadow: `0 28px 60px ${alpha(theme.palette.grey[900], 0.14)}`,
+        })}
       >
-        {/* Header with AI icon */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Avatar
-            sx={{
-              width: 40,
-              height: 40,
-              backgroundColor: 'primary.main',
-              animation: 'aiThinking 2s infinite ease-in-out',
-              '@keyframes aiThinking': {
-                '0%, 100%': {
-                  transform: 'scale(1)',
-                },
-                '50%': {
-                  transform: 'scale(1.05)',
-                },
-              },
-            }}
-          >
-            <AutoAwesomeIcon sx={{ fontSize: '1.5rem', color: 'white' }} />
-          </Avatar>
-          <Box>
-            <Typography
-              variant="h5"
-              fontWeight={600}
-              sx={{
-                color: 'text.primary',
-                mb: 0.5
-              }}
-            >
-              AI Recipe Wizard
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: 'text.secondary',
-                fontWeight: 400,
-                fontStyle: 'normal' // Ensure description is not italic
-              }}
-            >
-              Crafting your perfect photo recipe...
-            </Typography>
-          </Box>
-        </Box>
-
-
-        {/* Recipe Generation Steps */}
-        <Card
+        <Box
+          sx={(theme) => ({
+            position: 'absolute',
+            inset: 0,
+            background: `
+              radial-gradient(circle at 12% 18%, ${alpha(theme.palette.primary.light, 0.18)} 0%, transparent 50%),
+              radial-gradient(circle at 88% 26%, ${alpha(theme.palette.secondary.light, 0.16)} 0%, transparent 55%),
+              linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.primary.main, 0.06)} 100%)
+            `,
+            opacity: 0.9,
+            pointerEvents: 'none',
+          })}
+        />
+        <Box
           sx={{
-            maxWidth: 800,
-            width: '100%',
-            backgroundColor: 'background.paper',
-            borderRadius: 2,
-            overflow: 'hidden',
+            position: 'relative',
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            px: { xs: 4, md: 6 },
+            py: { xs: 6, md: 7 },
+            gap: 3,
           }}
         >
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ width: '100%' }}>
-              {recipeSteps.map((step, _index) => (
-                <Grow in={true} timeout={600} key={step.id}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      p: 1.5,
-                      mb: 1.5,
-                      borderRadius: 2,
-                      backgroundColor: step.status === 'completed' ? 'grey.50' :
-                        step.status === 'active' ? 'grey.100' :
-                          step.status === 'error' ? 'grey.50' : 'grey.50',
-                      border: `1px solid ${step.status === 'completed' ? 'grey.300' :
-                        step.status === 'active' ? 'primary.main' :
-                          step.status === 'error' ? 'grey.400' : 'grey.300'}`,
-                      transition: 'all 0.3s ease',
-                      opacity: step.status === 'pending' ? 0.6 : 1,
-                      transform: step.status === 'active' ? 'scale(1.01)' : 'scale(1)',
-                      boxShadow: step.status === 'active' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
-                    }}
-                  >
-                    <Avatar
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        backgroundColor: getStepStatusColor(step.status),
-                        color: 'white',
-                        animation: step.status === 'active' ? 'pulse 2s infinite' : 'none',
-                        '@keyframes pulse': {
-                          '0%': { transform: 'scale(1)' },
-                          '50%': { transform: 'scale(1.05)' },
-                          '100%': { transform: 'scale(1)' },
-                        },
-                      }}
-                    >
-                      {step.status === 'completed' ? <CheckCircleIcon /> : step.icon}
-                    </Avatar>
+          <Avatar
+            sx={(theme) => ({
+              width: 96,
+              height: 96,
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              boxShadow: `0 16px 36px ${alpha(theme.palette.primary.main, 0.15)}`,
+              animation: 'pulse 4s ease-in-out infinite',
+              '@keyframes pulse': {
+                '0%, 100%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.04)' },
+              },
+            })}
+          >
+            <AutoAwesomeIcon sx={{ fontSize: '2.75rem' }} />
+          </Avatar>
 
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.25 }}>
-                        {step.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.85rem', fontStyle: 'normal' }}>
-                        {step.description}
-                      </Typography>
+          <Typography
+            variant="h4"
+            fontWeight={600}
+            sx={(theme) => ({
+              mt: 2,
+              color: theme.palette.text.primary,
+              letterSpacing: '-0.01em',
+            })}
+          >
+            AI Recipe Wizard
+          </Typography>
 
+          <Typography
+            variant="subtitle1"
+            sx={(theme) => ({
+              color: theme.palette.text.secondary,
+              maxWidth: 420,
+            })}
+          >
+            {loadingText}
+          </Typography>
 
-                      {/* Show sub-steps for active tool execution only */}
-                      {step.status === 'active' && step.subSteps && step.subSteps.length > 0 && (
-                        <Box sx={{ mb: 1 }}>
-                          <List dense sx={{ py: 0 }}>
-                            {step.subSteps.map((subStep, subIndex) => (
-                              <ListItem key={subIndex} sx={{ py: 0.25, px: 0 }}>
-                                <ListItemIcon sx={{ minWidth: 20 }}>
-                                  <Box
-                                    sx={{
-                                      width: 6,
-                                      height: 6,
-                                      borderRadius: '50%',
-                                      backgroundColor: 'primary.main',
-                                      animation: 'pulse 2s infinite',
-                                      animationDelay: `${subIndex * 0.3}s`,
-                                    }}
-                                  />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={
-                                    <Typography variant="caption" color="text.secondary">
-                                      {subStep}
-                                    </Typography>
-                                  }
-                                />
-                              </ListItem>
-                            ))}
-                          </List>
-                        </Box>
-                      )}
+          <Box
+            sx={(theme) => ({
+              width: '100%',
+              backgroundColor: alpha(theme.palette.primary.main, 0.04),
+              borderRadius: 3,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+              px: { xs: 3, md: 4 },
+              py: { xs: 3, md: 4 },
+            })}
+          >
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={(theme) => ({
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 5,
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                },
+              })}
+            />
 
-                      {step.status === 'active' && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LinearProgress
-                            variant={step.progress !== undefined ? "determinate" : "indeterminate"}
-                            value={step.progress}
-                            sx={{
-                              flex: 1,
-                              height: 4,
-                              borderRadius: 2,
-                              backgroundColor: 'rgba(0,0,0,0.1)',
-                              '& .MuiLinearProgress-bar': {
-                                borderRadius: 2,
-                                backgroundColor: 'primary.main',
-                              },
-                            }}
-                          />
-                          {step.progress !== undefined && (
-                            <Typography variant="caption" sx={{ minWidth: '35px', textAlign: 'right' }}>
-                              {Math.round(step.progress)}%
-                            </Typography>
-                          )}
-                        </Box>
-                      )}
+            <Typography
+              variant="h5"
+              fontWeight={500}
+              sx={(theme) => ({
+                mt: 3,
+                color: theme.palette.text.primary,
+                letterSpacing: '-0.01em',
+              })}
+            >
+              {Math.round(progress)}%
+            </Typography>
 
-                      {step.status === 'completed' && (
-                        <Box sx={{ mt: 0.5 }}>
-                          <Chip
-                            label="Completed"
-                            size="small"
-                            variant="outlined"
-                            sx={{
-                              fontSize: '0.7rem',
-                              borderColor: 'primary.main',
-                              color: 'primary.main'
-                            }}
-                          />
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                </Grow>
+            <Box
+              sx={(theme) => ({
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 2,
+                mt: 2,
+                color: theme.palette.primary.main,
+              })}
+            >
+              {[0, 1, 2].map((index) => (
+                <Box
+                  key={index}
+                  sx={(theme) => ({
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    backgroundColor: alpha(theme.palette.primary.main, 0.22),
+                    animation: 'floatDot 1.8s ease-in-out infinite',
+                    animationDelay: `${index * 0.2}s`,
+                    '@keyframes floatDot': {
+                      '0%, 100%': { transform: 'translateY(0)', opacity: 0.6 },
+                      '50%': { transform: 'translateY(-6px)', opacity: 1 },
+                    },
+                  })}
+                />
               ))}
             </Box>
-          </CardContent>
-        </Card>
+          </Box>
 
+          <Typography
+            variant="body2"
+            sx={(theme) => ({
+              color: theme.palette.text.secondary,
+              maxWidth: 400,
+              lineHeight: 1.6,
+            })}
+          >
+            Creating your personalized photo recipe with advanced AI analysis.
+          </Typography>
+        </Box>
       </Box>
-    </div>
+    </Box>
   );
 };
 

@@ -4,17 +4,7 @@ import { getCoreSystemPrompt } from './ai-prompt-shared';
 import { AIColorAdjustments } from './types';
 
 
-export interface StreamingUpdate {
-    type: 'thinking' | 'analysis' | 'tool_call' | 'progress' | 'complete' | 'step_progress' | 'step_transition';
-    content: string;
-    step?: string;
-    progress?: number;
-    toolName?: string;
-    toolArgs?: any;
-}
-
-export interface StreamingOptions {
-    onUpdate?: (update: StreamingUpdate) => void;
+export interface AIOptions {
     aiFunctions?: {
         masks?: boolean;
         colorGrading?: boolean;
@@ -25,7 +15,7 @@ export interface StreamingOptions {
     };
 }
 
-export class AIStreamingService {
+export class AIService {
     private openai: OpenAI;
 
     constructor(apiKey: string, _model: string = 'gpt-5') {
@@ -34,11 +24,11 @@ export class AIStreamingService {
         });
     }
 
-    async analyzeColorMatchWithStreaming(
+    async analyzeColorMatch(
         baseImageBase64?: string | string[],
         targetImageBase64?: string,
         hint?: string,
-        options?: StreamingOptions & { styleOptions?: any }
+        options?: AIOptions & { styleOptions?: any }
     ): Promise<AIColorAdjustments> {
         try {
             // Build messages for OpenAI
@@ -127,7 +117,7 @@ export class AIStreamingService {
         baseImageBase64?: string | string[],
         targetImageBase64?: string,
         hint?: string,
-        _options?: StreamingOptions & { styleOptions?: any }
+        _options?: AIOptions & { styleOptions?: any }
     ): Promise<any[]> {
         const messages: any[] = [];
 
@@ -195,7 +185,7 @@ export class AIStreamingService {
         return messages;
     }
 
-    private buildOpenAITools(options?: StreamingOptions): any[] {
+    private buildOpenAITools(options?: AIOptions): any[] {
         const tools: any[] = [
             {
                 type: 'function',
@@ -372,7 +362,7 @@ export class AIStreamingService {
         return ensured;
     }
 
-    private getSystemPrompt(_options: StreamingOptions): string {
+    private getSystemPrompt(_options: AIOptions): string {
         const base = getCoreSystemPrompt({
             includeMaskTypes: true,
             includeTechniques: true,
