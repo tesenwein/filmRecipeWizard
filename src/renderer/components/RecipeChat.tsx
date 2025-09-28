@@ -103,13 +103,11 @@ const RecipeChat: React.FC<RecipeChatProps> = ({
 
         try {
             // Call the chat API
-            const response = await window.electronAPI.chatRecipe({
-                messages: [...messages, newUserMessage],
-                recipe,
-            });
+            // Chat functionality removed - this component is no longer used
+            const response = { success: false, error: 'Chat functionality has been removed' };
 
             if (response.success) {
-                const displayText = response.message || '';
+                const displayText = (response as any).message || '';
                 const assistantMessage = {
                     id: (Date.now() + 1).toString(),
                     role: 'assistant' as const,

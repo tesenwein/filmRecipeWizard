@@ -79,8 +79,6 @@ const electronAPI = {
   clearHistory: () => ipcRenderer.invoke('clear-recipes'),
 
   // Chat operations
-  chatRecipe: (data: { messages: Array<{ role: string; content: string }>; recipe: any }) =>
-    ipcRenderer.invoke('chat-recipe', data),
   clearPendingRecipes: () => ipcRenderer.invoke('clear-pending-recipes'),
 
   // AI Image generation

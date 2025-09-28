@@ -52,18 +52,5 @@ export class AIImageHandlers {
       }
     });
 
-    // Update API key for AI image service
-    ipcMain.handle('update-ai-image-api-key', async (_event, apiKey: string) => {
-      try {
-        this.aiImageService = new AIImageGenerationService(apiKey);
-        return { success: true };
-      } catch (error) {
-        logError('AI_IMAGE', 'Failed to update AI image service API key', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Failed to update API key',
-        };
-      }
-    });
   }
 }
