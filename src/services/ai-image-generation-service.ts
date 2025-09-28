@@ -36,8 +36,6 @@ export class AIImageGenerationService {
         quality: "low"
       });
 
-      console.log('OpenAI Response:', JSON.stringify(response, null, 2));
-
       if (!response.data || response.data.length === 0) {
         return {
           success: false,
@@ -46,7 +44,6 @@ export class AIImageGenerationService {
       }
 
       const imageData = response.data[0];
-      console.log('Image data:', JSON.stringify(imageData, null, 2));
 
       // Check if we have a URL or base64 data
       if (imageData.url) {
