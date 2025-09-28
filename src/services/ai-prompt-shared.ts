@@ -26,7 +26,7 @@ TASK:
 - REFERENCE IMAGES: Style to achieve if provided
 - TARGET IMAGE: Photo to modify to match the style 
 - STYLE DESCRIPTION: Text description of desired look
-- GOAL: Create professional, impactful presets
+- GOAL: ALWAYS create professional, impactful presets
 
 CORE PRINCIPLES:
 - Use masks VERY subtly for natural results (max ±0.3 range), but apply strong global adjustments
