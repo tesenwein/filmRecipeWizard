@@ -19,7 +19,6 @@ interface ProcessingViewProps {
 
 
 const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage, targetImages: _targetImages }) => {
-  const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('Initializing AI analysis...');
 
   // Simulate realistic progress during processing
@@ -43,13 +42,10 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
         
         if (currentProgress >= 100) {
           currentProgress = 100;
-          setProgress(100);
           setLoadingText('Complete!');
           clearInterval(interval);
           return;
         }
-
-        setProgress(Math.min(currentProgress, 95)); // Cap at 95% until actually complete
 
         // Update message every 20-30% progress
         if (currentProgress > (currentMessageIndex + 1) * 15 && currentMessageIndex < progressMessages.length - 1) {
@@ -60,7 +56,6 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseIm
 
       return () => clearInterval(interval);
     } else {
-      setProgress(0);
       setLoadingText('Initializing AI analysis...');
     }
   }, [processingState.isProcessing]);

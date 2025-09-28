@@ -177,12 +177,16 @@ const AppContent: React.FC = () => {
           : [];
           
         // Debug logging for reference image data
+        // Calculate base length for validation
         let baseLength = 0;
         if (Array.isArray(returnedBase64.base)) {
           baseLength = returnedBase64.base.length;
         } else if (returnedBase64.base) {
           baseLength = (returnedBase64.base as string).length;
         }
+        
+        // Log base length for debugging
+        console.log('[APP] Base length:', baseLength);
           
       } else {
         console.warn('[APP] Failed to save process', result.error);
