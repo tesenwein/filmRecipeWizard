@@ -20,13 +20,13 @@ export function getCoreSystemPrompt(options: SharedPromptOptions = {}): string {
     includeRequirements = true
   } = options;
 
-  let prompt = `You are a professional photo editor. Create impactful Lightroom/Camera Raw adjustments to match the target image to the reference style.
+  let prompt = `You are a professional photo editor and color grader. Create impactful Lightroom/Camera Raw adjustments.
 
 TASK:
-- REFERENCE IMAGES: Style to achieve
-- TARGET IMAGE: Photo to modify  
+- REFERENCE IMAGES: Style to achieve (if not provided, create a preset based on reference style)
+- TARGET IMAGE: Photo to modify (OPTIONAL - if not provided, create a preset based on reference style)
 - STYLE DESCRIPTION: Text description of desired look
-- GOAL: Create professional, impactful presets that transform the image to match the reference style
+- GOAL: Create professional, impactful presets
 
 CORE PRINCIPLES:
 - Use masks VERY subtly for natural results (max ±0.3 range), but apply strong global adjustments
@@ -54,6 +54,7 @@ STYLE INSTRUCTIONS:
 - If film style is specified, follow the detailed prompt instructions for that film's characteristics
 - Combine artist and film style instructions when both are provided
 - Use the specific parameter ranges and techniques mentioned in the style prompts
+- If no reference images are provided, create a preset based on the reference style
 - Apply the exact color grading, tone curves, and grain settings specified in the style prompts`;
   }
 

@@ -140,6 +140,17 @@ export class ProcessingHandlers {
             if (typeof data.baseImageData === 'string') return data.baseImageData;
             return undefined;
           })();
+          
+          // Debug logging for reference image processing
+          console.log('[DEBUG] Processing with reference images:', {
+            hasBaseImageData: !!baseImageData,
+            baseImageDataType: Array.isArray(baseImageData) ? 'array' : typeof baseImageData,
+            baseImageDataLength: Array.isArray(baseImageData) ? baseImageData.length : (typeof baseImageData === 'string' ? baseImageData.length : 0),
+            hasTargetImageData: !!data.targetImageData,
+            targetImageDataLength: Array.isArray(data.targetImageData) ? data.targetImageData.length : 0,
+            prompt: data.prompt,
+            hasPrompt: !!data.prompt
+          });
           const basePrompt = data.prompt ?? stored.prompt;
           // Build an additional hint from userOptions if present
           // Use passed styleOptions if provided, otherwise fall back to stored userOptions

@@ -141,7 +141,7 @@ const AppContent: React.FC = () => {
 
     // Save process to storage (converts to base64 and persists only base64 + results)
     let newProcessId: string | null = null;
-    let returnedBase64: { base?: string | null; targets?: string[] } = {};
+    let returnedBase64: { base?: string | string[] | null; targets?: string[] } = {};
     try {
       const processData = {
         baseImages: baseImages.length ? baseImages.slice(0, 3) : undefined,
@@ -170,11 +170,27 @@ const AppContent: React.FC = () => {
         // Use the single recipe image (first reference) for processing only
         returnedBase64.base = result?.process?.recipeImageData
           ? [result.process.recipeImageData]
-          : (null as any);
+          : undefined;
         // Use ephemeral target base64 data returned by save-process (not persisted)
         returnedBase64.targets = Array.isArray((result as any)?.targetImageData)
           ? (result as any).targetImageData
           : [];
+          
+        // Debug logging for reference image data
+        const baseLength = Array.isArray(returnedBase64.base) 
+          ? returnedBase64.base.length 
+          : (typeof returnedBase64.base === 'string' ? returnedBase64.base.length : 0);
+          
+        console.log('[DEBUG] App - Processing data:', {
+          hasBaseImages: baseImages.length > 0,
+          baseImagesLength: baseImages.length,
+          hasReturnedBase64: !!returnedBase64.base,
+          returnedBase64BaseLength: baseLength,
+          hasReturnedBase64Targets: !!returnedBase64.targets,
+          returnedBase64TargetsLength: Array.isArray(returnedBase64.targets) ? returnedBase64.targets.length : 0,
+          hasPrompt: !!prompt,
+          promptLength: prompt ? prompt.length : 0
+        });
       } else {
         console.warn('[APP] Failed to save process', result.error);
         startingRef.current = false;
@@ -204,7 +220,7 @@ const AppContent: React.FC = () => {
         const processingData = {
           processId: newProcessId,
           targetIndex: 0,
-          baseImageData: (returnedBase64.base || undefined) as any,
+          baseImageData: returnedBase64.base,
           targetImageData: returnedBase64.targets || undefined,
           prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
           styleOptions: styleOptions,

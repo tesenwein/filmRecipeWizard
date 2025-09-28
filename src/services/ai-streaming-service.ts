@@ -157,6 +157,18 @@ export class AIStreamingService {
     ): Promise<any[]> {
         const content: any[] = [];
 
+        // Debug logging for AI content building
+        console.log('[DEBUG] AI Streaming Service - buildUserContent:', {
+            hasBaseImageBase64: !!baseImageBase64,
+            baseImageBase64Type: Array.isArray(baseImageBase64) ? 'array' : typeof baseImageBase64,
+            baseImageBase64Length: Array.isArray(baseImageBase64) ? baseImageBase64.length : (typeof baseImageBase64 === 'string' ? baseImageBase64.length : 0),
+            hasTargetImageBase64: !!targetImageBase64,
+            targetImageBase64Length: typeof targetImageBase64 === 'string' ? targetImageBase64.length : 0,
+            hasHint: !!hint,
+            hintLength: typeof hint === 'string' ? hint.length : 0,
+            hasStyleOptions: !!options?.styleOptions
+        });
+
         // Add reference images (the style we want to match)
         if (baseImageBase64) {
             content.push({
@@ -183,6 +195,12 @@ export class AIStreamingService {
                 type: 'image',
                 image: targetImageBase64,
                 detail: 'high'
+            });
+        } else {
+            // No target image provided - create a preset based on reference style only
+            content.push({
+                type: 'text',
+                text: 'NO TARGET IMAGE PROVIDED: Create a preset based on the reference image style that can be applied to any similar image.'
             });
         }
 
