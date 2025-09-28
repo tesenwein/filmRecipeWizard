@@ -118,7 +118,7 @@ const RecipeNameHeader: React.FC<RecipeNameHeaderProps> = ({
             }}
             inputProps={{ maxLength: 120 }}
           />
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0.5 }}>
             <IconButton
               size="small"
               aria-label="Save name"

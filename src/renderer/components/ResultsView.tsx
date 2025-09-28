@@ -833,7 +833,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                   }
                                 }}
                               />
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0.5 }}>
                                 <IconButton size="small" onClick={() => saveDescription()} title="Save description">
                                   <CheckIcon fontSize="small" />
                                 </IconButton>
