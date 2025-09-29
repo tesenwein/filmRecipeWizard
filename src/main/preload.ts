@@ -23,16 +23,13 @@ const electronAPI = {
   analyzeColors: (imagePath: string) => ipcRenderer.invoke('analyze-colors', imagePath),
   matchStyle: (data: any) => ipcRenderer.invoke('match-style', data),
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
-  downloadXMP: (data: any) => ipcRenderer.invoke('download-xmp', data),
   generateLUT: (data: any) => ipcRenderer.invoke('generate-lut', data),
   generateXmpContent: (data: { adjustments: any; include?: any; recipeName?: string }) =>
     ipcRenderer.invoke('generate-xmp-content', data),
-  exportProfile: (data: { adjustments: any; recipeIndex?: number }) =>
-    ipcRenderer.invoke('export-profile', data),
-  exportPresetToLightroom: (data: { adjustments: any; recipeName?: string }) =>
-    ipcRenderer.invoke('export-preset-to-lightroom', data),
-  exportProfileToLightroom: (data: { adjustments: any; recipeName?: string }) =>
-    ipcRenderer.invoke('export-profile-to-lightroom', data),
+  // Note: Individual export APIs removed - now using unified export system
+  // Unified export API
+  unifiedExport: (request: { type: string; action: string; adjustments: any; include?: any; recipeName?: string }) =>
+    ipcRenderer.invoke('unified-export', request),
   // Recipe import/export
   exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
   exportAllRecipes: () => ipcRenderer.invoke('export-all-recipes'),

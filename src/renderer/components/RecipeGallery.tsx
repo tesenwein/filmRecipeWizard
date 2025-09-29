@@ -6,6 +6,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
+import {
+    downloadCaptureOneBasicStyle,
+    downloadCaptureOneStyle,
+    saveCaptureOneBasicStyleToFolder,
+    saveCaptureOneStyleToFolder,
+    saveLightroomPresetToFolder,
+    saveLightroomProfileToFolder
+} from '../utils/export-utils';
 import ConfirmDialog from './ConfirmDialog';
 import ErrorDialog from './ErrorDialog';
 import XMPImportDialog from './XMPImportDialog';
@@ -338,10 +346,10 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           
           
           // Export preset to Lightroom for each recipe
-          const res = await window.electronAPI.exportPresetToLightroom({
-            adjustments: recipe.results?.[0]?.metadata?.aiAdjustments,
-            recipeName: recipe.name || 'Custom Recipe'
-          });
+          const res = await saveLightroomPresetToFolder(
+            recipe.results?.[0]?.metadata?.aiAdjustments,
+            recipe.name || 'Custom Recipe'
+          );
           
           
           if (res.success) {
@@ -393,10 +401,10 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           }
           
           // Export camera profile to Lightroom for each recipe
-          const res = await window.electronAPI.exportProfileToLightroom({
-            adjustments: recipe.results?.[0]?.metadata?.aiAdjustments,
-            recipeName: recipe.name || 'Custom Recipe'
-          });
+          const res = await saveLightroomProfileToFolder(
+            recipe.results?.[0]?.metadata?.aiAdjustments,
+            recipe.name || 'Custom Recipe'
+          );
           
           if (res.success) {
             successCount++;
@@ -419,6 +427,207 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     }
   };
 
+  const handleBulkSaveStylesToCaptureOne = async () => {
+    if (selectedRecipes.size === 0) {
+      showError('No recipes selected. Please select recipes first.');
+      return;
+    }
+
+    if (!settings?.captureOneStylesPath) {
+      showError('Capture One styles path not configured. Please set it in Settings first.');
+      return;
+    }
+    
+    try {
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const recipeId of selectedRecipeIds) {
+        try {
+          // Get the recipe data
+          const recipe = recipes.find(r => r.id === recipeId);
+          if (!recipe) {
+            errorCount++;
+            continue;
+          }
+          
+          // Export style to Capture One for each recipe
+          const res = await saveCaptureOneStyleToFolder(
+            recipe.results?.[0]?.metadata?.aiAdjustments,
+            {},
+            recipe.name || 'Custom Recipe'
+          );
+          
+          if (res.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        showSuccess(`Successfully saved ${successCount} style${successCount !== 1 ? 's' : ''} to Capture One`);
+      }
+      if (errorCount > 0) {
+        showError(`Failed to save ${errorCount} style${errorCount !== 1 ? 's' : ''} to Capture One`);
+      }
+    } catch {
+      showError('Bulk save styles to Capture One failed');
+    }
+  };
+
+  const handleBulkSaveBasicStylesToCaptureOne = async () => {
+    if (selectedRecipes.size === 0) {
+      showError('No recipes selected. Please select recipes first.');
+      return;
+    }
+
+    if (!settings?.captureOneStylesPath) {
+      showError('Capture One styles path not configured. Please set it in Settings first.');
+      return;
+    }
+    
+    try {
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const recipeId of selectedRecipeIds) {
+        try {
+          // Get the recipe data
+          const recipe = recipes.find(r => r.id === recipeId);
+          if (!recipe) {
+            errorCount++;
+            continue;
+          }
+          
+          // Export basic style to Capture One for each recipe
+          const res = await saveCaptureOneBasicStyleToFolder(
+            recipe.results?.[0]?.metadata?.aiAdjustments,
+            {},
+            recipe.name || 'Custom Recipe'
+          );
+          
+          if (res.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        showSuccess(`Successfully saved ${successCount} basic style${successCount !== 1 ? 's' : ''} to Capture One`);
+      }
+      if (errorCount > 0) {
+        showError(`Failed to save ${errorCount} basic style${errorCount !== 1 ? 's' : ''} to Capture One`);
+      }
+    } catch {
+      showError('Bulk save basic styles to Capture One failed');
+    }
+  };
+
+  const handleBulkExportStyles = async () => {
+    if (selectedRecipes.size === 0) {
+      showError('No recipes selected. Please select recipes first.');
+      return;
+    }
+    
+    try {
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const recipeId of selectedRecipeIds) {
+        try {
+          // Get the recipe data
+          const recipe = recipes.find(r => r.id === recipeId);
+          if (!recipe) {
+            errorCount++;
+            continue;
+          }
+          
+          // Download Capture One style for each recipe
+          const res = await downloadCaptureOneStyle(
+            recipe.results?.[0]?.metadata?.aiAdjustments,
+            {},
+            recipe.name || 'Custom Recipe'
+          );
+          
+          if (res.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        showSuccess(`Successfully exported ${successCount} style${successCount !== 1 ? 's' : ''}`);
+      }
+      if (errorCount > 0) {
+        showError(`Failed to export ${errorCount} style${errorCount !== 1 ? 's' : ''}`);
+      }
+    } catch {
+      showError('Bulk export styles failed');
+    }
+  };
+
+  const handleBulkExportBasicStyles = async () => {
+    if (selectedRecipes.size === 0) {
+      showError('No recipes selected. Please select recipes first.');
+      return;
+    }
+    
+    try {
+      const selectedRecipeIds = Array.from(selectedRecipes);
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const recipeId of selectedRecipeIds) {
+        try {
+          // Get the recipe data
+          const recipe = recipes.find(r => r.id === recipeId);
+          if (!recipe) {
+            errorCount++;
+            continue;
+          }
+          
+          // Download basic Capture One style for each recipe
+          const res = await downloadCaptureOneBasicStyle(
+            recipe.results?.[0]?.metadata?.aiAdjustments,
+            {},
+            recipe.name || 'Custom Recipe'
+          );
+          
+          if (res.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        showSuccess(`Successfully exported ${successCount} basic style${successCount !== 1 ? 's' : ''}`);
+      }
+      if (errorCount > 0) {
+        showError(`Failed to export ${errorCount} basic style${errorCount !== 1 ? 's' : ''}`);
+      }
+    } catch {
+      showError('Bulk export basic styles failed');
+    }
+  };
 
   // Drag and drop handlers for XMP files
   const handleDragOver = (e: React.DragEvent) => {
@@ -539,9 +748,14 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           onDeleteSelected={handleMultiDelete}
           onExportPresets={handleBulkExportPresets}
           onExportProfiles={handleBulkExportProfiles}
+          onExportStyles={handleBulkExportStyles}
+          onExportBasicStyles={handleBulkExportBasicStyles}
           onSavePresetsToLightroom={handleBulkSavePresetsToLightroom}
           onSaveProfilesToLightroom={handleBulkSaveProfilesToLightroom}
+          onSaveStylesToCaptureOne={handleBulkSaveStylesToCaptureOne}
+          onSaveBasicStylesToCaptureOne={handleBulkSaveBasicStylesToCaptureOne}
           lightroomPathConfigured={!!settings?.lightroomProfilePath}
+          captureOnePathConfigured={!!settings?.captureOneStylesPath}
         />
       )}
 

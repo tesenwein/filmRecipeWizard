@@ -10,6 +10,7 @@ import { SettingsHandlers } from './ipc-handlers/settings-handlers';
 import { StorageHandlers } from './ipc-handlers/storage-handlers';
 import { SettingsService } from './settings-service';
 import { StorageService } from './storage-service';
+import { UnifiedExportHandler } from './unified-export-handler';
 
 class FilmRecipeWizardApp {
   private mainWindow: BrowserWindow | null = null;
@@ -25,6 +26,7 @@ class FilmRecipeWizardApp {
   private settingsHandlers: SettingsHandlers;
   private exportHandlers: ExportHandlers;
   private importHandlers: ImportHandlers;
+  private unifiedExportHandler: UnifiedExportHandler;
 
   constructor() {
     this.imageProcessor = new ImageProcessor();
@@ -51,6 +53,7 @@ class FilmRecipeWizardApp {
     );
     this.exportHandlers = new ExportHandlers(this.imageProcessor, this.storageService, this.settingsService);
     this.importHandlers = new ImportHandlers(this.storageService);
+    this.unifiedExportHandler = new UnifiedExportHandler(this.imageProcessor, this.settingsService);
 
     this.setupApp();
     this.setupIPC();
@@ -247,6 +250,7 @@ class FilmRecipeWizardApp {
     this.settingsHandlers.setupHandlers();
     this.exportHandlers.setupHandlers();
     this.importHandlers.setupHandlers();
+    this.unifiedExportHandler.setupHandlers();
   }
 }
 

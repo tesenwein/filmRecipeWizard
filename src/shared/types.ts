@@ -92,6 +92,7 @@ export interface AppSettings {
   userProfile?: UserProfile;
   storageLocation?: string; // Path to the recipe storage folder
   lightroomProfilePath?: string; // Path to Lightroom profile/preset destination folder
+  captureOneStylesPath?: string; // Path to Capture One styles destination folder
   // Optional UX: show generating spinner during reprocessing after Accept
   reprocessShowsGenerating?: boolean;
 }

@@ -26,6 +26,7 @@ const Settings: React.FC = () => {
   const [isProfileValid, setIsProfileValid] = useState(true);
   const [storageLocation, setStorageLocation] = useState('');
   const [lightroomProfilePath, setLightroomProfilePath] = useState('');
+  const [captureOneStylesPath, setCaptureOneStylesPath] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -40,6 +41,7 @@ const Settings: React.FC = () => {
           setSetupCompleted(!!settingsRes.settings.setupCompleted);
           setStorageLocation(settingsRes.settings.storageLocation || '');
           setLightroomProfilePath((settingsRes.settings as any).lightroomProfilePath || '');
+          setCaptureOneStylesPath((settingsRes.settings as any).captureOneStylesPath || '');
           const u = (settingsRes.settings as any).userProfile || {};
           setProfileData({
             firstName: u.firstName || '',
@@ -154,6 +156,18 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleSelectCaptureOneFolder = async () => {
+    try {
+      const result = await window.electronAPI.selectStorageFolder();
+      if (result?.success && result.path) {
+        setCaptureOneStylesPath(result.path);
+      }
+    } catch (error) {
+      console.error('Failed to select Capture One folder:', error);
+      setStatus({ type: 'error', msg: 'Failed to select Capture One folder' });
+    }
+  };
+
   const handleSave = async () => {
     setStatus(null);
     setIsValidating(true);
@@ -188,6 +202,10 @@ const Settings: React.FC = () => {
       
       if (lightroomProfilePath.trim()) {
         settingsToSave.lightroomProfilePath = lightroomProfilePath.trim();
+      }
+      
+      if (captureOneStylesPath.trim()) {
+        settingsToSave.captureOneStylesPath = captureOneStylesPath.trim();
       }
       
       // Always include userProfile as it's a complete object
@@ -392,6 +410,33 @@ const Settings: React.FC = () => {
           />
           <Typography variant="caption" color="text.secondary">
             Set this to your Lightroom presets folder to enable direct export. Usually located at: ~/Library/Application Support/Adobe/Lightroom/Develop Presets/ (macOS) or %APPDATA%\Adobe\Lightroom\Develop Presets\ (Windows).
+          </Typography>
+        </Stack>
+      </Paper>
+
+      <Typography variant="h6" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
+        Capture One Integration
+      </Typography>
+      <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+        <Stack spacing={1.5}>
+          <TextField
+            fullWidth
+            label="Capture One Styles Folder"
+            value={captureOneStylesPath}
+            onChange={e => setCaptureOneStylesPath(e.target.value)}
+            helperText="Where to save Capture One styles for direct import"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button variant="outlined" size="small" onClick={handleSelectCaptureOneFolder}>
+                    Browse...
+                  </Button>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            Set this to your Capture One styles folder to enable direct export. Usually located at: ~/Library/Application Support/Capture One/Styles/ (macOS) or %APPDATA%\Capture One\Styles\ (Windows).
           </Typography>
         </Stack>
       </Paper>

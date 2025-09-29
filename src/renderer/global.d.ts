@@ -96,17 +96,12 @@ declare global {
       analyzeColors: (imagePath: string) => Promise<ColorAnalysis>;
       matchStyle: (data: StyleMatchRequest) => Promise<StyleMatchResult>;
       generatePreset: (data: PresetGenerationRequest) => Promise<PresetResult>;
-      downloadXMP: (data: XMPDownloadRequest) => Promise<XMPResult>;
       importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) => Promise<any>;
       readFile: (filePath: string) => Promise<string>;
       generateLUT: (data: any) => Promise<any>;
-      exportProfile: (data: {
-        adjustments: any;
-        recipeIndex?: number;
-        recipeName?: string;
-      }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
-      exportPresetToLightroom: (data: { adjustments: any; recipeName?: string }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
-      exportProfileToLightroom: (data: { adjustments: any; recipeName?: string }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+      // Note: Individual export APIs removed - now using unified export system
+      // Unified export API
+      unifiedExport: (request: { type: string; action: string; adjustments: any; include?: any; recipeName?: string }) => Promise<{ success: boolean; filePath?: string; outputPath?: string; error?: string }>;
 
       // Recipe import/export
       exportRecipe: (processId: string) => Promise<ExportResult>;

@@ -26,6 +26,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const [isProfileValid, setIsProfileValid] = useState(true);
   const [storageLocation, setStorageLocation] = useState('');
   const [lightroomProfilePath, setLightroomProfilePath] = useState('');
+  const [captureOneStylesPath, setCaptureOneStylesPath] = useState('');
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDetails, setErrorDetails] = useState('');
@@ -58,6 +59,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
           // Load Lightroom profile path if available
           if ((res.settings as any)?.lightroomProfilePath) {
             setLightroomProfilePath((res.settings as any).lightroomProfilePath);
+          }
+          if ((res.settings as any)?.captureOneStylesPath) {
+            setCaptureOneStylesPath((res.settings as any).captureOneStylesPath);
           }
         }
       } catch {
@@ -371,6 +375,27 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                   sx={{ mb: 3 }}
                 />
 
+                <Typography variant="h6" sx={{ mt: 3, mb: 2, fontWeight: 600 }}>
+                  Capture One Integration (Optional)
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                  Configure Capture One styles folder for direct export:
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                  <strong>macOS:</strong> ~/Library/Application Support/Capture One/Styles/<br />
+                  <strong>Windows:</strong> %APPDATA%\Capture One\Styles\
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  label="Capture One Styles Folder Path"
+                  value={captureOneStylesPath}
+                  onChange={(e) => setCaptureOneStylesPath(e.target.value)}
+                  placeholder="~/Library/Application Support/Capture One/Styles"
+                  helperText="Leave empty to skip Capture One integration. You can configure this later in Settings."
+                  sx={{ mb: 3 }}
+                />
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <Button
                     variant="outlined"
@@ -385,7 +410,10 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                     onClick={async () => {
                       setIsLoading(true);
                       try {
-                        await saveSettings({ lightroomProfilePath: lightroomProfilePath.trim() || undefined });
+                        await saveSettings({ 
+                          lightroomProfilePath: lightroomProfilePath.trim() || undefined,
+                          captureOneStylesPath: captureOneStylesPath.trim() || undefined
+                        });
                         setCurrentStep(5);
                       } catch (error) {
                         console.error('Failed to save Lightroom path:', error);
@@ -452,6 +480,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
                             instagram: ig.handle || undefined,
                           },
                           lightroomProfilePath: lightroomProfilePath.trim() || undefined,
+                          captureOneStylesPath: captureOneStylesPath.trim() || undefined,
                         });
                         setCurrentStep(6);
                       } finally {
