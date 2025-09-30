@@ -115,6 +115,9 @@ export class AIStreamingService {
                         if (functionArgs.description) {
                             adjustments.description = functionArgs.description;
                         }
+                        if (typeof functionArgs.confidence === 'number') {
+                            adjustments.confidence = functionArgs.confidence;
+                        }
                         break;
                 }
             }
@@ -277,9 +280,13 @@ export class AIStreamingService {
                             description: {
                                 type: 'string',
                                 description: '1-2 sentence description of the recipe style and mood'
+                            },
+                            confidence: {
+                                type: 'number',
+                                description: 'Confidence level (0.0 to 1.0) in the accuracy of the style match and adjustments'
                             }
                         },
-                        required: ['preset_name', 'description']
+                        required: ['preset_name', 'description', 'confidence']
                     }
                 }
             }
@@ -366,6 +373,11 @@ export class AIStreamingService {
             ensured.preset_name = 'Custom Recipe';
         }
 
+        // Ensure confidence is always set
+        if (ensured.confidence === undefined || ensured.confidence === null) {
+            ensured.confidence = 0.5; // Default confidence when not provided by AI
+        }
+
         const normalizedProfile = this.normalizeCameraProfileName(ensured.camera_profile) || this.autoSelectProfileFromResult(ensured);
         ensured.camera_profile = normalizedProfile;
 
@@ -385,7 +397,15 @@ CRITICAL REFERENCE IMAGE REQUIREMENTS:
 - Create adjustments that precisely match the reference style
 - Use the analyze_color_palette tool to understand the color characteristics
 - Use the generate_global_adjustments tool to create matching adjustments
-- Use the name_and_describe tool to create an appropriate preset name
+- Use the name_and_describe tool to create an appropriate preset name and confidence level
+
+CONFIDENCE CALCULATION:
+- Assess how well you can match the reference style (0.0 = poor match, 1.0 = perfect match)
+- Consider: clarity of reference images, distinctiveness of style, complexity of adjustments needed
+- Higher confidence (0.7-1.0): Clear reference images with distinctive, achievable styles
+- Medium confidence (0.4-0.7): Good reference images but complex or subtle style differences
+- Lower confidence (0.1-0.4): Unclear references, very subtle styles, or complex multi-style combinations
+- Always provide a confidence value between 0.0 and 1.0
 
 CRITICAL TOOL USAGE REQUIREMENTS:
 - You MUST use the available tools to complete your task
