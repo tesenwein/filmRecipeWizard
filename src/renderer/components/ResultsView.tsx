@@ -851,8 +851,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
             <Tab icon={<CompareArrowsIcon />} label="Overview" iconPosition="start" />
             <Tab icon={<TuneIcon />} label="Recipe Analysis" iconPosition="start" />
             <Tab icon={<DownloadIcon />} label="Lightroom Export" iconPosition="start" />
-            <Tab icon={<DownloadIcon />} label="Capture One Export" iconPosition="start" />
-            <Tab icon={<PaletteIcon />} label="LUT Export" iconPosition="start" />
+            <Tab icon={<DownloadIcon />} label="Capture One Export (Alpha)" iconPosition="start" />
+            <Tab icon={<DownloadIcon />} label="LUT Export" iconPosition="start" />
             {author && (author.firstName || author.lastName) && <Tab icon={<PersonOutlineIcon />} label="Author" iconPosition="start" />}
           </Tabs>
 
@@ -1293,7 +1293,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                   <Box>
                     <Typography variant="h5" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <DownloadIcon color="primary" />
-                      Capture One Export
+                      Capture One Export (Alpha)
                     </Typography>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1412,7 +1412,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                 {activeTab === 4 && (
                   <Box>
                     <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <PaletteIcon color="primary" />
+                      <DownloadIcon color="primary" />
                       LUT Export
                     </Typography>
 

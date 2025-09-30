@@ -218,27 +218,6 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
   ],
   Editorial: [
     {
-      key: 'aavedon',
-      name: 'Richard Avedon',
-      category: 'Editorial',
-      blurb: 'Minimal backgrounds, crisp tones, expressive portraiture, high-key balance.',
-      prompt: 'Create minimal backgrounds with crisp tones and high-key balance. Use moderate contrast (contrast: +15 to +25) with clean, crisp detail. Apply high-key lighting with lifted shadows (shadows: +20 to +30) and bright highlights. Use clarity (+15 to +25) for crisp tones. Focus on expressive portraiture with minimal, clean backgrounds and balanced high-key lighting.'
-    },
-    {
-      key: 'newton',
-      name: 'Helmut Newton',
-      category: 'Editorial',
-      blurb: 'High-contrast fashion noir, glossy monochrome, bold highlights and shadows.',
-      prompt: 'Create high-contrast fashion noir with glossy monochrome. Use extreme contrast (contrast: +40 to +60) with bold highlights and deep shadows. Apply S-curve tone curves with strong compression (0,0 to 15,5) and (200,200 to 255,235). Use clarity (+25 to +35) for glossy effect. Focus on dramatic fashion lighting with bold, graphic compositions and strong shadow/highlight separation.'
-    },
-    {
-      key: 'testino',
-      name: 'Mario Testino',
-      category: 'Editorial',
-      blurb: 'Polished color fashion, luminous skin tones, bright and energetic palette.',
-      prompt: 'Create polished color fashion with luminous skin tones. Use bright, energetic palette with high saturation (saturation: +20 to +35). Apply warm color grading for skin tones (midtones: +15 hue, +10 saturation). Use moderate contrast (contrast: +15 to +25) with bright highlights (highlights: +10 to +20). Add vibrance (+20 to +30) for luminous effect. Focus on polished fashion lighting with bright, energetic compositions.'
-    },
-    {
       key: 'timwalker',
       name: 'Tim Walker',
       category: 'Editorial',
@@ -272,64 +251,78 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
       category: 'Editorial',
       blurb: 'Raw energy, high contrast, bold grain, dynamic composition and movement.',
       prompt: 'Create raw energy with high contrast and bold grain. Use extreme contrast (contrast: +40 to +60) with bold grain (grain_amount: 30-50, grain_size: 20-30). Apply S-curve tone curves with strong shadow compression (0,0 to 15,5) and highlight compression (200,200 to 255,235). Use clarity (+25 to +35) for dynamic detail. Focus on raw energy with dynamic composition and movement in bold, graphic style.'
+    },
+    {
+      key: 'mccurry_editorial',
+      name: 'Steve McCurry',
+      category: 'Editorial',
+      blurb: 'Documentary editorial style, cultural storytelling, warm tones, human connection.',
+      prompt: 'Create documentary editorial style with cultural storytelling. Use warm color grading (shadows: +15 hue, +10 saturation) with moderate contrast (contrast: +15 to +25). Apply S-curve tone curves with lifted shadows (0,0 to 25,20) for human connection. Use clarity (+10 to +20) for documentary detail. Focus on cultural storytelling with warm tones and human connection in editorial photography style.'
+    },
+    {
+      key: 'leibovitz_editorial',
+      name: 'Annie Leibovitz',
+      category: 'Editorial',
+      blurb: 'Celebrity editorial portraiture, dramatic lighting, controlled composition, iconic moments.',
+      prompt: 'Create celebrity editorial portraiture with dramatic lighting and controlled composition. Use high contrast (contrast: +25 to +40) with dramatic tonal separation. Apply S-curve tone curves with strong shadow compression (0,0 to 15,8) and highlight compression (200,200 to 255,230). Use clarity (+20 to +30) for iconic detail. Focus on dramatic lighting with controlled composition and iconic moments in editorial photography style.'
     }
   ],
   Fashion: [
     {
-      key: 'demarchelier_fashion',
+      key: 'demarchelier',
       name: 'Patrick Demarchelier',
       category: 'Fashion',
       blurb: 'Elegant fashion photography, soft natural light, refined color and composition.',
       prompt: 'Create elegant fashion photography with soft natural light. Use refined color grading with gentle contrast (contrast: +10 to +20) and soft highlights (highlights: -5 to -15). Apply warm color grading (shadows: +10 hue, +5 saturation) for elegant skin tones. Use subtle clarity (+5 to +15) for refined detail. Focus on elegant compositions with soft, natural lighting and refined color harmony.'
     },
     {
-      key: 'weber_fashion',
+      key: 'weber',
       name: 'Bruce Weber',
       category: 'Fashion',
       blurb: 'Natural outdoor fashion, warm golden tones, romantic and nostalgic mood.',
       prompt: 'Create natural outdoor fashion with warm golden tones. Use warm color grading (shadows: +20 hue, +15 saturation) and golden highlights (highlights: +15 hue, +10 saturation). Apply gentle contrast (contrast: +10 to +20) with lifted shadows (shadows: +15 to +25) for romantic mood. Add subtle grain (grain_amount: 10-20) for nostalgic texture. Focus on natural outdoor lighting with warm, golden hour tones and romantic atmosphere.'
     },
     {
-      key: 'bailey_fashion',
+      key: 'bailey',
       name: 'David Bailey',
       category: 'Fashion',
       blurb: 'Raw energy, high contrast, bold composition, iconic 60s fashion aesthetic.',
       prompt: 'Create raw energy with high contrast and bold composition. Use extreme contrast (contrast: +40 to +60) with bold highlights and deep shadows. Apply S-curve tone curves with strong compression (0,0 to 15,5) and (200,200 to 255,235). Use clarity (+25 to +35) for sharp detail. Focus on bold, graphic compositions with strong shadow/highlight separation and iconic 60s fashion aesthetic.'
     },
     {
-      key: 'lindbergh_fashion',
+      key: 'lindbergh',
       name: 'Peter Lindbergh',
       category: 'Fashion',
       blurb: 'Cinematic monochrome fashion, natural light, honest texture, minimal retouching.',
       prompt: 'Create cinematic monochrome fashion with natural lighting. Use high contrast (contrast: +30 to +50) with strong blacks and whites. Apply film grain (grain_amount: 20-40, grain_size: 15-25) for texture. Use S-curve tone curves with lifted shadows (0,0 to 30,15) and compressed highlights (200,200 to 255,230). Add subtle clarity (+5 to +15) for honest texture. Focus on natural lighting with soft shadows and minimal retouching aesthetic.'
     },
     {
-      key: 'testino_fashion',
+      key: 'testino',
       name: 'Mario Testino',
       category: 'Fashion',
       blurb: 'Polished color fashion, luminous skin tones, bright and energetic palette.',
       prompt: 'Create polished color fashion with luminous skin tones. Use bright, energetic palette with high saturation (saturation: +20 to +35). Apply warm color grading for skin tones (midtones: +15 hue, +10 saturation). Use moderate contrast (contrast: +15 to +25) with bright highlights (highlights: +10 to +20). Add vibrance (+20 to +30) for luminous effect. Focus on polished fashion lighting with bright, energetic compositions.'
     },
     {
-      key: 'meisel_fashion',
-      name: 'Steven Meisel',
+      key: 'newton',
+      name: 'Helmut Newton',
       category: 'Fashion',
-      blurb: 'High-fashion editorial, dramatic lighting, bold composition, cinematic quality.',
-      prompt: 'Create high-fashion editorial with dramatic lighting and cinematic quality. Use high contrast (contrast: +25 to +40) with dramatic tonal separation. Apply S-curve tone curves with strong shadow compression (0,0 to 15,8) and highlight compression (200,200 to 255,230). Use clarity (+20 to +30) for cinematic detail. Focus on dramatic lighting with bold composition and cinematic quality for high-fashion editorial work.'
+      blurb: 'High-contrast fashion noir, glossy monochrome, bold highlights and shadows.',
+      prompt: 'Create high-contrast fashion noir with glossy monochrome. Use extreme contrast (contrast: +40 to +60) with bold highlights and deep shadows. Apply S-curve tone curves with strong compression (0,0 to 15,5) and (200,200 to 255,235). Use clarity (+25 to +35) for glossy effect. Focus on dramatic fashion lighting with bold, graphic compositions and strong shadow/highlight separation.'
     },
     {
-      key: 'bourdin_fashion',
-      name: 'Guy Bourdin',
+      key: 'aavedon',
+      name: 'Richard Avedon',
       category: 'Fashion',
-      blurb: 'Surreal fashion imagery, bold color, dramatic composition, provocative storytelling.',
-      prompt: 'Create surreal fashion imagery with bold color and dramatic composition. Use high saturation (saturation: +25 to +40) with dramatic contrast (contrast: +25 to +40). Apply bold color grading with surreal tones (shadows: +15 hue, +15 saturation). Use S-curve tone curves with strong compression (0,0 to 15,8) and (200,200 to 255,230). Use clarity (+20 to +30) for dramatic detail. Focus on surreal compositions with bold color and provocative storytelling.'
+      blurb: 'Minimal backgrounds, crisp tones, expressive portraiture, high-key balance.',
+      prompt: 'Create minimal backgrounds with crisp tones and high-key balance. Use moderate contrast (contrast: +15 to +25) with clean, crisp detail. Apply high-key lighting with lifted shadows (shadows: +20 to +30) and bright highlights. Use clarity (+15 to +25) for crisp tones. Focus on expressive portraiture with minimal, clean backgrounds and balanced high-key lighting.'
     },
     {
-      key: 'klein_fashion',
-      name: 'William Klein',
+      key: 'lagerfeld',
+      name: 'Karl Lagerfeld',
       category: 'Fashion',
-      blurb: 'Raw energy, high contrast, bold grain, dynamic composition and movement.',
-      prompt: 'Create raw energy with high contrast and bold grain. Use extreme contrast (contrast: +40 to +60) with bold grain (grain_amount: 30-50, grain_size: 20-30). Apply S-curve tone curves with strong shadow compression (0,0 to 15,5) and highlight compression (200,200 to 255,235). Use clarity (+25 to +35) for dynamic detail. Focus on raw energy with dynamic composition and movement in bold, graphic style.'
+      blurb: 'Sophisticated fashion photography, clean lines, minimalist aesthetic, refined elegance.',
+      prompt: 'Create sophisticated fashion photography with clean lines and minimalist aesthetic. Use refined color grading with gentle contrast (contrast: +10 to +20) and clean highlights. Apply minimalist color grading (shadows: +5 hue, +5 saturation) for sophisticated tones. Use subtle clarity (+5 to +15) for refined detail. Focus on clean lines with minimalist compositions and sophisticated elegance in fashion photography style.'
     }
   ]
 };

@@ -125,6 +125,7 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 
 ### 📤 **Export Formats & Compatibility**
 - **Lightroom XMP Presets**: Direct import to Adobe Lightroom Classic & CC
+- **Capture One Styles (.costyle)**: *Alpha* - Direct import to Capture One (includes full mask support)
 - **3D LUTs (.cube)**: Compatible with Premiere Pro, Final Cut Pro, DaVinci Resolve, After Effects
 - **Batch Processing**: Process up to 3 target images simultaneously
 - **Cross-Platform**: macOS (Intel & Apple Silicon) and Windows support
@@ -141,7 +142,7 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 
 1. **Setup**: Add your [OpenAI API key](https://platform.openai.com/api-keys) in Settings
 2. **Create**: Upload target photos and describe your desired style
-3. **Export**: Generate Lightroom XMP presets or 3D LUTs for your workflow
+3. **Export**: Generate Lightroom XMP presets, Capture One styles (Alpha), or 3D LUTs for your workflow
 
 ## ⚠️ macOS Installation Note
 
