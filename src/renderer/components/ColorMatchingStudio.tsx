@@ -9,6 +9,7 @@ import FilmStylesCard from './FilmStylesCard';
 import FineTuneControls from './FineTuneControls';
 import ImagePicker from './ImagePicker';
 import ProcessButton from './ProcessButton';
+import StyleCategoriesCard from './StyleCategoriesCard';
 import StyleDescriptionCard from './StyleDescriptionCard';
 
 interface ColorMatchingStudioProps {
@@ -309,6 +310,9 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             <StyleDescriptionCard
               prompt={prompt}
               onPromptChange={onPromptChange}
+            />
+
+            <StyleCategoriesCard
               selectedStyleCategories={styleOptions?.styleCategories}
               onStyleCategoriesChange={handleStyleCategoriesChange}
             />
