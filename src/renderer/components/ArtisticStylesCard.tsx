@@ -71,7 +71,15 @@ const ArtisticStylesCard: React.FC<ArtisticStylesCardProps> = ({ selected, onSel
                           <Typography variant="body2" sx={{ fontWeight: 700, color: '#2c3338' }} noWrap>
                             {item.name}
                           </Typography>
-                          <Chip size="small" label={item.category} variant="outlined" sx={{ height: 20, fontSize: 11 }} />
+                          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                            <Chip 
+                              size="small" 
+                              label={item.colorType === 'monochrome' ? 'B&W' : 'Color'} 
+                              variant="outlined" 
+                              color={item.colorType === 'monochrome' ? 'secondary' : 'primary'} 
+                              sx={{ height: 20, fontSize: 11 }} 
+                            />
+                          </Box>
                         </Box>
                         <Typography
                           variant="caption"

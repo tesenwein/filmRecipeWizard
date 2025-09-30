@@ -953,7 +953,15 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                               {processOptions.artistStyle?.name && (
-                                <Chip label={`Artist: ${processOptions.artistStyle.name}`} variant="outlined" />
+                                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                                  <Chip label={`Artist: ${processOptions.artistStyle.name}`} variant="outlined" />
+                                  <Chip 
+                                    label={processOptions.artistStyle.colorType === 'monochrome' ? 'B&W' : 'Color'} 
+                                    variant="outlined" 
+                                    color={processOptions.artistStyle.colorType === 'monochrome' ? 'secondary' : 'primary'} 
+                                    size="small" 
+                                  />
+                                </Box>
                               )}
                               {processOptions.filmStyle?.name && (
                                 <Chip label={`Film: ${processOptions.filmStyle.name}`} variant="outlined" />

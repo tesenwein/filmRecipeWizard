@@ -36,7 +36,7 @@ export interface StyleOptions {
   faded?: number; // 0-100: 0=vibrant, 50=balanced, 100=very faded/washed out
   
   // Optional artist and film selections
-  artistStyle?: { key: string; name: string; category: string; blurb: string; prompt?: string };
+  artistStyle?: { key: string; name: string; category: string; blurb: string; prompt?: string; colorType?: 'color' | 'monochrome' };
   filmStyle?: { key: string; name: string; category: string; blurb: string; prompt?: string };
 }
 

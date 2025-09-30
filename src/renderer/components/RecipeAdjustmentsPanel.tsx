@@ -150,7 +150,30 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
       )}
 
       <Section title="Style & Options">
-        <Row label="Artist Style" cur={<ValueChip label={str(current.artistStyle?.name)} />} next={<ValueChip label={str(proposed.artistStyle?.name)} color={hasChange(current.artistStyle?.key, proposed.artistStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.artistStyle?.key, proposed.artistStyle?.key)} />
+        <Row label="Artist Style" 
+          cur={
+            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+              <ValueChip label={str(current.artistStyle?.name)} />
+              <Chip 
+                label={current.artistStyle?.colorType === 'monochrome' ? 'B&W' : 'Color'} 
+                variant="outlined" 
+                color={current.artistStyle?.colorType === 'monochrome' ? 'secondary' : 'primary'} 
+                size="small" 
+              />
+            </Box>
+          } 
+          next={
+            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+              <ValueChip label={str(proposed.artistStyle?.name)} color={hasChange(current.artistStyle?.key, proposed.artistStyle?.key) ? 'warning' : 'default'} />
+              <Chip 
+                label={proposed.artistStyle?.colorType === 'monochrome' ? 'B&W' : 'Color'} 
+                variant="outlined" 
+                color={proposed.artistStyle?.colorType === 'monochrome' ? 'secondary' : 'primary'} 
+                size="small" 
+              />
+            </Box>
+          } 
+          isChanged={hasChange(current.artistStyle?.key, proposed.artistStyle?.key)} />
         <Divider sx={{ my: 1 }} />
         <Row label="Film Style" cur={<ValueChip label={str(current.filmStyle?.name)} />} next={<ValueChip label={str(proposed.filmStyle?.name)} color={hasChange(current.filmStyle?.key, proposed.filmStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmStyle?.key, proposed.filmStyle?.key)} />
       </Section>
