@@ -18,14 +18,6 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
       colorType: 'color'
     },
     {
-      key: 'lindbergh',
-      name: 'Peter Lindbergh',
-      category: 'Portrait',
-      blurb: 'Cinematic monochrome, natural light, honest texture, minimal retouching.',
-      prompt: 'Create cinematic monochrome with natural lighting. Use high contrast (contrast: +30 to +50) with strong blacks and whites. Apply film grain (grain_amount: 20-40, grain_size: 15-25) for texture. Use S-curve tone curves with lifted shadows (0,0 to 30,15) and compressed highlights (200,200 to 255,230). Add subtle clarity (+5 to +15) for honest texture. Focus on natural lighting with soft shadows and minimal retouching aesthetic.',
-      colorType: 'monochrome'
-    },
-    {
       key: 'mccurry',
       name: 'Steve McCurry',
       category: 'Portrait',
@@ -57,54 +49,6 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
       prompt: 'Create muted palettes with painterly tones. Use gentle contrast (contrast: +5 to +15) with soft color grading. Apply muted saturation (saturation: -10 to -20) and warm, contemplative tones (shadows: +10 hue, +5 saturation). Use soft S-curve tone curves with lifted shadows (0,0 to 30,25) for painterly effect. Add subtle grain (grain_amount: 10-20) for texture. Focus on contemplative atmosphere with gentle, dreamy lighting.',
       colorType: 'color'
     },
-    {
-      key: 'newton',
-      name: 'Helmut Newton',
-      category: 'Portrait',
-      blurb: 'High-contrast fashion noir, glossy monochrome, bold highlights and shadows.',
-      prompt: 'Create high-contrast fashion noir with glossy monochrome. Use extreme contrast (contrast: +40 to +60) with bold highlights and deep shadows. Apply S-curve tone curves with strong compression (0,0 to 15,5) and (200,200 to 255,235). Use clarity (+25 to +35) for glossy effect. Focus on dramatic fashion lighting with bold, graphic compositions and strong shadow/highlight separation.',
-      colorType: 'monochrome'
-    },
-    {
-      key: 'aavedon',
-      name: 'Richard Avedon',
-      category: 'Portrait',
-      blurb: 'Minimal backgrounds, crisp tones, expressive portraiture, high-key balance.',
-      prompt: 'Create minimal backgrounds with crisp tones and high-key balance. Use moderate contrast (contrast: +15 to +25) with clean, crisp detail. Apply high-key lighting with lifted shadows (shadows: +20 to +30) and bright highlights. Use clarity (+15 to +25) for crisp tones. Focus on expressive portraiture with minimal, clean backgrounds and balanced high-key lighting.',
-      colorType: 'color'
-    },
-    {
-      key: 'testino',
-      name: 'Mario Testino',
-      category: 'Portrait',
-      blurb: 'Polished color fashion, luminous skin tones, bright and energetic palette.',
-      prompt: 'Create polished color fashion with luminous skin tones. Use bright, energetic palette with high saturation (saturation: +20 to +35). Apply warm color grading for skin tones (midtones: +15 hue, +10 saturation). Use moderate contrast (contrast: +15 to +25) with bright highlights (highlights: +10 to +20). Add vibrance (+20 to +30) for luminous effect. Focus on polished fashion lighting with bright, energetic compositions.',
-      colorType: 'color'
-    },
-    {
-      key: 'demarchelier',
-      name: 'Patrick Demarchelier',
-      category: 'Portrait',
-      blurb: 'Elegant fashion portraiture, soft natural light, refined color and composition.',
-      prompt: 'Create elegant fashion portraiture with soft natural light. Use refined color grading with gentle contrast (contrast: +10 to +20) and soft highlights (highlights: -5 to -15). Apply warm color grading (shadows: +10 hue, +5 saturation) for elegant skin tones. Use subtle clarity (+5 to +15) for refined detail. Focus on elegant compositions with soft, natural lighting and refined color harmony.',
-      colorType: 'color'
-    },
-    {
-      key: 'weber',
-      name: 'Bruce Weber',
-      category: 'Portrait',
-      blurb: 'Natural outdoor portraiture, warm golden tones, romantic and nostalgic mood.',
-      prompt: 'Create natural outdoor portraiture with warm golden tones. Use warm color grading (shadows: +20 hue, +15 saturation) and golden highlights (highlights: +15 hue, +10 saturation). Apply gentle contrast (contrast: +10 to +20) with lifted shadows (shadows: +15 to +25) for romantic mood. Add subtle grain (grain_amount: 10-20) for nostalgic texture. Focus on natural outdoor lighting with warm, golden hour tones and romantic atmosphere.',
-      colorType: 'color'
-    },
-    {
-      key: 'bailey',
-      name: 'David Bailey',
-      category: 'Portrait',
-      blurb: 'Raw energy, high contrast, bold composition, iconic 60s fashion aesthetic.',
-      prompt: 'Create raw energy with high contrast and bold composition. Use extreme contrast (contrast: +40 to +60) with bold highlights and deep shadows. Apply S-curve tone curves with strong compression (0,0 to 15,5) and (200,200 to 255,235). Use clarity (+25 to +35) for sharp detail. Focus on bold, graphic compositions with strong shadow/highlight separation and iconic 60s fashion aesthetic.',
-      colorType: 'color'
-    }
   ],
   Landscape: [
     {
@@ -198,14 +142,6 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
       colorType: 'color'
     },
     {
-      key: 'meyerowitz',
-      name: 'Joel Meyerowitz',
-      category: 'Street',
-      blurb: 'Lyrical color street, gentle contrast, ambient light and pastel nuance.',
-      prompt: 'Create lyrical color street photography with gentle contrast and pastel nuance. Use gentle contrast (contrast: +5 to +15) with pastel color grading (saturation: -5 to -15). Apply soft S-curve tone curves with lifted shadows (0,0 to 30,25) and soft highlights (highlights: -5 to -10). Use subtle clarity (+5 to +15) for lyrical detail. Focus on ambient light with pastel nuance and lyrical color street photography aesthetics.',
-      colorType: 'color'
-    },
-    {
       key: 'winogrand',
       name: 'Garry Winogrand',
       category: 'Street',
@@ -230,21 +166,13 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
       colorType: 'color'
     },
     {
-      key: 'levitt',
-      name: 'Helen Levitt',
-      category: 'Street',
-      blurb: 'Intimate street moments, children at play, natural light, gentle contrast.',
-      prompt: 'Create intimate street moments with natural light and gentle contrast. Use gentle contrast (contrast: +5 to +15) with natural exposure. Apply soft S-curve tone curves with lifted shadows (0,0 to 30,25) and soft highlights (highlights: -5 to -10). Use subtle clarity (+5 to +15) for intimate detail. Focus on natural light with intimate street moments and gentle contrast for human warmth.',
-      colorType: 'color'
-    },
-    {
       key: 'parks',
       name: 'Gordon Parks',
       category: 'Street',
       blurb: 'Social documentary, powerful storytelling, balanced tones, human dignity.',
       prompt: 'Create social documentary with powerful storytelling and human dignity. Use balanced tones with moderate contrast (contrast: +10 to +20). Apply balanced S-curve tone curves with lifted shadows (0,0 to 25,20) and balanced highlights. Use clarity (+10 to +20) for documentary detail. Focus on powerful storytelling with balanced tones and social documentary aesthetics that emphasize human dignity.',
       colorType: 'monochrome'
-    }
+    },
   ],
   Editorial: [
     {
@@ -256,53 +184,29 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
       colorType: 'color'
     },
     {
-      key: 'unwerth',
-      name: 'Ellen von Unwerth',
+      key: 'mapplethorpe',
+      name: 'Robert Mapplethorpe',
       category: 'Editorial',
-      blurb: 'Playful high-fashion energy, punchy contrast, sensual monochrome or vivid color.',
-      prompt: 'Create playful high-fashion energy with punchy contrast. Use high contrast (contrast: +25 to +40) with punchy tonal separation. Apply S-curve tone curves with moderate compression (0,0 to 20,10) and (200,200 to 255,230). Use clarity (+20 to +30) for punchy detail. For color: use vivid saturation (+20 to +35). For monochrome: use high contrast with sculpted tones. Focus on playful compositions with punchy contrast and high-fashion energy.',
-      colorType: 'color'
-    },
-    {
-      key: 'meisel',
-      name: 'Steven Meisel',
-      category: 'Editorial',
-      blurb: 'High-fashion editorial, dramatic lighting, bold composition, cinematic quality.',
-      prompt: 'Create high-fashion editorial with dramatic lighting and cinematic quality. Use high contrast (contrast: +25 to +40) with dramatic tonal separation. Apply S-curve tone curves with strong shadow compression (0,0 to 15,8) and highlight compression (200,200 to 255,230). Use clarity (+20 to +30) for cinematic detail. Focus on dramatic lighting with bold composition and cinematic quality for high-fashion editorial work.',
-      colorType: 'color'
-    },
-    {
-      key: 'bourdin',
-      name: 'Guy Bourdin',
-      category: 'Editorial',
-      blurb: 'Surreal fashion imagery, bold color, dramatic composition, provocative storytelling.',
-      prompt: 'Create surreal fashion imagery with bold color and dramatic composition. Use high saturation (saturation: +25 to +40) with dramatic contrast (contrast: +25 to +40). Apply bold color grading with surreal tones (shadows: +15 hue, +15 saturation). Use S-curve tone curves with strong compression (0,0 to 15,8) and (200,200 to 255,230). Use clarity (+20 to +30) for dramatic detail. Focus on surreal compositions with bold color and provocative storytelling.',
-      colorType: 'color'
-    },
-    {
-      key: 'klein',
-      name: 'William Klein',
-      category: 'Editorial',
-      blurb: 'Raw energy, high contrast, bold grain, dynamic composition and movement.',
-      prompt: 'Create raw energy with high contrast and bold grain. Use extreme contrast (contrast: +40 to +60) with bold grain (grain_amount: 30-50, grain_size: 20-30). Apply S-curve tone curves with strong shadow compression (0,0 to 15,5) and highlight compression (200,200 to 255,235). Use clarity (+25 to +35) for dynamic detail. Focus on raw energy with dynamic composition and movement in bold, graphic style.',
+      blurb: 'Provocative editorial photography, high contrast, bold composition, controversial storytelling.',
+      prompt: 'Create provocative editorial photography with high contrast and bold composition. Use extreme contrast (contrast: +40 to +60) with bold highlights and deep shadows. Apply S-curve tone curves with strong compression (0,0 to 15,5) and (200,200 to 255,235). Use clarity (+25 to +35) for bold detail. Focus on provocative compositions with controversial storytelling and bold editorial aesthetics.',
       colorType: 'monochrome'
     },
     {
-      key: 'mccurry_editorial',
-      name: 'Steve McCurry',
+      key: 'aaron',
+      name: 'Sidney Aaron',
       category: 'Editorial',
-      blurb: 'Documentary editorial style, cultural storytelling, warm tones, human connection.',
-      prompt: 'Create documentary editorial style with cultural storytelling. Use warm color grading (shadows: +15 hue, +10 saturation) with moderate contrast (contrast: +15 to +25). Apply S-curve tone curves with lifted shadows (0,0 to 25,20) for human connection. Use clarity (+10 to +20) for documentary detail. Focus on cultural storytelling with warm tones and human connection in editorial photography style.',
-      colorType: 'color'
+      blurb: 'Documentary editorial style, social commentary, balanced tones, human dignity.',
+      prompt: 'Create documentary editorial style with social commentary and human dignity. Use balanced tones with moderate contrast (contrast: +10 to +20). Apply balanced S-curve tone curves with lifted shadows (0,0 to 25,20) and balanced highlights. Use clarity (+10 to +20) for documentary detail. Focus on social commentary with balanced tones and documentary editorial aesthetics that emphasize human dignity.',
+      colorType: 'monochrome'
     },
     {
-      key: 'leibovitz_editorial',
-      name: 'Annie Leibovitz',
+      key: 'goldin',
+      name: 'Nan Goldin',
       category: 'Editorial',
-      blurb: 'Celebrity editorial portraiture, dramatic lighting, controlled composition, iconic moments.',
-      prompt: 'Create celebrity editorial portraiture with dramatic lighting and controlled composition. Use high contrast (contrast: +25 to +40) with dramatic tonal separation. Apply S-curve tone curves with strong shadow compression (0,0 to 15,8) and highlight compression (200,200 to 255,230). Use clarity (+20 to +30) for iconic detail. Focus on dramatic lighting with controlled composition and iconic moments in editorial photography style.',
+      blurb: 'Intimate editorial photography, raw emotion, candid moments, personal storytelling.',
+      prompt: 'Create intimate editorial photography with raw emotion and candid moments. Use moderate contrast (contrast: +15 to +25) with emotional color grading. Apply S-curve tone curves with lifted shadows (0,0 to 25,20) for intimate detail. Use subtle clarity (+5 to +15) for personal storytelling. Focus on raw emotion with candid moments and intimate editorial photography aesthetics.',
       colorType: 'color'
-    }
+    },
   ],
   Fashion: [
     {
@@ -367,6 +271,30 @@ export const ARTIST_STYLES: Record<string, ArtistStyle[]> = {
       category: 'Fashion',
       blurb: 'Sophisticated fashion photography, clean lines, minimalist aesthetic, refined elegance.',
       prompt: 'Create sophisticated fashion photography with clean lines and minimalist aesthetic. Use refined color grading with gentle contrast (contrast: +10 to +20) and clean highlights. Apply minimalist color grading (shadows: +5 hue, +5 saturation) for sophisticated tones. Use subtle clarity (+5 to +15) for refined detail. Focus on clean lines with minimalist compositions and sophisticated elegance in fashion photography style.',
+      colorType: 'color'
+    },
+    {
+      key: 'bourdin',
+      name: 'Guy Bourdin',
+      category: 'Fashion',
+      blurb: 'Surreal fashion imagery, bold color, dramatic composition, provocative storytelling.',
+      prompt: 'Create surreal fashion imagery with bold color and dramatic composition. Use high saturation (saturation: +25 to +40) with dramatic contrast (contrast: +25 to +40). Apply bold color grading with surreal tones (shadows: +15 hue, +15 saturation). Use S-curve tone curves with strong compression (0,0 to 15,8) and (200,200 to 255,230). Use clarity (+20 to +30) for dramatic detail. Focus on surreal compositions with bold color and provocative storytelling.',
+      colorType: 'color'
+    },
+    {
+      key: 'unwerth',
+      name: 'Ellen von Unwerth',
+      category: 'Fashion',
+      blurb: 'Playful high-fashion energy, punchy contrast, sensual monochrome or vivid color.',
+      prompt: 'Create playful high-fashion energy with punchy contrast. Use high contrast (contrast: +25 to +40) with punchy tonal separation. Apply S-curve tone curves with moderate compression (0,0 to 20,10) and (200,200 to 255,230). Use clarity (+20 to +30) for punchy detail. For color: use vivid saturation (+20 to +35). For monochrome: use high contrast with sculpted tones. Focus on playful compositions with punchy contrast and high-fashion energy.',
+      colorType: 'color'
+    },
+    {
+      key: 'meisel',
+      name: 'Steven Meisel',
+      category: 'Fashion',
+      blurb: 'High-fashion photography, dramatic lighting, bold composition, cinematic quality.',
+      prompt: 'Create high-fashion photography with dramatic lighting and cinematic quality. Use high contrast (contrast: +25 to +40) with dramatic tonal separation. Apply S-curve tone curves with strong shadow compression (0,0 to 15,8) and highlight compression (200,200 to 255,230). Use clarity (+20 to +30) for cinematic detail. Focus on dramatic lighting with bold composition and cinematic quality for high-fashion photography.',
       colorType: 'color'
     }
   ]
