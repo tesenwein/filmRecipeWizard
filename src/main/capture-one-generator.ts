@@ -1,6 +1,6 @@
 import type { AIColorAdjustments } from '../services/types';
 import { convertRecipeToMasks } from '../shared/mask-converter';
-import { getMaskConfig, normalizeMaskType } from '../shared/mask-types';
+import { normalizeMaskType } from '../shared/mask-types';
 
 /**
  * Generates Capture One style (.costyle) content based on AI adjustments
@@ -225,7 +225,6 @@ function generateMasksXML(masks: any[]): string {
 
   const maskElements = masks.map((mask, index) => {
     const maskType = normalizeMaskType(mask.type || 'subject');
-    const maskConfig = getMaskConfig(maskType);
     const adjustments = mask.adjustments || {};
     
     // Generate unique ID for the mask

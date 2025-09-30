@@ -21,16 +21,16 @@ export class ExportManager {
       type: 'lightroom-preset',
       settingsPath: 'lightroomProfilePath',
       fileExtension: 'xmp',
-      generateContent: (adjustments: any, include?: any, recipeName?: string) => generateXMPContent(adjustments, include),
+      generateContent: (adjustments: any, include?: any, _recipeName?: string) => generateXMPContent(adjustments, include),
       defaultFilename: (recipeName) => `${recipeName || 'Custom-Preset'}.xmp`,
     },
     'lightroom-profile': {
       type: 'lightroom-profile',
       settingsPath: 'lightroomProfilePath',
       fileExtension: 'xmp',
-      generateContent: async (adjustments: any, include?: any, recipeName?: string, imageProcessor?: ImageProcessor) => {
+      generateContent: async (adjustments: any, include?: any, _recipeName?: string, imageProcessor?: ImageProcessor) => {
         if (!imageProcessor) throw new Error('ImageProcessor required for profile generation');
-        const result = await imageProcessor.generateCameraProfile({ adjustments, recipeName });
+        const result = await imageProcessor.generateCameraProfile({ adjustments, recipeName: _recipeName });
         return result.xmpContent || '';
       },
       defaultFilename: (recipeName) => `${recipeName || 'Custom-Profile'}-Profile.xmp`,
@@ -39,7 +39,7 @@ export class ExportManager {
       type: 'capture-one-style',
       settingsPath: 'captureOneStylesPath',
       fileExtension: 'costyle',
-      generateContent: (adjustments: any, include?: any, recipeName?: string) => {
+      generateContent: (adjustments: any, include?: any, _recipeName?: string) => {
         const config = {
           basic: true,
           hsl: true,
@@ -57,7 +57,7 @@ export class ExportManager {
       type: 'capture-one-basic-style',
       settingsPath: 'captureOneStylesPath',
       fileExtension: 'costyle',
-      generateContent: (adjustments: any, include?: any, recipeName?: string) => {
+      generateContent: (adjustments: any, include?: any, _recipeName?: string) => {
         const config = {
           basic: true,
           hsl: false,
