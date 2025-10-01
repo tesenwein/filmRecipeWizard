@@ -87,7 +87,18 @@ export class RecipeModificationService {
 
         const gen = await (window.electronAPI as any).generateXmpContent({
           adjustments: adjForExport,
-          include: { strength: 1.0 },
+          include: {
+            basic: true,
+            hsl: true,
+            colorGrading: true,
+            curves: true,
+            pointColor: true,
+            grain: true,
+            vignette: true,
+            masks: true,
+            exposure: false,
+            sharpenNoise: false,
+          },
           recipeName: currentState.processName,
         });
 

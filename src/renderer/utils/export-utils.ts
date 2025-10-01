@@ -42,6 +42,18 @@ export async function downloadLightroomPreset(adjustments: any, recipeName?: str
     type: 'lightroom-preset',
     action: 'download',
     adjustments,
+    include: {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }
@@ -51,6 +63,18 @@ export async function downloadLightroomProfile(adjustments: any, recipeName?: st
     type: 'lightroom-profile',
     action: 'download',
     adjustments,
+    include: {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }
@@ -60,7 +84,18 @@ export async function downloadCaptureOneStyle(adjustments: any, include?: any, r
     type: 'capture-one-style',
     action: 'download',
     adjustments,
-    include,
+    include: include || {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }
@@ -70,7 +105,18 @@ export async function downloadCaptureOneBasicStyle(adjustments: any, include?: a
     type: 'capture-one-basic-style',
     action: 'download',
     adjustments,
-    include,
+    include: include || {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }
@@ -80,6 +126,18 @@ export async function saveLightroomPresetToFolder(adjustments: any, recipeName?:
     type: 'lightroom-preset',
     action: 'save-to-folder',
     adjustments,
+    include: {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }
@@ -89,6 +147,18 @@ export async function saveLightroomProfileToFolder(adjustments: any, recipeName?
     type: 'lightroom-profile',
     action: 'save-to-folder',
     adjustments,
+    include: {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }
@@ -98,7 +168,18 @@ export async function saveCaptureOneStyleToFolder(adjustments: any, include?: an
     type: 'capture-one-style',
     action: 'save-to-folder',
     adjustments,
-    include,
+    include: include || {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }
@@ -108,7 +189,18 @@ export async function saveCaptureOneBasicStyleToFolder(adjustments: any, include
     type: 'capture-one-basic-style',
     action: 'save-to-folder',
     adjustments,
-    include,
+    include: include || {
+      basic: true,
+      hsl: true,
+      colorGrading: true,
+      curves: true,
+      pointColor: true,
+      grain: true,
+      vignette: true,
+      masks: true,
+      exposure: false,
+      sharpenNoise: false,
+    },
     recipeName
   });
 }

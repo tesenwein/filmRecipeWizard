@@ -63,17 +63,23 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
   const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
 
-  // Use raw values directly - no scaling needed
+  // Helper function to provide default values when adjustments are undefined
+  const withDefault = (v: any, def: number): number => {
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    return def;
+  };
+
+  // Use raw values with meaningful defaults that create subtle visible effects
   const basicToneValues = {
-    exposure: aiAdjustments.exposure,
-    contrast: aiAdjustments.contrast,
-    highlights: aiAdjustments.highlights,
-    shadows: aiAdjustments.shadows,
-    whites: aiAdjustments.whites,
-    blacks: aiAdjustments.blacks,
-    clarity: aiAdjustments.clarity,
-    vibrance: aiAdjustments.vibrance,
-    saturation: aiAdjustments.saturation,
+    exposure: withDefault(aiAdjustments.exposure, 0.1), // Slight exposure boost
+    contrast: withDefault(aiAdjustments.contrast, 5), // Subtle contrast increase
+    highlights: withDefault(aiAdjustments.highlights, -10), // Slight highlight reduction
+    shadows: withDefault(aiAdjustments.shadows, 10), // Slight shadow lift
+    whites: withDefault(aiAdjustments.whites, -5), // Slight white point reduction
+    blacks: withDefault(aiAdjustments.blacks, 5), // Slight black point lift
+    clarity: withDefault(aiAdjustments.clarity, 10), // Subtle clarity boost
+    vibrance: withDefault(aiAdjustments.vibrance, 5), // Slight vibrance increase
+    saturation: withDefault(aiAdjustments.saturation, 0), // Keep saturation neutral
   };
 
   const presetName = aiAdjustments.preset_name || (include?.recipeName as string) || 'Custom Recipe';
@@ -112,13 +118,13 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
 
   const parametricCurvesBlock = inc.curves
     ? [
-        tag('ParametricShadows', round(clamp((aiAdjustments as any).parametric_shadows, -100, 100))),
-        tag('ParametricDarks', round(clamp((aiAdjustments as any).parametric_darks, -100, 100))),
-        tag('ParametricLights', round(clamp((aiAdjustments as any).parametric_lights, -100, 100))),
-        tag('ParametricHighlights', round(clamp((aiAdjustments as any).parametric_highlights, -100, 100))),
-        tag('ParametricShadowSplit', round(clamp((aiAdjustments as any).parametric_shadow_split, 0, 100))),
-        tag('ParametricMidtoneSplit', round(clamp((aiAdjustments as any).parametric_midtone_split, 0, 100))),
-        tag('ParametricHighlightSplit', round(clamp((aiAdjustments as any).parametric_highlight_split, 0, 100))),
+        tag('ParametricShadows', round(clamp(withDefault((aiAdjustments as any).parametric_shadows, 0), -100, 100))),
+        tag('ParametricDarks', round(clamp(withDefault((aiAdjustments as any).parametric_darks, 0), -100, 100))),
+        tag('ParametricLights', round(clamp(withDefault((aiAdjustments as any).parametric_lights, 0), -100, 100))),
+        tag('ParametricHighlights', round(clamp(withDefault((aiAdjustments as any).parametric_highlights, 0), -100, 100))),
+        tag('ParametricShadowSplit', round(clamp(withDefault((aiAdjustments as any).parametric_shadow_split, 25), 0, 100))),
+        tag('ParametricMidtoneSplit', round(clamp(withDefault((aiAdjustments as any).parametric_midtone_split, 50), 0, 100))),
+        tag('ParametricHighlightSplit', round(clamp(withDefault((aiAdjustments as any).parametric_highlight_split, 75), 0, 100))),
       ].join('')
     : '';
 
@@ -129,30 +135,30 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   // HSL only applies to color treatment; B&W uses GrayMixer tags
   // HSL values should be attributes on the rdf:Description element, not separate elements
   const hslValues = inc.hsl && !isBW ? {
-    hue_red: aiAdjustments.hue_red,
-    hue_orange: aiAdjustments.hue_orange,
-    hue_yellow: aiAdjustments.hue_yellow,
-    hue_green: aiAdjustments.hue_green,
-    hue_aqua: aiAdjustments.hue_aqua,
-    hue_blue: aiAdjustments.hue_blue,
-    hue_purple: aiAdjustments.hue_purple,
-    hue_magenta: aiAdjustments.hue_magenta,
-    sat_red: aiAdjustments.sat_red,
-    sat_orange: aiAdjustments.sat_orange,
-    sat_yellow: aiAdjustments.sat_yellow,
-    sat_green: aiAdjustments.sat_green,
-    sat_aqua: aiAdjustments.sat_aqua,
-    sat_blue: aiAdjustments.sat_blue,
-    sat_purple: aiAdjustments.sat_purple,
-    sat_magenta: aiAdjustments.sat_magenta,
-    lum_red: aiAdjustments.lum_red,
-    lum_orange: aiAdjustments.lum_orange,
-    lum_yellow: aiAdjustments.lum_yellow,
-    lum_green: aiAdjustments.lum_green,
-    lum_aqua: aiAdjustments.lum_aqua,
-    lum_blue: aiAdjustments.lum_blue,
-    lum_purple: aiAdjustments.lum_purple,
-    lum_magenta: aiAdjustments.lum_magenta,
+    hue_red: withDefault(aiAdjustments.hue_red, 0),
+    hue_orange: withDefault(aiAdjustments.hue_orange, 0),
+    hue_yellow: withDefault(aiAdjustments.hue_yellow, 0),
+    hue_green: withDefault(aiAdjustments.hue_green, 0),
+    hue_aqua: withDefault(aiAdjustments.hue_aqua, 0),
+    hue_blue: withDefault(aiAdjustments.hue_blue, 0),
+    hue_purple: withDefault(aiAdjustments.hue_purple, 0),
+    hue_magenta: withDefault(aiAdjustments.hue_magenta, 0),
+    sat_red: withDefault(aiAdjustments.sat_red, 0),
+    sat_orange: withDefault(aiAdjustments.sat_orange, 0),
+    sat_yellow: withDefault(aiAdjustments.sat_yellow, 0),
+    sat_green: withDefault(aiAdjustments.sat_green, 0),
+    sat_aqua: withDefault(aiAdjustments.sat_aqua, 0),
+    sat_blue: withDefault(aiAdjustments.sat_blue, 0),
+    sat_purple: withDefault(aiAdjustments.sat_purple, 0),
+    sat_magenta: withDefault(aiAdjustments.sat_magenta, 0),
+    lum_red: withDefault(aiAdjustments.lum_red, 0),
+    lum_orange: withDefault(aiAdjustments.lum_orange, 0),
+    lum_yellow: withDefault(aiAdjustments.lum_yellow, 0),
+    lum_green: withDefault(aiAdjustments.lum_green, 0),
+    lum_aqua: withDefault(aiAdjustments.lum_aqua, 0),
+    lum_blue: withDefault(aiAdjustments.lum_blue, 0),
+    lum_purple: withDefault(aiAdjustments.lum_purple, 0),
+    lum_magenta: withDefault(aiAdjustments.lum_magenta, 0),
   } : {};
   const hslAttrs = inc.hsl && !isBW
     ? [
@@ -185,20 +191,20 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
 
   // Color Grading block
   const colorGradingValues = inc.colorGrading ? {
-    color_grade_shadow_hue: aiAdjustments.color_grade_shadow_hue,
-    color_grade_shadow_sat: aiAdjustments.color_grade_shadow_sat,
-    color_grade_shadow_lum: aiAdjustments.color_grade_shadow_lum,
-    color_grade_midtone_hue: aiAdjustments.color_grade_midtone_hue,
-    color_grade_midtone_sat: aiAdjustments.color_grade_midtone_sat,
-    color_grade_midtone_lum: aiAdjustments.color_grade_midtone_lum,
-    color_grade_highlight_hue: aiAdjustments.color_grade_highlight_hue,
-    color_grade_highlight_sat: aiAdjustments.color_grade_highlight_sat,
-    color_grade_highlight_lum: aiAdjustments.color_grade_highlight_lum,
-    color_grade_global_hue: aiAdjustments.color_grade_global_hue,
-    color_grade_global_sat: aiAdjustments.color_grade_global_sat,
-    color_grade_global_lum: aiAdjustments.color_grade_global_lum,
-    color_grade_blending: aiAdjustments.color_grade_blending,
-    color_grade_balance: aiAdjustments.color_grade_balance,
+    color_grade_shadow_hue: withDefault(aiAdjustments.color_grade_shadow_hue, 0),
+    color_grade_shadow_sat: withDefault(aiAdjustments.color_grade_shadow_sat, 0),
+    color_grade_shadow_lum: withDefault(aiAdjustments.color_grade_shadow_lum, 0),
+    color_grade_midtone_hue: withDefault(aiAdjustments.color_grade_midtone_hue, 0),
+    color_grade_midtone_sat: withDefault(aiAdjustments.color_grade_midtone_sat, 0),
+    color_grade_midtone_lum: withDefault(aiAdjustments.color_grade_midtone_lum, 0),
+    color_grade_highlight_hue: withDefault(aiAdjustments.color_grade_highlight_hue, 0),
+    color_grade_highlight_sat: withDefault(aiAdjustments.color_grade_highlight_sat, 0),
+    color_grade_highlight_lum: withDefault(aiAdjustments.color_grade_highlight_lum, 0),
+    color_grade_global_hue: withDefault(aiAdjustments.color_grade_global_hue, 0),
+    color_grade_global_sat: withDefault(aiAdjustments.color_grade_global_sat, 0),
+    color_grade_global_lum: withDefault(aiAdjustments.color_grade_global_lum, 0),
+    color_grade_blending: withDefault(aiAdjustments.color_grade_blending, 0),
+    color_grade_balance: withDefault(aiAdjustments.color_grade_balance, 0),
   } : {};
   const colorGradingBlock = inc.colorGrading
     ? [
@@ -221,14 +227,14 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
 
   // Black & White Mix block (GrayMixer*) when in monochrome
   const bwMixerValues = isBW ? {
-    gray_red: aiAdjustments.gray_red,
-    gray_orange: aiAdjustments.gray_orange,
-    gray_yellow: aiAdjustments.gray_yellow,
-    gray_green: aiAdjustments.gray_green,
-    gray_aqua: aiAdjustments.gray_aqua,
-    gray_blue: aiAdjustments.gray_blue,
-    gray_purple: aiAdjustments.gray_purple,
-    gray_magenta: aiAdjustments.gray_magenta,
+    gray_red: withDefault(aiAdjustments.gray_red, 0),
+    gray_orange: withDefault(aiAdjustments.gray_orange, 0),
+    gray_yellow: withDefault(aiAdjustments.gray_yellow, 0),
+    gray_green: withDefault(aiAdjustments.gray_green, 0),
+    gray_aqua: withDefault(aiAdjustments.gray_aqua, 0),
+    gray_blue: withDefault(aiAdjustments.gray_blue, 0),
+    gray_purple: withDefault(aiAdjustments.gray_purple, 0),
+    gray_magenta: withDefault(aiAdjustments.gray_magenta, 0),
   } : {};
   const bwMixerBlock = isBW
     ? [
@@ -263,21 +269,21 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   // Grain block
   const grainBlock = inc.grain
     ? [
-        tag('GrainAmount', round(clamp((aiAdjustments as any).grain_amount, 0, 100))),
-        tag('GrainSize', round(clamp((aiAdjustments as any).grain_size, 0, 100))),
-        tag('GrainFrequency', round(clamp((aiAdjustments as any).grain_frequency, 0, 100))),
+        tag('GrainAmount', round(clamp(withDefault((aiAdjustments as any).grain_amount, 0), 0, 100))),
+        tag('GrainSize', round(clamp(withDefault((aiAdjustments as any).grain_size, 0), 0, 100))),
+        tag('GrainFrequency', round(clamp(withDefault((aiAdjustments as any).grain_frequency, 0), 0, 100))),
       ].join('')
     : '';
 
   // Vignette block
   const vignetteBlock = inc.vignette
     ? [
-        tag('PostCropVignetteAmount', round(clamp((aiAdjustments as any).vignette_amount, -100, 100))),
-        tag('PostCropVignetteMidpoint', round(clamp((aiAdjustments as any).vignette_midpoint, 0, 100))),
-        tag('PostCropVignetteFeather', round(clamp((aiAdjustments as any).vignette_feather, 0, 100))),
-        tag('PostCropVignetteRoundness', round(clamp((aiAdjustments as any).vignette_roundness, -100, 100))),
-        tag('PostCropVignetteStyle', round(clamp((aiAdjustments as any).vignette_style, 0, 2))),
-        tag('PostCropVignetteHighlightContrast', round(clamp((aiAdjustments as any).vignette_highlight_contrast, 0, 100))),
+        tag('PostCropVignetteAmount', round(clamp(withDefault((aiAdjustments as any).vignette_amount, 0), -100, 100))),
+        tag('PostCropVignetteMidpoint', round(clamp(withDefault((aiAdjustments as any).vignette_midpoint, 50), 0, 100))),
+        tag('PostCropVignetteFeather', round(clamp(withDefault((aiAdjustments as any).vignette_feather, 50), 0, 100))),
+        tag('PostCropVignetteRoundness', round(clamp(withDefault((aiAdjustments as any).vignette_roundness, 0), -100, 100))),
+        tag('PostCropVignetteStyle', round(clamp(withDefault((aiAdjustments as any).vignette_style, 0), 0, 2))),
+        tag('PostCropVignetteHighlightContrast', round(clamp(withDefault((aiAdjustments as any).vignette_highlight_contrast, 0), 0, 100))),
       ].join('')
     : '';
 
