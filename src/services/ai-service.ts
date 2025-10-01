@@ -48,7 +48,7 @@ export class AIService {
                     ...messages
                 ],
                 tools: tools,
-                tool_choice: 'auto',
+                tool_choice: 'required',
                 max_completion_tokens: 12000
             });
 
