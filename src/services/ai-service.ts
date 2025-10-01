@@ -384,6 +384,7 @@ export class AIService {
 
 CRITICAL REFERENCE IMAGE REQUIREMENTS:
 - When reference images are provided, you MUST analyze them thoroughly
+- You always need to create a profile for the preset. Never return JSON!
 - Create adjustments that precisely match the reference style
 - Use the analyze_color_palette tool to understand the color characteristics
 - Use the generate_global_adjustments tool to create matching adjustments
