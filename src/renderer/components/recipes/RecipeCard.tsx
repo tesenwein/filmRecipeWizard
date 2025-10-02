@@ -1,9 +1,10 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
-import { Button, Card, CardActionArea, CardContent, Checkbox, IconButton, Typography } from '@mui/material';
+import { Box, Button, Card, CardActionArea, CardContent, Checkbox, IconButton, Typography } from '@mui/material';
 import React from 'react';
 import { Recipe } from '../../../shared/types';
 import SingleImage from '../SingleImage';
+import StarRating from './StarRating';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -15,6 +16,7 @@ interface RecipeCardProps {
   onOpenRecipe: (recipe: Recipe) => void;
   onToggleSelect: (recipeId: string) => void;
   onOpenMenu: (e: React.MouseEvent<HTMLElement>, recipeId: string) => void;
+  onRatingChange: (recipeId: string, rating: number) => void;
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({
@@ -27,6 +29,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   onOpenRecipe,
   onToggleSelect,
   onOpenMenu,
+  onRatingChange,
 }) => {
   const formatDate = (timestamp: string) => new Date(timestamp).toLocaleString();
 
@@ -102,6 +105,18 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ mb: 1 }}>
             {(recipe.name && recipe.name.trim().length > 0) ? recipe.name : 'Untitled Recipe'}
           </Typography>
+
+          <Box 
+            sx={{ mb: 1, display: 'flex', justifyContent: 'center' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <StarRating
+              rating={recipe.userRating || 0}
+              onRatingChange={(rating) => onRatingChange(recipe.id, rating)}
+              disabled={isGenerating || selectionMode}
+              size="small"
+            />
+          </Box>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="caption" color="text.secondary">

@@ -12,6 +12,7 @@ interface RecipeGridProps {
   onOpenRecipe: (recipe: Recipe) => void;
   onToggleSelect: (recipeId: string) => void;
   onOpenMenu: (e: React.MouseEvent<HTMLElement>, recipeId: string) => void;
+  onRatingChange: (recipeId: string, rating: number) => void;
 }
 
 const RecipeGrid: React.FC<RecipeGridProps> = ({
@@ -23,6 +24,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
   onOpenRecipe,
   onToggleSelect,
   onOpenMenu,
+  onRatingChange,
 }) => {
   return (
     <Grid container spacing={2}>
@@ -38,6 +40,7 @@ const RecipeGrid: React.FC<RecipeGridProps> = ({
             onOpenRecipe={onOpenRecipe}
             onToggleSelect={onToggleSelect}
             onOpenMenu={onOpenMenu}
+            onRatingChange={onRatingChange}
           />
         </Grid>
       ))}

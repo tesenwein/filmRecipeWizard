@@ -1,12 +1,12 @@
+import DownloadIcon from '@mui/icons-material/Download';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import DownloadIcon from '@mui/icons-material/Download';
-import { Box, Button, FormControl, IconButton, InputAdornment, InputLabel, Menu, MenuItem, Select, Stack, TextField, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Button, FormControl, IconButton, InputAdornment, InputLabel, ListItemIcon, ListItemText, Menu, MenuItem, Select, Stack, TextField } from '@mui/material';
 import React from 'react';
 
-type SortBy = 'newest' | 'oldest' | 'name';
+type SortBy = 'newest' | 'oldest' | 'name' | 'rating';
 
 interface GalleryHeaderProps {
   searchQuery: string;
@@ -82,6 +82,7 @@ const GalleryHeader: React.FC<GalleryHeaderProps> = ({
             <MenuItem value="name">Name</MenuItem>
             <MenuItem value="newest">Newest</MenuItem>
             <MenuItem value="oldest">Oldest</MenuItem>
+            <MenuItem value="rating">Rating</MenuItem>
           </Select>
         </FormControl>
       </Box>

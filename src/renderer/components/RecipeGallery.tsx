@@ -39,13 +39,14 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     importXMP,
     exportRecipe,
     exportAllRecipes,
+    updateRecipeInStorage,
     settings,
     loadSettings
   } = useAppStore();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name' | 'rating'>('newest');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [multiDeleteDialogOpen, setMultiDeleteDialogOpen] = useState(false);
@@ -149,6 +150,14 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
         case 'name':
           return getRecipeName(a).localeCompare(getRecipeName(b));
+        case 'rating':
+          // Sort by rating (highest first), then by newest for unrated recipes
+          const ratingA = a.userRating || 0;
+          const ratingB = b.userRating || 0;
+          if (ratingA !== ratingB) {
+            return ratingB - ratingA;
+          }
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
         default:
           return 0;
       }
@@ -174,6 +183,15 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const handleMenuClose = () => {
     // Only close the menu; keep selectedRecipeId for confirm dialogs
     setAnchorEl(null);
+  };
+
+  const handleRatingChange = async (recipeId: string, rating: number) => {
+    try {
+      await updateRecipeInStorage(recipeId, { userRating: rating });
+    } catch (error) {
+      console.error('Error updating recipe rating:', error);
+      showError('Failed to update rating');
+    }
   };
 
   const handleDeleteRecipe = () => {
@@ -698,8 +716,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
         <GalleryHeader
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          sortBy={sortBy}
-          onSortChange={(v) => setSortBy(v)}
+          sortBy={sortBy as any}
+          onSortChange={(v) => setSortBy(v as any)}
           selectionMode={selectionMode}
           onToggleSelectionMode={handleToggleSelectionMode}
           onNewProcess={onNewProcess}
@@ -795,6 +813,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           onOpenRecipe={onOpenRecipe}
           onToggleSelect={handleSelectRecipe}
           onOpenMenu={handleMenuOpen}
+          onRatingChange={handleRatingChange}
         />
       )}
 
