@@ -150,7 +150,7 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
         case 'name':
           return getRecipeName(a).localeCompare(getRecipeName(b));
-        case 'rating': {
+        case 'rating':
           // Sort by rating (highest first), then by newest for unrated recipes
           const ratingA = a.userRating || 0;
           const ratingB = b.userRating || 0;
@@ -158,7 +158,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             return ratingB - ratingA;
           }
           return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-        }
         default:
           return 0;
       }
