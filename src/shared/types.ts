@@ -68,6 +68,8 @@ export interface Recipe {
   status?: 'generating' | 'completed' | 'failed';
   // Optional author/creator profile attached to the recipe
   author?: UserProfile;
+  // User rating (1-5 stars)
+  userRating?: number;
 }
 
 // Type alias for recipes in storage/persistence context
