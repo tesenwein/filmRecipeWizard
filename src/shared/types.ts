@@ -55,8 +55,6 @@ export interface Recipe {
   userOptions?: StyleOptions;
   // Optional mask overrides proposed/accepted via chat; used to guide next generation
   maskOverrides?: any[];
-  // Optional global adjustment overrides accepted via chat (e.g., grain, vignette)
-  aiAdjustmentOverrides?: { [key: string]: number };
   // Pending modifications proposed via chat awaiting user approval
   pendingModifications?: any;
   // Timestamp when pendingModifications was last updated (ISO)
