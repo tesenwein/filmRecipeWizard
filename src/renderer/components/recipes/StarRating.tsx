@@ -20,7 +20,12 @@ const StarRating: React.FC<StarRatingProps> = ({
 }) => {
   const handleStarClick = (starRating: number) => {
     if (!disabled) {
-      onRatingChange(starRating);
+      // If clicking on the same star that's currently selected, clear the rating
+      if (rating === starRating) {
+        onRatingChange(0);
+      } else {
+        onRatingChange(starRating);
+      }
     }
   };
 
@@ -48,7 +53,7 @@ const StarRating: React.FC<StarRatingProps> = ({
         return (
           <Tooltip
             key={star}
-            title={showTooltip ? `${star} star${star > 1 ? 's' : ''}` : ''}
+            title={showTooltip ? (isFilled && star === rating ? 'Click to remove rating' : `${star} star${star > 1 ? 's' : ''}`) : ''}
             placement="top"
             arrow
           >
