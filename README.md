@@ -21,15 +21,15 @@
 ![Film Presets](assets/screenshots/screen2.png)
 *Comprehensive film simulation library and processing controls*
 
-### Export & Results
-![Export Results](assets/screenshots/screen3.png)
-*Lightroom XMP presets and 3D LUT export options*
+### Recipe Generation & Preview
+![Recipe Generation](assets/screenshots/screen3.png)
+*AI generating custom color recipes with real-time preview*
 
 </div>
 
 ## 💻 Installation
 
-### For Users (No Coding Required)
+### For Users
 
 **Simply download and install the app:**
 
