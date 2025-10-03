@@ -14,7 +14,6 @@ import TuneIcon from '@mui/icons-material/Tune';
 import { Avatar, Box, Button, Chip, CircularProgress, Divider, IconButton, Paper, Popover, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
-import { applyMaskOverrides } from '../../shared/mask-utils';
 import { filterFailedResults, filterSuccessfulResults } from '../../shared/result-utils';
 import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
@@ -414,12 +413,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   };
 
   const [processName, setProcessName] = useState<string | undefined>(undefined);
-  const [maskOverrides, setMaskOverrides] = useState<any[] | undefined>(undefined);
-  const [adjustmentOverrides, setAdjustmentOverrides] = useState<Record<string, number> | undefined>(undefined);
   const [processDescription, setProcessDescription] = useState<string | undefined>(undefined);
-  
-  // Note: Pending modifications are now handled by the useChatModifications hook
-  // No local state management needed here
 
   // Load base64 image data when processId is provided
   useEffect(() => {
@@ -457,9 +451,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setProcessDescription(typeof desc === 'string' && desc.trim().length > 0 ? desc : undefined);
 
           // Do not source description from AI adjustments; keep top-level only
-          const masks = (processResponse.process as any).maskOverrides;
-          setMaskOverrides(Array.isArray(masks) ? masks : undefined);
-          // Note: Pending modifications are now handled by the useChatModifications hook
           // name is handled in header component
         } else {
           console.warn('[RESULTS] Process not found or failed to load:', processResponse.error);
@@ -467,9 +458,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           setProcessOptions(undefined);
           setProcessName(undefined);
           setProcessDescription(undefined);
-          setMaskOverrides(undefined);
-          setAdjustmentOverrides(undefined);
-          // Note: Pending modifications are now handled by the useChatModifications hook
         }
       } catch (error) {
         console.error('[RESULTS] Error loading base64 images:', error);
@@ -509,10 +497,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
 
   // Name editing handled by RecipeNameHeader subcomponent
-
-  // Compute effective masks by applying overrides (add/update/remove/clear) to AI masks
-  const getEffectiveMasks = (aiMasks: any[] | undefined, overrides: any[] | undefined) =>
-    applyMaskOverrides(aiMasks as any[], overrides as any[]);
 
   // Generate default options - AI gets access to all features
   const getDefaultOptions = () =>
@@ -559,16 +543,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 
     }
 
-    // Apply mask overrides if they exist
-    if (Array.isArray(maskOverrides) && maskOverrides.length > 0) {
-      const masks = effectiveAdjustments.masks || [];
-      effectiveAdjustments.masks = applyMaskOverrides(masks as any[], maskOverrides as any[]) as any;
-    }
-
-    // Apply global adjustment overrides (e.g., grain, vignette) if present
-    if (adjustmentOverrides && typeof adjustmentOverrides === 'object') {
-      Object.assign(effectiveAdjustments as any, adjustmentOverrides);
-    }
 
     return effectiveAdjustments;
   };
@@ -1126,8 +1100,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                     <Paper sx={{ p: 2 }}>
                       {(() => {
                         const effectiveAdjustments = getEffectiveAdjustments(result);
-                        const effectiveMasks = getEffectiveMasks(effectiveAdjustments?.masks, maskOverrides);
-                        const effective = { ...effectiveAdjustments, masks: effectiveMasks } as any;
                         return (
                           <RecipeAdjustmentsPanel
                             recipe={
@@ -1139,12 +1111,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 userOptions: processOptions,
                                 results: successfulResults,
                                 timestamp: new Date().toISOString(),
-                                // expose overrides for panel sections
-                                ...(maskOverrides ? { maskOverrides } : {}),
                               } as any
                             }
-                            pendingModifications={null}
-                            aiAdjustments={effective}
+                            aiAdjustments={effectiveAdjustments}
                             showOnlyCurrent
                           />
                         );

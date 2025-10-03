@@ -4,7 +4,6 @@ import { createErrorResponse, logError } from '../../shared/error-utils';
 import { ImageProcessor } from '../image-processor';
 import { generateLUTContent } from '../lut-generator';
 import { StorageService } from '../storage-service';
-import { generateXMPContent } from '../xmp-generator';
 
 export class ProcessingHandlers {
   constructor(
@@ -300,31 +299,15 @@ export class ProcessingHandlers {
               typeof aiGeneratedDescription === 'string' && 
               aiGeneratedDescription.trim().length > 0;
 
-            // If we have adjustments, merge with any stored overrides, auto-generate XMP, and store it
-            let xmpContent: string | undefined;
+            // If we have adjustments, store them
             let effectiveAdjustments: any | undefined;
             try {
               let adj = result?.metadata?.aiAdjustments;
               if (result.success && adj) {
                 effectiveAdjustments = adj;
-                const include = {
-                  wbBasic: true,
-                  hsl: true,
-                  colorGrading: true,
-                  curves: true,
-                  pointColor: true,
-                  grain: true,
-                  vignette: true,
-                  masks: true,
-                  exposure: false,
-                  sharpenNoise: false,
-                  strength: 1.0,
-                  recipeName: aiGeneratedName || 'Custom Recipe',
-                } as any;
-                xmpContent = generateXMPContent(adj as any, include);
               }
             } catch (e) {
-              console.warn('[IPC] Auto XMP generation failed:', e);
+              console.warn('[IPC] Adjustments processing failed:', e);
             }
 
             await this.storageService.updateProcess(data.processId, {

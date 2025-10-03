@@ -1,5 +1,5 @@
 import { Box, Chip, Divider, Paper, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { AIColorAdjustments } from '../../services/types';
 import { Recipe, StyleOptions } from '../../shared/types';
 
@@ -7,24 +7,6 @@ type Maybe<T> = T | undefined | null;
 
 export interface RecipeAdjustmentsPanelProps {
   recipe: Recipe;
-  pendingModifications?: {
-    userOptions?: Partial<StyleOptions>;
-    aiAdjustments?: {
-      grain_amount?: number;
-      grain_size?: number;
-      grain_frequency?: number;
-      vignette_amount?: number;
-      vignette_midpoint?: number;
-      vignette_feather?: number;
-      vignette_roundness?: number;
-      vignette_style?: number;
-      vignette_highlight_contrast?: number;
-    };
-    prompt?: string;
-    name?: string;
-    description?: string;
-    masks?: any[];
-  } | null;
   aiAdjustments?: AIColorAdjustments | null;
   showOnlyCurrent?: boolean;
 }
@@ -43,61 +25,24 @@ function str(v: Maybe<string>): string {
   return s.length ? s : '—';
 }
 
-function hasChange(a: any, b: any): boolean {
-  // Simple deep-ish comparison for primitives/objects used here
-  try {
-    return JSON.stringify(a ?? null) !== JSON.stringify(b ?? null);
-  } catch {
-    return a !== b;
-  }
-}
-
-
-export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ recipe, pendingModifications, aiAdjustments, showOnlyCurrent }) => {
+export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ recipe, aiAdjustments }) => {
   const current = (recipe.userOptions || {}) as StyleOptions;
-  const proposed = useMemo<StyleOptions>(() => {
-    const mods = pendingModifications?.userOptions || {};
-    const merged: StyleOptions = { ...current, ...mods };
-    // Merge nested artist/film objects wholesale if provided
-    if ((mods as any).artistStyle) merged.artistStyle = (mods as any).artistStyle;
-    if ((mods as any).filmStyle) merged.filmStyle = (mods as any).filmStyle;
-    return merged;
-  }, [current, pendingModifications]);
 
-  // Create effective aiAdjustments that include pending modifications
-  const effectiveAiAdjustments = useMemo(() => {
-    if (!aiAdjustments) return null;
-    const pendingAiMods = pendingModifications?.aiAdjustments || {};
-    return { ...aiAdjustments, ...pendingAiMods };
-  }, [aiAdjustments, pendingModifications]);
-
-  // Name changes are not supported via AI chat; hide name row in adjustments panel
-  const descriptionChange = (pendingModifications && Object.prototype.hasOwnProperty.call(pendingModifications, 'description'))
-    ? hasChange((recipe as any).description, (pendingModifications as any).description)
-    : false;
-
-  const Row = ({ label, cur, next, isChanged: _isChanged }: { label: string; cur: React.ReactNode; next?: React.ReactNode; isChanged?: boolean }) => (
-    <Box sx={{ display: 'grid', gridTemplateColumns: showOnlyCurrent ? '1.2fr 1fr' : '1.2fr 1fr 1fr', alignItems: 'center', gap: 1, py: 0.75 }}>
+  const Row = ({ label, cur }: { label: string; cur: React.ReactNode }) => (
+    <Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', alignItems: 'center', gap: 1, py: 0.75 }}>
       <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>{label}</Typography>
       <Box>{cur}</Box>
-      {!showOnlyCurrent && (
-        <Box>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
-            {next}
-          </Box>
-        </Box>
-      )}
     </Box>
   );
 
-  const ValueChip = ({ label, color }: { label: React.ReactNode; color?: 'default' | 'success' | 'warning' | 'info' | 'error' }) => (
-    <Chip size="small" variant="outlined" color={color || 'default'} label={label} />
+  const ValueChip = ({ label }: { label: React.ReactNode }) => (
+    <Chip size="small" variant="outlined" label={label} />
   );
 
-  const LongValue = ({ text, highlight }: { text?: string; highlight?: boolean }) => (
+  const LongValue = ({ text }: { text?: string }) => (
     <Paper
       variant="outlined"
-      sx={{ p: 1, backgroundColor: 'grey.50', borderColor: highlight ? 'warning.main' : 'divider' }}
+      sx={{ p: 1, backgroundColor: 'grey.50' }}
     >
       <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
         {str(text)}
@@ -120,69 +65,56 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
         <Row
           label="Description"
           cur={<LongValue text={(recipe as any).description} />}
-          next={<LongValue text={(pendingModifications as any)?.description ?? (recipe as any).description} highlight={descriptionChange} />}
-          isChanged={descriptionChange}
         />
       </Section>
 
       {aiAdjustments && (
         <Section title="Tone Adjustments">
-          <Row label="Exposure" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.exposure)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.exposure)} color="default" />} />
+          <Row label="Exposure" cur={<ValueChip label={fmtNum(aiAdjustments?.exposure)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Contrast" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.contrast)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.contrast)} color="default" />} />
+          <Row label="Contrast" cur={<ValueChip label={fmtNum(aiAdjustments?.contrast)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Highlights" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.highlights)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.highlights)} color="default" />} />
+          <Row label="Highlights" cur={<ValueChip label={fmtNum(aiAdjustments?.highlights)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Shadows" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.shadows)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.shadows)} color="default" />} />
+          <Row label="Shadows" cur={<ValueChip label={fmtNum(aiAdjustments?.shadows)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Whites" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.whites)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.whites)} color="default" />} />
+          <Row label="Whites" cur={<ValueChip label={fmtNum(aiAdjustments?.whites)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Blacks" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.blacks)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.blacks)} color="default" />} />
+          <Row label="Blacks" cur={<ValueChip label={fmtNum(aiAdjustments?.blacks)} />} />
         </Section>
       )}
 
       {aiAdjustments && (
         <Section title="Color Adjustments">
-          <Row label="Vibrance" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.vibrance)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.vibrance)} color="default" />} />
+          <Row label="Vibrance" cur={<ValueChip label={fmtNum(aiAdjustments?.vibrance)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Saturation" cur={<ValueChip label={fmtNum(effectiveAiAdjustments?.saturation)} />} next={<ValueChip label={fmtNum(effectiveAiAdjustments?.saturation)} color="default" />} />
+          <Row label="Saturation" cur={<ValueChip label={fmtNum(aiAdjustments?.saturation)} />} />
         </Section>
       )}
 
       <Section title="Style & Options">
-        <Row label="Artist Style" 
+        <Row label="Artist Style"
           cur={
             <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
               <ValueChip label={str(current.artistStyle?.name)} />
-              <Chip 
-                label={current.artistStyle?.colorType === 'monochrome' ? 'B&W' : 'Color'} 
-                variant="outlined" 
-                color={current.artistStyle?.colorType === 'monochrome' ? 'secondary' : 'primary'} 
-                size="small" 
+              <Chip
+                label={current.artistStyle?.colorType === 'monochrome' ? 'B&W' : 'Color'}
+                variant="outlined"
+                color={current.artistStyle?.colorType === 'monochrome' ? 'secondary' : 'primary'}
+                size="small"
               />
             </Box>
-          } 
-          next={
-            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-              <ValueChip label={str(proposed.artistStyle?.name)} color={hasChange(current.artistStyle?.key, proposed.artistStyle?.key) ? 'warning' : 'default'} />
-              <Chip 
-                label={proposed.artistStyle?.colorType === 'monochrome' ? 'B&W' : 'Color'} 
-                variant="outlined" 
-                color={proposed.artistStyle?.colorType === 'monochrome' ? 'secondary' : 'primary'} 
-                size="small" 
-              />
-            </Box>
-          } 
-          isChanged={hasChange(current.artistStyle?.key, proposed.artistStyle?.key)} />
+          }
+        />
         <Divider sx={{ my: 1 }} />
-        <Row label="Film Style" cur={<ValueChip label={str(current.filmStyle?.name)} />} next={<ValueChip label={str(proposed.filmStyle?.name)} color={hasChange(current.filmStyle?.key, proposed.filmStyle?.key) ? 'warning' : 'default'} />} isChanged={hasChange(current.filmStyle?.key, proposed.filmStyle?.key)} />
+        <Row label="Film Style" cur={<ValueChip label={str(current.filmStyle?.name)} />} />
       </Section>
 
       {aiAdjustments && (
         <Section title="Camera Profile">
-          <Row label="Profile" cur={<ValueChip label={str(aiAdjustments.camera_profile)} />} next={<ValueChip label={str(aiAdjustments.camera_profile)} />} isChanged={false} />
+          <Row label="Profile" cur={<ValueChip label={str(aiAdjustments.camera_profile)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Treatment" cur={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} next={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} isChanged={false} />
+          <Row label="Treatment" cur={<ValueChip label={str(aiAdjustments.treatment || 'color')} />} />
         </Section>
       )}
 
@@ -191,55 +123,49 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
           <Row
             label="Curves Present"
             cur={<ValueChip label={((((aiAdjustments as any).tone_curve?.length || 0) > 0) || ['red', 'green', 'blue'].some(c => (((aiAdjustments as any)[`tone_curve_${c}`]?.length || 0) > 0)) || ['parametric_shadows', 'parametric_darks', 'parametric_lights', 'parametric_highlights'].some(k => (aiAdjustments as any)[k] !== undefined)) ? 'Yes' : 'No'} />}
-            next={<ValueChip label={((((aiAdjustments as any).tone_curve?.length || 0) > 0) || ['red', 'green', 'blue'].some(c => (((aiAdjustments as any)[`tone_curve_${c}`]?.length || 0) > 0)) || ['parametric_shadows', 'parametric_darks', 'parametric_lights', 'parametric_highlights'].some(k => (aiAdjustments as any)[k] !== undefined)) ? 'Yes' : 'No'} />}
-            isChanged={false}
           />
           <Divider sx={{ my: 1 }} />
           <Row
             label="Color Grading"
             cur={<ValueChip label={(((aiAdjustments as any).color_grade_global_hue !== undefined) || ((aiAdjustments as any).color_grade_shadow_hue !== undefined)) ? 'Yes' : 'No'} />}
-            next={<ValueChip label={(((aiAdjustments as any).color_grade_global_hue !== undefined) || ((aiAdjustments as any).color_grade_shadow_hue !== undefined)) ? 'Yes' : 'No'} />}
-            isChanged={false}
           />
           <Divider sx={{ my: 1 }} />
           <Row
             label="HSL Present"
             cur={<ValueChip label={Object.keys(aiAdjustments).some(k => /^(hue|sat|lum)_(red|orange|yellow|green|aqua|blue|purple|magenta)$/.test(k)) ? 'Yes' : 'No'} />}
-            next={<ValueChip label={Object.keys(aiAdjustments).some(k => /^(hue|sat|lum)_(red|orange|yellow|green|aqua|blue|purple|magenta)$/.test(k)) ? 'Yes' : 'No'} />}
-            isChanged={false}
           />
         </Section>
       )}
 
       {aiAdjustments && (
         <Section title="Film Grain">
-          <Row label="Grain Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_amount)} color={hasChange((aiAdjustments as any).grain_amount, (effectiveAiAdjustments as any).grain_amount) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_amount, (effectiveAiAdjustments as any).grain_amount)} />
+          <Row label="Grain Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_amount)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Grain Size" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_size)} color={hasChange((aiAdjustments as any).grain_size, (effectiveAiAdjustments as any).grain_size) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_size, (effectiveAiAdjustments as any).grain_size)} />
+          <Row label="Grain Size" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_size)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Grain Frequency" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).grain_frequency)} color={hasChange((aiAdjustments as any).grain_frequency, (effectiveAiAdjustments as any).grain_frequency) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).grain_frequency, (effectiveAiAdjustments as any).grain_frequency)} />
+          <Row label="Grain Frequency" cur={<ValueChip label={fmtNum((aiAdjustments as any).grain_frequency)} />} />
         </Section>
       )}
 
       {aiAdjustments && (
         <Section title="Vignette">
-          <Row label="Vignette Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_amount)} color={hasChange((aiAdjustments as any).vignette_amount, (effectiveAiAdjustments as any).vignette_amount) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_amount, (effectiveAiAdjustments as any).vignette_amount)} />
+          <Row label="Vignette Amount" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_amount)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Midpoint" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_midpoint)} color={hasChange((aiAdjustments as any).vignette_midpoint, (effectiveAiAdjustments as any).vignette_midpoint) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_midpoint, (effectiveAiAdjustments as any).vignette_midpoint)} />
+          <Row label="Vignette Midpoint" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_midpoint)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Feather" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_feather)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_feather)} color={hasChange((aiAdjustments as any).vignette_feather, (effectiveAiAdjustments as any).vignette_feather) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_feather, (effectiveAiAdjustments as any).vignette_feather)} />
+          <Row label="Vignette Feather" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_feather)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Roundness" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_roundness)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_roundness)} color={hasChange((aiAdjustments as any).vignette_roundness, (effectiveAiAdjustments as any).vignette_roundness) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_roundness, (effectiveAiAdjustments as any).vignette_roundness)} />
+          <Row label="Vignette Roundness" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_roundness)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Style" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_style)} color={hasChange((aiAdjustments as any).vignette_style, (effectiveAiAdjustments as any).vignette_style) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_style, (effectiveAiAdjustments as any).vignette_style)} />
+          <Row label="Vignette Style" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_style)} />} />
           <Divider sx={{ my: 1 }} />
-          <Row label="Vignette Highlight Contrast" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} next={<ValueChip label={fmtNum((effectiveAiAdjustments as any).vignette_highlight_contrast)} color={hasChange((aiAdjustments as any).vignette_highlight_contrast, (effectiveAiAdjustments as any).vignette_highlight_contrast) ? 'warning' : 'default'} />} isChanged={hasChange((aiAdjustments as any).vignette_highlight_contrast, (effectiveAiAdjustments as any).vignette_highlight_contrast)} />
+          <Row label="Vignette Highlight Contrast" cur={<ValueChip label={fmtNum((aiAdjustments as any).vignette_highlight_contrast)} />} />
         </Section>
       )}
 
       {aiAdjustments && (
         <Section title="Local Adjustments">
-          <Row label="Masks" cur={<ValueChip label={`${Array.isArray((aiAdjustments as any).masks) ? (aiAdjustments as any).masks.length : 0}`} />} next={<ValueChip label={`${Array.isArray((aiAdjustments as any).masks) ? (aiAdjustments as any).masks.length : 0}`} />} isChanged={false} />
+          <Row label="Masks" cur={<ValueChip label={`${Array.isArray((aiAdjustments as any).masks) ? (aiAdjustments as any).masks.length : 0}`} />} />
 
           {Array.isArray((aiAdjustments as any).masks) && (aiAdjustments as any).masks.length > 0 && (
             <Box sx={{ mt: 1 }}>
@@ -269,82 +195,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
               })}
             </Box>
           )}
-        </Section>
-      )}
-
-      {/* Accepted mask overrides on the recipe (persisted). Hidden in current-only mode to avoid duplication with effective masks. */}
-      {!showOnlyCurrent && Array.isArray((recipe as any).maskOverrides) && (recipe as any).maskOverrides.length > 0 && (
-        <Section title="Recipe Mask Overrides">
-          <Box>
-            {(recipe as any).maskOverrides.map((m: any, idx: number) => {
-              const adj = m?.adjustments || {};
-              const adjKeys = Object.keys(adj).filter(k => typeof (adj as any)[k] === 'number');
-              const name = m?.name || `Mask ${idx + 1}`;
-              const type = m?.type || 'mask';
-              const op = m?.op || 'add';
-              return (
-                <Paper key={idx} variant="outlined" sx={{ p: 1, mb: 1, backgroundColor: 'white', overflowX: 'hidden' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                    <Chip size="small" color={op === 'remove' ? 'error' : op === 'update' ? 'warning' : 'success'} label={op.toUpperCase()} />
-                    <Chip size="small" label={name} />
-                    <Chip size="small" color="info" label={`Type: ${type}`} />
-                    {typeof m.subCategoryId === 'number' && (
-                      <Chip size="small" variant="outlined" label={`SubCat: ${m.subCategoryId}`} />
-                    )}
-                  </Box>
-                  {adjKeys.length > 0 && (
-                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                      {adjKeys.map(k => (
-                        <Chip key={k} size="small" variant="outlined" label={`${k.replace('local_', '')}: ${(adj as any)[k]}`} />
-                      ))}
-                    </Box>
-                  )}
-                </Paper>
-              );
-            })}
-          </Box>
-        </Section>
-      )}
-
-      {/* Proposed mask changes from chat (prefer maskOverrides, fallback to masks) */}
-      {!showOnlyCurrent && (() => {
-        const pm: any = pendingModifications as any;
-        const proposed = (pm && (pm.maskOverrides || pm.masks)) as any[] | undefined;
-        return Array.isArray(proposed) && proposed.length > 0;
-      })() && (
-        <Section title="Proposed Masks">
-          <Box>
-            {(() => {
-              const pm: any = pendingModifications as any;
-              const proposed = (pm && (pm.maskOverrides || pm.masks)) as any[];
-              return proposed.map((m: any, idx: number) => {
-                const adj = m?.adjustments || {};
-                const adjKeys = Object.keys(adj).filter(k => typeof (adj as any)[k] === 'number');
-                const name = m?.name || `Mask ${idx + 1}`;
-                const type = m?.type || 'mask';
-                const op = m?.op || 'add';
-                return (
-                  <Paper key={idx} variant="outlined" sx={{ p: 1, mb: 1, backgroundColor: 'white', overflowX: 'hidden' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                      <Chip size="small" color={op === 'remove' ? 'error' : op === 'update' ? 'warning' : 'success'} label={op.toUpperCase()} />
-                      <Chip size="small" label={name} />
-                      <Chip size="small" color="info" label={`Type: ${type}`} />
-                      {typeof m.subCategoryId === 'number' && (
-                        <Chip size="small" variant="outlined" label={`SubCat: ${m.subCategoryId}`} />
-                      )}
-                    </Box>
-                    {adjKeys.length > 0 && (
-                      <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                        {adjKeys.map(k => (
-                          <Chip key={k} size="small" variant="outlined" label={`${k.replace('local_', '')}: ${(adj as any)[k]}`} />
-                        ))}
-                      </Box>
-                    )}
-                  </Paper>
-                );
-              });
-            })()}
-          </Box>
         </Section>
       )}
     </Box>
