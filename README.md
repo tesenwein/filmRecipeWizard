@@ -21,9 +21,9 @@
 ![Film Presets](assets/screenshots/screen2.png)
 *Comprehensive film simulation library and processing controls*
 
-### AI Recipe Generation with Sample Images
+### Recipe Generation & Preview
 ![Recipe Generation](assets/screenshots/screen3.png)
-*AI generating custom color recipes with sample image preview*
+*AI generating custom color recipes with real-time preview*
 
 </div>
 
