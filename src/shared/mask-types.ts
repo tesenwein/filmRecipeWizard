@@ -251,13 +251,6 @@ export function getAllMaskTypes(): string[] {
 }
 
 /**
- * Check if a mask type is supported
- */
-export function isMaskTypeSupported(type: string): boolean {
-  return MASK_TYPE_MAP.has(type);
-}
-
-/**
  * Normalize loosely specified mask types to our canonical supported types.
  * Handles common synonyms coming from AI outputs to avoid falling back to generic 'subject'.
  */
