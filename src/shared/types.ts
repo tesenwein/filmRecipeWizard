@@ -59,9 +59,6 @@ export interface Recipe {
   pendingModifications?: any;
   // Timestamp when pendingModifications was last updated (ISO)
   pendingModificationsUpdatedAt?: string;
-  // Optional embedded XMP preset generated from the current effective adjustments
-  xmpPreset?: string;
-  xmpCreatedAt?: string;
   // Processing status to track if generation is still in progress
   status?: 'generating' | 'completed' | 'failed';
   // Optional author/creator profile attached to the recipe

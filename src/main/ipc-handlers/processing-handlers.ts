@@ -341,7 +341,6 @@ export class ProcessingHandlers {
               ...(firstBase ? { recipeImageData: firstBase } : {}),
               ...(shouldUpdateName && aiGeneratedName ? { name: aiGeneratedName.trim() } : {}),
               ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
-              ...(xmpContent ? { xmpPreset: xmpContent, xmpCreatedAt: new Date().toISOString() } : {}),
             } as any);
             try {
               mainWindow?.webContents.send('process-updated', {
@@ -362,7 +361,6 @@ export class ProcessingHandlers {
                   ...(firstBase ? { recipeImageData: firstBase } : {}),
                   ...(shouldUpdateName && aiGeneratedName ? { name: aiGeneratedName.trim() } : {}),
                   ...(shouldUpdateDescription ? { description: aiGeneratedDescription.trim() } : {}),
-                  ...(xmpContent ? { xmpPreset: xmpContent, xmpCreatedAt: new Date().toISOString() } : {}),
                 },
               });
             } catch {
