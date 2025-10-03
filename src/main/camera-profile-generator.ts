@@ -29,8 +29,6 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
   };
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
   const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
-  // const attrIf = (k: string, val?: string | number) =>
-  //   val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
 
   // Extract raw color adjustments (only include exposure if it's actually set and non-zero)
   const exposure = adjustments.exposure !== undefined && adjustments.exposure !== 0 ? clamp(scale(adjustments.exposure), -5, 5) : undefined;

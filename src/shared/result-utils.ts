@@ -29,13 +29,4 @@ export function hasErrors<T extends { success: boolean; error?: string }>(result
   return results.some(result => !result.success && result.error);
 }
 
-/**
- * Get the first error message from results
- * @param results - Array of results to check
- * @returns First error message or undefined
- */
-export function getFirstError<T extends { success: boolean; error?: string }>(results: T[]): string | undefined {
-  const failedResult = results.find(result => !result.success && result.error);
-  return failedResult?.error;
-}
 

@@ -21,15 +21,6 @@ export function createErrorResponse(error: unknown) {
 }
 
 /**
- * Create a standardized success response object
- * @param data - The data to include in the response
- * @returns Standardized success response
- */
-export function createSuccessResponse<T>(data: T) {
-  return { success: true, ...data };
-}
-
-/**
  * Log error with consistent formatting
  * @param module - The module name for logging context
  * @param message - The error message
@@ -37,25 +28,5 @@ export function createSuccessResponse<T>(data: T) {
  */
 export function logError(module: string, message: string, error: unknown) {
   console.error(`[${module}] ${message}:`, error);
-}
-
-/**
- * Handle async operations with consistent error handling
- * @param operation - The async operation to execute
- * @param module - The module name for error logging
- * @param errorMessage - The error message to log
- * @returns Promise that resolves to success response or rejects with error
- */
-export async function handleAsyncOperation<T>(
-  operation: () => Promise<T>,
-  module: string,
-  errorMessage: string
-): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    logError(module, errorMessage, error);
-    throw error;
-  }
 }
 
