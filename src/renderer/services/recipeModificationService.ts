@@ -9,8 +9,6 @@ export interface RecipeModificationUpdates {
   maskOverrides?: any[];
   pendingModifications?: any;
   pendingModificationsUpdatedAt?: string;
-  xmpPreset?: string;
-  xmpCreatedAt?: string;
   status?: string;
 }
 
@@ -71,43 +69,7 @@ export class RecipeModificationService {
       const clearStamp = new Date().toISOString();
       updates.pendingModifications = null;
       updates.pendingModificationsUpdatedAt = clearStamp;
-
-      // Generate XMP content with updated adjustments
-      const current = currentState.successfulResults[currentState.selectedResult];
-      const adjustments = this.getEffectiveAdjustments(current, {
-        processOptions: currentState.processOptions,
-        adjustmentOverrides: currentState.adjustmentOverrides,
-        maskOverrides: currentState.maskOverrides,
-      });
-
-      if (adjustments) {
-        const adjForExport = { ...adjustments } as any;
-        if (currentState.processName) adjForExport.preset_name = currentState.processName;
-        if (currentState.processDescription) adjForExport.description = currentState.processDescription;
-
-        const gen = await (window.electronAPI as any).generateXmpContent({
-          adjustments: adjForExport,
-          include: {
-            basic: true,
-            hsl: true,
-            colorGrading: true,
-            curves: true,
-            pointColor: true,
-            grain: true,
-            vignette: true,
-            masks: true,
-            exposure: false,
-            sharpenNoise: false,
-          },
-          recipeName: currentState.processName,
-        });
-
-        if (gen?.success && gen?.content) {
-          updates.xmpPreset = gen.content;
-          updates.xmpCreatedAt = new Date().toISOString();
-          updates.status = 'completed';
-        }
-      }
+      updates.status = 'completed';
 
       return updates;
     } catch (error) {
