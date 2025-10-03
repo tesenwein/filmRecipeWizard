@@ -123,6 +123,12 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 - **Lightroom Profiles**: Adobe Color, Adobe Monochrome, Flat Profile base
 - **Custom Vibes**: Cinematic, Soft Pastel, and other mood presets
 
+### ⭐ **Recipe Management**
+- **Recipe Gallery**: Browse and organize all your saved recipes
+- **5-Star Rating System**: Rate your favorite recipes (1-5 stars)
+- **Smart Sorting**: Sort by newest, oldest, name, or rating
+- **Search & Filter**: Quickly find specific recipes by name or prompt
+
 ### 📤 **Export Formats & Compatibility**
 - **Lightroom XMP Presets**: Direct import to Adobe Lightroom Classic & CC
 - **Capture One Styles (.costyle)**: *Alpha* - Direct import to Capture One (includes full mask support)
