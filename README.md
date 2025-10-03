@@ -57,7 +57,7 @@
 Perfect for photographers seeking **Fujifilm film simulations for Lightroom** and classic film looks unavailable in Adobe's default profiles.
 
 **Color Negative Film Presets:**
-- **Kodak Portra Series**: Portra 400, 160, 800 (warm skin tones, wedding photography)
+- **Kodak Portra Series**: Portra 160, 400, 800 (warm skin tones, wedding photography)
 - **Kodak Consumer Films**: Gold 200, UltraMax 400, ColorPlus 200, Max 400 (nostalgic film look)
 - **Kodak Ektar 100**: Ultra-vivid landscape photography colors
 - **Fujifilm Color Negative**: Superia 200/400/800, Pro 400H, C200, Pro 160NS (cool greens, pastel fashion tones)
@@ -65,26 +65,24 @@ Perfect for photographers seeking **Fujifilm film simulations for Lightroom** an
 - **Lomography Films**: Color 400, 800, Metropolis, Lady Grey (creative experimental looks)
 
 **Color Positive (Slide) Film LUTs:**
-- **Kodachrome Series**: 25, 64 (legendary rich reds, deep blacks, vintage travel photography)
-- **Fujifilm Velvia Series**: 50, 100, original variants (super-saturated nature and landscape photography)
-- **Fujifilm Provia Series**: 100F, 400X (neutral professional slide film)
-- **Fujifilm Astia 100F**: Soft contrast portrait and fashion photography  
-- **Kodak Ektachrome Series**: E100, 100VS (modern digital-friendly slide clarity)
+- **Kodachrome Series**: Kodachrome 25, 64 (legendary rich reds, deep blacks, vintage travel photography)
+- **Fujifilm Velvia Series**: Velvia 50, 100 (super-saturated nature and landscape photography)
+- **Fujifilm Provia Series**: Provia 100F, 400X (neutral professional slide film)
+- **Fujifilm Astia 100F**: Soft contrast portrait and fashion photography
+- **Kodak Ektachrome Series**: Ektachrome E100, 100VS (modern digital-friendly slide clarity)
 - **Consumer Slides**: Fuji Sensia 100, Agfa CT Precisa 100 (affordable slide film options)
 
 **Black & White Film Presets:**
-- **Kodak Tri-X 400**: Classic street photography grain and contrast
-- **Ilford HP5 Plus 400**: Versatile documentary photography tones
-- **Kodak T-MAX Series**: 100, 400, 3200 (modern tabular grain sharpness)
-- **Fuji Acros 100 II**: Ultra-fine grain for detailed B&W work
-- **Ilford Delta Series**: 100, 400, 3200 (modern T-grain technology)
-- **European Classics**: Agfa APX 100, Foma Fomapan 100, Kentmere 400
-- **Specialty Films**: Rollei Retro 80S, Fuji Neopan 400 (unique tonality options)
+- **Kodak Series**: Tri-X 400, T-Max 100, 400, 3200 (classic and modern grain options)
+- **Ilford Series**: HP5 Plus 400, FP4 Plus 125, Pan F 50, Delta 100, 400, 3200 (versatile documentary photography)
+- **Fujifilm Series**: ACROS 100 II, Neopan 400 (ultra-fine grain for detailed B&W work)
+- **European Classics**: Agfa APX 100, Foma Fomapan 100, Kentmere 400 (budget-friendly traditional looks)
+- **Specialty Films**: Rollei Retro 80S (orthochromatic artistic look)
 
 **Cinematic Film LUTs:**
-- **Kodak Vision3 Series**: 200T, 250D, 500T (tungsten and daylight cinema stocks)
-- **CineStill Series**: 50D, 400D, 800T (remjet-removed cinema film for still photography)
-- **Fuji Eterna Series**: 250D, 400T (warm cinema tones for video color grading)
+- **Kodak Vision3 Series**: Vision3 200T, 250D, 500T (tungsten and daylight cinema stocks)
+- **CineStill Series**: CineStill 50D, 400D, 800T (remjet-removed cinema film for still photography)
+- **Fuji Eterna Series**: Eterna 250D, 400T (warm cinema tones for video color grading)
 
 ### 🎭 **Artistic Styles**
 **Portrait Styles:**
