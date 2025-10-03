@@ -306,13 +306,6 @@ export class ProcessingHandlers {
             try {
               let adj = result?.metadata?.aiAdjustments;
               if (result.success && adj) {
-                try {
-                  const currentProcess = await this.storageService.getProcess(data.processId);
-                  const overrides = (currentProcess as any)?.aiAdjustmentOverrides;
-                  if (overrides && typeof overrides === 'object') {
-                    adj = { ...adj, ...overrides };
-                  }
-                } catch { /* ignore overlay failures */ }
                 effectiveAdjustments = adj;
                 const include = {
                   wbBasic: true,

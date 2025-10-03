@@ -459,8 +459,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
           // Do not source description from AI adjustments; keep top-level only
           const masks = (processResponse.process as any).maskOverrides;
           setMaskOverrides(Array.isArray(masks) ? masks : undefined);
-          const adjOv = (processResponse.process as any).aiAdjustmentOverrides;
-          setAdjustmentOverrides(adjOv && typeof adjOv === 'object' ? adjOv : undefined);
           // Note: Pending modifications are now handled by the useChatModifications hook
           // name is handled in header component
         } else {
