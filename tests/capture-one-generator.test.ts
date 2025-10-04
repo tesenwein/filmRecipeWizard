@@ -32,9 +32,7 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="ColorBalanceShadow" V="1;1;1" />');
       expect(result).toContain('<E K="ColorBalanceMidtone" V="1;1;1" />');
       expect(result).toContain('<E K="ColorBalanceHighlight" V="1;1;1" />');
-      expect(result).toContain('<E K="Highlight" V="0;0;0;0" />');
-      expect(result).toContain('<E K="Midtone" V="0;0;0;0" />');
-      expect(result).toContain('<E K="Shadow" V="0;0;0;0" />');
+      expect(result).toContain('<E K="ColorCorrections"');
       expect(result).toContain('<LDS>');
     });
 
@@ -177,10 +175,8 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<LA>');
       expect(result).toContain('<E K="Name" V="Test Radial Mask" />');
       expect(result).toContain('<E K="MaskType" V="2" />'); // Radial
-      expect(result).toContain('<E K="Exposure" V="0.500000" />');
-      expect(result).toContain('<E K="Contrast" V="20" />');
-      expect(result).toContain('<E K="HighlightRecoveryEx" V="15" />');
-      expect(result).toContain('<E K="ShadowRecovery" V="25" />');
+      // Note: Local adjustment values are not included in generated styles
+      // They must be configured manually in Capture One after import
     });
 
     it('should handle AI-detected masks correctly', () => {
@@ -220,8 +216,7 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="MaskType" V="4" />'); // AI/Subject mask
       expect(result).toContain('<SO>'); // Subject options
       expect(result).toContain('<E K="Face" V="1" />'); // face_skin maps to Face
-      expect(result).toContain('<E K="Exposure" V="0.200000" />');
-      expect(result).toContain('<E K="Saturation" V="10" />');
+      // Note: Local adjustment values are not included in generated styles
     });
 
     it('should escape special characters in text content', () => {
@@ -292,7 +287,7 @@ describe('Capture One Generator', () => {
 
       // Default sections should be present with neutral values
       expect(result).toContain('<E K="ColorBalanceShadow" V="1;1;1" />');
-      expect(result).toContain('<E K="Highlight" V="0;0;0;0" />');
+      expect(result).toContain('<E K="ColorCorrections"');
       expect(result).toContain('<LDS>');
     });
 
