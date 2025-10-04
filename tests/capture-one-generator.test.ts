@@ -29,6 +29,12 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="UUID"');
       expect(result).not.toContain('<E K="FilmCurve"');
       expect(result).not.toContain('<E K="ICCProfile"');
+      expect(result).toContain('<E K="ColorBalanceShadow" V="1;1;1" />');
+      expect(result).toContain('<E K="ColorBalanceMidtone" V="1;1;1" />');
+      expect(result).toContain('<E K="ColorBalanceHighlight" V="1;1;1" />');
+      expect(result).toContain('<E K="Highlight" V="0;0;0;0" />');
+      expect(result).toContain('<E K="Midtone" V="0;0;0;0" />');
+      expect(result).toContain('<E K="Shadow" V="0;0;0;0" />');
       expect(result).toContain('<LDS>');
     });
 
@@ -285,8 +291,8 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="Saturation" V="3" />');
 
       // Default sections should be present with neutral values
-      expect(result).not.toContain('<E K="ColorBalanceShadow"');
-      expect(result).not.toContain('<E K="Highlight" V="0;0;0;0" />');
+      expect(result).toContain('<E K="ColorBalanceShadow" V="1;1;1" />');
+      expect(result).toContain('<E K="Highlight" V="0;0;0;0" />');
       expect(result).toContain('<LDS>');
     });
 

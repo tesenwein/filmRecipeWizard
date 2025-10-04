@@ -162,16 +162,15 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   const highlightHue = clamp(aiAdjustments.color_grade_highlight_hue, -180, 180);
   const highlightSat = clamp(aiAdjustments.color_grade_highlight_sat, -100, 100);
 
-  if (includeColorGrading) {
-    const pushColorBalance = (key: string, hue?: number, sat?: number) => {
-      if (typeof hue !== 'number' && typeof sat !== 'number') return;
-      elements.push(E(key, hueToRgb(hue, sat)));
-    };
+  const colorBalanceValue = (hue?: number, sat?: number) => {
+    if (!includeColorGrading) return '1;1;1';
+    if (typeof hue !== 'number' && typeof sat !== 'number') return '1;1;1';
+    return hueToRgb(hue, sat);
+  };
 
-    pushColorBalance('ColorBalanceShadow', shadowHue, shadowSat);
-    pushColorBalance('ColorBalanceMidtone', midtoneHue, midtoneSat);
-    pushColorBalance('ColorBalanceHighlight', highlightHue, highlightSat);
-  }
+  elements.push(E('ColorBalanceShadow', colorBalanceValue(shadowHue, shadowSat)));
+  elements.push(E('ColorBalanceMidtone', colorBalanceValue(midtoneHue, midtoneSat)));
+  elements.push(E('ColorBalanceHighlight', colorBalanceValue(highlightHue, highlightSat)));
 
   // Grain
   if (include?.grain !== false) {
@@ -265,16 +264,15 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     return `${formatNumber(intensity)};${formatNumber(r)};${formatNumber(g)};${formatNumber(b)}`;
   };
 
-  if (includeColorGrading) {
-    const pushColorShift = (key: string, hue?: number, sat?: number) => {
-      if (typeof hue !== 'number' && typeof sat !== 'number') return;
-      elements.push(E(key, hueToColorShift(hue, sat)));
-    };
+  const colorShiftValue = (hue?: number, sat?: number) => {
+    if (!includeColorGrading) return '0;0;0;0';
+    if (typeof hue !== 'number' && typeof sat !== 'number') return '0;0;0;0';
+    return hueToColorShift(hue, sat);
+  };
 
-    pushColorShift('Highlight', highlightHue, highlightSat);
-    pushColorShift('Midtone', midtoneHue, midtoneSat);
-    pushColorShift('Shadow', shadowHue, shadowSat);
-  }
+  elements.push(E('Highlight', colorShiftValue(highlightHue, highlightSat)));
+  elements.push(E('Midtone', colorShiftValue(midtoneHue, midtoneSat)));
+  elements.push(E('Shadow', colorShiftValue(shadowHue, shadowSat)));
 
   // Add required retouching fields (even if zero, these appear to be mandatory)
   elements.push(E('RetouchingBlemishRemovalAmount', '0'));
