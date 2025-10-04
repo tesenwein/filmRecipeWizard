@@ -273,11 +273,6 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     return `${formatNumber(intensity)};${formatNumber(r)};${formatNumber(g)};${formatNumber(b)}`;
   };
 
-  const colorShiftValue = (hue?: number, sat?: number) => {
-    if (!includeColorGrading) return '0;0;0;0';
-    if (typeof hue !== 'number' && typeof sat !== 'number') return '0;0;0;0';
-    return hueToColorShift(hue, sat);
-  };
 
   // NOTE: Highlight, Midtone, Shadow fields are NOT included in working Capture One styles
   // These appear to conflict with ColorCorrections field and prevent import
