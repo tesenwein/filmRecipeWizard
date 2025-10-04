@@ -27,7 +27,9 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<SL Engine="1300">');
       expect(result).toContain('<E K="Name" V="Test Style" />');
       expect(result).toContain('<E K="UUID"');
-      expect(result).toContain('<E K="StyleSource" V="Styles" />');
+      expect(result).not.toContain('<E K="FilmCurve"');
+      expect(result).not.toContain('<E K="ICCProfile"');
+      expect(result).toContain('<LDS>');
     });
 
     it('should include basic adjustments when enabled', () => {
@@ -60,12 +62,12 @@ describe('Capture One Generator', () => {
       const result = generateCaptureOneStyle(adjustments, include);
 
       expect(result).toContain('<E K="Exposure" V="0.500000" />');
-      expect(result).toContain('<E K="Contrast" V="15.000000" />');
-      expect(result).toContain('<E K="HighlightRecoveryEx" V="20.000000" />'); // Inverted
-      expect(result).toContain('<E K="ShadowRecovery" V="25.000000" />');
-      expect(result).toContain('<E K="WhiteRecovery" V="10.000000" />');
-      expect(result).toContain('<E K="BlackRecovery" V="-15.000000" />');
-      expect(result).toContain('<E K="Saturation" V="5.000000" />');
+      expect(result).toContain('<E K="Contrast" V="15" />');
+      expect(result).toContain('<E K="HighlightRecoveryEx" V="20" />'); // Inverted
+      expect(result).toContain('<E K="ShadowRecovery" V="25" />');
+      expect(result).toContain('<E K="WhiteRecovery" V="10" />');
+      expect(result).toContain('<E K="BlackRecovery" V="-15" />');
+      expect(result).toContain('<E K="Saturation" V="5" />');
     });
 
     it('should include color grading when enabled', () => {
@@ -120,7 +122,7 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
-      expect(result).toContain('<E K="FilmGrainAmount" V="25.000000" />');
+      expect(result).toContain('<E K="FilmGrainAmount" V="25" />');
     });
 
     it('should include masks when enabled', () => {
@@ -170,9 +172,9 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="Name" V="Test Radial Mask" />');
       expect(result).toContain('<E K="MaskType" V="2" />'); // Radial
       expect(result).toContain('<E K="Exposure" V="0.500000" />');
-      expect(result).toContain('<E K="Contrast" V="20.000000" />');
-      expect(result).toContain('<E K="HighlightRecoveryEx" V="15.000000" />');
-      expect(result).toContain('<E K="ShadowRecovery" V="25.000000" />');
+      expect(result).toContain('<E K="Contrast" V="20" />');
+      expect(result).toContain('<E K="HighlightRecoveryEx" V="15" />');
+      expect(result).toContain('<E K="ShadowRecovery" V="25" />');
     });
 
     it('should handle AI-detected masks correctly', () => {
@@ -213,7 +215,7 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<SO>'); // Subject options
       expect(result).toContain('<E K="Face" V="1" />'); // face_skin maps to Face
       expect(result).toContain('<E K="Exposure" V="0.200000" />');
-      expect(result).toContain('<E K="Saturation" V="10.000000" />');
+      expect(result).toContain('<E K="Saturation" V="10" />');
     });
 
     it('should escape special characters in text content', () => {
@@ -275,16 +277,17 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<SL Engine="1300">');
       expect(result).toContain('<E K="Name" V="Basic Test Style" />');
       expect(result).toContain('<E K="Exposure" V="0.300000" />');
-      expect(result).toContain('<E K="Contrast" V="10.000000" />');
-      expect(result).toContain('<E K="HighlightRecoveryEx" V="15.000000" />');
-      expect(result).toContain('<E K="ShadowRecovery" V="20.000000" />');
-      expect(result).toContain('<E K="WhiteRecovery" V="5.000000" />');
-      expect(result).toContain('<E K="BlackRecovery" V="-10.000000" />');
-      expect(result).toContain('<E K="Saturation" V="3.000000" />');
+      expect(result).toContain('<E K="Contrast" V="10" />');
+      expect(result).toContain('<E K="HighlightRecoveryEx" V="15" />');
+      expect(result).toContain('<E K="ShadowRecovery" V="20" />');
+      expect(result).toContain('<E K="WhiteRecovery" V="5" />');
+      expect(result).toContain('<E K="BlackRecovery" V="-10" />');
+      expect(result).toContain('<E K="Saturation" V="3" />');
 
-      // Should not include advanced features
-      expect(result).not.toContain('ColorBalance');
-      expect(result).not.toContain('<LDS>');
+      // Default sections should be present with neutral values
+      expect(result).not.toContain('<E K="ColorBalanceShadow"');
+      expect(result).not.toContain('<E K="Highlight" V="0;0;0;0" />');
+      expect(result).toContain('<LDS>');
     });
 
     it('should handle missing adjustments gracefully', () => {
@@ -311,7 +314,34 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<SL Engine="1300">');
       expect(result).toContain('<E K="Name" V="Minimal Style" />');
       expect(result).toContain('<E K="UUID"');
-      expect(result).toContain('<E K="StyleSource" V="Styles" />');
+      expect(result).not.toContain('<E K="FilmCurve"');
+      expect(result).not.toContain('<E K="ICCProfile"');
+    });
+
+    it('includes camera references only when explicitly provided', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Override Style',
+        treatment: 'color',
+        camera_profile: 'Adobe Color',
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+        captureOne: {
+          iccProfile: 'LeicaSL2-ProStandard.icm',
+          filmCurve: 'LeicaSL2-Auto.fcrv',
+        },
+      };
+
+      const result = generateCaptureOneBasicStyle(adjustments, include);
+
+      expect(result).toContain('<E K="FilmCurve" V="LeicaSL2-Auto.fcrv" />');
+      expect(result).toContain('<E K="ICCProfile" V="LeicaSL2-ProStandard.icm" />');
     });
   });
 
@@ -340,10 +370,10 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
-      expect(result).toContain('<E K="Exposure" V="5.000000" />');
-      expect(result).toContain('<E K="Contrast" V="100.000000" />');
-      expect(result).toContain('<E K="HighlightRecoveryEx" V="100.000000" />');
-      expect(result).toContain('<E K="ShadowRecovery" V="100.000000" />');
+      expect(result).toContain('<E K="Exposure" V="5" />');
+      expect(result).toContain('<E K="Contrast" V="100" />');
+      expect(result).toContain('<E K="HighlightRecoveryEx" V="100" />');
+      expect(result).toContain('<E K="ShadowRecovery" V="100" />');
     });
 
     it('should handle invalid numeric values', () => {
@@ -371,12 +401,10 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
-      // Should not include invalid values
-      expect(result).not.toContain('<E K="Exposure"');
-      expect(result).not.toContain('<E K="Contrast"');
-      expect(result).not.toContain('<E K="HighlightRecoveryEx"');
-      expect(result).not.toContain('<E K="ShadowRecovery"');
-      expect(result).not.toContain('<E K="WhiteRecovery"');
+      // Should fall back to safe defaults and never emit invalid tokens
+      expect(result).toContain('<E K="Exposure" V="0" />');
+      expect(result).not.toContain('NaN');
+      expect(result).not.toContain('Infinity');
     });
   });
 
