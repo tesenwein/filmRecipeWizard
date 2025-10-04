@@ -256,23 +256,6 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     }
   }
 
-  // Add color correction fields (Highlight, Midtone, Shadow)
-  // Format: "intensity;red;green;blue" where intensity is overall strength and RGB are color shifts
-  // These use the same color grading data but in a different format
-  const hueToColorShift = (hue: number | undefined, sat: number | undefined): string => {
-    const h = (hue || 0) * Math.PI / 180;
-    const s = (sat || 0) / 100;
-
-    const intensity = Math.abs(s);
-
-    // RGB shifts based on hue angle (simplified color wheel mapping)
-    const r = s * Math.cos(h) * 0.1;
-    const g = s * Math.cos(h - 2.094) * 0.1; // -120 degrees
-    const b = s * Math.cos(h + 2.094) * 0.1; // +120 degrees
-
-    return `${formatNumber(intensity)};${formatNumber(r)};${formatNumber(g)};${formatNumber(b)}`;
-  };
-
 
   // NOTE: Highlight, Midtone, Shadow fields are NOT included in working Capture One styles
   // These appear to conflict with ColorCorrections field and prevent import
