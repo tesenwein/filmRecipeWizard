@@ -260,69 +260,14 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   // NOTE: Highlight, Midtone, Shadow fields are NOT included in working Capture One styles
   // These appear to conflict with ColorCorrections field and prevent import
 
-  // Add ColorCorrections field (required by Capture One)
-  // Format: 9 semicolon-separated color correction zones, each with 18 parameters
-  // Parameters: [enabled, ?, ?, lum, ?, hue, rangeMin1, rangeMin2, rangeMin3, rangeMax1, rangeMax2, limitMin, limitMax, smoothness, ?, ?, ?, ?]
-  // Zones map to 8 color bands + 1 disabled zone:
-  // Red(0°), Orange(30°), Yellow(60°), Green(120°), Cyan(180°), Blue(240°), Purple(270°), Magenta(300°), Disabled
-  const buildColorZone = (enabled: boolean, hueShift: number, satShift: number, lumShift: number, hueCenter: number, hueRange: number): string => {
-    if (!enabled) return '0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0';
+  // NOTE: ColorCorrections (HSL color picker) is disabled because the format is proprietary and undocumented
+  // Without proper documentation or SDK, we cannot reliably map Lightroom HSL values to Capture One's format
+  // The format uses 9 zones with 18 parameters each, but the exact parameter mapping is unknown
+  // Users must manually adjust color pickers in Capture One
 
-    // Format the zone with HSL adjustments
-    // Hue range defines the color band this zone affects
-    const rangeSpread = hueRange / 2;
-
-    // Convert saturation shift to multiplier (C1 uses multipliers, not offsets)
-    // satShift range -100 to +100 maps to multiplier ~0.0 to ~2.0
-    const satMultiplier = 1 + (satShift / 100);
-
-    return `1,${formatNumber(satMultiplier)},1,${formatNumber(lumShift)},0,${formatNumber(hueShift)},0,0,${formatNumber(hueCenter)},${formatNumber(-rangeSpread)},${formatNumber(rangeSpread)},-100,100,15,0,0,0,0`;
-  };
-
-  // Map HSL adjustments to color zones
-  const hueRed = clamp(aiAdjustments.hue_red, -100, 100) || 0;
-  const hueOrange = clamp(aiAdjustments.hue_orange, -100, 100) || 0;
-  const hueYellow = clamp(aiAdjustments.hue_yellow, -100, 100) || 0;
-  const hueGreen = clamp(aiAdjustments.hue_green, -100, 100) || 0;
-  const hueAqua = clamp(aiAdjustments.hue_aqua, -100, 100) || 0;
-  const hueBlue = clamp(aiAdjustments.hue_blue, -100, 100) || 0;
-  const huePurple = clamp(aiAdjustments.hue_purple, -100, 100) || 0;
-  const hueMagenta = clamp(aiAdjustments.hue_magenta, -100, 100) || 0;
-
-  const satRed = clamp((aiAdjustments as any).sat_red, -100, 100) || 0;
-  const satOrange = clamp((aiAdjustments as any).sat_orange, -100, 100) || 0;
-  const satYellow = clamp((aiAdjustments as any).sat_yellow, -100, 100) || 0;
-  const satGreen = clamp((aiAdjustments as any).sat_green, -100, 100) || 0;
-  const satAqua = clamp((aiAdjustments as any).sat_aqua, -100, 100) || 0;
-  const satBlue = clamp((aiAdjustments as any).sat_blue, -100, 100) || 0;
-  const satPurple = clamp((aiAdjustments as any).sat_purple, -100, 100) || 0;
-  const satMagenta = clamp((aiAdjustments as any).sat_magenta, -100, 100) || 0;
-
-  const lumRed = clamp((aiAdjustments as any).lum_red, -100, 100) || 0;
-  const lumOrange = clamp((aiAdjustments as any).lum_orange, -100, 100) || 0;
-  const lumYellow = clamp((aiAdjustments as any).lum_yellow, -100, 100) || 0;
-  const lumGreen = clamp((aiAdjustments as any).lum_green, -100, 100) || 0;
-  const lumAqua = clamp((aiAdjustments as any).lum_aqua, -100, 100) || 0;
-  const lumBlue = clamp((aiAdjustments as any).lum_blue, -100, 100) || 0;
-  const lumPurple = clamp((aiAdjustments as any).lum_purple, -100, 100) || 0;
-  const lumMagenta = clamp((aiAdjustments as any).lum_magenta, -100, 100) || 0;
-
-  // Define standard hue range for each color band (degrees)
-  const standardRange = 30;
-
-  const colorZones = [
-    buildColorZone(hueRed !== 0 || satRed !== 0 || lumRed !== 0, hueRed, satRed, lumRed, 0, standardRange),
-    buildColorZone(hueOrange !== 0 || satOrange !== 0 || lumOrange !== 0, hueOrange, satOrange, lumOrange, 30, standardRange),
-    buildColorZone(hueYellow !== 0 || satYellow !== 0 || lumYellow !== 0, hueYellow, satYellow, lumYellow, 60, standardRange),
-    buildColorZone(hueGreen !== 0 || satGreen !== 0 || lumGreen !== 0, hueGreen, satGreen, lumGreen, 120, standardRange),
-    buildColorZone(hueAqua !== 0 || satAqua !== 0 || lumAqua !== 0, hueAqua, satAqua, lumAqua, 180, standardRange),
-    buildColorZone(hueBlue !== 0 || satBlue !== 0 || lumBlue !== 0, hueBlue, satBlue, lumBlue, 240, standardRange),
-    buildColorZone(huePurple !== 0 || satPurple !== 0 || lumPurple !== 0, huePurple, satPurple, lumPurple, 270, standardRange),
-    buildColorZone(hueMagenta !== 0 || satMagenta !== 0 || lumMagenta !== 0, hueMagenta, satMagenta, lumMagenta, 300, standardRange),
-    '0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0' // Zone 9 always disabled
-  ];
-
-  const colorCorrections = colorZones.join(';');
+  // Add ColorCorrections field with all zones disabled (required by Capture One)
+  const defaultZone = '0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0';
+  const colorCorrections = Array(9).fill(defaultZone).join(';');
   elements.push(E('ColorCorrections', colorCorrections));
 
   // Add required retouching fields (even if zero, these appear to be mandatory)
