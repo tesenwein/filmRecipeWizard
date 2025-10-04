@@ -272,7 +272,11 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     // Hue range defines the color band this zone affects
     const rangeSpread = hueRange / 2;
 
-    return `1,1,1,${formatNumber(lumShift)},0,${formatNumber(hueShift)},0,0,${formatNumber(hueCenter)},${formatNumber(-rangeSpread)},${formatNumber(rangeSpread)},-100,100,15,0,0,0,0`;
+    // Convert saturation shift to multiplier (C1 uses multipliers, not offsets)
+    // satShift range -100 to +100 maps to multiplier ~0.0 to ~2.0
+    const satMultiplier = 1 + (satShift / 100);
+
+    return `1,${formatNumber(satMultiplier)},1,${formatNumber(lumShift)},0,${formatNumber(hueShift)},0,0,${formatNumber(hueCenter)},${formatNumber(-rangeSpread)},${formatNumber(rangeSpread)},-100,100,15,0,0,0,0`;
   };
 
   // Map HSL adjustments to color zones
