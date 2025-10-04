@@ -195,23 +195,8 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     }
   }
 
-  // Vignette
-  if (include?.vignette !== false) {
-    const vignetteAmount = clamp((aiAdjustments as any).vignette_amount, -100, 100);
-    const vignetteMidpoint = clamp((aiAdjustments as any).vignette_midpoint, 0, 100);
-    const vignetteFeather = clamp((aiAdjustments as any).vignette_feather, 0, 100);
-    const vignetteRoundness = clamp((aiAdjustments as any).vignette_roundness, -100, 100);
-
-    if (typeof vignetteAmount === 'number') {
-      // C1 format: "amount|midpoint|feather|roundness" (pipe-separated)
-      const midpoint = typeof vignetteMidpoint === 'number' ? vignetteMidpoint / 100 : 0.5;
-      const feather = typeof vignetteFeather === 'number' ? vignetteFeather / 100 : 0.5;
-      const roundness = typeof vignetteRoundness === 'number' ? vignetteRoundness / 100 : 0;
-      const amount = vignetteAmount / 100; // Normalize to -1..1 range
-
-      elements.push(E('Vignetting', `${formatNumber(amount)}|${formatNumber(midpoint)}|${formatNumber(feather)}|${formatNumber(roundness)}`));
-    }
-  }
+  // NOTE: Vignette field is NOT included in working Capture One styles
+  // This appears to prevent import when present
 
   // Tone curves
   if (include?.curves !== false) {
@@ -270,9 +255,14 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     return hueToColorShift(hue, sat);
   };
 
-  elements.push(E('Highlight', colorShiftValue(highlightHue, highlightSat)));
-  elements.push(E('Midtone', colorShiftValue(midtoneHue, midtoneSat)));
-  elements.push(E('Shadow', colorShiftValue(shadowHue, shadowSat)));
+  // NOTE: Highlight, Midtone, Shadow fields are NOT included in working Capture One styles
+  // These appear to conflict with ColorCorrections field and prevent import
+
+  // Add ColorCorrections field (required by Capture One)
+  // Format: 9 semicolon-separated color correction zones, each with 18 parameters
+  // First param: 0=disabled, 1=enabled. Default to all disabled for generated styles.
+  const colorCorrections = Array(9).fill('0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0').join(';');
+  elements.push(E('ColorCorrections', colorCorrections));
 
   // Add required retouching fields (even if zero, these appear to be mandatory)
   elements.push(E('RetouchingBlemishRemovalAmount', '0'));
@@ -356,35 +346,9 @@ function generateMasksXML(masks: any[]): string {
     localElements.push(E('Moire', '0;0'));
     localElements.push(E('Name', escapeXml(mask.name || `Mask ${index + 1}`)));
 
-    const localExposure = clamp(adjustments.local_exposure, -4, 4);
-    if (typeof localExposure === 'number') {
-      localElements.push(E('Exposure', localExposure));
-    }
-
-    const localContrast = clamp(adjustments.local_contrast, -100, 100);
-    if (typeof localContrast === 'number') {
-      localElements.push(E('Contrast', localContrast));
-    }
-
-    const localBrightness = clamp(adjustments.local_brightness, -100, 100);
-    if (typeof localBrightness === 'number') {
-      localElements.push(E('Brightness', localBrightness));
-    }
-
-    const localSaturation = clamp(adjustments.local_saturation, -100, 100);
-    if (typeof localSaturation === 'number') {
-      localElements.push(E('Saturation', localSaturation));
-    }
-
-    const localHighlights = clamp(adjustments.local_highlights, -100, 100);
-    if (typeof localHighlights === 'number') {
-      localElements.push(E('HighlightRecoveryEx', -localHighlights));
-    }
-
-    const localShadows = clamp(adjustments.local_shadows, -100, 100);
-    if (typeof localShadows === 'number') {
-      localElements.push(E('ShadowRecovery', localShadows));
-    }
+    // NOTE: Capture One appears to not accept local adjustment values in imported styles
+    // Only include the basic metadata fields that are present in working examples
+    // Local adjustments must be configured manually in Capture One after import
 
     localElements.push(E('Opacity', '100'));
     localElements.push(E('UsmMethod', '0'));
