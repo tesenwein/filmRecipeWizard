@@ -129,10 +129,10 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="FilmGrainAmount" V="25" />');
     });
 
-    it('should include masks when enabled', () => {
+    it('masks are not supported in Capture One generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Mask Style',
-        description: 'Masks included',
+        description: 'Masks not supported',
         confidence: 0.8,
         treatment: 'color',
         camera_profile: 'Adobe Color',
@@ -170,53 +170,10 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
+      // Masks are not supported - should have empty LDS block
       expect(result).toContain('<LDS>');
-      expect(result).toContain('<LD>');
-      expect(result).toContain('<LA>');
-      expect(result).toContain('<E K="Name" V="Test Radial Mask" />');
-      expect(result).toContain('<E K="MaskType" V="2" />'); // Radial
-      // Note: Local adjustment values are not included in generated styles
-      // They must be configured manually in Capture One after import
-    });
-
-    it('should handle AI-detected masks correctly', () => {
-      const adjustments: AIColorAdjustments = {
-        preset_name: 'AI Mask Style',
-        description: 'AI-detected mask included',
-        confidence: 0.8,
-        treatment: 'color',
-        camera_profile: 'Adobe Color',
-        masks: [
-          {
-            type: 'face_skin',
-            name: 'Face Mask',
-            referenceX: 0.4,
-            referenceY: 0.3,
-            inverted: false,
-            adjustments: {
-              local_exposure: 0.2,
-              local_saturation: 10,
-            },
-          },
-        ],
-      };
-
-      const include = {
-        basic: true,
-        hsl: false,
-        colorGrading: false,
-        grain: false,
-        vignette: false,
-        masks: true,
-      };
-
-      const result = generateCaptureOneStyle(adjustments, include);
-
-      expect(result).toContain('<E K="Name" V="Face Mask" />');
-      expect(result).toContain('<E K="MaskType" V="4" />'); // AI/Subject mask
-      expect(result).toContain('<SO>'); // Subject options
-      expect(result).toContain('<E K="Face" V="1" />'); // face_skin maps to Face
-      // Note: Local adjustment values are not included in generated styles
+      expect(result).toContain('</LDS>');
+      expect(result).not.toContain('<LD>');
     });
 
     it('should escape special characters in text content', () => {
