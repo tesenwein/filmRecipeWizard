@@ -1,0 +1,214 @@
+<?xml version="1.0"?>
+<SL Engine="1300">
+	<E K="BlackRecovery" V="-28" />
+	<E K="ColorBalance" V="1;1;1" />
+	<E K="ColorBalanceHighlight" V="1.00642800331116;0.958119988441467;0.864872634410858" />
+	<E K="ColorBalanceMidtone" V="1.00529801845551;0.937617242336273;0.880973637104034" />
+	<E K="ColorBalanceShadow" V="1.01023697853088;0.882525324821472;0.866607069969177" />
+	<E K="Contrast" V="18" />
+	<E K="Exposure" V="-0.150000005960464" />
+	<E K="FilmCurve" V="LeicaSL2-Auto.fcrv" />
+	<E K="GradationCurve" V="0,0;0.417171269655228,0.540352463722229;1,1" />
+	<E K="GradationCurveBlue" V="0,0;0.625838041305542,0.735592305660248;1,1" />
+	<E K="GradationCurveGreen" V="0,0;0.681039154529572,0.756795048713684;1,1" />
+	<E K="GradationCurveRed" V="0,0;0.223791629076004,0.340243458747864;0.400194644927979,0.443731844425201;1,1" />
+	<E K="GradationCurveY" V="0,0;0.279073864221573,0.415988385677338;1,1" />
+	<E K="Highlight" V="0.890625;1;1;1" />
+	<E K="HighlightRecoveryEx" V="25" />
+	<E K="ICCProfile" V="LeicaSL2-ProStandard.icm" />
+	<E K="Midtone" V="0.171974658966064;0;0;0" />
+	<E K="Name" V="full" />
+	<E K="RetouchingBlemishRemovalAmount" V="0" />
+	<E K="RetouchingDarkCirclesReductionAmount" V="0" />
+	<E K="RetouchingFaceSculptingContouring" V="0" />
+	<E K="RetouchingOpacity" V="100" />
+	<E K="RetouchingSkinEveningAmount" V="0" />
+	<E K="RetouchingSkinEveningTexture" V="0" />
+	<E K="Saturation" V="-5" />
+	<E K="Shadow" V="0;0;0;0" />
+	<E K="ShadowRecovery" V="-20" />
+	<E K="UUID" V="52166F0F-1E12-4CE3-BBF3-892DF8A39021" />
+	<E K="WhiteRecovery" V="8" />
+</SL>
+<LDS>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Gesichts-Haut-Maske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="0" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="0" />
+				<E K="Face" V="1" />
+				<E K="Hair" V="0" />
+				<E K="IrisAndPupil" V="0" />
+				<E K="Lips" V="0" />
+				<E K="Sclera" V="0" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Körper-Haut-Maske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="1" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="0" />
+				<E K="Face" V="0" />
+				<E K="Hair" V="0" />
+				<E K="IrisAndPupil" V="0" />
+				<E K="Lips" V="0" />
+				<E K="Sclera" V="0" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Gesichts-Haut-Maske 2" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="0" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="0" />
+				<E K="Face" V="1" />
+				<E K="Hair" V="0" />
+				<E K="IrisAndPupil" V="0" />
+				<E K="Lips" V="0" />
+				<E K="Sclera" V="0" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Augenbrauen-Maske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="0" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="1" />
+				<E K="Face" V="0" />
+				<E K="Hair" V="0" />
+				<E K="IrisAndPupil" V="0" />
+				<E K="Lips" V="0" />
+				<E K="Sclera" V="0" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Lippen-Maske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="0" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="0" />
+				<E K="Face" V="0" />
+				<E K="Hair" V="0" />
+				<E K="IrisAndPupil" V="0" />
+				<E K="Lips" V="1" />
+				<E K="Sclera" V="0" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Haar-Maske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="0" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="0" />
+				<E K="Face" V="0" />
+				<E K="Hair" V="1" />
+				<E K="IrisAndPupil" V="0" />
+				<E K="Lips" V="0" />
+				<E K="Sclera" V="0" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Pupillen- und Irismaske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="0" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="0" />
+				<E K="Face" V="0" />
+				<E K="Hair" V="0" />
+				<E K="IrisAndPupil" V="1" />
+				<E K="Lips" V="0" />
+				<E K="Sclera" V="0" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Sklera Maske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="4" />
+			<SO>
+				<E K="Body" V="0" />
+				<E K="Clothes" V="0" />
+				<E K="Eyebrows" V="0" />
+				<E K="Face" V="0" />
+				<E K="Hair" V="0" />
+				<E K="IrisAndPupil" V="0" />
+				<E K="Lips" V="0" />
+				<E K="Sclera" V="1" />
+			</SO>
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Hintergrundmaske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="3" />
+		</MD>
+	</LD>
+	<LD>
+		<LA>
+			<E K="Enabled" V="1" />
+			<E K="Name" V="Objektmaske 1" />
+			<E K="Opacity" V="100" />
+		</LA>
+		<MD>
+			<E K="MaskType" V="2" />
+		</MD>
+	</LD>
+</LDS>
