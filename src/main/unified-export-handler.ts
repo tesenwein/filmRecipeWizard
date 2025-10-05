@@ -3,15 +3,14 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createErrorResponse, logError } from '../shared/error-utils';
 import { AppSettings } from '../shared/types';
-import { generateCaptureOneBasicStyle, generateCaptureOneStyle } from './capture-one-generator';
+import { generateCaptureOneStyle } from './capture-one-generator';
 import { ImageProcessor } from './image-processor';
 import { generateXMPContent } from './xmp-generator';
 
-export type ExportType = 
-  | 'lightroom-preset' 
-  | 'lightroom-profile' 
-  | 'capture-one-style' 
-  | 'capture-one-basic-style';
+export type ExportType =
+  | 'lightroom-preset'
+  | 'lightroom-profile'
+  | 'capture-one-style';
 
 export type ExportAction = 'download' | 'save-to-folder';
 
@@ -70,24 +69,6 @@ export class UnifiedExportHandler {
       },
       defaultFilename: (recipeName?: string) => `${recipeName || 'Custom-Style'}.costyle`,
       displayName: 'Capture One Style',
-    },
-    'capture-one-basic-style': {
-      settingsPath: 'captureOneStylesPath' as keyof AppSettings,
-      fileExtension: 'costyle',
-      generateContent: (adjustments: any, include?: any) => {
-        const config = {
-          basic: true,
-          hsl: false,
-          colorGrading: false,
-          grain: false,
-          vignette: false,
-          masks: false,
-          ...include,
-        };
-        return generateCaptureOneBasicStyle(adjustments, config);
-      },
-      defaultFilename: (recipeName?: string) => `${recipeName || 'Custom-Style'}-Basic.costyle`,
-      displayName: 'Basic Capture One Style',
     },
   };
 

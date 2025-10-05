@@ -7,9 +7,7 @@ import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import {
-    downloadCaptureOneBasicStyle,
     downloadCaptureOneStyle,
-    saveCaptureOneBasicStyleToFolder,
     saveCaptureOneStyleToFolder,
     saveLightroomPresetToFolder,
     saveLightroomProfileToFolder
@@ -499,58 +497,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     }
   };
 
-  const handleBulkSaveBasicStylesToCaptureOne = async () => {
-    if (selectedRecipes.size === 0) {
-      showError('No recipes selected. Please select recipes first.');
-      return;
-    }
-
-    if (!settings?.captureOneStylesPath) {
-      showError('Capture One styles path not configured. Please set it in Settings first.');
-      return;
-    }
-    
-    try {
-      const selectedRecipeIds = Array.from(selectedRecipes);
-      let successCount = 0;
-      let errorCount = 0;
-      
-      for (const recipeId of selectedRecipeIds) {
-        try {
-          // Get the recipe data
-          const recipe = recipes.find(r => r.id === recipeId);
-          if (!recipe) {
-            errorCount++;
-            continue;
-          }
-          
-          // Export basic style to Capture One for each recipe
-          const res = await saveCaptureOneBasicStyleToFolder(
-            recipe.results?.[0]?.metadata?.aiAdjustments,
-            {},
-            recipe.name || 'Custom Recipe'
-          );
-          
-          if (res.success) {
-            successCount++;
-          } else {
-            errorCount++;
-          }
-        } catch {
-          errorCount++;
-        }
-      }
-      
-      if (successCount > 0) {
-        showSuccess(`Successfully saved ${successCount} basic style${successCount !== 1 ? 's' : ''} to Capture One`);
-      }
-      if (errorCount > 0) {
-        showError(`Failed to save ${errorCount} basic style${errorCount !== 1 ? 's' : ''} to Capture One`);
-      }
-    } catch {
-      showError('Bulk save basic styles to Capture One failed');
-    }
-  };
 
   const handleBulkExportStyles = async () => {
     if (selectedRecipes.size === 0) {
@@ -597,54 +543,6 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
       }
     } catch {
       showError('Bulk export styles failed');
-    }
-  };
-
-  const handleBulkExportBasicStyles = async () => {
-    if (selectedRecipes.size === 0) {
-      showError('No recipes selected. Please select recipes first.');
-      return;
-    }
-    
-    try {
-      const selectedRecipeIds = Array.from(selectedRecipes);
-      let successCount = 0;
-      let errorCount = 0;
-      
-      for (const recipeId of selectedRecipeIds) {
-        try {
-          // Get the recipe data
-          const recipe = recipes.find(r => r.id === recipeId);
-          if (!recipe) {
-            errorCount++;
-            continue;
-          }
-          
-          // Download basic Capture One style for each recipe
-          const res = await downloadCaptureOneBasicStyle(
-            recipe.results?.[0]?.metadata?.aiAdjustments,
-            {},
-            recipe.name || 'Custom Recipe'
-          );
-          
-          if (res.success) {
-            successCount++;
-          } else {
-            errorCount++;
-          }
-        } catch {
-          errorCount++;
-        }
-      }
-      
-      if (successCount > 0) {
-        showSuccess(`Successfully exported ${successCount} basic style${successCount !== 1 ? 's' : ''}`);
-      }
-      if (errorCount > 0) {
-        showError(`Failed to export ${errorCount} basic style${errorCount !== 1 ? 's' : ''}`);
-      }
-    } catch {
-      showError('Bulk export basic styles failed');
     }
   };
 
@@ -768,11 +666,9 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           onExportPresets={handleBulkExportPresets}
           onExportProfiles={handleBulkExportProfiles}
           onExportStyles={handleBulkExportStyles}
-          onExportBasicStyles={handleBulkExportBasicStyles}
           onSavePresetsToLightroom={handleBulkSavePresetsToLightroom}
           onSaveProfilesToLightroom={handleBulkSaveProfilesToLightroom}
           onSaveStylesToCaptureOne={handleBulkSaveStylesToCaptureOne}
-          onSaveBasicStylesToCaptureOne={handleBulkSaveBasicStylesToCaptureOne}
           lightroomPathConfigured={!!settings?.lightroomProfilePath}
           captureOnePathConfigured={!!settings?.captureOneStylesPath}
         />

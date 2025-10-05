@@ -19,11 +19,9 @@ import { ProcessingResult, UserProfile } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import {
-  downloadCaptureOneBasicStyle,
   downloadCaptureOneStyle,
   downloadLightroomPreset,
   downloadLightroomProfile,
-  saveCaptureOneBasicStyleToFolder,
   saveCaptureOneStyleToFolder,
   saveLightroomPresetToFolder,
   saveLightroomProfileToFolder
@@ -687,31 +685,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
-  const handleExportBasicStyleToCaptureOne = async (index: number, result: any) => {
-    try {
-      // Extract adjustments same way as preset export
-      const adjustments = getEffectiveAdjustments(result);
-      if (!adjustments) return;
-
-      // Generate and export basic style directly to Capture One folder
-      const adjForExport = { ...adjustments } as any;
-      if (processName) adjForExport.preset_name = processName;
-      if (processDescription) adjForExport.description = processDescription;
-      const res = await saveCaptureOneBasicStyleToFolder(adjForExport, {}, processName);
-
-      if (res?.success) {
-        showSuccess(
-          'Basic style successfully saved to Capture One folder!',
-          { title: 'Export Successful' }
-        );
-      } else {
-        showError(res?.error || 'Export failed', { title: 'Export Failed' });
-      }
-    } catch (e) {
-      showError(e instanceof Error ? e.message : 'Export failed', { title: 'Export Failed' });
-    }
-  };
-
   const handleExportCaptureOneStyle = async (index: number, result: any) => {
     const adjustments = getEffectiveAdjustments(result);
     if (!adjustments) return;
@@ -721,24 +694,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
       const res = await downloadCaptureOneStyle(adjForExport, getOptions(index), processName);
-      if (!res.success) {
-        showError(`Export failed: ${res.error}`);
-      }
-    } catch (e) {
-      console.error('Export error:', e);
-      showError('Export failed.');
-    }
-  };
-
-  const handleExportBasicCaptureOneStyle = async (index: number, result: any) => {
-    const adjustments = getEffectiveAdjustments(result);
-    if (!adjustments) return;
-
-    try {
-      const adjForExport = { ...adjustments } as any;
-      if (processName) adjForExport.preset_name = processName;
-      if (processDescription) adjForExport.description = processDescription;
-      const res = await downloadCaptureOneBasicStyle(adjForExport, getOptions(index), processName);
       if (!res.success) {
         showError(`Export failed: ${res.error}`);
       }
@@ -1335,50 +1290,6 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         </Box>
                       </Paper>
 
-                      <Paper elevation={1} sx={{ p: 3 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                          Basic Style (.costyle)
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                          Create a simplified style with only basic adjustments for broader compatibility.
-                        </Typography>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                          <Button
-                            variant="outlined"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => handleExportBasicCaptureOneStyle(index, result)}
-                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                            size="large"
-                          >
-                            Export Basic Style (.costyle)
-                          </Button>
-                          {captureOnePathConfigured ? (
-                            <Button
-                              variant="contained"
-                              startIcon={<DownloadIcon />}
-                              onClick={() => handleExportBasicStyleToCaptureOne(index, result)}
-                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                              size="large"
-                            >
-                              Save Basic to Capture One
-                            </Button>
-                          ) : (
-                            <Tooltip title="Configure Capture One styles path in Settings to enable direct export">
-                              <span>
-                                <Button
-                                  variant="contained"
-                                  startIcon={<DownloadIcon />}
-                                  disabled
-                                  sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                                  size="large"
-                                >
-                                  Save Basic to Capture One
-                                </Button>
-                              </span>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      </Paper>
                     </Box>
                   </Box>
                 )}

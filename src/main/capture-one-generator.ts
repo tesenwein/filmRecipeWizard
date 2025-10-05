@@ -360,18 +360,3 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
 
 // NOTE: Mask generation removed - Capture One format is too complex and incompatible
 // Users must create masks manually in Capture One
-
-/**
- * Generates a Capture One style file with basic adjustments only
- */
-export function generateCaptureOneBasicStyle(aiAdjustments: AIColorAdjustments, include: any): string {
-  const basicInclude = {
-    ...include,
-    colorGrading: false,
-    grain: false,
-    vignette: false,
-    masks: false,
-  };
-
-  return generateCaptureOneStyle(aiAdjustments, basicInclude);
-}

@@ -88,14 +88,11 @@ export class ExportHandlers {
     // The following handlers have been replaced by UnifiedExportHandler:
     // - download-xmp
     // - export-profile
-    // - export-preset-to-lightroom  
+    // - export-preset-to-lightroom
     // - export-profile-to-lightroom
     // - export-style-to-capture-one
-    // - export-basic-style-to-capture-one
     // - generate-capture-one-style
-    // - generate-capture-one-basic-style
     // - download-capture-one-style
-    // - download-capture-one-basic-style
 
     // Export a recipe (process) to a ZIP file
     ipcMain.handle('export-recipe', async (_event, processId: string): Promise<ExportResult> => {

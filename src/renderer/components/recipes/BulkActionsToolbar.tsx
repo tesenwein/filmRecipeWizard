@@ -12,28 +12,24 @@ interface BulkActionsToolbarProps {
   onExportPresets: () => void;
   onExportProfiles: () => void;
   onExportStyles: () => void;
-  onExportBasicStyles: () => void;
   onSavePresetsToLightroom: () => void;
   onSaveProfilesToLightroom: () => void;
   onSaveStylesToCaptureOne: () => void;
-  onSaveBasicStylesToCaptureOne: () => void;
   lightroomPathConfigured?: boolean;
   captureOnePathConfigured?: boolean;
 }
 
-const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({ 
-  selectedCount, 
-  totalCount, 
-  onSelectAll, 
-  onDeleteSelected, 
-  onExportPresets, 
+const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
+  selectedCount,
+  totalCount,
+  onSelectAll,
+  onDeleteSelected,
+  onExportPresets,
   onExportProfiles,
   onExportStyles,
-  onExportBasicStyles,
   onSavePresetsToLightroom,
   onSaveProfilesToLightroom,
   onSaveStylesToCaptureOne,
-  onSaveBasicStylesToCaptureOne,
   lightroomPathConfigured: _lightroomPathConfigured = false,
   captureOnePathConfigured: _captureOnePathConfigured = false
 }) => {
@@ -85,16 +81,12 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
                 onExportProfiles();
               } else if (value === 'export-styles') {
                 onExportStyles();
-              } else if (value === 'export-basic-styles') {
-                onExportBasicStyles();
               } else if (value === 'save-presets') {
                 onSavePresetsToLightroom();
               } else if (value === 'save-profiles') {
                 onSaveProfilesToLightroom();
               } else if (value === 'save-styles') {
                 onSaveStylesToCaptureOne();
-              } else if (value === 'save-basic-styles') {
-                onSaveBasicStylesToCaptureOne();
               }
               // Reset the select value after action
               e.target.value = '';
@@ -145,12 +137,6 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
               </ListItemIcon>
               <ListItemText>Export as Capture One Styles</ListItemText>
             </MenuItem>
-            <MenuItem value="export-basic-styles">
-              <ListItemIcon>
-                <DownloadIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Export as Basic Capture One Styles</ListItemText>
-            </MenuItem>
             <MenuItem value="save-presets">
               <ListItemIcon>
                 <SaveIcon fontSize="small" />
@@ -168,12 +154,6 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
                 <SaveIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>Save Styles to Capture One</ListItemText>
-            </MenuItem>
-            <MenuItem value="save-basic-styles">
-              <ListItemIcon>
-                <SaveIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Save Basic Styles to Capture One</ListItemText>
             </MenuItem>
           </Select>
         </FormControl>

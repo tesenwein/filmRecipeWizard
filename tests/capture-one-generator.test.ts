@@ -1,4 +1,4 @@
-import { generateCaptureOneBasicStyle, generateCaptureOneStyle } from '../src/main/capture-one-generator';
+import { generateCaptureOneStyle } from '../src/main/capture-one-generator';
 import { AIColorAdjustments } from '../src/services/types';
 
 describe('Capture One Generator', () => {
@@ -229,7 +229,7 @@ describe('Capture One Generator', () => {
         masks: false,
       };
 
-      const result = generateCaptureOneBasicStyle(adjustments, include);
+      const result = generateCaptureOneStyle(adjustments, include);
 
       expect(result).toContain('<?xml version="1.0"?>');
       expect(result).toContain('<SL Engine="1300">');
@@ -266,7 +266,7 @@ describe('Capture One Generator', () => {
         masks: false,
       };
 
-      const result = generateCaptureOneBasicStyle(adjustments, include);
+      const result = generateCaptureOneStyle(adjustments, include);
 
       expect(result).toContain('<?xml version="1.0"?>');
       expect(result).toContain('<SL Engine="1300">');
@@ -296,7 +296,7 @@ describe('Capture One Generator', () => {
         },
       };
 
-      const result = generateCaptureOneBasicStyle(adjustments, include);
+      const result = generateCaptureOneStyle(adjustments, include);
 
       expect(result).toContain('<E K="FilmCurve" V="LeicaSL2-Auto.fcrv" />');
       expect(result).toContain('<E K="ICCProfile" V="LeicaSL2-ProStandard.icm" />');
@@ -363,6 +363,98 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="Exposure" V="0" />');
       expect(result).not.toContain('NaN');
       expect(result).not.toContain('Infinity');
+    });
+  });
+
+  describe('Color Editor (HSL) Support', () => {
+    it('should generate ColorCorrections with HSL adjustments', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'HSL Test',
+        treatment: 'color',
+        camera_profile: 'Adobe Color',
+        hue_red: -10,
+        sat_red: -5,
+        lum_red: 6,
+        hue_orange: 5,
+        sat_orange: 10,
+        lum_orange: -3,
+        hue_blue: -15,
+        sat_blue: 20,
+        lum_blue: -8,
+      };
+
+      const include = {
+        basic: true,
+        hsl: true,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      // Should contain ColorCorrections field
+      expect(result).toContain('<E K="ColorCorrections"');
+
+      // ColorCorrections should have 9 zones separated by semicolons
+      const colorCorrectionsMatch = result.match(/<E K="ColorCorrections" V="([^"]+)"/);
+      expect(colorCorrectionsMatch).toBeTruthy();
+
+      if (colorCorrectionsMatch) {
+        const zones = colorCorrectionsMatch[1].split(';');
+        expect(zones.length).toBe(9); // 9 color zones
+
+        // Each zone should have 18 parameters
+        zones.forEach((zone, index) => {
+          const params = zone.split(',');
+          expect(params.length).toBe(18);
+
+          // First param is enabled flag (1 for zones with adjustments, 0 for rainbow)
+          if (index < 8) {
+            expect(params[0]).toBe('1'); // Color zones should be enabled
+          } else {
+            expect(params[0]).toBe('0'); // Rainbow zone should be disabled
+          }
+        });
+      }
+    });
+
+    it('should generate proper RGB encoding for color zones', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Color Zone Test',
+        treatment: 'color',
+        hue_red: 10,
+        sat_red: 5,
+        lum_red: -5,
+      };
+
+      const include = {
+        basic: true,
+        hsl: true,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      // Should have ColorCorrections with proper values
+      expect(result).toContain('<E K="ColorCorrections"');
+
+      const colorCorrectionsMatch = result.match(/<E K="ColorCorrections" V="([^"]+)"/);
+      if (colorCorrectionsMatch) {
+        const zones = colorCorrectionsMatch[1].split(';');
+        const redZone = zones[0].split(',');
+
+        // Red zone: enabled,1,1,H,S,L,R,G,B,...
+        expect(redZone[0]).toBe('1'); // enabled
+        expect(redZone[3]).toBe('10'); // hue
+        expect(redZone[4]).toBe('5'); // saturation
+        expect(redZone[5]).toBe('-5'); // luminance
+        expect(redZone[6]).toBe('255'); // Red channel should be 255 for red color
+      }
     });
   });
 

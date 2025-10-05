@@ -1,9 +1,8 @@
 // Unified export utility for the frontend
-export type ExportType = 
-  | 'lightroom-preset' 
-  | 'lightroom-profile' 
-  | 'capture-one-style' 
-  | 'capture-one-basic-style';
+export type ExportType =
+  | 'lightroom-preset'
+  | 'lightroom-profile'
+  | 'capture-one-style';
 
 export type ExportAction = 'download' | 'save-to-folder';
 
@@ -100,26 +99,6 @@ export async function downloadCaptureOneStyle(adjustments: any, include?: any, r
   });
 }
 
-export async function downloadCaptureOneBasicStyle(adjustments: any, include?: any, recipeName?: string): Promise<ExportResponse> {
-  return unifiedExport({
-    type: 'capture-one-basic-style',
-    action: 'download',
-    adjustments,
-    include: include || {
-      basic: true,
-      hsl: true,
-      colorGrading: true,
-      curves: true,
-      pointColor: true,
-      grain: true,
-      vignette: true,
-      masks: true,
-      exposure: false,
-      sharpenNoise: false,
-    },
-    recipeName
-  });
-}
 
 export async function saveLightroomPresetToFolder(adjustments: any, recipeName?: string): Promise<ExportResponse> {
   return unifiedExport({
@@ -184,23 +163,3 @@ export async function saveCaptureOneStyleToFolder(adjustments: any, include?: an
   });
 }
 
-export async function saveCaptureOneBasicStyleToFolder(adjustments: any, include?: any, recipeName?: string): Promise<ExportResponse> {
-  return unifiedExport({
-    type: 'capture-one-basic-style',
-    action: 'save-to-folder',
-    adjustments,
-    include: include || {
-      basic: true,
-      hsl: true,
-      colorGrading: true,
-      curves: true,
-      pointColor: true,
-      grain: true,
-      vignette: true,
-      masks: true,
-      exposure: false,
-      sharpenNoise: false,
-    },
-    recipeName
-  });
-}
