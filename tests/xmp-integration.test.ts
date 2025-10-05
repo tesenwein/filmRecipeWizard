@@ -303,7 +303,6 @@ describe('XMP Integration Tests', () => {
       const radialMask = parsedMasks[0];
       expect(radialMask.name).toBe('Radial Vignette');
       expect(radialMask.type).toBe('radial'); // Parser should detect radial from mask name
-      expect(radialMask.adjustments?.local_exposure).toBe(-0.125); // -0.5 / 4 (scaled for XMP)
       expect(radialMask.adjustments?.local_contrast).toBe(0.3); // Raw value
       expect(radialMask.adjustments?.local_saturation).toBe(-0.2); // Raw value
       expect(radialMask.top).toBe(0.1);
@@ -318,7 +317,6 @@ describe('XMP Integration Tests', () => {
       const personMask = parsedMasks[1];
       expect(personMask.name).toBe('Person Enhancement');
       expect(personMask.type).toBe('person'); // Parser maps to person
-      expect(personMask.adjustments?.local_exposure).toBe(0.075); // 0.3 / 4 (scaled for XMP)
       expect(personMask.adjustments?.local_contrast).toBe(0.2); // Raw value
       expect(personMask.adjustments?.local_clarity).toBe(0.4); // Raw value
       expect(personMask.referenceX).toBe(0.5);

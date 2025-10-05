@@ -139,7 +139,6 @@ function parseBasicAdjustments(xmpContent: string, adjustments: AIColorAdjustmen
     }
   };
 
-  parseToneValue('Exposure2012', 'exposure');
   parseToneValue('Contrast2012', 'contrast');
   parseToneValue('Highlights2012', 'highlights');
   parseToneValue('Shadows2012', 'shadows');

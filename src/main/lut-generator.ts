@@ -10,7 +10,6 @@ export function generateLUTContent(aiAdjustments: AIColorAdjustments, size: numb
   // Extract and normalize ALL adjustments including color grading
   const adjustments = {
     // Basic adjustments
-    exposure: clamp(withDefault(aiAdjustments.exposure, 0), -5, 5),
     contrast: clamp(withDefault(aiAdjustments.contrast, 0), -100, 100) / 100,
     highlights: clamp(withDefault(aiAdjustments.highlights, 0), -100, 100) / 100,
     shadows: clamp(withDefault(aiAdjustments.shadows, 0), -100, 100) / 100,
@@ -163,14 +162,7 @@ function applyColorTransform(r: number, g: number, b: number, A: any): [number, 
 
   let R = r, G = g, B = b;
 
-
-  // 2) Exposure in stops (map 4 UI units ≈ 1 stop)
-  if (Math.abs(A.exposure) > 1e-3) {
-    const factor = Math.pow(2, A.exposure * 0.25);
-    R *= factor; G *= factor; B *= factor;
-  }
-
-  // 3) Basic tone curve: blacks/whites + shadows/highlights + contrast
+  // 2) Basic tone curve: blacks/whites + shadows/highlights + contrast
   const luma = (0.299 * R + 0.587 * G + 0.114 * B);
   const shadowW = 1 - smoothstep(0.25, 0.65, luma);
   const highlightW = smoothstep(0.35, 0.85, luma);
