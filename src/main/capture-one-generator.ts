@@ -67,36 +67,29 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     return `\t<E K="${key}" V="${formattedValue}" />`;
   };
 
-  // Build elements array
-  const elements: string[] = [];
+  // Build elements arrays - separate base and layer adjustments
+  const baseElements: string[] = [];
+  const layerElements: string[] = [];
 
-  // Name and UUID are required
-  elements.push(E('Name', escapeXml(presetName)));
-  elements.push(E('UUID', styleId));
+  // Helper to create E elements for layers (with tab indentation)
+  const ELayer = (key: string, value: string | number) => {
+    const formattedValue = typeof value === 'number' ? formatNumber(value) : value;
+    return `\t\t\t<E K="${key}" V="${formattedValue}" />`;
+  };
 
-  // Basic adjustments
-  // Exposure is required - default to 0 if not provided
-  const exposure = clamp(aiAdjustments.exposure, -5, 5);
-  elements.push(E('Exposure', typeof exposure === 'number' ? exposure : 0));
+  // Base elements (SL) - Name, UUID, B&W settings, Film Grain, Retouching
+  baseElements.push(E('Name', escapeXml(presetName)));
+  baseElements.push(E('UUID', styleId));
 
-  const contrast = clamp(aiAdjustments.contrast, -100, 100);
-  if (typeof contrast === 'number') {
-    elements.push(E('Contrast', contrast));
-  }
-
+  // Brightness - only in base adjustments (not supported in layers)
   const brightness = clamp(aiAdjustments.brightness, -100, 100);
   if (typeof brightness === 'number') {
-    elements.push(E('Brightness', brightness));
+    baseElements.push(E('Brightness', brightness));
   }
 
-  const saturation = isBW ? -100 : clamp(aiAdjustments.saturation, -100, 100);
-  if (typeof saturation === 'number') {
-    elements.push(E('Saturation', saturation));
-  }
-
-  // B&W mode settings (required when using B&W)
+  // B&W mode settings (in base adjustments)
   if (isBW) {
-    elements.push(E('BwEnabled', '1'));
+    baseElements.push(E('BwEnabled', '1'));
 
     // Add B&W color mixer - map from Lightroom gray mixer values
     // C1 range appears to be roughly -100 to +100 based on working examples
@@ -113,47 +106,95 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     // Purple: interpolate between blue and magenta (C1 doesn't have separate purple)
     const gray_purple = clamp((aiAdjustments as any).gray_purple, -100, 100);
 
-    elements.push(E('BwRed', typeof gray_red === 'number' ? gray_red + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0));
-    elements.push(E('BwGreen', typeof gray_green === 'number' ? gray_green : 0));
-    elements.push(E('BwBlue', typeof gray_blue === 'number' ? gray_blue + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0));
-    elements.push(E('BwYellow', typeof gray_yellow === 'number' ? gray_yellow + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0));
-    elements.push(E('BwCyan', typeof gray_cyan === 'number' ? gray_cyan : 0));
-    elements.push(E('BwMagenta', typeof gray_magenta === 'number' ? gray_magenta + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0));
+    baseElements.push(E('BwRed', typeof gray_red === 'number' ? gray_red + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0));
+    baseElements.push(E('BwGreen', typeof gray_green === 'number' ? gray_green : 0));
+    baseElements.push(E('BwBlue', typeof gray_blue === 'number' ? gray_blue + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0));
+    baseElements.push(E('BwYellow', typeof gray_yellow === 'number' ? gray_yellow + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0));
+    baseElements.push(E('BwCyan', typeof gray_cyan === 'number' ? gray_cyan : 0));
+    baseElements.push(E('BwMagenta', typeof gray_magenta === 'number' ? gray_magenta + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0));
   }
 
   if (filmCurveName) {
-    elements.push(E('FilmCurve', filmCurveName));
+    baseElements.push(E('FilmCurve', filmCurveName));
   }
   if (iccProfileName) {
-    elements.push(E('ICCProfile', iccProfileName));
+    baseElements.push(E('ICCProfile', iccProfileName));
   }
 
-  // Highlights and Shadows (use HighlightRecoveryEx and ShadowRecovery in Capture One)
+  // Grain (in base adjustments)
+  if (include?.grain !== false) {
+    const grainAmount = clamp((aiAdjustments as any).grain_amount, 0, 100);
+    if (typeof grainAmount === 'number') {
+      baseElements.push(E('FilmGrainAmount', grainAmount));
+    }
+
+    const grainSize = clamp((aiAdjustments as any).grain_size, 0, 100);
+    if (typeof grainSize === 'number') {
+      baseElements.push(E('FilmGrainGranularity', grainSize));
+    }
+
+    const grainFrequency = clamp((aiAdjustments as any).grain_frequency, 0, 100);
+    if (typeof grainFrequency === 'number') {
+      baseElements.push(E('FilmGrainDensity', grainFrequency));
+    }
+
+    // FilmGrainType: 0 = Soft, 1 = Medium, 2 = Hard (default to 1 if grain is present)
+    if (typeof grainAmount === 'number' && grainAmount > 0) {
+      baseElements.push(E('FilmGrainType', 1));
+    }
+  }
+
+  // Add required retouching fields to base (even if zero, these appear to be mandatory)
+  baseElements.push(E('RetouchingBlemishRemovalAmount', '0'));
+  baseElements.push(E('RetouchingDarkCirclesReductionAmount', '0'));
+  baseElements.push(E('RetouchingFaceSculptingContouring', '0'));
+  baseElements.push(E('RetouchingOpacity', '100'));
+  baseElements.push(E('RetouchingSkinEveningAmount', '0'));
+  baseElements.push(E('RetouchingSkinEveningTexture', '0'));
+
+  // Layer elements (LA) - Exposure, Contrast, Highlights/Shadows, Whites/Blacks, Color Grading, Curves, ColorCorrections
+  layerElements.push(ELayer('Enabled', '1'));
+  layerElements.push(ELayer('Name', escapeXml(presetName)));
+
+  // Exposure (in layer)
+  const exposure = clamp(aiAdjustments.exposure, -5, 5);
+  layerElements.push(ELayer('Exposure', typeof exposure === 'number' ? exposure : 0));
+
+  // Contrast (in layer)
+  const contrast = clamp(aiAdjustments.contrast, -100, 100);
+  if (typeof contrast === 'number') {
+    layerElements.push(ELayer('Contrast', contrast));
+  }
+
+  // Saturation (in layer)
+  const saturation = isBW ? -100 : clamp(aiAdjustments.saturation, -100, 100);
+  if (typeof saturation === 'number') {
+    layerElements.push(ELayer('Saturation', saturation));
+  }
+
+  // Highlights and Shadows (in layer)
   const highlights = clamp(aiAdjustments.highlights, -100, 100);
   if (typeof highlights === 'number') {
-    elements.push(E('HighlightRecoveryEx', -highlights)); // Inverted
+    layerElements.push(ELayer('HighlightRecoveryEx', -highlights)); // Inverted
   }
 
   const shadows = clamp(aiAdjustments.shadows, -100, 100);
   if (typeof shadows === 'number') {
-    elements.push(E('ShadowRecovery', shadows));
+    layerElements.push(ELayer('ShadowRecovery', shadows));
   }
 
-  // Whites and Blacks
+  // Whites and Blacks (in layer)
   const whites = clamp(aiAdjustments.whites, -100, 100);
   if (typeof whites === 'number') {
-    elements.push(E('WhiteRecovery', whites));
+    layerElements.push(ELayer('WhiteRecovery', whites));
   }
 
   const blacks = clamp(aiAdjustments.blacks, -100, 100);
   if (typeof blacks === 'number') {
-    elements.push(E('BlackRecovery', blacks));
+    layerElements.push(ELayer('BlackRecovery', blacks));
   }
 
-  // Base color balance (required field)
-  elements.push(E('ColorBalance', '1;1;1'));
-
-  // Color grading - convert hue/sat to RGB multipliers
+  // Color grading - convert hue/sat to RGB multipliers (in layer)
   const includeColorGrading = include?.colorGrading !== false;
   const hueToRgb = (hue: number | undefined, sat: number | undefined): string => {
     const h = (hue || 0) * Math.PI / 180; // Convert to radians
@@ -181,37 +222,10 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     return hueToRgb(hue, sat);
   };
 
-  elements.push(E('ColorBalanceShadow', colorBalanceValue(shadowHue, shadowSat)));
-  elements.push(E('ColorBalanceMidtone', colorBalanceValue(midtoneHue, midtoneSat)));
-  elements.push(E('ColorBalanceHighlight', colorBalanceValue(highlightHue, highlightSat)));
+  layerElements.push(ELayer('ColorBalanceShadow', colorBalanceValue(shadowHue, shadowSat)));
+  layerElements.push(ELayer('ColorBalanceHighlight', colorBalanceValue(highlightHue, highlightSat)));
 
-  // Grain
-  if (include?.grain !== false) {
-    const grainAmount = clamp((aiAdjustments as any).grain_amount, 0, 100);
-    if (typeof grainAmount === 'number') {
-      elements.push(E('FilmGrainAmount', grainAmount));
-    }
-
-    const grainSize = clamp((aiAdjustments as any).grain_size, 0, 100);
-    if (typeof grainSize === 'number') {
-      elements.push(E('FilmGrainGranularity', grainSize));
-    }
-
-    const grainFrequency = clamp((aiAdjustments as any).grain_frequency, 0, 100);
-    if (typeof grainFrequency === 'number') {
-      elements.push(E('FilmGrainDensity', grainFrequency));
-    }
-
-    // FilmGrainType: 0 = Soft, 1 = Medium, 2 = Hard (default to 1 if grain is present)
-    if (typeof grainAmount === 'number' && grainAmount > 0) {
-      elements.push(E('FilmGrainType', 1));
-    }
-  }
-
-  // NOTE: Vignette field is NOT included in working Capture One styles
-  // This appears to prevent import when present
-
-  // Tone curves
+  // Tone curves (in layer)
   if (include?.curves !== false) {
     // Convert curve points from our format to Capture One format
     // Our format: array of {input, output} objects where values can be 0-255 or 0-1
@@ -237,30 +251,26 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     // Check for tone_curve fields (from AIColorAdjustments)
     const toneCurve = (aiAdjustments as any).tone_curve;
     if (toneCurve && Array.isArray(toneCurve)) {
-      elements.push(E('GradationCurve', convertCurve(toneCurve)));
+      layerElements.push(ELayer('GradationCurve', convertCurve(toneCurve)));
     }
 
     const toneCurveRed = (aiAdjustments as any).tone_curve_red;
     if (toneCurveRed && Array.isArray(toneCurveRed)) {
-      elements.push(E('GradationCurveRed', convertCurve(toneCurveRed)));
+      layerElements.push(ELayer('GradationCurveRed', convertCurve(toneCurveRed)));
     }
 
     const toneCurveGreen = (aiAdjustments as any).tone_curve_green;
     if (toneCurveGreen && Array.isArray(toneCurveGreen)) {
-      elements.push(E('GradationCurveGreen', convertCurve(toneCurveGreen)));
+      layerElements.push(ELayer('GradationCurveGreen', convertCurve(toneCurveGreen)));
     }
 
     const toneCurveBlue = (aiAdjustments as any).tone_curve_blue;
     if (toneCurveBlue && Array.isArray(toneCurveBlue)) {
-      elements.push(E('GradationCurveBlue', convertCurve(toneCurveBlue)));
+      layerElements.push(ELayer('GradationCurveBlue', convertCurve(toneCurveBlue)));
     }
   }
 
-
-  // NOTE: Highlight, Midtone, Shadow fields are NOT included in working Capture One styles
-  // These appear to conflict with ColorCorrections field and prevent import
-
-  // ColorCorrections (HSL color picker) - 9 zones with 18 parameters each
+  // ColorCorrections (HSL color picker) - 9 zones with 18 parameters each (in layer)
   // Zone order: Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink, Rainbow
   // Format per zone (18 params): enabled,1,1,H,S,L,hue_angle_encoding(3 values),symmetry,symmetry,-100,100,15,0,0,0,0
   const buildColorZone = (hue: number | undefined, sat: number | undefined, lum: number | undefined, hueAngleDegrees: number): string => {
@@ -328,18 +338,19 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     '0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0' // Rainbow zone - always disabled
   ];
 
-  elements.push(E('ColorCorrections', zones.join(';')));
+  layerElements.push(ELayer('ColorCorrections', zones.join(';')));
 
-  // Add required retouching fields (even if zero, these appear to be mandatory)
-  elements.push(E('RetouchingBlemishRemovalAmount', '0'));
-  elements.push(E('RetouchingDarkCirclesReductionAmount', '0'));
-  elements.push(E('RetouchingFaceSculptingContouring', '0'));
-  elements.push(E('RetouchingOpacity', '100'));
-  elements.push(E('RetouchingSkinEveningAmount', '0'));
-  elements.push(E('RetouchingSkinEveningTexture', '0'));
+  // Opacity (in layer)
+  layerElements.push(ELayer('Opacity', '100'));
 
   // Sort elements alphabetically by key (required by Capture One)
-  elements.sort((a, b) => {
+  baseElements.sort((a, b) => {
+    const keyA = a.match(/K="([^"]+)"/)?.[1] || '';
+    const keyB = b.match(/K="([^"]+)"/)?.[1] || '';
+    return keyA.localeCompare(keyB);
+  });
+
+  layerElements.sort((a, b) => {
     const keyA = a.match(/K="([^"]+)"/)?.[1] || '';
     const keyB = b.match(/K="([^"]+)"/)?.[1] || '';
     return keyA.localeCompare(keyB);
@@ -347,13 +358,21 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
 
   // Build the XML
   let xml = `<?xml version="1.0"?>\n<SL Engine="1300">\n`;
-  xml += elements.join('\n') + '\n';
+  xml += baseElements.join('\n') + '\n';
   xml += `</SL>\n`;
 
-  // NOTE: Mask support disabled - ColorCorrections format is incompatible with mask adjustments
-  // and Capture One rejects imports with local adjustment values.
-  // Users must create masks manually in Capture One.
-  xml += '<LDS>\n</LDS>\n';
+  // Add layer with adjustments
+  xml += '<LDS>\n';
+  xml += '\t<LD>\n';
+  xml += '\t\t<LA>\n';
+  xml += layerElements.join('\n') + '\n';
+  xml += '\t\t</LA>\n';
+  xml += '\t\t<MD>\n';
+  xml += '\t\t\t<E K="Density" V="1" />\n';
+  xml += '\t\t\t<E K="MaskType" V="1" />\n';
+  xml += '\t\t</MD>\n';
+  xml += '\t</LD>\n';
+  xml += '</LDS>\n';
 
   return xml;
 }
