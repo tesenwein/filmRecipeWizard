@@ -43,7 +43,6 @@ describe('Camera Profile Generator', () => {
     it('should include basic tone adjustments', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Basic Profile',
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -70,7 +69,6 @@ describe('Camera Profile Generator', () => {
     it('should handle undefined values gracefully', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Minimal Profile',
-        exposure: 0.5,
         // Other values undefined
       };
 
@@ -334,7 +332,6 @@ describe('Camera Profile Generator', () => {
         preset_name: 'Complete Profile',
         treatment: 'color',
         // Basic adjustments
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -396,7 +393,6 @@ describe('Camera Profile Generator', () => {
     it('should handle extreme values correctly', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Extreme Profile',
-        exposure: 5.0,
         contrast: 100,
         highlights: -100,
         shadows: 100,
@@ -447,7 +443,6 @@ describe('Camera Profile Generator', () => {
     it('should generate valid XML structure', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'XML Structure Profile',
-        exposure: 0.5,
         contrast: 25,
       };
 
@@ -466,7 +461,6 @@ describe('Camera Profile Generator', () => {
     it('should handle different profile names', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Test Profile',
-        exposure: 0.5,
       };
 
       const result1 = generateCameraProfileXMP('Profile 1', adjustments);
@@ -481,7 +475,6 @@ describe('Camera Profile Generator', () => {
     it('should handle special characters in profile names', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Special Characters Test',
-        exposure: 0.5,
       };
 
       const specialNames = [

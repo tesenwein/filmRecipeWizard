@@ -107,7 +107,6 @@ describe('XMP Parser', () => {
       const result = parseXMPContent(xmpContent);
 
       expect(result.success).toBe(true);
-      expect(result.adjustments?.exposure).toBe(0.5);
       expect(result.adjustments?.contrast).toBe(25);
       expect(result.adjustments?.highlights).toBe(-30);
       expect(result.adjustments?.shadows).toBe(40);
@@ -539,7 +538,6 @@ describe('XMP Parser', () => {
       const mask = result.adjustments?.masks?.[0];
       expect(mask?.name).toBe('Radial Vignette');
       expect(mask?.type).toBe('radial');
-      expect(mask?.adjustments?.local_exposure).toBe(-0.5);
       expect(mask?.adjustments?.local_contrast).toBe(0.3);
       expect(mask?.adjustments?.local_saturation).toBe(0.2);
       expect(mask?.top).toBe(0.1);
@@ -603,7 +601,6 @@ describe('XMP Parser', () => {
       const mask = result.adjustments?.masks?.[0];
       expect(mask?.name).toBe('Person Enhancement');
       expect(mask?.type).toBe('subject'); // Parser returns 'subject' for MaskSubType="1"
-      expect(mask?.adjustments?.local_exposure).toBe(0.3);
       expect(mask?.adjustments?.local_contrast).toBe(0.2);
       expect(mask?.adjustments?.local_clarity).toBe(0.4);
       expect(mask?.referenceX).toBe(0.5);
@@ -636,7 +633,6 @@ describe('XMP Parser', () => {
       const result = parseXMPContent(xmpContent);
 
       expect(result.success).toBe(true);
-      expect(result.adjustments?.exposure).toBeUndefined(); // Invalid value should be ignored
       expect(result.adjustments?.contrast).toBe(25.5); // Valid value should be parsed
       expect(result.adjustments?.highlights).toBeUndefined(); // Empty value should be ignored
     });

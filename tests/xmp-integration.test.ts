@@ -13,7 +13,6 @@ describe('XMP Integration Tests', () => {
         treatment: 'color',
         camera_profile: 'Adobe Color',
         // Basic adjustments
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -124,7 +123,6 @@ describe('XMP Integration Tests', () => {
       // expect(parseResult.description).toBe(originalAdjustments.description);
 
       // Verify basic adjustments (now using full strength by default)
-      expect(parsedAdjustments.exposure).toBe((originalAdjustments.exposure || 0) * 1.0);
       expect(parsedAdjustments.contrast).toBe(25); // Actual parsed value
       expect(parsedAdjustments.highlights).toBe((originalAdjustments.highlights || 0) * 1.0);
       expect(parsedAdjustments.shadows).toBe((originalAdjustments.shadows || 0) * 1.0);
@@ -182,7 +180,6 @@ describe('XMP Integration Tests', () => {
         monochrome: true,
         camera_profile: 'Adobe Monochrome',
         // Basic adjustments
-        exposure: 0.5,
         contrast: 25,
         // Gray mixer adjustments
         gray_red: -30,
@@ -241,7 +238,6 @@ describe('XMP Integration Tests', () => {
         treatment: 'color',
         camera_profile: 'Adobe Color',
         // Basic adjustments
-        exposure: 0.5,
         contrast: 25,
         // Masks
         masks: [
@@ -249,7 +245,6 @@ describe('XMP Integration Tests', () => {
             name: 'Radial Vignette',
             type: 'radial',
             adjustments: {
-              local_exposure: -0.5,
               local_contrast: 0.3,
               local_saturation: -0.2,
             },
@@ -267,7 +262,6 @@ describe('XMP Integration Tests', () => {
             name: 'Person Enhancement',
             type: 'person',
             adjustments: {
-              local_exposure: 0.3,
               local_contrast: 0.2,
               local_clarity: 0.4,
             },
@@ -341,7 +335,6 @@ describe('XMP Integration Tests', () => {
         treatment: 'color',
         camera_profile: 'Adobe Portrait',
         // Basic adjustments
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -369,7 +362,6 @@ describe('XMP Integration Tests', () => {
 
       // Verify basic adjustments
       // Camera profile parsing doesn't include basic adjustments in the current implementation
-      // expect(parsedAdjustments.exposure).toBe(adjustments.exposure);
       expect(parsedAdjustments.contrast).toBe(adjustments.contrast);
       expect(parsedAdjustments.highlights).toBe(adjustments.highlights);
       expect(parsedAdjustments.shadows).toBe(adjustments.shadows);
@@ -545,7 +537,6 @@ describe('XMP Integration Tests', () => {
       const parseResult = parseXMPContent(malformedXMP);
       expect(parseResult.success).toBe(true);
       expect(parseResult.adjustments?.preset_name).toBe('Malformed Test');
-      expect(parseResult.adjustments?.exposure).toBeUndefined(); // Invalid value should be ignored
       expect(parseResult.adjustments?.contrast).toBe(25.5); // Valid value should be parsed
       expect(parseResult.adjustments?.highlights).toBeUndefined(); // Empty value should be ignored
     });

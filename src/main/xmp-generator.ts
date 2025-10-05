@@ -61,7 +61,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     return Math.max(min, Math.min(max, v));
   };
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
-  const fixed2 = (v: number | undefined) => (typeof v === 'number' ? v.toFixed(2) : undefined);
 
   // Helper function to provide default values when adjustments are undefined
   const withDefault = (v: any, def: number): number => {

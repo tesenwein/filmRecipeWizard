@@ -74,7 +74,6 @@ describe('XMP Generator', () => {
     it('should include basic tone adjustments', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Basic Test',
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -103,7 +102,6 @@ describe('XMP Generator', () => {
     it('should handle undefined values gracefully', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Minimal Test',
-        exposure: 0.5,
         // Other values undefined
       };
 
@@ -260,7 +258,6 @@ describe('XMP Generator', () => {
     it('should apply custom strength scaling to basic tone values', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Custom Strength Test',
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -530,7 +527,6 @@ describe('XMP Generator', () => {
             name: 'Radial Vignette',
             type: 'radial',
             adjustments: {
-              local_exposure: -0.5,
               local_contrast: 0.3,
               local_saturation: -0.2,
             },
@@ -569,7 +565,6 @@ describe('XMP Generator', () => {
             name: 'Sky Gradient',
             type: 'linear',
             adjustments: {
-              local_exposure: -0.8,
               local_highlights: -0.5,
             },
             geometry: {
@@ -606,7 +601,6 @@ describe('XMP Generator', () => {
             name: 'Person Enhancement',
             type: 'person',
             adjustments: {
-              local_exposure: 0.3,
               local_contrast: 0.2,
               local_clarity: 0.4,
             },
@@ -643,7 +637,6 @@ describe('XMP Generator', () => {
             name: 'Face Retouch',
             type: 'face_skin',
             adjustments: {
-              local_exposure: 0.2,
               local_clarity: 0.3,
             },
             geometry: {
@@ -677,7 +670,6 @@ describe('XMP Generator', () => {
             name: 'Sky Enhancement',
             type: 'sky',
             adjustments: {
-              local_exposure: -0.4,
               local_highlights: -0.6,
               local_saturation: 0.3,
             },
@@ -780,7 +772,6 @@ describe('XMP Generator', () => {
             name: 'Highlights',
             type: 'range_luminance',
             adjustments: {
-              local_exposure: -0.3,
               local_highlights: -0.5,
             },
             rangeParams: {
@@ -813,7 +804,6 @@ describe('XMP Generator', () => {
             name: 'Selective Dodge',
             type: 'brush',
             adjustments: {
-              local_exposure: 0.4,
               local_contrast: 0.2,
             },
             brushParams: {
@@ -927,7 +917,6 @@ describe('XMP Generator', () => {
             name: 'Strong Mask',
             type: 'radial',
             adjustments: {
-              local_exposure: 1.0, // Should be scaled down
               local_contrast: 0.5,
             },
             geometry: {
@@ -955,7 +944,6 @@ describe('XMP Generator', () => {
     it('should handle extreme values correctly', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Extreme Values Test',
-        exposure: 5.0,
         contrast: 100,
         highlights: -100,
         shadows: 100,
@@ -1004,7 +992,6 @@ describe('XMP Generator', () => {
     it('should generate valid XML structure', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'XML Structure Test',
-        exposure: 0.5,
         contrast: 25,
       };
 

@@ -62,7 +62,6 @@ describe('LUT Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Exposure Test',
         treatment: 'color',
-        exposure: 1.0, // +1 stop
       };
 
       const result = generateLUTContent(adjustments, 17, 'cube');
@@ -401,7 +400,6 @@ describe('LUT Generator', () => {
         preset_name: 'Basic + HSL Test',
         treatment: 'color',
         // Basic adjustments
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -442,7 +440,6 @@ describe('LUT Generator', () => {
         preset_name: 'Complete Test',
         treatment: 'color',
         // Basic adjustments
-        exposure: 0.5,
         contrast: 25,
         highlights: -30,
         shadows: 40,
@@ -484,7 +481,6 @@ describe('LUT Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Extreme Values Test',
         treatment: 'color',
-        exposure: 5.0,
         contrast: 100,
         highlights: -100,
         shadows: 100,
@@ -522,7 +518,6 @@ describe('LUT Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Undefined Test',
         treatment: 'color',
-        exposure: 0.5,
         // Other values undefined
       };
 
@@ -552,7 +547,6 @@ describe('LUT Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Range Test',
         treatment: 'color',
-        exposure: 2.0, // Extreme exposure
         contrast: 100, // Maximum contrast
         saturation: -100, // Maximum desaturation
       };
@@ -576,7 +570,6 @@ describe('LUT Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Format Test',
         treatment: 'color',
-        exposure: 0.5,
         contrast: 25,
       };
 
@@ -595,7 +588,6 @@ describe('LUT Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Neutral Test',
         treatment: 'color',
-        exposure: 0,
         contrast: 0,
         highlights: 0,
         shadows: 0,
@@ -629,7 +621,6 @@ describe('LUT Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Exposure Consistency Test',
         treatment: 'color',
-        exposure: 1.0, // +1 stop
       };
 
       const result = generateLUTContent(adjustments, 17, 'cube');
