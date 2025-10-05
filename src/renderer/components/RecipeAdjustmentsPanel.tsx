@@ -70,8 +70,6 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
 
       {aiAdjustments && (
         <Section title="Tone Adjustments">
-          <Row label="Exposure" cur={<ValueChip label={fmtNum(aiAdjustments?.exposure)} />} />
-          <Divider sx={{ my: 1 }} />
           <Row label="Contrast" cur={<ValueChip label={fmtNum(aiAdjustments?.contrast)} />} />
           <Divider sx={{ my: 1 }} />
           <Row label="Highlights" cur={<ValueChip label={fmtNum(aiAdjustments?.highlights)} />} />

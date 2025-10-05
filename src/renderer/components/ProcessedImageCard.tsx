@@ -24,7 +24,6 @@ const getAvailableFeatures = (adjustments: any): string[] => {
 
   // Basic Adjustments
   if (
-    adjustments.exposure !== undefined ||
     adjustments.contrast !== undefined ||
     adjustments.highlights !== undefined ||
     adjustments.shadows !== undefined ||
@@ -341,10 +340,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
                   Basic
                 </Typography>
                 <Box sx={{ display: 'grid', gap: 0.5, fontSize: '12px' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Exposure</span>
-                    <strong>{(result.metadata.aiAdjustments.exposure || 0).toFixed(2)}</strong>
-                  </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Contrast</span>
                     <strong>{result.metadata.aiAdjustments.contrast ?? 0}</strong>
