@@ -260,15 +260,75 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   // NOTE: Highlight, Midtone, Shadow fields are NOT included in working Capture One styles
   // These appear to conflict with ColorCorrections field and prevent import
 
-  // NOTE: ColorCorrections (HSL color picker) is disabled because the format is proprietary and undocumented
-  // Without proper documentation or SDK, we cannot reliably map Lightroom HSL values to Capture One's format
-  // The format uses 9 zones with 18 parameters each, but the exact parameter mapping is unknown
-  // Users must manually adjust color pickers in Capture One
+  // ColorCorrections (HSL color picker) - 9 zones with 18 parameters each
+  // Zone order: Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink, Rainbow
+  // Format per zone (18 params): enabled,1,1,H,S,L,hue_angle_encoding(3 values),symmetry,symmetry,-100,100,15,0,0,0,0
+  const buildColorZone = (hue: number | undefined, sat: number | undefined, lum: number | undefined, hueAngleDegrees: number): string => {
+    const h = hue || 0;
+    const s = sat || 0;
+    const l = lum || 0;
 
-  // Add ColorCorrections field with all zones disabled (required by Capture One)
-  const defaultZone = '0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0';
-  const colorCorrections = Array(9).fill(defaultZone).join(';');
-  elements.push(E('ColorCorrections', colorCorrections));
+    // Always enable zones (Capture One shows all colors even with 0 adjustments)
+    const enabled = 1;
+
+    // Encode hue angle as RGB-like triplet (reverse engineered from C1 examples)
+    // The encoding appears to wrap the angle in a specific way
+    const angle = hueAngleDegrees;
+    let r: number, g: number, b: number;
+
+    // This encoding matches the observed pattern in coloreditor.costyle
+    if (angle >= 0 && angle < 60) {
+      // Red to Yellow range
+      r = 255;
+      g = 0;
+      b = 255 - (angle / 60) * 255;
+    } else if (angle >= 60 && angle < 120) {
+      // Yellow to Green range
+      r = 255 - ((angle - 60) / 60) * 255;
+      g = (angle - 60) / 60 * 255;
+      b = 255;
+    } else if (angle >= 120 && angle < 180) {
+      // Green to Cyan range
+      r = 0;
+      g = 255;
+      b = 255 - ((angle - 120) / 60) * 255;
+    } else if (angle >= 180 && angle < 240) {
+      // Cyan to Blue range
+      r = ((angle - 180) / 60) * 255;
+      g = 255;
+      b = 0;
+    } else if (angle >= 240 && angle < 300) {
+      // Blue to Magenta range
+      r = 255;
+      g = 255 - ((angle - 240) / 60) * 255;
+      b = 0;
+    } else {
+      // Magenta to Red range
+      r = 255;
+      g = 0;
+      b = ((angle - 300) / 60) * 255;
+    }
+
+    // Symmetry values derived from hue adjustment
+    const hueSymmetry = h * 1.0;
+
+    return `${enabled},1,1,${h},${s},${l},${r},${g},${b},${-hueSymmetry},${hueSymmetry},-100,100,15,0,0,0,0`;
+  };
+
+  // Map 8 Lightroom colors to 9 Capture One zones with their hue angles
+  const zones = [
+    buildColorZone(aiAdjustments.hue_red, aiAdjustments.sat_red, aiAdjustments.lum_red, 0),         // Red
+    buildColorZone(aiAdjustments.hue_orange, aiAdjustments.sat_orange, aiAdjustments.lum_orange, 30), // Orange
+    buildColorZone(aiAdjustments.hue_yellow, aiAdjustments.sat_yellow, aiAdjustments.lum_yellow, 60), // Yellow
+    buildColorZone(aiAdjustments.hue_green, aiAdjustments.sat_green, aiAdjustments.lum_green, 120),   // Green
+    buildColorZone(aiAdjustments.hue_aqua, aiAdjustments.sat_aqua, aiAdjustments.lum_aqua, 180),     // Cyan
+    buildColorZone(aiAdjustments.hue_blue, aiAdjustments.sat_blue, aiAdjustments.lum_blue, 240),     // Blue
+    buildColorZone(aiAdjustments.hue_purple, aiAdjustments.sat_purple, aiAdjustments.lum_purple, 270), // Purple
+    buildColorZone(aiAdjustments.hue_magenta, aiAdjustments.sat_magenta, aiAdjustments.lum_magenta, 300), // Pink
+    '0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0' // Rainbow zone - always disabled
+  ];
+
+  elements.push(E('ColorCorrections', zones.join(';')));
 
   // Add required retouching fields (even if zero, these appear to be mandatory)
   elements.push(E('RetouchingBlemishRemovalAmount', '0'));
