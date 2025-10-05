@@ -71,7 +71,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
 
   // Use raw values with meaningful defaults that create subtle visible effects
   const basicToneValues = {
-    exposure: withDefault(aiAdjustments.exposure, 0.1), // Slight exposure boost
     contrast: withDefault(aiAdjustments.contrast, 5), // Subtle contrast increase
     highlights: withDefault(aiAdjustments.highlights, -10), // Slight highlight reduction
     shadows: withDefault(aiAdjustments.shadows, 10), // Slight shadow lift
@@ -87,7 +86,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   // Inclusion flags: only include sections when explicitly enabled.
   const inc = {
     wbBasic: include?.basic === true,
-    exposure: include?.exposure === true,
     hsl: include?.hsl === true,
     colorGrading: include?.colorGrading === true,
     curves: include?.curves === true,
@@ -111,10 +109,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  // Include exposure when explicitly enabled, or when basic block is on and not explicitly disabled
-  const includeExposure = (include?.exposure === true) || (inc.wbBasic && include?.exposure !== false);
-  const shouldIncludeExposure = includeExposure && typeof basicToneValues.exposure === 'number' && Number.isFinite(basicToneValues.exposure);
-  const exposureBlock = shouldIncludeExposure ? tag('Exposure2012', fixed2(basicToneValues.exposure)) : '';
 
   const parametricCurvesBlock = inc.curves
     ? [
@@ -298,16 +292,8 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         // Normalize local adjustments to Lightroom units
         // Notes:
         // - Lightroom stores most local params in normalized units [-1,1]. UI shows [-100,100].
-        // - LocalExposure2012 in XMP appears to be normalized to the full exposure span (±4 EV in UI),
-        //   i.e. UI_stops = XMP_value * 4. To target S stops in UI, write XMP_value = S / 4.
         const normalizeLocal = (key: string, val: any): number | undefined => {
           if (typeof val !== 'number' || !Number.isFinite(val)) return undefined;
-          
-          // LocalExposure2012 in XMP is normalized to full exposure span (±4 EV in UI)
-          // UI_stops = XMP_value * 4, so XMP_value = UI_stops / 4
-          if (key === 'local_exposure') {
-            return val / 4;
-          }
           
           // Use raw values for other adjustments
           return val;
@@ -330,7 +316,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
             // Build adjustment attributes using 2012 naming where applicable
             const adjAttrs = [
               attrIf('CorrectionSyncID', correctionSyncID),
-              attrIf('LocalExposure', 0),
               attrIf('LocalHue', 0),
               // Do not emit a default LocalSaturation here; it is emitted below if provided
               attrIf('LocalContrast', 0),
@@ -339,7 +324,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
               attrIf('LocalBrightness', 0),
               attrIf('LocalToningHue', 0),
               attrIf('LocalToningSaturation', 0),
-              attrIf('LocalExposure2012', f3(normalizeLocal('local_exposure', adj.local_exposure))),
               attrIf('LocalContrast2012', f3(normalizeLocal('local_contrast', adj.local_contrast))),
               attrIf('LocalHighlights2012', f3(normalizeLocal('local_highlights', adj.local_highlights))),
               attrIf('LocalShadows2012', f3(normalizeLocal('local_shadows', adj.local_shadows))),
@@ -634,7 +618,7 @@ ${correctionLis}
      </rdf:Description>
     </crs:Look>` : ''}
    ${treatmentTag}
-${wbBasicBlock}${exposureBlock}${parametricCurvesBlock}${toneCurvesBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}${vignetteBlock}
+${wbBasicBlock}${parametricCurvesBlock}${toneCurvesBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}${vignetteBlock}
    <!-- Masks (optional) -->
    ${masksBlock}
    <!-- Processing Notes -->

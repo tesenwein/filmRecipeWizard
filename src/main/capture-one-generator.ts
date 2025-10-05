@@ -152,13 +152,9 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   baseElements.push(E('RetouchingSkinEveningAmount', '0'));
   baseElements.push(E('RetouchingSkinEveningTexture', '0'));
 
-  // Layer elements (LA) - Exposure, Contrast, Highlights/Shadows, Whites/Blacks, Color Grading, Curves, ColorCorrections
+  // Layer elements (LA) - Contrast, Highlights/Shadows, Whites/Blacks, Color Grading, Curves, ColorCorrections
   layerElements.push(ELayer('Enabled', '1'));
   layerElements.push(ELayer('Name', escapeXml(presetName)));
-
-  // Exposure (in layer)
-  const exposure = clamp(aiAdjustments.exposure, -5, 5);
-  layerElements.push(ELayer('Exposure', typeof exposure === 'number' ? exposure : 0));
 
   // Contrast (in layer)
   const contrast = clamp(aiAdjustments.contrast, -100, 100);
@@ -223,6 +219,7 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   };
 
   layerElements.push(ELayer('ColorBalanceShadow', colorBalanceValue(shadowHue, shadowSat)));
+  layerElements.push(ELayer('ColorBalanceMidtone', colorBalanceValue(midtoneHue, midtoneSat)));
   layerElements.push(ELayer('ColorBalanceHighlight', colorBalanceValue(highlightHue, highlightSat)));
 
   // Tone curves (in layer)
@@ -270,9 +267,41 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     }
   }
 
-  // ColorCorrections (HSL color picker) - 9 zones with 18 parameters each (in layer)
-  // Zone order: Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink, Rainbow
-  // Format per zone (18 params): enabled,1,1,H,S,L,hue_angle_encoding(3 values),symmetry,symmetry,-100,100,15,0,0,0,0
+  /**
+   * ColorCorrections field - Capture One's HSL Color Editor
+   *
+   * This field controls the 9 color zones in Capture One's Color Editor panel.
+   * Format: 9 zones separated by semicolons, each with 18 comma-separated parameters
+   *
+   * Zone order: Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink, Rainbow
+   *
+   * Parameter structure per zone (18 values):
+   * 0: enabled (1=enabled, 0=disabled)
+   * 1-2: always "1,1" (unknown purpose)
+   * 3-5: H,S,L adjustments (Hue, Saturation, Luminance from Lightroom HSL)
+   * 6-8: R,G,B hue center encoding (defines which color this zone represents)
+   * 9-10: Hue symmetry values (derived from hue adjustment, format: -H, +H)
+   * 11-12: Range bounds (always -100, 100)
+   * 13: Feather (always 15)
+   * 14-17: Unused (always 0,0,0,0)
+   *
+   * RGB Hue Center Encoding (parameters 6-8):
+   * These values encode the hue angle of the color zone's center point using a
+   * custom RGB-space representation. The encoding uses a sawtooth pattern where
+   * one channel is 255, one is 0, and one varies linearly based on the angle.
+   *
+   * Example encodings:
+   * - Red (0°):     255, 0, 255
+   * - Orange (30°): 255, 0, 127.5
+   * - Yellow (60°): 255, 0, 0
+   * - Green (120°): 0, 255, 255
+   * - Cyan (180°):  0, 255, 0
+   * - Blue (240°):  255, 0, 0
+   * - Purple (270°): 255, 127.5, 0
+   * - Pink (300°):  255, 0, 0
+   *
+   * @see example/coloreditor.costyle for real-world example
+   */
   const buildColorZone = (hue: number | undefined, sat: number | undefined, lum: number | undefined, hueAngleDegrees: number): string => {
     const h = hue || 0;
     const s = sat || 0;
@@ -282,11 +311,11 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     const enabled = 1;
 
     // Encode hue angle as RGB-like triplet (reverse engineered from C1 examples)
-    // The encoding appears to wrap the angle in a specific way
+    // This determines which color icon appears in the Color Editor UI
     const angle = hueAngleDegrees;
     let r: number, g: number, b: number;
 
-    // This encoding matches the observed pattern in coloreditor.costyle
+    // RGB encoding uses a sawtooth pattern across the color wheel
     if (angle >= 0 && angle < 60) {
       // Red to Yellow range
       r = 255;

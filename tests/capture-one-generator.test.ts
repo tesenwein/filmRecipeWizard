@@ -9,7 +9,6 @@ describe('Capture One Generator', () => {
         description: 'A test Capture One style',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
       };
 
       const include = {
@@ -42,8 +41,6 @@ describe('Capture One Generator', () => {
         description: 'Basic adjustments only',
         confidence: 0.9,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
-        exposure: 0.5,
         contrast: 15,
         highlights: -20,
         shadows: 25,
@@ -65,7 +62,6 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
-      expect(result).toContain('<E K="Exposure" V="0.500000" />');
       expect(result).toContain('<E K="Contrast" V="15" />');
       expect(result).toContain('<E K="HighlightRecoveryEx" V="20" />'); // Inverted
       expect(result).toContain('<E K="ShadowRecovery" V="25" />');
@@ -80,7 +76,6 @@ describe('Capture One Generator', () => {
         description: 'Color grading included',
         confidence: 0.9,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
         color_grade_shadow_hue: 200,
         color_grade_shadow_sat: 15,
         color_grade_midtone_hue: 180,
@@ -111,7 +106,6 @@ describe('Capture One Generator', () => {
         description: 'Film grain included',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
         grain_amount: 25,
       };
 
@@ -135,7 +129,6 @@ describe('Capture One Generator', () => {
         description: 'Masks not supported',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
         masks: [
           {
             type: 'radial',
@@ -150,7 +143,6 @@ describe('Capture One Generator', () => {
             feather: 75,
             inverted: false,
             adjustments: {
-              local_exposure: 0.5,
               local_contrast: 20,
               local_highlights: -15,
               local_shadows: 25,
@@ -182,7 +174,6 @@ describe('Capture One Generator', () => {
         description: 'Description with "quotes" & <special> chars',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
       };
 
       const include = {
@@ -208,8 +199,6 @@ describe('Capture One Generator', () => {
         description: 'A basic Capture One style',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
-        exposure: 0.3,
         contrast: 10,
         highlights: -15,
         shadows: 20,
@@ -234,7 +223,6 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<?xml version="1.0"?>');
       expect(result).toContain('<SL Engine="1300">');
       expect(result).toContain('<E K="Name" V="Basic Test Style" />');
-      expect(result).toContain('<E K="Exposure" V="0.300000" />');
       expect(result).toContain('<E K="Contrast" V="10" />');
       expect(result).toContain('<E K="HighlightRecoveryEx" V="15" />');
       expect(result).toContain('<E K="ShadowRecovery" V="20" />');
@@ -254,7 +242,6 @@ describe('Capture One Generator', () => {
         description: 'Minimal adjustments',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
       };
 
       const include = {
@@ -280,7 +267,6 @@ describe('Capture One Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Override Style',
         treatment: 'color',
-        camera_profile: 'Adobe Color',
       };
 
       const include = {
@@ -304,14 +290,12 @@ describe('Capture One Generator', () => {
   });
 
   describe('Value Clamping and Validation', () => {
-    it('should clamp exposure values correctly', () => {
+    it('should clamp values correctly', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Clamp Test',
         description: 'Testing value clamping',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
-        exposure: 10, // Should be clamped to 5
         contrast: 200, // Should be clamped to 100
         highlights: -200, // Should be clamped to -100
         shadows: 300, // Should be clamped to 100
@@ -328,7 +312,6 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
-      expect(result).toContain('<E K="Exposure" V="5" />');
       expect(result).toContain('<E K="Contrast" V="100" />');
       expect(result).toContain('<E K="HighlightRecoveryEx" V="100" />');
       expect(result).toContain('<E K="ShadowRecovery" V="100" />');
@@ -340,8 +323,6 @@ describe('Capture One Generator', () => {
         description: 'Testing invalid values',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
-        exposure: NaN,
         contrast: Infinity,
         highlights: -Infinity,
         shadows: null as any,
@@ -360,7 +341,6 @@ describe('Capture One Generator', () => {
       const result = generateCaptureOneStyle(adjustments, include);
 
       // Should fall back to safe defaults and never emit invalid tokens
-      expect(result).toContain('<E K="Exposure" V="0" />');
       expect(result).not.toContain('NaN');
       expect(result).not.toContain('Infinity');
     });
@@ -371,7 +351,6 @@ describe('Capture One Generator', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'HSL Test',
         treatment: 'color',
-        camera_profile: 'Adobe Color',
         hue_red: -10,
         sat_red: -5,
         lum_red: 6,
@@ -427,6 +406,12 @@ describe('Capture One Generator', () => {
         hue_red: 10,
         sat_red: 5,
         lum_red: -5,
+        hue_orange: -8,
+        sat_orange: 12,
+        lum_orange: 3,
+        hue_blue: -15,
+        sat_blue: 20,
+        lum_blue: -10,
       };
 
       const include = {
@@ -444,16 +429,95 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="ColorCorrections"');
 
       const colorCorrectionsMatch = result.match(/<E K="ColorCorrections" V="([^"]+)"/);
+      expect(colorCorrectionsMatch).toBeTruthy();
+
       if (colorCorrectionsMatch) {
         const zones = colorCorrectionsMatch[1].split(';');
-        const redZone = zones[0].split(',');
+        expect(zones.length).toBe(9);
 
-        // Red zone: enabled,1,1,H,S,L,R,G,B,...
+        // Test Red zone (0°)
+        const redZone = zones[0].split(',');
         expect(redZone[0]).toBe('1'); // enabled
         expect(redZone[3]).toBe('10'); // hue
         expect(redZone[4]).toBe('5'); // saturation
         expect(redZone[5]).toBe('-5'); // luminance
-        expect(redZone[6]).toBe('255'); // Red channel should be 255 for red color
+        expect(redZone[6]).toBe('255'); // R channel (red = 255)
+        expect(redZone[7]).toBe('0'); // G channel (red = 0)
+        expect(redZone[8]).toBe('255'); // B channel (red = 255 at 0°)
+        expect(redZone[9]).toBe('-10'); // -hue symmetry
+        expect(redZone[10]).toBe('10'); // +hue symmetry
+
+        // Test Orange zone (30°)
+        const orangeZone = zones[1].split(',');
+        expect(orangeZone[0]).toBe('1'); // enabled
+        expect(orangeZone[3]).toBe('-8'); // hue
+        expect(orangeZone[4]).toBe('12'); // saturation
+        expect(orangeZone[5]).toBe('3'); // luminance
+        expect(orangeZone[6]).toBe('255'); // R channel (orange has high R)
+        expect(orangeZone[7]).toBe('0'); // G channel
+        expect(parseFloat(orangeZone[8])).toBeCloseTo(127.5, 1); // B channel (30° = halfway from 255 to 0)
+
+        // Test Blue zone (240°)
+        const blueZone = zones[5].split(',');
+        expect(blueZone[0]).toBe('1'); // enabled
+        expect(blueZone[3]).toBe('-15'); // hue
+        expect(blueZone[4]).toBe('20'); // saturation
+        expect(blueZone[5]).toBe('-10'); // luminance
+        expect(blueZone[6]).toBe('255'); // R channel (at 240°)
+        expect(blueZone[7]).toBe('0'); // G channel
+        expect(blueZone[8]).toBe('0'); // B channel
+
+        // Test Rainbow zone (always disabled)
+        const rainbowZone = zones[8].split(',');
+        expect(rainbowZone[0]).toBe('0'); // disabled
+        expect(rainbowZone[3]).toBe('0'); // no adjustments
+        expect(rainbowZone[4]).toBe('0');
+        expect(rainbowZone[5]).toBe('0');
+      }
+    });
+
+    it('should validate all 8 color zones are properly enabled and structured', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'All Colors Test',
+        treatment: 'color',
+        hue_red: 1, sat_red: 1, lum_red: 1,
+        hue_orange: 2, sat_orange: 2, lum_orange: 2,
+        hue_yellow: 3, sat_yellow: 3, lum_yellow: 3,
+        hue_green: 4, sat_green: 4, lum_green: 4,
+        hue_aqua: 5, sat_aqua: 5, lum_aqua: 5,
+        hue_blue: 6, sat_blue: 6, lum_blue: 6,
+        hue_purple: 7, sat_purple: 7, lum_purple: 7,
+        hue_magenta: 8, sat_magenta: 8, lum_magenta: 8,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, { basic: true, hsl: true });
+      const colorCorrectionsMatch = result.match(/<E K="ColorCorrections" V="([^"]+)"/);
+      expect(colorCorrectionsMatch).toBeTruthy();
+
+      if (colorCorrectionsMatch) {
+        const zones = colorCorrectionsMatch[1].split(';');
+        expect(zones.length).toBe(9);
+
+        // All 8 color zones should be enabled with their HSL values
+        for (let i = 0; i < 8; i++) {
+          const zone = zones[i].split(',');
+          expect(zone.length).toBe(18); // 18 parameters per zone
+          expect(zone[0]).toBe('1'); // enabled
+          expect(zone[1]).toBe('1'); // constant
+          expect(zone[2]).toBe('1'); // constant
+          expect(parseInt(zone[3])).toBe(i + 1); // hue value
+          expect(parseInt(zone[4])).toBe(i + 1); // sat value
+          expect(parseInt(zone[5])).toBe(i + 1); // lum value
+          // RGB encoding (params 6-8) varies by hue angle - just check they're numeric
+          expect(parseFloat(zone[6])).toBeGreaterThanOrEqual(0);
+          expect(parseFloat(zone[7])).toBeGreaterThanOrEqual(0);
+          expect(parseFloat(zone[8])).toBeGreaterThanOrEqual(0);
+        }
+
+        // Rainbow zone (index 8) should be disabled
+        const rainbowZone = zones[8].split(',');
+        expect(rainbowZone[0]).toBe('0');
+        expect(rainbowZone[3]).toBe('0'); // no adjustments
       }
     });
   });
@@ -465,8 +529,6 @@ describe('Capture One Generator', () => {
         description: 'Testing XML structure',
         confidence: 0.8,
         treatment: 'color',
-        camera_profile: 'Adobe Color',
-        exposure: 0.5,
         contrast: 15,
       };
 

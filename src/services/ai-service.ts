@@ -239,7 +239,6 @@ export class AIService {
                     parameters: {
                         type: 'object',
                         properties: {
-                            exposure: { type: 'number', description: 'Exposure adjustment (-5 to +5)' },
                             contrast: { type: 'number', description: 'Contrast adjustment (-100 to +100)' },
                             highlights: { type: 'number', description: 'Highlights adjustment (-100 to +100)' },
                             shadows: { type: 'number', description: 'Shadows adjustment (-100 to +100)' },
@@ -251,7 +250,7 @@ export class AIService {
                             tint: { type: 'number', description: 'Tint adjustment (-100 to +100)' },
                             camera_profile: { type: 'string', description: 'Camera profile name' }
                         },
-                        required: ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation', 'temperature', 'tint', 'camera_profile']
+                        required: ['contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation', 'temperature', 'tint', 'camera_profile']
                     }
                 }
             },
@@ -302,7 +301,6 @@ export class AIService {
                                         adjustments: {
                                             type: 'object',
                                             properties: {
-                                                exposure: { type: 'number' },
                                                 contrast: { type: 'number' },
                                                 highlights: { type: 'number' },
                                                 shadows: { type: 'number' },
@@ -339,7 +337,6 @@ export class AIService {
             preset_name: 'Custom Recipe',
             description: 'A custom color grading recipe',
             camera_profile: 'Adobe Color',
-            exposure: 0,
             contrast: 0,
             highlights: 0,
             shadows: 0,
@@ -474,7 +471,6 @@ CRITICAL TOOL USAGE REQUIREMENTS:
             description: 'A balanced color grading recipe with natural tones and clean contrast.',
             confidence: 0.5,
             camera_profile: 'Adobe Color',
-            exposure: 0,
             contrast: 0,
             highlights: 0,
             shadows: 0,

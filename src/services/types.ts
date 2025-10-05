@@ -9,7 +9,6 @@ export interface AIColorAdjustments {
   monochrome?: boolean;
 
   // Basic tone and color
-  exposure?: number; // -5.0 to +5.0
   highlights?: number; // -100..100
   shadows?: number; // -100..100
   whites?: number; // -100..100
@@ -75,7 +74,6 @@ export interface AIColorAdjustments {
     name: string;
     type: 'face_skin' | 'iris_pupil' | 'eye_whites' | 'eyebrows' | 'lips' | 'teeth' | 'hair' | 'clothing' | 'body_skin' | 'sky' | 'vegetation' | 'water' | 'architecture' | 'natural_ground' | 'artificial_ground' | 'mountains' | 'background' | 'subject' | 'person' | 'radial' | 'linear' | 'brush' | 'range_color' | 'range_luminance';
     adjustments: {
-      local_exposure?: number;
       local_contrast?: number;
       local_highlights?: number;
       local_shadows?: number;
