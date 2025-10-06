@@ -1,0 +1,194 @@
+{
+  "id": "mfyy34idu5dmkrou45",
+  "name": "Newton Fashion Noir",
+  "description": "Glossy, high-contrast monochrome inspired by Helmut Newton editorials. Deep blacks, punchy highlights, cool steel shadows with luminous skin.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Newton Fashion Noir",
+          "description": "Glossy, high-contrast monochrome inspired by Helmut Newton editorials. Deep blacks, punchy highlights, cool steel shadows with luminous skin.",
+          "treatment": "black_and_white",
+          "camera_profile": "Adobe Monochrome",
+          "monochrome": true,
+          "confidence": 0.78,
+          "exposure": 0,
+          "highlights": 25,
+          "shadows": -50,
+          "whites": 35,
+          "blacks": -35,
+          "brightness": 5,
+          "contrast": 40,
+          "clarity": 25,
+          "saturation": 0,
+          "color_grade_shadow_hue": 220,
+          "color_grade_shadow_sat": 12,
+          "color_grade_shadow_lum": -10,
+          "color_grade_midtone_hue": 220,
+          "color_grade_midtone_sat": 6,
+          "color_grade_midtone_lum": 0,
+          "color_grade_highlight_hue": 45,
+          "color_grade_highlight_sat": 6,
+          "color_grade_highlight_lum": 5,
+          "grain_amount": 18,
+          "grain_size": 22,
+          "grain_frequency": 55,
+          "vignette_amount": -18,
+          "vignette_midpoint": 45,
+          "vignette_feather": 80,
+          "vignette_roundness": 0,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 20,
+          "override_look_vignette": true,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 20,
+              "output": 10
+            },
+            {
+              "input": 50,
+              "output": 40
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 190,
+              "output": 205
+            },
+            {
+              "input": 235,
+              "output": 245
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 224,
+              "output": 236
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 30
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 224,
+              "output": 230
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 40
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 224,
+              "output": 216
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "gray_red": 10,
+          "gray_orange": 20,
+          "gray_yellow": 10,
+          "gray_green": -20,
+          "gray_aqua": -30,
+          "gray_blue": -35,
+          "gray_purple": -10,
+          "gray_magenta": 0,
+          "masks": [
+            {
+              "name": "Face Skin Lift",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.1,
+                "whites": 0.05,
+                "clarity": -0.05,
+                "dehaze": 0,
+                "texture": -0.1
+              },
+              "subCategoryId": 3,
+              "confidence": 0.7,
+              "detectionQuality": 0.7
+            },
+            {
+              "name": "Hair Shine Boost",
+              "type": "hair",
+              "adjustments": {
+                "shadows": -0.05,
+                "blacks": -0.1,
+                "clarity": 0.15,
+                "texture": 0.1
+              },
+              "subCategoryId": 4,
+              "confidence": 0.7,
+              "detectionQuality": 0.7
+            },
+            {
+              "name": "Background Deepen",
+              "type": "background",
+              "adjustments": {
+                "blacks": -0.15,
+                "clarity": 0.05,
+                "dehaze": 0.05
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7,
+              "detectionQuality": 0.7
+            }
+          ]
+        },
+        "confidence": 0.78
+      }
+    }
+  ]
+}

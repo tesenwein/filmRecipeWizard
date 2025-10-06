@@ -1,0 +1,184 @@
+{
+  "id": "mfyy34j5yj0tuapjnp",
+  "name": "Clean Cinematic Teal",
+  "description": "Portrait-optimized version of Clean Cinematic Teal: gentle contrast, skin-friendly color, softened skin texture, subtle subject-focused vignette, reduced grain, and crisp but natural eye detail.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Vintage Vista",
+          "description": "Warm, cinematic film feel for landscapes with lifted blacks, teal-leaning skies, and softened, nostalgic contrast.",
+          "treatment": "color",
+          "camera_profile": "Adobe Landscape",
+          "confidence": 0.78,
+          "exposure": -0.1,
+          "highlights": -25,
+          "shadows": 20,
+          "whites": -10,
+          "blacks": 15,
+          "contrast": -5,
+          "clarity": 8,
+          "vibrance": 12,
+          "saturation": -6,
+          "color_grade_shadow_hue": 32,
+          "color_grade_shadow_sat": 25,
+          "color_grade_shadow_lum": -5,
+          "color_grade_midtone_hue": 45,
+          "color_grade_midtone_sat": 10,
+          "color_grade_midtone_lum": 2,
+          "color_grade_highlight_hue": 200,
+          "color_grade_highlight_sat": 18,
+          "color_grade_highlight_lum": 6,
+          "hue_yellow": -10,
+          "hue_green": -35,
+          "hue_aqua": -20,
+          "hue_blue": -10,
+          "sat_red": -5,
+          "sat_orange": -5,
+          "sat_yellow": -15,
+          "sat_green": -30,
+          "sat_aqua": -20,
+          "sat_blue": -15,
+          "lum_orange": 10,
+          "lum_yellow": 5,
+          "lum_green": -10,
+          "lum_aqua": 5,
+          "lum_blue": -5,
+          "grain_amount": 30,
+          "grain_size": 25,
+          "grain_frequency": 60,
+          "vignette_amount": -18,
+          "vignette_midpoint": 48,
+          "vignette_feather": 75,
+          "vignette_roundness": -10,
+          "override_look_vignette": true,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 20
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 64,
+              "output": 58
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 205
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 22
+            },
+            {
+              "input": 32,
+              "output": 38
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 186
+            },
+            {
+              "input": 255,
+              "output": 242
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 18
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 206
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 10
+            },
+            {
+              "input": 32,
+              "output": 20
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 210
+            },
+            {
+              "input": 255,
+              "output": 248
+            }
+          ],
+          "masks": [
+            {
+              "name": "Sky Soften",
+              "type": "sky",
+              "adjustments": {
+                "dehaze": -0.1,
+                "saturation": -0.1
+              },
+              "confidence": 0.7
+            },
+            {
+              "name": "Vegetation Fade",
+              "type": "vegetation",
+              "adjustments": {
+                "shadows": 0.1,
+                "texture": -0.1,
+                "saturation": -0.2
+              },
+              "confidence": 0.7
+            },
+            {
+              "name": "Background Haze",
+              "type": "background",
+              "adjustments": {
+                "clarity": -0.1,
+                "dehaze": -0.1
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7
+            }
+          ]
+        },
+        "confidence": 0.78
+      }
+    }
+  ]
+}

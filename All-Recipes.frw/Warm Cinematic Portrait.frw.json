@@ -1,0 +1,65 @@
+{
+  "id": "mfyy34g7evactfs2sae",
+  "name": "Warm Cinematic Portrait",
+  "description": "Embrace warm, cinematic tones with enriched depth and natural skin tones, perfect for creating a balanced and inviting portrait.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Warm Cinematic Portrait",
+          "description": "Embrace warm, cinematic tones with enriched depth and natural skin tones, perfect for creating a balanced and inviting portrait.",
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.95,
+          "exposure": 0.2,
+          "highlights": -30,
+          "shadows": 20,
+          "whites": -10,
+          "blacks": -15,
+          "contrast": 15,
+          "clarity": 10,
+          "vibrance": 20,
+          "saturation": 10,
+          "temperature": 6500,
+          "tint": 10,
+          "color_grade_shadow_hue": 35,
+          "color_grade_shadow_sat": 20,
+          "color_grade_shadow_lum": 0,
+          "color_grade_midtone_hue": 0,
+          "color_grade_midtone_sat": 0,
+          "color_grade_midtone_lum": 0,
+          "color_grade_highlight_hue": 40,
+          "color_grade_highlight_sat": 10,
+          "color_grade_highlight_lum": 5,
+          "hue_green": -10,
+          "sat_green": 10,
+          "sat_blue": 5,
+          "lum_green": 10,
+          "masks": [
+            {
+              "name": "Face Skin",
+              "type": "face_skin",
+              "adjustments": {
+                "contrast": 0.2,
+                "highlights": -0.1,
+                "shadows": 0.1,
+                "clarity": 0.1,
+                "saturation": 0.1
+              }
+            },
+            {
+              "name": "Background",
+              "type": "background",
+              "adjustments": {
+                "contrast": -0.1
+              },
+              "subCategoryId": 22
+            }
+          ]
+        },
+        "confidence": 0.95
+      }
+    }
+  ]
+}

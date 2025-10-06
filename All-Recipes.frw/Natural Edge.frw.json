@@ -1,0 +1,60 @@
+{
+  "id": "mfyy34harkp5hl49ni",
+  "name": "Natural Edge",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Natural Edge",
+          "description": "A refined style with clean contrast and natural tones, perfect for emphasizing modern, edgy portraiture while maintaining the authenticity of facial features and textures.",
+          "treatment": "color",
+          "confidence": 0.9,
+          "reasoning": "Balancing exposure and contrast while maintaining natural skin tones and sharp details creates an edgy yet natural look.",
+          "exposure": 0.1,
+          "highlights": -20,
+          "shadows": 10,
+          "whites": 5,
+          "blacks": -5,
+          "contrast": 15,
+          "clarity": 20,
+          "vibrance": 10,
+          "saturation": -5,
+          "temperature": 5200,
+          "tint": 0,
+          "masks": [
+            {
+              "name": "Face Skin",
+              "type": "face_skin",
+              "adjustments": {
+                "clarity": 0.1,
+                "texture": 0.1
+              }
+            },
+            {
+              "name": "Hair",
+              "type": "hair",
+              "adjustments": {
+                "clarity": 0.2,
+                "texture": 0.2
+              }
+            },
+            {
+              "name": "Background",
+              "type": "background",
+              "adjustments": {
+                "contrast": -0.1
+              },
+              "subCategoryId": 22
+            }
+          ]
+        },
+        "confidence": 0.9,
+        "reasoning": "Balancing exposure and contrast while maintaining natural skin tones and sharp details creates an edgy yet natural look.",
+        "usedSettings": {
+          "preserveSkinTones": false
+        }
+      }
+    }
+  ]
+}

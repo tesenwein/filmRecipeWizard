@@ -1,0 +1,187 @@
+{
+  "id": "mfyy34alz81smhojqyo",
+  "name": "UltraMax Street Pop",
+  "description": "Punchy, saturated consumer-film emulation of Kodak UltraMax 400 with warm golden highlights, teal-cool shadows, moderate contrast, and visible 400-speed grain. Ideal for lively street scenes with forgiving latitude.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Color",
+          "confidence": 0.88,
+          "exposure": 0,
+          "highlights": -25,
+          "shadows": 30,
+          "whites": 10,
+          "blacks": -12,
+          "contrast": 25,
+          "clarity": 8,
+          "vibrance": 25,
+          "saturation": 30,
+          "color_grade_shadow_hue": 200,
+          "color_grade_shadow_sat": 12,
+          "color_grade_shadow_lum": -5,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 10,
+          "color_grade_midtone_lum": 4,
+          "color_grade_highlight_hue": 50,
+          "color_grade_highlight_sat": 12,
+          "color_grade_highlight_lum": 6,
+          "hue_red": -5,
+          "hue_orange": -5,
+          "hue_yellow": -10,
+          "hue_green": -20,
+          "hue_aqua": -10,
+          "hue_blue": -10,
+          "hue_purple": 5,
+          "hue_magenta": 5,
+          "sat_red": 20,
+          "sat_orange": 10,
+          "sat_yellow": 20,
+          "sat_green": 10,
+          "sat_aqua": 10,
+          "sat_blue": 20,
+          "sat_purple": 10,
+          "sat_magenta": 10,
+          "lum_red": 5,
+          "lum_orange": 10,
+          "lum_yellow": 5,
+          "lum_green": -5,
+          "lum_aqua": 0,
+          "lum_blue": -10,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "grain_amount": 30,
+          "grain_size": 18,
+          "grain_frequency": 55,
+          "vignette_amount": -10,
+          "vignette_midpoint": 50,
+          "vignette_feather": 70,
+          "vignette_roundness": 0,
+          "vignette_highlight_contrast": 40,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 96,
+              "output": 95
+            },
+            {
+              "input": 160,
+              "output": 170
+            },
+            {
+              "input": 224,
+              "output": 230
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 60
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 202
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 4
+            },
+            {
+              "input": 64,
+              "output": 66
+            },
+            {
+              "input": 128,
+              "output": 132
+            },
+            {
+              "input": 192,
+              "output": 192
+            },
+            {
+              "input": 255,
+              "output": 252
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 10
+            },
+            {
+              "input": 64,
+              "output": 72
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 186
+            },
+            {
+              "input": 255,
+              "output": 244
+            }
+          ],
+          "preset_name": "UltraMax Street Pop",
+          "description": "Punchy, saturated consumer-film emulation of Kodak UltraMax 400 with warm golden highlights, teal-cool shadows, moderate contrast, and visible 400-speed grain. Ideal for lively street scenes with forgiving latitude.",
+          "masks": [
+            {
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.1,
+                "clarity": -0.05,
+                "texture": -0.05,
+                "saturation": 0.05
+              },
+              "subCategoryId": 3,
+              "confidence": 0.7,
+              "detectionQuality": 0.6
+            },
+            {
+              "type": "background",
+              "adjustments": {
+                "shadows": 0.05,
+                "clarity": -0.05,
+                "saturation": -0.05
+              },
+              "subCategoryId": 22,
+              "confidence": 0.6,
+              "detectionQuality": 0.6
+            }
+          ]
+        },
+        "confidence": 0.88
+      }
+    }
+  ]
+}

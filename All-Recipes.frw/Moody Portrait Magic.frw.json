@@ -1,0 +1,136 @@
+{
+  "id": "mfyy34ev9oanm1wywtc",
+  "name": "Moody Portrait Magic",
+  "description": "Transform your portraits with a moody and intimate look, enhancing skin tones and creating dramatic lighting.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Moody Portrait Magic",
+          "description": "Transform your portraits with a moody and intimate look, enhancing skin tones and creating dramatic lighting.",
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 1,
+          "exposure": -0.5,
+          "highlights": -20,
+          "shadows": 15,
+          "blacks": -30,
+          "contrast": 40,
+          "clarity": 30,
+          "vibrance": 20,
+          "saturation": 10,
+          "color_grade_shadow_hue": 50,
+          "color_grade_shadow_sat": 20,
+          "color_grade_shadow_lum": -10,
+          "color_grade_midtone_hue": 40,
+          "color_grade_midtone_sat": 25,
+          "color_grade_midtone_lum": 0,
+          "color_grade_highlight_hue": 30,
+          "color_grade_highlight_sat": 15,
+          "color_grade_highlight_lum": 10,
+          "hue_red": 5,
+          "hue_orange": -10,
+          "hue_yellow": -5,
+          "sat_red": 10,
+          "sat_orange": -5,
+          "sat_yellow": -10,
+          "lum_red": 10,
+          "lum_orange": 5,
+          "lum_yellow": 0,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 10
+            },
+            {
+              "input": 64,
+              "output": 50
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 210
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 10
+            },
+            {
+              "input": 128,
+              "output": 125
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 20
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 255,
+              "output": 240
+            }
+          ],
+          "masks": [
+            {
+              "name": "face_skin",
+              "type": "face_skin",
+              "adjustments": {
+                "contrast": 0.2,
+                "clarity": 0.2,
+                "texture": 0.1
+              }
+            },
+            {
+              "name": "eye_whites",
+              "type": "eye_whites",
+              "adjustments": {
+                "clarity": 0.2
+              }
+            },
+            {
+              "name": "background",
+              "type": "background",
+              "adjustments": {
+                "clarity": -0.2,
+                "texture": -0.1
+              }
+            }
+          ]
+        },
+        "confidence": 1
+      }
+    }
+  ]
+}

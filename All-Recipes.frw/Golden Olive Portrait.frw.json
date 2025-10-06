@@ -1,0 +1,55 @@
+{
+  "id": "mg8fnepkfsdmbq8h74s",
+  "name": "Golden Olive Portrait",
+  "description": "Warm, golden highlights with rich yet clean contrast and faithful skin tones, paired with muted olive greens for a luminous backlit look. Built for outdoor portraits shot in natural light.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Golden Olive Portrait",
+          "description": "Warm, golden highlights with rich yet clean contrast and faithful skin tones, paired with muted olive greens for a luminous backlit look. Built for outdoor portraits shot in natural light.",
+          "masks": [
+            {
+              "type": "face",
+              "name": "Face Skin",
+              "adjustments": {
+                "exposure": 0.08,
+                "contrast": -5,
+                "highlights": -5,
+                "shadows": 10,
+                "vibrance": 0,
+                "saturation": -3
+              }
+            },
+            {
+              "type": "background",
+              "name": "Background Greens Soften",
+              "adjustments": {
+                "exposure": 0,
+                "contrast": -8,
+                "highlights": -5,
+                "shadows": 5,
+                "vibrance": -12,
+                "saturation": -10
+              }
+            }
+          ],
+          "exposure": 0,
+          "contrast": 28,
+          "highlights": -35,
+          "shadows": 30,
+          "whites": 18,
+          "blacks": -12,
+          "vibrance": 20,
+          "saturation": -6,
+          "temperature": 12,
+          "tint": 6,
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.85
+        },
+        "confidence": 0.85
+      }
+    }
+  ]
+}

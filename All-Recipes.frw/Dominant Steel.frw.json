@@ -1,0 +1,123 @@
+{
+  "id": "mfyy34b901vf2v0hs4om",
+  "name": "Dominant Steel",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Dominant Steel",
+          "treatment": "color",
+          "camera_profile": "Adobe Color",
+          "monochrome": false,
+          "confidence": 0.78,
+          "reasoning": "Heavy, dominant mood via cool teal shadows, restrained saturation, deepened blacks, and a subtle S-curve. Warm-leaning skin tones retain presence against a darker, desaturated background. Added grain for gritty weight and a subtle vignette to focus attention.",
+          "exposure": -0.3,
+          "highlights": -12,
+          "shadows": -18,
+          "whites": -6,
+          "blacks": -25,
+          "contrast": 18,
+          "clarity": 12,
+          "texture": 10,
+          "dehaze": 6,
+          "vibrance": -18,
+          "saturation": -6,
+          "hue_red": 6,
+          "hue_orange": 4,
+          "hue_yellow": -10,
+          "hue_green": -20,
+          "hue_aqua": -10,
+          "hue_blue": -15,
+          "hue_purple": -4,
+          "hue_magenta": -2,
+          "sat_red": -5,
+          "sat_orange": -5,
+          "sat_yellow": -18,
+          "sat_green": -30,
+          "sat_aqua": -20,
+          "sat_blue": -25,
+          "sat_purple": -20,
+          "sat_magenta": -10,
+          "lum_red": 2,
+          "lum_orange": 6,
+          "lum_yellow": -5,
+          "lum_green": -10,
+          "lum_aqua": -8,
+          "lum_blue": -12,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "color_grade_shadow_hue": 200,
+          "color_grade_shadow_sat": 12,
+          "color_grade_shadow_lum": -5,
+          "color_grade_midtone_hue": 210,
+          "color_grade_midtone_sat": 6,
+          "color_grade_midtone_lum": -2,
+          "color_grade_highlight_hue": 38,
+          "color_grade_highlight_sat": 8,
+          "color_grade_highlight_lum": 1,
+          "color_grade_global_hue": 0,
+          "color_grade_global_sat": 0,
+          "color_grade_global_lum": 0,
+          "color_grade_blending": 50,
+          "color_grade_balance": -20,
+          "grain_amount": 32,
+          "grain_size": 28,
+          "grain_frequency": 55,
+          "parametric_shadows": -20,
+          "parametric_darks": -10,
+          "parametric_lights": 5,
+          "parametric_highlights": 2,
+          "parametric_shadow_split": 25,
+          "parametric_midtone_split": 50,
+          "parametric_highlight_split": 75,
+          "sharpening": 45,
+          "sharpening_radius": 1,
+          "sharpening_detail": 20,
+          "sharpening_masking": 60,
+          "luminance_noise_reduction": 5,
+          "color_noise_reduction": 25,
+          "vignette": -22,
+          "calib_red_hue": 10,
+          "calib_red_sat": 5,
+          "calib_green_hue": -10,
+          "calib_green_sat": -5,
+          "calib_blue_hue": -30,
+          "calib_blue_sat": 20,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 96,
+              "output": 88
+            },
+            {
+              "input": 160,
+              "output": 162
+            },
+            {
+              "input": 224,
+              "output": 228
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ]
+        },
+        "confidence": 0.78,
+        "reasoning": "Heavy, dominant mood via cool teal shadows, restrained saturation, deepened blacks, and a subtle S-curve. Warm-leaning skin tones retain presence against a darker, desaturated background. Added grain for gritty weight and a subtle vignette to focus attention.",
+        "usedSettings": {
+          "preserveSkinTones": false,
+          "emphasize3DPop": false
+        }
+      }
+    }
+  ]
+}

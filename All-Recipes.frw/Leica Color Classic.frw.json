@@ -1,0 +1,200 @@
+{
+  "id": "mfyy34apa77exbhfvp4",
+  "name": "Leica Color Classic",
+  "description": "Leica-inspired color with warm highlights, cool shadows, and lifted blacks for gentle roll-off and rich midtone contrast. Natural skin tones, cyan-leaning blues, restrained greens, subtle grain, and a slight vignette evoke the iconic M-series feel.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Color",
+          "confidence": 0.77,
+          "exposure": 0,
+          "highlights": -30,
+          "shadows": 20,
+          "whites": 10,
+          "blacks": -10,
+          "contrast": 10,
+          "clarity": 20,
+          "vibrance": 18,
+          "saturation": -6,
+          "color_grade_shadow_hue": 205,
+          "color_grade_shadow_sat": 12,
+          "color_grade_shadow_lum": -6,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 9,
+          "color_grade_midtone_lum": 2,
+          "color_grade_highlight_hue": 40,
+          "color_grade_highlight_sat": 10,
+          "color_grade_highlight_lum": 4,
+          "hue_red": 5,
+          "hue_orange": -5,
+          "hue_yellow": -20,
+          "hue_green": 20,
+          "hue_aqua": -10,
+          "hue_blue": -10,
+          "hue_purple": 5,
+          "hue_magenta": 5,
+          "sat_red": -5,
+          "sat_orange": 5,
+          "sat_yellow": -25,
+          "sat_green": -35,
+          "sat_aqua": -15,
+          "sat_blue": -10,
+          "sat_purple": -20,
+          "sat_magenta": -20,
+          "lum_red": 5,
+          "lum_orange": 10,
+          "lum_yellow": 10,
+          "lum_green": -10,
+          "lum_aqua": -5,
+          "lum_blue": -20,
+          "lum_purple": -5,
+          "lum_magenta": -5,
+          "grain_amount": 18,
+          "grain_size": 24,
+          "grain_frequency": 55,
+          "vignette_amount": -12,
+          "vignette_midpoint": 45,
+          "vignette_feather": 80,
+          "vignette_roundness": -10,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 20,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 18
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 96,
+              "output": 108
+            },
+            {
+              "input": 160,
+              "output": 172
+            },
+            {
+              "input": 224,
+              "output": 232
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 48,
+              "output": 44
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 208,
+              "output": 214
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 64,
+              "output": 70
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 208,
+              "output": 206
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 12
+            },
+            {
+              "input": 64,
+              "output": 72
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 208,
+              "output": 198
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "preset_name": "Leica Color Classic",
+          "description": "Leica-inspired color with warm highlights, cool shadows, and lifted blacks for gentle roll-off and rich midtone contrast. Natural skin tones, cyan-leaning blues, restrained greens, subtle grain, and a slight vignette evoke the iconic M-series feel.",
+          "masks": [
+            {
+              "name": "Subject Pop",
+              "type": "subject",
+              "adjustments": {
+                "shadows": 0.1,
+                "clarity": 0.05,
+                "saturation": 0.05
+              },
+              "confidence": 0.7,
+              "detectionQuality": 0.7
+            },
+            {
+              "name": "Background Falloff",
+              "type": "background",
+              "adjustments": {
+                "clarity": -0.05,
+                "saturation": -0.05
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7,
+              "detectionQuality": 0.7
+            },
+            {
+              "name": "Face Soft Light",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.05,
+                "clarity": -0.05,
+                "texture": -0.05,
+                "saturation": 0.02
+              },
+              "subCategoryId": 3,
+              "confidence": 0.6,
+              "detectionQuality": 0.6
+            }
+          ]
+        },
+        "confidence": 0.77
+      }
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "id": "mg8f6rdvu1lpv5ypvr",
+  "name": "Clean Urban Noir",
+  "description": "Cool-shadow, matte-contrast portrait look with low overall saturation and crisp luminance contrast, while preserving natural, faithful skin tones. Ideal for moody street portraits, leather textures, and overcast light.",
+  "results": [
+    {
+      "outputPath": "",
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Clean Urban Noir",
+          "description": "Cool-shadow, matte-contrast portrait look with low overall saturation and crisp luminance contrast, while preserving natural, faithful skin tones. Ideal for moody street portraits, leather textures, and overcast light.",
+          "masks": [
+            {
+              "type": "face",
+              "name": "Face Skin",
+              "adjustments": {
+                "exposure": 0.08,
+                "contrast": -6,
+                "highlights": -4,
+                "shadows": 6,
+                "vibrance": 6,
+                "saturation": 4
+              }
+            },
+            {
+              "type": "subject",
+              "name": "Subject Depth",
+              "adjustments": {
+                "exposure": -0.06,
+                "contrast": 10,
+                "highlights": -6,
+                "shadows": -6,
+                "saturation": -6
+              }
+            },
+            {
+              "type": "background",
+              "name": "Background Fade",
+              "adjustments": {
+                "exposure": -0.1,
+                "contrast": -10,
+                "highlights": -6,
+                "saturation": -4
+              }
+            }
+          ],
+          "exposure": 0,
+          "contrast": 36,
+          "highlights": -38,
+          "shadows": 28,
+          "whites": -12,
+          "blacks": -22,
+          "vibrance": -24,
+          "saturation": -10,
+          "temperature": -6,
+          "tint": 4,
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.78
+        },
+        "confidence": 0.78
+      }
+    }
+  ]
+}

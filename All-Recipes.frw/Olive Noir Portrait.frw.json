@@ -1,0 +1,204 @@
+{
+  "id": "mfyy34jk0zkw5eect3ek",
+  "name": "Olive Noir Portrait",
+  "description": "Moody, painterly portrait with olive-green shadows and warm golden highlights, matte blacks, and faithful skin tones with clean contrast.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Olive Noir Portrait",
+          "description": "Moody, painterly portrait with olive-green shadows and warm golden highlights, matte blacks, and faithful skin tones with clean contrast.",
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.78,
+          "exposure": -0.15,
+          "highlights": -25,
+          "shadows": -20,
+          "whites": 8,
+          "blacks": -28,
+          "contrast": 18,
+          "clarity": 10,
+          "vibrance": -8,
+          "saturation": -5,
+          "color_grade_shadow_hue": 155,
+          "color_grade_shadow_sat": 25,
+          "color_grade_shadow_lum": -5,
+          "color_grade_midtone_hue": 28,
+          "color_grade_midtone_sat": 12,
+          "color_grade_midtone_lum": 4,
+          "color_grade_highlight_hue": 50,
+          "color_grade_highlight_sat": 20,
+          "color_grade_highlight_lum": 10,
+          "hue_red": 5,
+          "hue_orange": -4,
+          "hue_yellow": -20,
+          "hue_green": 30,
+          "hue_aqua": -15,
+          "hue_blue": -10,
+          "hue_purple": 5,
+          "hue_magenta": 5,
+          "sat_red": -10,
+          "sat_orange": 8,
+          "sat_yellow": -35,
+          "sat_green": -40,
+          "sat_aqua": -25,
+          "sat_blue": -60,
+          "sat_purple": -20,
+          "sat_magenta": -20,
+          "lum_red": -5,
+          "lum_orange": 12,
+          "lum_yellow": -10,
+          "lum_green": -15,
+          "lum_aqua": -10,
+          "lum_blue": -20,
+          "lum_purple": -10,
+          "lum_magenta": -10,
+          "grain_amount": 15,
+          "grain_size": 25,
+          "grain_frequency": 45,
+          "vignette_amount": -32,
+          "vignette_midpoint": 50,
+          "vignette_feather": 75,
+          "vignette_roundness": -20,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 35,
+          "override_look_vignette": true,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 18
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 64,
+              "output": 58
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 206
+            },
+            {
+              "input": 255,
+              "output": 242
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 12
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 205
+            },
+            {
+              "input": 255,
+              "output": 248
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 20
+            },
+            {
+              "input": 32,
+              "output": 40
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 206
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 32,
+              "output": 24
+            },
+            {
+              "input": 128,
+              "output": 126
+            },
+            {
+              "input": 192,
+              "output": 186
+            },
+            {
+              "input": 255,
+              "output": 238
+            }
+          ],
+          "masks": [
+            {
+              "name": "Face Balance",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.1,
+                "clarity": -0.05,
+                "texture": -0.1,
+                "saturation": 0.05
+              },
+              "subCategoryId": 1,
+              "confidence": 0.9,
+              "detectionQuality": 0.85
+            },
+            {
+              "name": "Eye Pop",
+              "type": "iris_pupil",
+              "adjustments": {
+                "clarity": 0.12,
+                "texture": 0.1,
+                "saturation": 0.1
+              },
+              "subCategoryId": 2,
+              "confidence": 0.85,
+              "detectionQuality": 0.8
+            },
+            {
+              "name": "Dark Green Backdrop",
+              "type": "background",
+              "adjustments": {
+                "shadows": -0.2,
+                "clarity": 0.1,
+                "dehaze": 0.15,
+                "saturation": -0.1
+              },
+              "subCategoryId": 22,
+              "confidence": 0.85,
+              "detectionQuality": 0.8
+            }
+          ]
+        },
+        "confidence": 0.78
+      }
+    }
+  ]
+}

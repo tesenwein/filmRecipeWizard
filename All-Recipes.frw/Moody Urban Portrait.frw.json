@@ -1,0 +1,207 @@
+{
+  "id": "mfyy34ekris6qhhrl97",
+  "name": "Moody Urban Portrait",
+  "description": "Cinematic matte contrast with cool teal shadows and restrained color while preserving natural, faithful skin tones. Built for sleek street/fashion portraits with glossy blacks and soft background falloff.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Moody Urban Portrait",
+          "description": "Cinematic matte contrast with cool teal shadows and restrained color while preserving natural, faithful skin tones. Built for sleek street/fashion portraits with glossy blacks and soft background falloff.",
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.77,
+          "exposure": -0.15,
+          "highlights": -35,
+          "shadows": 8,
+          "whites": -12,
+          "blacks": -30,
+          "contrast": 25,
+          "clarity": 10,
+          "vibrance": -10,
+          "saturation": -15,
+          "color_grade_shadow_hue": 210,
+          "color_grade_shadow_sat": 18,
+          "color_grade_shadow_lum": -4,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 6,
+          "color_grade_midtone_lum": 0,
+          "color_grade_highlight_hue": 210,
+          "color_grade_highlight_sat": 6,
+          "color_grade_highlight_lum": 5,
+          "hue_red": 5,
+          "hue_orange": -4,
+          "hue_yellow": -10,
+          "hue_green": -20,
+          "hue_aqua": -10,
+          "hue_blue": -8,
+          "hue_purple": 0,
+          "hue_magenta": 0,
+          "sat_red": -5,
+          "sat_orange": -5,
+          "sat_yellow": -40,
+          "sat_green": -50,
+          "sat_aqua": -40,
+          "sat_blue": -45,
+          "sat_purple": -20,
+          "sat_magenta": -15,
+          "lum_red": -2,
+          "lum_orange": 8,
+          "lum_yellow": -10,
+          "lum_green": -5,
+          "lum_aqua": -5,
+          "lum_blue": -5,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "grain_amount": 8,
+          "grain_size": 22,
+          "grain_frequency": 60,
+          "vignette_amount": -18,
+          "vignette_midpoint": 40,
+          "vignette_feather": 75,
+          "vignette_roundness": -10,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 25,
+          "override_look_vignette": true,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 18
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 64,
+              "output": 62
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 190
+            },
+            {
+              "input": 224,
+              "output": 215
+            },
+            {
+              "input": 255,
+              "output": 240
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 24
+            },
+            {
+              "input": 128,
+              "output": 126
+            },
+            {
+              "input": 224,
+              "output": 232
+            },
+            {
+              "input": 255,
+              "output": 252
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 14
+            },
+            {
+              "input": 32,
+              "output": 40
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 224,
+              "output": 220
+            },
+            {
+              "input": 255,
+              "output": 236
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 18
+            },
+            {
+              "input": 32,
+              "output": 44
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 224,
+              "output": 216
+            },
+            {
+              "input": 255,
+              "output": 230
+            }
+          ],
+          "masks": [
+            {
+              "name": "Face Tone Balance",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.12,
+                "whites": 0.06,
+                "clarity": -0.12,
+                "texture": -0.15,
+                "saturation": 0.08
+              },
+              "subCategoryId": 3,
+              "confidence": 0.8
+            },
+            {
+              "name": "Jacket Pop",
+              "type": "clothing",
+              "adjustments": {
+                "blacks": -0.3,
+                "clarity": 0.35,
+                "dehaze": 0.25,
+                "texture": 0.4,
+                "saturation": -0.1
+              },
+              "subCategoryId": 5,
+              "confidence": 0.85
+            },
+            {
+              "name": "Background Fade",
+              "type": "background",
+              "adjustments": {
+                "clarity": -0.12,
+                "dehaze": -0.05,
+                "saturation": -0.25
+              },
+              "subCategoryId": 22,
+              "confidence": 0.75
+            }
+          ]
+        },
+        "confidence": 0.77
+      }
+    }
+  ]
+}

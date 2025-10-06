@@ -1,0 +1,200 @@
+{
+  "id": "mg0pxb15y65p22j6zlg",
+  "name": "M8 Cyan Pop",
+  "description": "Punchy midtone contrast with deep blacks, cool cyan-leaning shadows, and warm highlights to emulate the Leica M8 CCD color and micro-contrast. Fine grain and cyan-skewed blues with slightly warm greens recreate the classic CCD ‘pop’.",
+  "results": [
+    {
+      "outputPath": "",
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.82,
+          "highlights": -35,
+          "shadows": 22,
+          "whites": -5,
+          "blacks": -10,
+          "contrast": 20,
+          "clarity": -10,
+          "vibrance": -5,
+          "saturation": 0,
+          "color_grade_shadow_hue": 200,
+          "color_grade_shadow_sat": 18,
+          "color_grade_shadow_lum": -5,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 10,
+          "color_grade_midtone_lum": 3,
+          "color_grade_highlight_hue": 45,
+          "color_grade_highlight_sat": 6,
+          "color_grade_highlight_lum": -5,
+          "hue_red": 5,
+          "hue_orange": -5,
+          "hue_yellow": -10,
+          "hue_green": -10,
+          "hue_aqua": -10,
+          "hue_blue": -15,
+          "hue_purple": -5,
+          "hue_magenta": -5,
+          "sat_red": -5,
+          "sat_orange": 6,
+          "sat_yellow": -15,
+          "sat_green": -20,
+          "sat_aqua": 10,
+          "sat_blue": 20,
+          "sat_purple": -10,
+          "sat_magenta": -10,
+          "lum_red": 0,
+          "lum_orange": 10,
+          "lum_yellow": 8,
+          "lum_green": -5,
+          "lum_aqua": -5,
+          "lum_blue": -10,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "grain_amount": 25,
+          "grain_size": 18,
+          "grain_frequency": 45,
+          "vignette_amount": -10,
+          "vignette_midpoint": 45,
+          "vignette_feather": 70,
+          "vignette_roundness": 0,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 35,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 12
+            },
+            {
+              "input": 32,
+              "output": 26
+            },
+            {
+              "input": 64,
+              "output": 64
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 188
+            },
+            {
+              "input": 255,
+              "output": 242
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 64,
+              "output": 60
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 196
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 18
+            },
+            {
+              "input": 64,
+              "output": 70
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 190
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 20
+            },
+            {
+              "input": 64,
+              "output": 72
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 186
+            },
+            {
+              "input": 255,
+              "output": 238
+            }
+          ],
+          "preset_name": "Tungsten Teal 500T",
+          "description": "Cinematic Kodak Vision3 500T emulation with teal shadows, warm midtones/skin, and controlled highlights. Lifted shadows, moderate contrast, and fine grain deliver a moody tungsten-balanced night portrait look.",
+          "masks": [
+            {
+              "name": "Face Skin",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.15,
+                "clarity": -0.08,
+                "texture": -0.1,
+                "saturation": 0.05
+              },
+              "subCategoryId": 3,
+              "confidence": 0.8
+            },
+            {
+              "name": "Eye Pop",
+              "type": "iris_pupil",
+              "adjustments": {
+                "clarity": 0.2,
+                "texture": 0.12,
+                "saturation": 0.1
+              },
+              "subCategoryId": 2,
+              "confidence": 0.75
+            },
+            {
+              "name": "Background Subdue",
+              "type": "background",
+              "adjustments": {
+                "highlights": -0.1,
+                "shadows": 0.05,
+                "clarity": -0.1,
+                "saturation": -0.05
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7
+            }
+          ]
+        },
+        "confidence": 0.82
+      }
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "id": "mg0pc3rvh4vb8ll9z7l",
+  "name": "Cinema Grunge",
+  "description": "A professional color grading recipe with carefully balanced tones and contrast.",
+  "results": [
+    {
+      "outputPath": "",
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Color",
+          "confidence": 0.82,
+          "exposure": 0.2,
+          "highlights": -20,
+          "shadows": -10,
+          "whites": 18,
+          "blacks": -28,
+          "contrast": 30,
+          "clarity": 20,
+          "vibrance": 10,
+          "saturation": -5,
+          "color_grade_shadow_hue": 205,
+          "color_grade_shadow_sat": 12,
+          "color_grade_shadow_lum": -4,
+          "color_grade_midtone_hue": 34,
+          "color_grade_midtone_sat": 6,
+          "color_grade_midtone_lum": 2,
+          "color_grade_highlight_hue": 48,
+          "color_grade_highlight_sat": 8,
+          "color_grade_highlight_lum": 4,
+          "hue_red": -5,
+          "hue_orange": -10,
+          "hue_yellow": -10,
+          "hue_green": 20,
+          "hue_aqua": -10,
+          "hue_blue": -20,
+          "hue_purple": 0,
+          "hue_magenta": 8,
+          "sat_red": 12,
+          "sat_orange": -12,
+          "sat_yellow": -10,
+          "sat_green": -15,
+          "sat_aqua": 15,
+          "sat_blue": -8,
+          "sat_purple": -20,
+          "sat_magenta": -10,
+          "lum_red": 0,
+          "lum_orange": 6,
+          "lum_yellow": 6,
+          "lum_green": -4,
+          "lum_aqua": 6,
+          "lum_blue": 12,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "grain_amount": 22,
+          "grain_size": 26,
+          "grain_frequency": 55,
+          "vignette_amount": -10,
+          "vignette_midpoint": 45,
+          "vignette_feather": 70,
+          "vignette_roundness": 0,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 25,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 6
+            },
+            {
+              "input": 32,
+              "output": 20
+            },
+            {
+              "input": 64,
+              "output": 58
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 210
+            },
+            {
+              "input": 255,
+              "output": 248
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 58
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 205
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 62
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 198
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 6
+            },
+            {
+              "input": 64,
+              "output": 70
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 190
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "preset_name": "M8 Cyan Pop",
+          "description": "Punchy midtone contrast with deep blacks, cool cyan-leaning shadows, and warm highlights to emulate the Leica M8 CCD color and micro-contrast. Fine grain and cyan-skewed blues with slightly warm greens recreate the classic CCD ‘pop’. ",
+          "masks": [
+            {
+              "name": "Subject Pop",
+              "type": "subject",
+              "adjustments": {
+                "contrast": 0.12,
+                "shadows": 0.06,
+                "clarity": 0.12,
+                "texture": 0.08,
+                "saturation": 0.03
+              },
+              "confidence": 0.72,
+              "detectionQuality": 0.7
+            },
+            {
+              "name": "Background Soften",
+              "type": "background",
+              "adjustments": {
+                "shadows": 0.04,
+                "clarity": -0.12,
+                "dehaze": -0.06,
+                "saturation": -0.05
+              },
+              "subCategoryId": 22,
+              "confidence": 0.72,
+              "detectionQuality": 0.72
+            }
+          ]
+        },
+        "confidence": 0.82
+      }
+    }
+  ]
+}

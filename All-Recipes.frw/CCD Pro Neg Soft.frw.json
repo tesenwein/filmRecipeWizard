@@ -1,0 +1,167 @@
+{
+  "id": "mg3b7ax2mnzgu2y4rmc",
+  "name": "CCD Pro Neg Soft",
+  "description": "Muted Fuji S5 Pro–style color with gentle contrast, cool teal-cyan shadows, and warm, creamy skin tones. Protects highlights and lifts blacks for smooth CCD roll-off with calm, cyan-leaning greens.",
+  "results": [
+    {
+      "outputPath": "",
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.78,
+          "highlights": -35,
+          "shadows": 25,
+          "whites": -10,
+          "blacks": 18,
+          "contrast": -12,
+          "clarity": -6,
+          "vibrance": 6,
+          "saturation": -12,
+          "color_grade_shadow_hue": 205,
+          "color_grade_shadow_sat": 10,
+          "color_grade_shadow_lum": 4,
+          "color_grade_midtone_hue": 38,
+          "color_grade_midtone_sat": 12,
+          "color_grade_midtone_lum": 6,
+          "color_grade_highlight_hue": 55,
+          "color_grade_highlight_sat": 8,
+          "color_grade_highlight_lum": -2,
+          "hue_red": -10,
+          "hue_orange": -2,
+          "hue_yellow": -20,
+          "hue_green": -25,
+          "hue_aqua": -6,
+          "hue_blue": -5,
+          "hue_purple": 0,
+          "hue_magenta": 0,
+          "sat_red": 6,
+          "sat_orange": 4,
+          "sat_yellow": -20,
+          "sat_green": -30,
+          "sat_aqua": -15,
+          "sat_blue": -10,
+          "sat_purple": -10,
+          "sat_magenta": -10,
+          "lum_red": 6,
+          "lum_orange": 10,
+          "lum_yellow": 8,
+          "lum_green": 6,
+          "lum_aqua": -4,
+          "lum_blue": -6,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "grain_amount": 22,
+          "grain_size": 25,
+          "grain_frequency": 55,
+          "vignette_amount": -10,
+          "vignette_midpoint": 35,
+          "vignette_feather": 70,
+          "vignette_roundness": 0,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 20,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 64,
+              "output": 60
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 188
+            },
+            {
+              "input": 224,
+              "output": 220
+            },
+            {
+              "input": 255,
+              "output": 248
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 32,
+              "output": 26
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 224,
+              "output": 236
+            },
+            {
+              "input": 255,
+              "output": 248
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 9
+            },
+            {
+              "input": 48,
+              "output": 46
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 224,
+              "output": 232
+            },
+            {
+              "input": 255,
+              "output": 248
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 10
+            },
+            {
+              "input": 48,
+              "output": 50
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 224,
+              "output": 230
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "preset_name": "CCD Pro Neg Soft",
+          "description": "Muted Fuji S5 Pro–style color with gentle contrast, cool teal-cyan shadows, and warm, creamy skin tones. Protects highlights and lifts blacks for smooth CCD roll-off with calm, cyan-leaning greens."
+        },
+        "confidence": 0.78
+      }
+    }
+  ]
+}

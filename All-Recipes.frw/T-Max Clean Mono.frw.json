@@ -1,0 +1,105 @@
+{
+  "id": "mg0ot7vzqjngen4qswp",
+  "name": "T-Max Clean Mono",
+  "description": "Modern Kodak T‑Max 100 emulation with lifted blacks, compressed highlights, neutral tonality, and extremely fine grain. Optimized for crisp detail and clean, high-resolution black-and-white rendering.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "black_and_white",
+          "camera_profile": "Adobe Monochrome",
+          "monochrome": true,
+          "confidence": 0.9,
+          "exposure": 0,
+          "highlights": -35,
+          "shadows": 18,
+          "whites": -20,
+          "blacks": 15,
+          "contrast": 22,
+          "clarity": 12,
+          "vibrance": 0,
+          "saturation": 0,
+          "grain_amount": 6,
+          "grain_size": 3,
+          "grain_frequency": 50,
+          "vignette_amount": 0,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 25,
+              "output": 20
+            },
+            {
+              "input": 64,
+              "output": 58
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 200,
+              "output": 200
+            },
+            {
+              "input": 255,
+              "output": 230
+            }
+          ],
+          "gray_red": 18,
+          "gray_orange": 15,
+          "gray_yellow": 10,
+          "gray_green": 6,
+          "gray_aqua": 2,
+          "gray_blue": -15,
+          "gray_purple": -5,
+          "gray_magenta": 0,
+          "preset_name": "T-Max Clean Mono",
+          "description": "Modern Kodak T‑Max 100 emulation with lifted blacks, compressed highlights, neutral tonality, and extremely fine grain. Optimized for crisp detail and clean, high-resolution black-and-white rendering.",
+          "masks": [
+            {
+              "name": "Face Skin Clean",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.1,
+                "clarity": -0.05,
+                "texture": -0.05
+              },
+              "subCategoryId": 3,
+              "confidence": 0.85,
+              "detectionQuality": 0.8
+            },
+            {
+              "name": "Iris Detail",
+              "type": "iris_pupil",
+              "adjustments": {
+                "shadows": 0.05,
+                "clarity": 0.1,
+                "texture": 0.1
+              },
+              "subCategoryId": 2,
+              "confidence": 0.8,
+              "detectionQuality": 0.75
+            },
+            {
+              "name": "Background Hold Highlights",
+              "type": "background",
+              "adjustments": {
+                "contrast": -0.05,
+                "highlights": -0.2
+              },
+              "subCategoryId": 22,
+              "confidence": 0.8,
+              "detectionQuality": 0.8
+            }
+          ]
+        },
+        "confidence": 0.9
+      }
+    }
+  ]
+}

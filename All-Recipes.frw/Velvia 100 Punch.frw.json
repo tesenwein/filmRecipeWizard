@@ -1,0 +1,181 @@
+{
+  "id": "mg380bivley0dbu97z",
+  "name": "Velvia 100 Punch",
+  "description": "Bold, high-contrast slide film look inspired by Fujifilm Velvia 100 with vivid greens, deep blues, and lively reds. Ideal for landscapes needing punchy saturation, crisp micro-contrast, and slide-like highlight compression.",
+  "results": [
+    {
+      "outputPath": "",
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Landscape",
+          "confidence": 0.84,
+          "highlights": -10,
+          "shadows": -5,
+          "whites": 10,
+          "blacks": -20,
+          "contrast": 30,
+          "clarity": 15,
+          "vibrance": 12,
+          "saturation": 32,
+          "color_grade_shadow_hue": 220,
+          "color_grade_shadow_sat": 10,
+          "color_grade_shadow_lum": -6,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 6,
+          "color_grade_midtone_lum": 2,
+          "color_grade_highlight_hue": 50,
+          "color_grade_highlight_sat": 8,
+          "color_grade_highlight_lum": 6,
+          "hue_red": 10,
+          "hue_orange": -5,
+          "hue_yellow": -5,
+          "hue_green": -15,
+          "hue_aqua": -10,
+          "hue_blue": -10,
+          "hue_purple": 0,
+          "hue_magenta": 0,
+          "sat_red": 15,
+          "sat_orange": 5,
+          "sat_yellow": 10,
+          "sat_green": 20,
+          "sat_aqua": 10,
+          "sat_blue": 22,
+          "sat_purple": 5,
+          "sat_magenta": 5,
+          "lum_red": -5,
+          "lum_orange": 0,
+          "lum_yellow": -5,
+          "lum_green": -10,
+          "lum_aqua": -5,
+          "lum_blue": -20,
+          "lum_purple": -5,
+          "lum_magenta": -5,
+          "grain_amount": 20,
+          "grain_size": 12,
+          "grain_frequency": 45,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 20,
+              "output": 10
+            },
+            {
+              "input": 64,
+              "output": 58
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 190
+            },
+            {
+              "input": 255,
+              "output": 225
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 20,
+              "output": 12
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 200,
+              "output": 210
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 30
+            },
+            {
+              "input": 128,
+              "output": 132
+            },
+            {
+              "input": 200,
+              "output": 198
+            },
+            {
+              "input": 255,
+              "output": 238
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 20,
+              "output": 28
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 200,
+              "output": 195
+            },
+            {
+              "input": 255,
+              "output": 235
+            }
+          ],
+          "preset_name": "Velvia 100 Punch",
+          "description": "Bold, high-contrast slide film look inspired by Fujifilm Velvia 100 with vivid greens, deep blues, and lively reds. Ideal for landscapes needing punchy saturation, crisp micro-contrast, and slide-like highlight compression.",
+          "masks": [
+            {
+              "name": "Sky Punch",
+              "type": "sky",
+              "adjustments": {
+                "highlights": -0.2,
+                "clarity": 0.15,
+                "dehaze": 0.25,
+                "saturation": 0.15
+              },
+              "confidence": 0.78
+            },
+            {
+              "name": "Vegetation Rich",
+              "type": "vegetation",
+              "adjustments": {
+                "shadows": -0.1,
+                "clarity": 0.1,
+                "texture": 0.15,
+                "saturation": 0.25
+              },
+              "confidence": 0.76
+            }
+          ]
+        },
+        "confidence": 0.84
+      }
+    }
+  ]
+}

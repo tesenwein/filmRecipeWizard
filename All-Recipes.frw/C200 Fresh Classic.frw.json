@@ -1,0 +1,196 @@
+{
+  "id": "mg111vjs40kozsx5ag5",
+  "name": "C200 Fresh Classic",
+  "description": "Emulates Fujicolor C200 with fresh greens, clean blues, and moderate contrast, plus fine grain for an affordable classic look. Ideal for everyday color with crisp skies and lively foliage.",
+  "results": [
+    {
+      "outputPath": "",
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Color",
+          "confidence": 0.86,
+          "highlights": -35,
+          "shadows": -10,
+          "whites": -20,
+          "blacks": -30,
+          "contrast": 40,
+          "clarity": 20,
+          "vibrance": 30,
+          "saturation": 5,
+          "color_grade_shadow_hue": 200,
+          "color_grade_shadow_sat": 12,
+          "color_grade_shadow_lum": 0,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 8,
+          "color_grade_midtone_lum": 0,
+          "color_grade_highlight_hue": 40,
+          "color_grade_highlight_sat": 12,
+          "color_grade_highlight_lum": 0,
+          "hue_red": 10,
+          "hue_orange": -5,
+          "hue_yellow": -5,
+          "hue_green": -15,
+          "hue_aqua": -10,
+          "hue_blue": -10,
+          "hue_purple": -5,
+          "hue_magenta": 5,
+          "sat_red": 25,
+          "sat_orange": 10,
+          "sat_yellow": 10,
+          "sat_green": -10,
+          "sat_aqua": -5,
+          "sat_blue": 10,
+          "sat_purple": -5,
+          "sat_magenta": -5,
+          "lum_red": 0,
+          "lum_orange": 5,
+          "lum_yellow": 5,
+          "lum_green": -5,
+          "lum_aqua": 0,
+          "lum_blue": -10,
+          "lum_purple": -5,
+          "lum_magenta": 0,
+          "grain_amount": 12,
+          "grain_size": 7,
+          "grain_frequency": 55,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 15,
+              "output": 5
+            },
+            {
+              "input": 32,
+              "output": 20
+            },
+            {
+              "input": 64,
+              "output": 60
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 200
+            },
+            {
+              "input": 224,
+              "output": 210
+            },
+            {
+              "input": 255,
+              "output": 220
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 64,
+              "output": 66
+            },
+            {
+              "input": 128,
+              "output": 140
+            },
+            {
+              "input": 192,
+              "output": 210
+            },
+            {
+              "input": 255,
+              "output": 240
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 60
+            },
+            {
+              "input": 128,
+              "output": 120
+            },
+            {
+              "input": 192,
+              "output": 198
+            },
+            {
+              "input": 255,
+              "output": 240
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 40
+            },
+            {
+              "input": 64,
+              "output": 70
+            },
+            {
+              "input": 128,
+              "output": 118
+            },
+            {
+              "input": 192,
+              "output": 200
+            },
+            {
+              "input": 255,
+              "output": 238
+            }
+          ],
+          "preset_name": "Kodachrome 64 Slide",
+          "description": "Emulates Kodachrome 64: rich reds, deep blacks, and high micro-contrast with a classic vintage slide feel. Strong S-curves, cool shadows, and warm highlights deliver saturated color and punchy contrast.",
+          "masks": [
+            {
+              "name": "Subject Pop",
+              "type": "subject",
+              "adjustments": {
+                "shadows": 0.1,
+                "clarity": 0.2,
+                "texture": 0.1
+              },
+              "confidence": 0.7
+            },
+            {
+              "name": "Background Soften",
+              "type": "background",
+              "adjustments": {
+                "clarity": -0.2,
+                "dehaze": -0.05,
+                "saturation": -0.1
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7
+            }
+          ]
+        },
+        "confidence": 0.86
+      }
+    }
+  ]
+}

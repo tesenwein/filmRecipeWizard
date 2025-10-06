@@ -1,0 +1,200 @@
+{
+  "id": "mg399g8bgyypy37dgto",
+  "name": "Golden Sage Portrait",
+  "description": "Warm, natural portrait preset with clean contrast, faithful skin tones, and muted sage greens. Lifted blacks, compressed highlights, and balanced warm highlights with slightly cool shadows create a soft, timeless look.",
+  "results": [
+    {
+      "outputPath": "",
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.86,
+          "exposure": 0,
+          "highlights": -35,
+          "shadows": 25,
+          "whites": -10,
+          "blacks": 20,
+          "contrast": -10,
+          "clarity": 5,
+          "vibrance": 20,
+          "saturation": -5,
+          "color_grade_shadow_hue": 220,
+          "color_grade_shadow_sat": 6,
+          "color_grade_shadow_lum": -6,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 8,
+          "color_grade_midtone_lum": 0,
+          "color_grade_highlight_hue": 45,
+          "color_grade_highlight_sat": 12,
+          "color_grade_highlight_lum": 6,
+          "hue_red": -5,
+          "hue_orange": 0,
+          "hue_yellow": -10,
+          "hue_green": -35,
+          "hue_aqua": -20,
+          "hue_blue": -10,
+          "hue_purple": 0,
+          "hue_magenta": 0,
+          "sat_red": -5,
+          "sat_orange": 8,
+          "sat_yellow": -25,
+          "sat_green": -40,
+          "sat_aqua": -30,
+          "sat_blue": -20,
+          "sat_purple": -10,
+          "sat_magenta": -10,
+          "lum_red": 0,
+          "lum_orange": 10,
+          "lum_yellow": -5,
+          "lum_green": -15,
+          "lum_aqua": -5,
+          "lum_blue": -10,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "grain_amount": 15,
+          "grain_size": 25,
+          "grain_frequency": 50,
+          "vignette_amount": -12,
+          "vignette_midpoint": 45,
+          "vignette_feather": 70,
+          "vignette_roundness": 0,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 35,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 15
+            },
+            {
+              "input": 32,
+              "output": 28
+            },
+            {
+              "input": 64,
+              "output": 64
+            },
+            {
+              "input": 128,
+              "output": 124
+            },
+            {
+              "input": 192,
+              "output": 200
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 10
+            },
+            {
+              "input": 64,
+              "output": 66
+            },
+            {
+              "input": 128,
+              "output": 134
+            },
+            {
+              "input": 192,
+              "output": 204
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 64
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 196
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 64,
+              "output": 62
+            },
+            {
+              "input": 128,
+              "output": 124
+            },
+            {
+              "input": 192,
+              "output": 186
+            },
+            {
+              "input": 255,
+              "output": 242
+            }
+          ],
+          "preset_name": "Golden Sage Portrait",
+          "description": "Warm, natural portrait preset with clean contrast, faithful skin tones, and muted sage greens. Lifted blacks, compressed highlights, and balanced warm highlights with slightly cool shadows create a soft, timeless look.",
+          "masks": [
+            {
+              "name": "Face Skin",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.1,
+                "clarity": -0.05,
+                "texture": -0.1,
+                "saturation": 0.05
+              },
+              "subCategoryId": 3,
+              "confidence": 0.8
+            },
+            {
+              "name": "Eye Pop",
+              "type": "iris_pupil",
+              "adjustments": {
+                "clarity": 0.15,
+                "texture": 0.15,
+                "saturation": 0.05
+              },
+              "subCategoryId": 2,
+              "confidence": 0.75
+            },
+            {
+              "name": "Background Soften",
+              "type": "background",
+              "adjustments": {
+                "clarity": -0.12,
+                "dehaze": -0.05,
+                "saturation": -0.05
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7
+            }
+          ]
+        },
+        "confidence": 0.86
+      }
+    }
+  ]
+}

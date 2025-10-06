@@ -1,0 +1,201 @@
+{
+  "id": "mfyy34cgpheu3erqud",
+  "name": "Warm Studio Glow",
+  "description": "A portrait-focused version of Warm Studio Glow: soft yet dimensional skin rendering, warm midtones, controlled highlights, and subdued cool tones. Ideal for studio or window light portraits; enhances skin luminosity while keeping eyes/hair crisp.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Portrait",
+          "confidence": 0.79,
+          "exposure": 0.45,
+          "highlights": -35,
+          "shadows": 30,
+          "whites": 12,
+          "blacks": -25,
+          "contrast": 35,
+          "clarity": -12,
+          "vibrance": 28,
+          "saturation": -8,
+          "color_grade_shadow_hue": 200,
+          "color_grade_shadow_sat": 22,
+          "color_grade_shadow_lum": -5,
+          "color_grade_midtone_hue": 30,
+          "color_grade_midtone_sat": 10,
+          "color_grade_midtone_lum": 3,
+          "color_grade_highlight_hue": 320,
+          "color_grade_highlight_sat": 20,
+          "color_grade_highlight_lum": 4,
+          "hue_red": 10,
+          "hue_orange": -5,
+          "hue_yellow": -10,
+          "hue_green": -20,
+          "hue_aqua": -10,
+          "hue_blue": 10,
+          "hue_purple": -20,
+          "hue_magenta": -15,
+          "sat_red": -10,
+          "sat_orange": 10,
+          "sat_yellow": -40,
+          "sat_green": -60,
+          "sat_aqua": -20,
+          "sat_blue": -15,
+          "sat_purple": -20,
+          "sat_magenta": -10,
+          "lum_red": 10,
+          "lum_orange": 25,
+          "lum_yellow": 0,
+          "lum_green": -10,
+          "lum_aqua": 0,
+          "lum_blue": -10,
+          "lum_purple": -5,
+          "lum_magenta": -10,
+          "grain_amount": 20,
+          "grain_size": 28,
+          "grain_frequency": 55,
+          "vignette_amount": -18,
+          "vignette_midpoint": 45,
+          "vignette_feather": 70,
+          "vignette_roundness": -10,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 20,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 12
+            },
+            {
+              "input": 30,
+              "output": 22
+            },
+            {
+              "input": 64,
+              "output": 58
+            },
+            {
+              "input": 128,
+              "output": 135
+            },
+            {
+              "input": 192,
+              "output": 205
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 26
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 224,
+              "output": 238
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 32,
+              "output": 30
+            },
+            {
+              "input": 128,
+              "output": 126
+            },
+            {
+              "input": 224,
+              "output": 212
+            },
+            {
+              "input": 255,
+              "output": 240
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 4
+            },
+            {
+              "input": 32,
+              "output": 40
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 224,
+              "output": 235
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "preset_name": "Neon Vogue Glow",
+          "description": "Editorial neon portrait preset with teal-tinted shadows, peachy midtones, and magenta-highlight pop. A soft, creamy glow over dark dramatic contrast for punchy fashion vibes.",
+          "masks": [
+            {
+              "name": "Face Skin Balance",
+              "type": "face_skin",
+              "adjustments": {
+                "shadows": 0.15,
+                "clarity": -0.05,
+                "texture": -0.1,
+                "saturation": -0.1
+              },
+              "subCategoryId": 3,
+              "confidence": 0.8,
+              "detectionQuality": 0.9
+            },
+            {
+              "name": "Eye Pop",
+              "type": "iris_pupil",
+              "adjustments": {
+                "clarity": 0.1,
+                "saturation": 0.1
+              },
+              "subCategoryId": 2,
+              "confidence": 0.75,
+              "detectionQuality": 0.85
+            },
+            {
+              "name": "Background Control",
+              "type": "background",
+              "adjustments": {
+                "contrast": 0.1,
+                "highlights": -0.3,
+                "dehaze": 0.1
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7,
+              "detectionQuality": 0.8
+            }
+          ]
+        },
+        "confidence": 0.79
+      }
+    }
+  ]
+}

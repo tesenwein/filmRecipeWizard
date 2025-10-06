@@ -1,0 +1,28 @@
+{
+  "id": "mg3e23bz7qqvz7xhgb3",
+  "name": "Neon Clean Balance",
+  "description": "A modern neon portrait grade that keeps skin tones natural while preserving the red–cyan drama. Clean, punchy contrast with cool highlights and gently warm midtones for balanced, faithful faces.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Neon Clean Balance",
+          "description": "A modern neon portrait grade that keeps skin tones natural while preserving the red–cyan drama. Clean, punchy contrast with cool highlights and gently warm midtones for balanced, faithful faces.",
+          "masks": [],
+          "exposure": 0,
+          "contrast": 40,
+          "highlights": -35,
+          "shadows": 15,
+          "whites": 25,
+          "blacks": -30,
+          "vibrance": 22,
+          "saturation": -6,
+          "temperature": -6,
+          "tint": 4,
+          "camera_profile": "Adobe Portrait"
+        }
+      }
+    }
+  ]
+}

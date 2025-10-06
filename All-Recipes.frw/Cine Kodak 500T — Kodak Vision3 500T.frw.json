@@ -1,0 +1,94 @@
+{
+  "id": "mfyy34d54v33z5t9015",
+  "name": "Cine Kodak 500T — Kodak Vision3 500T",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Cine Kodak 500T",
+          "description": "Emulate the legendary Kodak Vision3 500T with its cinematic teal shadows and controlled highlights, delivering a vibrantly rich and smooth cinematic experience.",
+          "treatment": "color",
+          "confidence": 1,
+          "reasoning": "Kodak Vision3 500T film stock is known for its distinctive high-speed tungsten cine look with teal shadows and controlled highlights. By incorporating teal into shadow grading, maintaining warm and natural midtones and highlights, and adjusting contrast thoughtfully, we capture the film's essence. Using HSL and tone curves to replicate the film's dynamic range and color palette, we can recreate its cinematic feel accurately.",
+          "exposure": 0,
+          "highlights": -20,
+          "shadows": 10,
+          "whites": -10,
+          "blacks": 5,
+          "contrast": 15,
+          "clarity": 5,
+          "vibrance": 10,
+          "saturation": 5,
+          "temperature": 5200,
+          "tint": -5,
+          "color_grade_shadow_hue": 190,
+          "color_grade_shadow_sat": 25,
+          "color_grade_midtone_hue": 0,
+          "color_grade_midtone_sat": 0,
+          "color_grade_highlight_hue": 0,
+          "color_grade_highlight_sat": 0,
+          "hue_green": 10,
+          "hue_blue": 10,
+          "sat_red": 5,
+          "sat_orange": 5,
+          "lum_red": 0,
+          "lum_orange": 0,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 10
+            },
+            {
+              "input": 64,
+              "output": 68
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 190
+            },
+            {
+              "input": 255,
+              "output": 245
+            }
+          ],
+          "masks": [
+            {
+              "name": "Teal Shadow Enhancement",
+              "type": "background",
+              "adjustments": {
+                "saturation": 0.15
+              },
+              "subCategoryId": 22
+            },
+            {
+              "name": "Background Desaturation",
+              "type": "background",
+              "adjustments": {
+                "saturation": -0.1
+              },
+              "subCategoryId": 22
+            },
+            {
+              "name": "Controlled Highlights",
+              "type": "background",
+              "adjustments": {
+                "highlights": -0.1
+              },
+              "subCategoryId": 22
+            }
+          ]
+        },
+        "confidence": 1,
+        "reasoning": "Kodak Vision3 500T film stock is known for its distinctive high-speed tungsten cine look with teal shadows and controlled highlights. By incorporating teal into shadow grading, maintaining warm and natural midtones and highlights, and adjusting contrast thoughtfully, we capture the film's essence. Using HSL and tone curves to replicate the film's dynamic range and color palette, we can recreate its cinematic feel accurately.",
+        "usedSettings": {
+          "preserveSkinTones": false
+        }
+      }
+    }
+  ]
+}

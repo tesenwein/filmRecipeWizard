@@ -1,0 +1,99 @@
+{
+  "id": "mfyy34fvtjw604n550d",
+  "name": "Summer Nostalgia",
+  "description": "Warm, inviting late-summer tones with gentle greens and a soft filmic contrast, inspired by Kodak Portra 400.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "preset_name": "Summer Nostalgia",
+          "description": "Warm, inviting late-summer tones with gentle greens and a soft filmic contrast, inspired by Kodak Portra 400.",
+          "treatment": "color",
+          "camera_profile": "Adobe Color",
+          "confidence": 0.9,
+          "exposure": 0,
+          "highlights": -20,
+          "shadows": 20,
+          "whites": 10,
+          "blacks": -10,
+          "contrast": -10,
+          "clarity": -5,
+          "vibrance": 20,
+          "saturation": 10,
+          "temperature": 6500,
+          "tint": 10,
+          "hue_green": -5,
+          "sat_red": 5,
+          "sat_green": 15,
+          "sat_blue": 10,
+          "lum_green": 20,
+          "lum_blue": 15,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 56
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 200
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 60
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 192,
+              "output": 195
+            },
+            {
+              "input": 255,
+              "output": 255
+            }
+          ],
+          "masks": [
+            {
+              "name": "Sky",
+              "type": "sky",
+              "adjustments": {
+                "clarity": -0.2,
+                "saturation": 0.1
+              }
+            },
+            {
+              "name": "Vegetation",
+              "type": "vegetation",
+              "adjustments": {
+                "saturation": 0.2
+              },
+              "subCategoryId": 22
+            }
+          ]
+        },
+        "confidence": 0.9
+      }
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "id": "mfyy34asncodbzwctjs",
+  "name": "Pan F 50 Mono",
+  "description": "Neutral, ultra‑fine grain black and white inspired by Ilford Pan F 50. Lifted shadows, compressed highlights, and a smooth S‑curve deliver rich tonality and crisp detail for portraits and landscapes.",
+  "results": [
+    {
+      "success": true,
+      "metadata": {
+        "aiAdjustments": {
+          "treatment": "color",
+          "camera_profile": "Adobe Color",
+          "confidence": 0.82,
+          "highlights": -25,
+          "shadows": 12,
+          "whites": 10,
+          "blacks": -10,
+          "contrast": 18,
+          "clarity": 20,
+          "vibrance": 22,
+          "saturation": -5,
+          "color_grade_shadow_hue": 200,
+          "color_grade_shadow_sat": 12,
+          "color_grade_shadow_lum": -4,
+          "color_grade_midtone_hue": 35,
+          "color_grade_midtone_sat": 10,
+          "color_grade_midtone_lum": 2,
+          "color_grade_highlight_hue": 48,
+          "color_grade_highlight_sat": 8,
+          "color_grade_highlight_lum": 4,
+          "hue_red": -5,
+          "hue_orange": -4,
+          "hue_yellow": -12,
+          "hue_green": -20,
+          "hue_aqua": -8,
+          "hue_blue": -22,
+          "hue_purple": 0,
+          "hue_magenta": -5,
+          "sat_red": -8,
+          "sat_orange": 6,
+          "sat_yellow": -25,
+          "sat_green": -35,
+          "sat_aqua": -10,
+          "sat_blue": -22,
+          "sat_purple": -15,
+          "sat_magenta": -12,
+          "lum_red": 5,
+          "lum_orange": 10,
+          "lum_yellow": -5,
+          "lum_green": -10,
+          "lum_aqua": 0,
+          "lum_blue": -6,
+          "lum_purple": 0,
+          "lum_magenta": 0,
+          "grain_amount": 15,
+          "grain_size": 20,
+          "grain_frequency": 60,
+          "vignette_amount": -10,
+          "vignette_midpoint": 45,
+          "vignette_feather": 80,
+          "vignette_roundness": 0,
+          "vignette_style": 1,
+          "vignette_highlight_contrast": 20,
+          "tone_curve": [
+            {
+              "input": 0,
+              "output": 8
+            },
+            {
+              "input": 32,
+              "output": 30
+            },
+            {
+              "input": 64,
+              "output": 60
+            },
+            {
+              "input": 128,
+              "output": 130
+            },
+            {
+              "input": 192,
+              "output": 200
+            },
+            {
+              "input": 232,
+              "output": 240
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "tone_curve_red": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 48,
+              "output": 44
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 208,
+              "output": 214
+            },
+            {
+              "input": 255,
+              "output": 254
+            }
+          ],
+          "tone_curve_green": [
+            {
+              "input": 0,
+              "output": 0
+            },
+            {
+              "input": 64,
+              "output": 62
+            },
+            {
+              "input": 128,
+              "output": 126
+            },
+            {
+              "input": 208,
+              "output": 210
+            },
+            {
+              "input": 255,
+              "output": 254
+            }
+          ],
+          "tone_curve_blue": [
+            {
+              "input": 0,
+              "output": 6
+            },
+            {
+              "input": 48,
+              "output": 52
+            },
+            {
+              "input": 128,
+              "output": 128
+            },
+            {
+              "input": 208,
+              "output": 202
+            },
+            {
+              "input": 255,
+              "output": 250
+            }
+          ],
+          "preset_name": "Leica Modern Tones",
+          "description": "Clean, high micro-contrast color with cool-cyan shadows and warm, creamy highlights. Desaturated greens/blues and lifted skin luminance emulate a refined, contemporary Leica look.",
+          "masks": [
+            {
+              "name": "Subject Crisp",
+              "type": "subject",
+              "adjustments": {
+                "shadows": 0.1,
+                "clarity": 0.1,
+                "texture": 0.1,
+                "saturation": 0.05
+              },
+              "confidence": 0.7,
+              "detectionQuality": 0.7
+            },
+            {
+              "name": "Background Soften",
+              "type": "background",
+              "adjustments": {
+                "contrast": -0.05,
+                "clarity": -0.1,
+                "saturation": -0.1
+              },
+              "subCategoryId": 22,
+              "confidence": 0.7,
+              "detectionQuality": 0.7
+            }
+          ]
+        },
+        "confidence": 0.82
+      }
+    }
+  ]
+}
