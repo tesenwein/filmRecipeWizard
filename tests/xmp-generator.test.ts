@@ -524,8 +524,8 @@ describe('XMP Generator', () => {
             name: 'Radial Vignette',
             type: 'radial',
             adjustments: {
-              local_contrast: 0.3,
-              local_saturation: -0.2,
+              contrast: 0.3,
+              saturation: -0.2,
             },
             geometry: {
               top: 0.1,
@@ -561,7 +561,7 @@ describe('XMP Generator', () => {
             name: 'Sky Gradient',
             type: 'linear',
             adjustments: {
-              local_highlights: -0.5,
+              highlights: -0.5,
             },
             geometry: {
               zeroX: 0.5,
@@ -596,8 +596,8 @@ describe('XMP Generator', () => {
             name: 'Person Enhancement',
             type: 'person',
             adjustments: {
-              local_contrast: 0.2,
-              local_clarity: 0.4,
+              contrast: 0.2,
+              clarity: 0.4,
             },
             geometry: {
               referenceX: 0.5,
@@ -631,7 +631,7 @@ describe('XMP Generator', () => {
             name: 'Face Retouch',
             type: 'face_skin',
             adjustments: {
-              local_clarity: 0.3,
+              clarity: 0.3,
             },
             geometry: {
               referenceX: 0.5,
@@ -663,8 +663,8 @@ describe('XMP Generator', () => {
             name: 'Sky Enhancement',
             type: 'sky',
             adjustments: {
-              local_highlights: -0.6,
-              local_saturation: 0.3,
+              highlights: -0.6,
+              saturation: 0.3,
             },
             geometry: {
               referenceX: 0.5,
@@ -697,8 +697,8 @@ describe('XMP Generator', () => {
             name: 'Background Blur',
             type: 'background',
             adjustments: {
-              local_clarity: -0.8,
-              local_texture: -0.6,
+              clarity: -0.8,
+              texture: -0.6,
             },
             geometry: {
               referenceX: 0.5,
@@ -731,7 +731,7 @@ describe('XMP Generator', () => {
             name: 'Blue Sky',
             type: 'range_color',
             adjustments: {
-              local_saturation: 0.5,
+              saturation: 0.5,
               // local_hue: 0.1, // Not a valid property
             },
             rangeParams: {
@@ -764,7 +764,7 @@ describe('XMP Generator', () => {
             name: 'Highlights',
             type: 'range_luminance',
             adjustments: {
-              local_highlights: -0.5,
+              highlights: -0.5,
             },
             rangeParams: {
               lumRange: [0.7, 1.0],
@@ -795,7 +795,7 @@ describe('XMP Generator', () => {
             name: 'Selective Dodge',
             type: 'brush',
             adjustments: {
-              local_contrast: 0.2,
+              contrast: 0.2,
             },
             brushParams: {
               size: 25,
@@ -829,17 +829,17 @@ describe('XMP Generator', () => {
           {
             name: 'Sky',
             type: 'sky',
-            adjustments: { local_contrast: 0.2 },
+            adjustments: { contrast: 0.2 },
           },
           {
             name: 'Person',
             type: 'person',
-            adjustments: { local_contrast: 0.2 },
+            adjustments: { contrast: 0.2 },
           },
           {
             name: 'Vignette',
             type: 'radial',
-            adjustments: { local_contrast: 0.2 },
+            adjustments: { contrast: 0.2 },
             geometry: {
               top: 0.1,
               left: 0.1,
@@ -871,7 +871,7 @@ describe('XMP Generator', () => {
           {
             name: 'Should Not Appear',
             type: 'radial',
-            adjustments: { local_contrast: 0.2 },
+            adjustments: { contrast: 0.2 },
           },
         ],
       };
@@ -907,7 +907,7 @@ describe('XMP Generator', () => {
             name: 'Strong Mask',
             type: 'radial',
             adjustments: {
-              local_contrast: 0.5,
+              contrast: 0.5,
             },
             geometry: {
               top: 0.1,

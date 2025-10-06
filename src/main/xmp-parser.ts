@@ -437,16 +437,16 @@ function parseMasks(xmpContent: string, adjustments: AIColorAdjustments): boolea
       }
     };
 
-    parseLocalAdjustment('LocalExposure2012', 'local_exposure');
-    parseLocalAdjustment('LocalContrast2012', 'local_contrast');
-    parseLocalAdjustment('LocalHighlights2012', 'local_highlights');
-    parseLocalAdjustment('LocalShadows2012', 'local_shadows');
-    parseLocalAdjustment('LocalWhites2012', 'local_whites');
-    parseLocalAdjustment('LocalBlacks2012', 'local_blacks');
-    parseLocalAdjustment('LocalClarity2012', 'local_clarity');
-    parseLocalAdjustment('LocalDehaze', 'local_dehaze');
-    parseLocalAdjustment('LocalTexture', 'local_texture');
-    parseLocalAdjustment('LocalSaturation', 'local_saturation');
+    parseLocalAdjustment('LocalExposure2012', 'exposure');
+    parseLocalAdjustment('LocalContrast2012', 'contrast');
+    parseLocalAdjustment('LocalHighlights2012', 'highlights');
+    parseLocalAdjustment('LocalShadows2012', 'shadows');
+    parseLocalAdjustment('LocalWhites2012', 'whites');
+    parseLocalAdjustment('LocalBlacks2012', 'blacks');
+    parseLocalAdjustment('LocalClarity2012', 'clarity');
+    parseLocalAdjustment('LocalDehaze', 'dehaze');
+    parseLocalAdjustment('LocalTexture', 'texture');
+    parseLocalAdjustment('LocalSaturation', 'saturation');
 
     // Extract reference point for AI masks
     const referenceXMatch = maskMatch.match(/crs:ReferenceX="([^"]*)"/);

@@ -404,7 +404,7 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
  * First layer = main adjustments layer
  * Subsequent layers = mask layers (without adjustments)
  */
-function generateMasksXML(masks: any[], mainLayerElements: string[], mainLayerName: string): string {
+function generateMasksXML(masks: any[], mainLayerElements: string[], _mainLayerName: string): string {
 
   const escapeXml = (str: string) => {
     return str

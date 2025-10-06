@@ -538,8 +538,8 @@ describe('XMP Parser', () => {
       const mask = result.adjustments?.masks?.[0];
       expect(mask?.name).toBe('Radial Vignette');
       expect(mask?.type).toBe('radial');
-      expect(mask?.adjustments?.local_contrast).toBe(0.3);
-      expect(mask?.adjustments?.local_saturation).toBe(0.2);
+      expect(mask?.adjustments?.contrast).toBe(0.3);
+      expect(mask?.adjustments?.saturation).toBe(0.2);
       expect(mask?.top).toBe(0.1);
       expect(mask?.left).toBe(0.1);
       expect(mask?.bottom).toBe(0.9);
@@ -601,8 +601,8 @@ describe('XMP Parser', () => {
       const mask = result.adjustments?.masks?.[0];
       expect(mask?.name).toBe('Person Enhancement');
       expect(mask?.type).toBe('subject'); // Parser returns 'subject' for MaskSubType="1"
-      expect(mask?.adjustments?.local_contrast).toBe(0.2);
-      expect(mask?.adjustments?.local_clarity).toBe(0.4);
+      expect(mask?.adjustments?.contrast).toBe(0.2);
+      expect(mask?.adjustments?.clarity).toBe(0.4);
       expect(mask?.referenceX).toBe(0.5);
       expect(mask?.referenceY).toBe(0.3);
     });

@@ -231,8 +231,8 @@ describe('Capture One Generator', () => {
             adjustments: { saturation: 0.05 },  // 0-1 normalized value
           },
           {
-            type: 'sky',
-            name: 'Sky',
+            type: 'person',
+            name: 'Person',
             adjustments: { contrast: 0.1 },     // 0-1 normalized value
           },
         ],
@@ -244,7 +244,7 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
-      // Should have 3 layers total: 1 main + 2 masks
+      // Should have 3 layers total: 1 main + 2 masks (sky is filtered out in real scenarios)
       const ldMatches = result.match(/<LD>/g);
       expect(ldMatches).toHaveLength(3);
 
@@ -257,9 +257,9 @@ describe('Capture One Generator', () => {
         expect(firstLayerMatch[2]).toContain('<E K="MaskType" V="1" />');
       }
 
-      // Should have mask layers for face and sky WITH their local adjustments
+      // Should have mask layers for face and person WITH their local adjustments
       expect(result).toContain('<E K="Name" V="Face" />');
-      expect(result).toContain('<E K="Name" V="Sky" />');
+      expect(result).toContain('<E K="Name" V="Person" />');
 
       // Face mask should have saturation: 0.05 -> 5%
       const faceLayerMatch = result.match(/<LD>[\s\S]*?<E K="Name" V="Face"[\s\S]*?<\/LD>/);
@@ -268,11 +268,11 @@ describe('Capture One Generator', () => {
         expect(faceLayerMatch[0]).toContain('<E K="Saturation" V="5" />'); // 0.05 * 100
       }
 
-      // Sky mask should have contrast: 0.1 -> 10%
-      const skyLayerMatch = result.match(/<LD>[\s\S]*?<E K="Name" V="Sky"[\s\S]*?<\/LD>/);
-      expect(skyLayerMatch).toBeTruthy();
-      if (skyLayerMatch) {
-        expect(skyLayerMatch[0]).toContain('<E K="Contrast" V="10" />'); // 0.1 * 100
+      // Person mask should have contrast: 0.1 -> 10%
+      const personLayerMatch = result.match(/<LD>[\s\S]*?<E K="Name" V="Person"[\s\S]*?<\/LD>/);
+      expect(personLayerMatch).toBeTruthy();
+      if (personLayerMatch) {
+        expect(personLayerMatch[0]).toContain('<E K="Contrast" V="10" />'); // 0.1 * 100
       }
     });
 

@@ -245,8 +245,8 @@ describe('XMP Integration Tests', () => {
             name: 'Radial Vignette',
             type: 'radial',
             adjustments: {
-              local_contrast: 0.3,
-              local_saturation: -0.2,
+              contrast: 0.3,
+              saturation: -0.2,
             },
             geometry: {
               top: 0.1,
@@ -262,8 +262,8 @@ describe('XMP Integration Tests', () => {
             name: 'Person Enhancement',
             type: 'person',
             adjustments: {
-              local_contrast: 0.2,
-              local_clarity: 0.4,
+              contrast: 0.2,
+              clarity: 0.4,
             },
             geometry: {
               referenceX: 0.5,
@@ -303,8 +303,8 @@ describe('XMP Integration Tests', () => {
       const radialMask = parsedMasks[0];
       expect(radialMask.name).toBe('Radial Vignette');
       expect(radialMask.type).toBe('radial'); // Parser should detect radial from mask name
-      expect(radialMask.adjustments?.local_contrast).toBe(0.3); // Raw value
-      expect(radialMask.adjustments?.local_saturation).toBe(-0.2); // Raw value
+      expect(radialMask.adjustments?.contrast).toBe(0.3); // Raw value
+      expect(radialMask.adjustments?.saturation).toBe(-0.2); // Raw value
       expect(radialMask.top).toBe(0.1);
       expect(radialMask.left).toBe(0.1);
       expect(radialMask.bottom).toBe(0.9);
@@ -317,8 +317,8 @@ describe('XMP Integration Tests', () => {
       const personMask = parsedMasks[1];
       expect(personMask.name).toBe('Person Enhancement');
       expect(personMask.type).toBe('person'); // Parser maps to person
-      expect(personMask.adjustments?.local_contrast).toBe(0.2); // Raw value
-      expect(personMask.adjustments?.local_clarity).toBe(0.4); // Raw value
+      expect(personMask.adjustments?.contrast).toBe(0.2); // Raw value
+      expect(personMask.adjustments?.clarity).toBe(0.4); // Raw value
       expect(personMask.referenceX).toBe(0.5);
       expect(personMask.referenceY).toBe(0.3);
     });
