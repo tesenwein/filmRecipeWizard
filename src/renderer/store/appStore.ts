@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import { logError } from '../../shared/error-utils';
 import { AppSettings, Recipe } from '../../shared/types';
 
@@ -71,8 +71,9 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>()(
-  devtools(
-    (set, get) => ({
+  persist(
+    devtools(
+      (set, get) => ({
       // Initial state
       setupWizardOpen: false,
       setupCompleted: false,
@@ -531,9 +532,18 @@ export const useAppStore = create<AppState>()(
           throw error;
         }
       },
-    }),
+      }),
+      {
+        name: 'film-recipe-wizard-store',
+      }
+    ),
     {
-      name: 'film-recipe-wizard-store',
+      name: 'film-recipe-wizard-storage',
+      partialize: (state) => ({
+        gallerySortBy: state.gallerySortBy,
+        gallerySearchQuery: state.gallerySearchQuery,
+        currentRoute: state.currentRoute,
+      }),
     }
   )
 );
