@@ -86,6 +86,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     parts.push(recipe.id);
     parts.push(getRecipeName(recipe));
     if (recipe.prompt) parts.push(recipe.prompt);
+    if (recipe.description) parts.push(recipe.description);
+    if (recipe.userRating !== undefined) parts.push(String(recipe.userRating));
     try {
       parts.push(new Date(recipe.timestamp).toLocaleString());
     } catch {
@@ -105,9 +107,10 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     // User options
     const uo = recipe.userOptions as any;
     if (uo) {
-      const numKeys = ['contrast', 'vibrance', 'saturationBias'] as const;
+      const numKeys = ['contrast', 'vibrance', 'saturationBias', 'moodiness', 'warmth', 'coolness', 'drama', 'softness', 'intensity', 'vintage', 'cinematic', 'faded'] as const;
       for (const k of numKeys) if (uo[k] !== undefined) parts.push(String(uo[k]));
       if (uo.vibe) parts.push(uo.vibe);
+      if (uo.styleCategories && Array.isArray(uo.styleCategories)) parts.push(...uo.styleCategories);
       if (uo.artistStyle) parts.push(uo.artistStyle.name, uo.artistStyle.category, uo.artistStyle.blurb, uo.artistStyle.key);
       if (uo.filmStyle) parts.push(uo.filmStyle.name, uo.filmStyle.category, uo.filmStyle.blurb, uo.filmStyle.key);
     }
