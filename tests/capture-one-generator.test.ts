@@ -123,7 +123,156 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="FilmGrainAmount" V="25" />');
     });
 
-    it('generates layered structure with global layer', () => {
+    it('should include masks when enabled', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Mask Style',
+        description: 'Masks included',
+        confidence: 0.8,
+        treatment: 'color',
+        masks: [
+          {
+            type: 'radial',
+            name: 'Test Radial Mask',
+            top: 0.2,
+            left: 0.3,
+            bottom: 0.8,
+            right: 0.7,
+            angle: 45,
+            midpoint: 50,
+            roundness: 0,
+            feather: 75,
+            inverted: false,
+            adjustments: {
+              local_contrast: 20,
+              local_highlights: -15,
+              local_shadows: 25,
+            },
+          },
+        ],
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: true,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      expect(result).toContain('<LDS>');
+      expect(result).toContain('<LD>');
+      expect(result).toContain('<LA>');
+      expect(result).toContain('<E K="Name" V="Test Radial Mask" />');
+      expect(result).toContain('<E K="MaskType" V="2" />'); // Radial
+
+      // Mask layers should include local adjustment values from recipe data
+      expect(result).toContain('<E K="Contrast" V="20" />');
+      expect(result).toContain('<E K="HighlightRecoveryEx" V="15" />'); // Inverted
+      expect(result).toContain('<E K="ShadowRecovery" V="25" />');
+    });
+
+    it('should handle AI-detected masks correctly', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'AI Mask Style',
+        description: 'AI-detected mask included',
+        confidence: 0.8,
+        treatment: 'color',
+        masks: [
+          {
+            type: 'face_skin',
+            name: 'Face Mask',
+            referenceX: 0.4,
+            referenceY: 0.3,
+            inverted: false,
+            adjustments: {
+              local_saturation: 10,
+              local_clarity: 5,
+            },
+          },
+        ],
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: true,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      expect(result).toContain('<E K="Name" V="Face Mask" />');
+      expect(result).toContain('<E K="MaskType" V="4" />'); // AI/Subject mask
+      expect(result).toContain('<SO>'); // Subject options
+      expect(result).toContain('<E K="Face" V="1" />'); // face_skin maps to Face
+      // Note: Local adjustment values are not included in generated styles
+    });
+
+    it('should have main adjustment layer plus mask layers', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Multi-Layer Style',
+        confidence: 0.8,
+        treatment: 'color',
+        contrast: 20,
+        saturation: 10,
+        masks: [
+          {
+            type: 'face_skin',
+            name: 'Face',
+            adjustments: { local_saturation: 5 },
+          },
+          {
+            type: 'sky',
+            name: 'Sky',
+            adjustments: { local_contrast: 10 },
+          },
+        ],
+      };
+
+      const include = {
+        masks: true,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      // Should have 3 layers total: 1 main + 2 masks
+      const ldMatches = result.match(/<LD>/g);
+      expect(ldMatches).toHaveLength(3);
+
+      // First layer should be main adjustment layer (MaskType 1) with adjustments
+      const firstLayerMatch = result.match(/<LD>\s*<LA>([\s\S]*?)<\/LA>\s*<MD>([\s\S]*?)<\/MD>\s*<\/LD>/);
+      expect(firstLayerMatch).toBeTruthy();
+      if (firstLayerMatch) {
+        expect(firstLayerMatch[1]).toContain('Contrast');
+        expect(firstLayerMatch[1]).toContain('Saturation');
+        expect(firstLayerMatch[2]).toContain('<E K="MaskType" V="1" />');
+      }
+
+      // Should have mask layers for face and sky WITH their local adjustments
+      expect(result).toContain('<E K="Name" V="Face" />');
+      expect(result).toContain('<E K="Name" V="Sky" />');
+
+      // Face mask should have local_saturation: 5
+      const faceLayerMatch = result.match(/<LD>[\s\S]*?<E K="Name" V="Face"[\s\S]*?<\/LD>/);
+      expect(faceLayerMatch).toBeTruthy();
+      if (faceLayerMatch) {
+        expect(faceLayerMatch[0]).toContain('<E K="Saturation" V="5" />');
+      }
+
+      // Sky mask should have local_contrast: 10
+      const skyLayerMatch = result.match(/<LD>[\s\S]*?<E K="Name" V="Sky"[\s\S]*?<\/LD>/);
+      expect(skyLayerMatch).toBeTruthy();
+      if (skyLayerMatch) {
+        expect(skyLayerMatch[0]).toContain('<E K="Contrast" V="10" />');
+      }
+    });
+
+    it('generates layered structure with main adjustment layer', () => {
       const adjustments: AIColorAdjustments = {
         preset_name: 'Layered Style',
         description: 'Uses layered architecture',
@@ -143,7 +292,7 @@ describe('Capture One Generator', () => {
 
       const result = generateCaptureOneStyle(adjustments, include);
 
-      // Should generate layered structure with global layer (MaskType 1)
+      // Should generate layered structure with main layer (MaskType 1)
       expect(result).toContain('<LDS>');
       expect(result).toContain('<LD>');
       expect(result).toContain('<LA>'); // Layer adjustments
@@ -153,6 +302,7 @@ describe('Capture One Generator', () => {
       expect(result).toContain('</LDS>');
 
       // Adjustments should be in the layer
+      expect(result).toContain('Contrast');
       expect(result).toContain('ColorCorrections');
     });
 

@@ -1,4 +1,6 @@
 import type { AIColorAdjustments } from '../services/types';
+import { convertRecipeToMasks } from '../shared/mask-converter';
+import { normalizeMaskType } from '../shared/mask-types';
 
 /**
  * Generates Capture One style (.costyle) content based on AI adjustments
@@ -390,21 +392,197 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   xml += baseElements.join('\n') + '\n';
   xml += `</SL>\n`;
 
-  // Add layer with adjustments
-  xml += '<LDS>\n';
+  // Add local adjustments (masks) section
+  const masks = include?.masks !== false ? convertRecipeToMasks(aiAdjustments) : [];
+  xml += generateMasksXML(masks, layerElements, presetName);
+
+  return xml;
+}
+
+/**
+ * Generates XML for local adjustments (masks) in Capture One format
+ * First layer = main adjustments layer
+ * Subsequent layers = mask layers (without adjustments)
+ */
+function generateMasksXML(masks: any[], mainLayerElements: string[], mainLayerName: string): string {
+
+  const escapeXml = (str: string) => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  };
+
+  const formatNumber = (n: number): string => {
+    // If it's an integer or very close to one, return as integer
+    if (Math.abs(n - Math.round(n)) < 0.0001) {
+      return Math.round(n).toString();
+    }
+    // Otherwise match the six decimal precision used in global adjustments
+    return n.toFixed(6);
+  };
+
+  const E = (key: string, value: string | number, indent: string = '\t\t\t') => {
+    const formattedValue = typeof value === 'number' ? formatNumber(value) : value;
+    return `${indent}<E K="${key}" V="${formattedValue}" />`;
+  };
+
+  let xml = '<LDS>\n';
+
+  // Always add the main layer with all adjustments (MaskType 1 = global)
   xml += '\t<LD>\n';
   xml += '\t\t<LA>\n';
-  xml += layerElements.join('\n') + '\n';
+  xml += mainLayerElements.join('\n') + '\n';
   xml += '\t\t</LA>\n';
   xml += '\t\t<MD>\n';
   xml += '\t\t\t<E K="Density" V="1" />\n';
   xml += '\t\t\t<E K="MaskType" V="1" />\n';
   xml += '\t\t</MD>\n';
   xml += '\t</LD>\n';
-  xml += '</LDS>\n';
 
+  // If no masks, return with just the main layer
+  if (!masks.length) {
+    xml += '</LDS>\n';
+    return xml;
+  }
+
+  masks.forEach((mask, index) => {
+    const maskType = normalizeMaskType(mask.type || 'subject');
+    const adjustments = mask.adjustments || {};
+
+    xml += '\t<LD>\n\t\t<LA>\n';
+
+    // Add mask adjustments
+    const localElements: string[] = [];
+
+    // Required mask metadata fields
+    localElements.push(E('AIColorGrade', '0'));
+    localElements.push(E('Enabled', '1'));
+    localElements.push(E('Moire', '0;0'));
+    localElements.push(E('Name', escapeXml(mask.name || `Mask ${index + 1}`)));
+
+    // Add local adjustments from the mask data
+    // Support both local_* and plain field names
+    const contrast = adjustments.local_contrast ?? adjustments.contrast;
+    if (typeof contrast === 'number') {
+      localElements.push(E('Contrast', contrast * 100)); // Convert 0-1 to percentage
+    }
+
+    const highlights = adjustments.local_highlights ?? adjustments.highlights;
+    if (typeof highlights === 'number') {
+      localElements.push(E('HighlightRecoveryEx', -highlights * 100)); // Inverted and convert
+    }
+
+    const shadows = adjustments.local_shadows ?? adjustments.shadows;
+    if (typeof shadows === 'number') {
+      localElements.push(E('ShadowRecovery', shadows * 100));
+    }
+
+    const whites = adjustments.local_whites ?? adjustments.whites;
+    if (typeof whites === 'number') {
+      localElements.push(E('WhiteRecovery', whites * 100));
+    }
+
+    const blacks = adjustments.local_blacks ?? adjustments.blacks;
+    if (typeof blacks === 'number') {
+      localElements.push(E('BlackRecovery', blacks * 100));
+    }
+
+    const saturation = adjustments.local_saturation ?? adjustments.saturation;
+    if (typeof saturation === 'number') {
+      localElements.push(E('Saturation', saturation * 100));
+    }
+
+    const vibrance = adjustments.local_vibrance ?? adjustments.vibrance;
+    if (typeof vibrance === 'number') {
+      localElements.push(E('Vibrance', vibrance * 100));
+    }
+
+    const clarity = adjustments.local_clarity ?? adjustments.clarity;
+    if (typeof clarity === 'number') {
+      localElements.push(E('Clarity', clarity * 100));
+    }
+
+    const dehaze = adjustments.local_dehaze ?? adjustments.dehaze;
+    if (typeof dehaze === 'number') {
+      localElements.push(E('Haze', dehaze * 100));
+    }
+
+    const texture = adjustments.local_texture ?? adjustments.texture;
+    if (typeof texture === 'number') {
+      localElements.push(E('Structure', texture * 100));
+    }
+
+    localElements.push(E('Opacity', '100'));
+    localElements.push(E('UsmMethod', '0'));
+
+    xml += localElements.join('\n') + '\n';
+    xml += '\t\t</LA>\n';
+
+    // Add mask metadata
+    xml += '\t\t<MD>\n';
+
+    // Map mask types to Capture One mask types
+    // MaskType: 0 = Brush, 1 = Gradient, 2 = Radial, 3 = Background, 4 = Subject/AI
+    let captureOneMaskType = '4'; // Default to AI/Subject mask
+
+    if (maskType === 'linear') {
+      captureOneMaskType = '1'; // Gradient
+    } else if (maskType === 'radial') {
+      captureOneMaskType = '2'; // Radial
+    } else if (maskType === 'brush') {
+      captureOneMaskType = '0'; // Brush
+    } else if (maskType === 'background') {
+      captureOneMaskType = '3'; // Background
+    }
+
+    xml += E('MaskType', captureOneMaskType, '\t\t\t');
+
+    // Add AI subject mask options if it's a subject mask
+    if (parseInt(captureOneMaskType) === 4) {
+      xml += '\n\t\t\t<SO>\n';
+
+      // Map common mask types to Capture One subject options
+      // Note: Our internal types don't always match C1's naming exactly
+      const subjectOptions: Record<string, string[]> = {
+        'Body': ['body', 'body_skin'],
+        'Clothes': ['clothes', 'clothing'],
+        'Eyebrows': ['eyebrows'],
+        'Face': ['face', 'face_skin'],
+        'Hair': ['hair'],
+        'IrisAndPupil': ['iris_pupil'],
+        'Lips': ['lips'],
+        'Sclera': ['sclera', 'eye_whites']
+      };
+
+      let anyEnabled = false;
+      const optionsXml: string[] = [];
+
+      Object.entries(subjectOptions).forEach(([coKey, ourTypes]) => {
+        const enabled = ourTypes.includes(maskType) ? '1' : '0';
+        if (enabled === '1') anyEnabled = true;
+        optionsXml.push(E(coKey, enabled, '\t\t\t\t'));
+      });
+
+      // If no specific subject part is enabled, enable Face as default
+      // (Subject masks require at least one part enabled)
+      if (!anyEnabled) {
+        const faceIndex = optionsXml.findIndex(line => line.includes('K="Face"'));
+        if (faceIndex >= 0) {
+          optionsXml[faceIndex] = E('Face', '1', '\t\t\t\t');
+        }
+      }
+
+      xml += optionsXml.join('\n') + '\n';
+      xml += '\t\t\t</SO>';
+    }
+
+    xml += '\n\t\t</MD>\n';
+    xml += '\t</LD>\n';
+  });
+
+  xml += '</LDS>\n';
   return xml;
 }
-
-// NOTE: Mask generation removed - Capture One format is too complex and incompatible
-// Users must create masks manually in Capture One
