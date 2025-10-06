@@ -92,6 +92,19 @@ TECHNIQUES:
 - Use point_colors for targeted corrections
 - Use only one mask for skin modification and use exposure max between -0.1 and 0.1
 - Create only one mask for each type of mask
+
+MASK ADJUSTMENTS (normalized 0-1 range, subtle values):
+- exposure: Local exposure (-1 to 1, typical: -0.1 to 0.1 for subtle lighting)
+- contrast: Local contrast (-1 to 1, typical: -0.2 to 0.3)
+- highlights: Brighten/darken highlights (-1 to 1)
+- shadows: Lift/lower shadows (-1 to 1)
+- whites: Adjust white point (-1 to 1)
+- blacks: Adjust black point (-1 to 1)
+- clarity: Local clarity/texture (-1 to 1, typical: -0.3 to 0.3)
+- dehaze: Remove/add haze (-1 to 1)
+- texture: Surface detail (-1 to 1)
+- saturation: Local saturation (-1 to 1, typical: -0.2 to 0.2)
+- vibrance: Local vibrance (-1 to 1)
 - For B&W: include gray_* values for each color channel
 - For film/artist styles: **ESSENTIAL** - match HSL and tone curve characteristics from reference
 - **TONE CURVES ARE KEY** - Create S-curves, lift shadows, compress highlights to match reference style

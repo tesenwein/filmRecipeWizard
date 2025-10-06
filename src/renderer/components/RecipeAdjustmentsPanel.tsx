@@ -184,7 +184,7 @@ export const RecipeAdjustmentsPanel: React.FC<RecipeAdjustmentsPanelProps> = ({ 
                     {adjKeys.length > 0 && (
                       <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {adjKeys.map(k => (
-                          <Chip key={k} size="small" variant="outlined" label={`${k.replace('local_', '')}: ${(adj as any)[k]}`} />
+                          <Chip key={k} size="small" variant="outlined" label={`${k}: ${(adj as any)[k]}`} />
                         ))}
                       </Box>
                     )}

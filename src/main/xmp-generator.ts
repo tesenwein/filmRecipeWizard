@@ -323,6 +323,7 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
               attrIf('LocalBrightness', 0),
               attrIf('LocalToningHue', 0),
               attrIf('LocalToningSaturation', 0),
+              attrIf('LocalExposure2012', f3(normalizeLocal('exposure', adj.exposure))),
               attrIf('LocalContrast2012', f3(normalizeLocal('contrast', adj.contrast))),
               attrIf('LocalHighlights2012', f3(normalizeLocal('highlights', adj.highlights))),
               attrIf('LocalShadows2012', f3(normalizeLocal('shadows', adj.shadows))),

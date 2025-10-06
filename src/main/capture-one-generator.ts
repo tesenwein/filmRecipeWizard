@@ -471,6 +471,10 @@ function generateMasksXML(masks: any[], mainLayerElements: string[], _mainLayerN
     localElements.push(E('Name', escapeXml(mask.name || `Mask ${index + 1}`)));
 
     // Add local adjustments from the mask data (normalized 0-1 values -> percentages)
+    if (typeof adjustments.exposure === 'number') {
+      localElements.push(E('Exposure', adjustments.exposure * 100));
+    }
+
     if (typeof adjustments.contrast === 'number') {
       localElements.push(E('Contrast', adjustments.contrast * 100));
     }

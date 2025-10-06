@@ -74,6 +74,7 @@ export interface AIColorAdjustments {
     name: string;
     type: 'face_skin' | 'iris_pupil' | 'eye_whites' | 'eyebrows' | 'lips' | 'teeth' | 'hair' | 'clothing' | 'body_skin' | 'sky' | 'vegetation' | 'water' | 'architecture' | 'natural_ground' | 'artificial_ground' | 'mountains' | 'background' | 'subject' | 'person' | 'radial' | 'linear' | 'brush' | 'range_color' | 'range_luminance';
     adjustments: {
+      exposure?: number;       // Local exposure adjustment (masks only)
       contrast?: number;
       highlights?: number;
       shadows?: number;
