@@ -44,8 +44,12 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name' | 'rating'>('newest');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Use store for persistent filter/sort state
+  const sortBy = useAppStore(state => state.gallerySortBy);
+  const searchQuery = useAppStore(state => state.gallerySearchQuery);
+  const setSortBy = useAppStore(state => state.setGallerySortBy);
+  const setSearchQuery = useAppStore(state => state.setGallerySearchQuery);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [multiDeleteDialogOpen, setMultiDeleteDialogOpen] = useState(false);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);

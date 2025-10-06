@@ -28,11 +28,17 @@ interface AppState {
   currentRoute: string;
   pollIntervalId: number | null;
 
+  // Gallery filter/sort state
+  gallerySortBy: 'newest' | 'oldest' | 'name' | 'rating';
+  gallerySearchQuery: string;
+
   // Actions
   setSetupWizardOpen: (open: boolean) => void;
   setSetupCompleted: (completed: boolean) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   setCurrentRoute: (route: string) => void;
+  setGallerySortBy: (sortBy: 'newest' | 'oldest' | 'name' | 'rating') => void;
+  setGallerySearchQuery: (query: string) => void;
 
   // Recipe actions
   setRecipes: (recipes: Recipe[]) => void;
@@ -82,6 +88,8 @@ export const useAppStore = create<AppState>()(
       },
       currentRoute: '/gallery',
       pollIntervalId: null,
+      gallerySortBy: 'newest',
+      gallerySearchQuery: '',
 
       // Sync actions
       setSetupWizardOpen: open => set({ setupWizardOpen: open }, false, 'setSetupWizardOpen'),
@@ -99,6 +107,10 @@ export const useAppStore = create<AppState>()(
         ),
 
       setCurrentRoute: route => set({ currentRoute: route }, false, 'setCurrentRoute'),
+
+      setGallerySortBy: sortBy => set({ gallerySortBy: sortBy }, false, 'setGallerySortBy'),
+
+      setGallerySearchQuery: query => set({ gallerySearchQuery: query }, false, 'setGallerySearchQuery'),
 
       // Recipe actions
       setRecipes: recipes =>
