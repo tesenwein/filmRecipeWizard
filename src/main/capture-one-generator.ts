@@ -463,56 +463,45 @@ function generateMasksXML(masks: any[], mainLayerElements: string[], mainLayerNa
     localElements.push(E('Moire', '0;0'));
     localElements.push(E('Name', escapeXml(mask.name || `Mask ${index + 1}`)));
 
-    // Add local adjustments from the mask data
-    // Support both local_* and plain field names
-    const contrast = adjustments.local_contrast ?? adjustments.contrast;
-    if (typeof contrast === 'number') {
-      localElements.push(E('Contrast', contrast * 100)); // Convert 0-1 to percentage
+    // Add local adjustments from the mask data (normalized 0-1 values -> percentages)
+    if (typeof adjustments.contrast === 'number') {
+      localElements.push(E('Contrast', adjustments.contrast * 100));
     }
 
-    const highlights = adjustments.local_highlights ?? adjustments.highlights;
-    if (typeof highlights === 'number') {
-      localElements.push(E('HighlightRecoveryEx', -highlights * 100)); // Inverted and convert
+    if (typeof adjustments.highlights === 'number') {
+      localElements.push(E('HighlightRecoveryEx', -adjustments.highlights * 100)); // Inverted
     }
 
-    const shadows = adjustments.local_shadows ?? adjustments.shadows;
-    if (typeof shadows === 'number') {
-      localElements.push(E('ShadowRecovery', shadows * 100));
+    if (typeof adjustments.shadows === 'number') {
+      localElements.push(E('ShadowRecovery', adjustments.shadows * 100));
     }
 
-    const whites = adjustments.local_whites ?? adjustments.whites;
-    if (typeof whites === 'number') {
-      localElements.push(E('WhiteRecovery', whites * 100));
+    if (typeof adjustments.whites === 'number') {
+      localElements.push(E('WhiteRecovery', adjustments.whites * 100));
     }
 
-    const blacks = adjustments.local_blacks ?? adjustments.blacks;
-    if (typeof blacks === 'number') {
-      localElements.push(E('BlackRecovery', blacks * 100));
+    if (typeof adjustments.blacks === 'number') {
+      localElements.push(E('BlackRecovery', adjustments.blacks * 100));
     }
 
-    const saturation = adjustments.local_saturation ?? adjustments.saturation;
-    if (typeof saturation === 'number') {
-      localElements.push(E('Saturation', saturation * 100));
+    if (typeof adjustments.saturation === 'number') {
+      localElements.push(E('Saturation', adjustments.saturation * 100));
     }
 
-    const vibrance = adjustments.local_vibrance ?? adjustments.vibrance;
-    if (typeof vibrance === 'number') {
-      localElements.push(E('Vibrance', vibrance * 100));
+    if (typeof adjustments.vibrance === 'number') {
+      localElements.push(E('Vibrance', adjustments.vibrance * 100));
     }
 
-    const clarity = adjustments.local_clarity ?? adjustments.clarity;
-    if (typeof clarity === 'number') {
-      localElements.push(E('Clarity', clarity * 100));
+    if (typeof adjustments.clarity === 'number') {
+      localElements.push(E('Clarity', adjustments.clarity * 100));
     }
 
-    const dehaze = adjustments.local_dehaze ?? adjustments.dehaze;
-    if (typeof dehaze === 'number') {
-      localElements.push(E('Haze', dehaze * 100));
+    if (typeof adjustments.dehaze === 'number') {
+      localElements.push(E('Haze', adjustments.dehaze * 100));
     }
 
-    const texture = adjustments.local_texture ?? adjustments.texture;
-    if (typeof texture === 'number') {
-      localElements.push(E('Structure', texture * 100));
+    if (typeof adjustments.texture === 'number') {
+      localElements.push(E('Structure', adjustments.texture * 100));
     }
 
     localElements.push(E('Opacity', '100'));
