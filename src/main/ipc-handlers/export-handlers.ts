@@ -33,24 +33,30 @@ export class ExportHandlers {
       const AdmZip = require('adm-zip');
       const zip = new AdmZip();
 
-      // Add each recipe as a separate file
-      for (const recipe of recipes) {
-        const recipeData = {
+      // Create bulk export format with all-recipes.json
+      const bulkData = {
+        schema: 'film-recipe-wizard-bulk@1',
+        processes: recipes.map(recipe => ({
           id: recipe.id,
           name: recipe.name,
           description: recipe.description,
+          timestamp: recipe.timestamp,
           createdAt: recipe.createdAt,
+          prompt: recipe.prompt,
+          userOptions: recipe.userOptions,
           results: recipe.results,
-        };
+          recipeImageData: recipe.recipeImageData,
+          author: recipe.author,
+        })),
+      };
 
-        // Add recipe JSON to ZIP
-        zip.addFile(`${recipe.name || 'Recipe'}.frw.json`, Buffer.from(JSON.stringify(recipeData, null, 2)));
-      }
+      // Add all-recipes.json to ZIP
+      zip.addFile('all-recipes.json', Buffer.from(JSON.stringify(bulkData, null, 2)));
 
       // Write ZIP file
       zip.writeZip(saveRes.filePath);
 
-      return { success: true, filePath: saveRes.filePath };
+      return { success: true, filePath: saveRes.filePath, count: recipes.length };
     } catch (error) {
       logError('ExportHandlers', 'Error creating recipes ZIP', error);
       return createErrorResponse(error);
@@ -140,15 +146,15 @@ export class ExportHandlers {
           });
         }
 
-        // Write manifest with embedded base64 images and results
-        const manifest = {
+        // Write recipe.json with embedded base64 images and results
+        const recipeData = {
           version: '1.0',
           type: 'film-recipe-wizard-recipe',
-          recipe: cleanedProcess,
+          process: cleanedProcess,
           exportedAt: new Date().toISOString(),
         };
 
-        zip.addFile('manifest.json', Buffer.from(JSON.stringify(manifest, null, 2)));
+        zip.addFile('recipe.json', Buffer.from(JSON.stringify(recipeData, null, 2)));
 
         // Add any result images as base64 data URLs
         if (cleanedProcess.results) {
