@@ -214,7 +214,12 @@ export class ExportHandlers {
           return { success: false, error: 'No recipes found to export' };
         }
 
-        return await this.createRecipesZip(recipes, 'Export All Recipes', 'All-Recipes.frw.zip');
+        // Add date to filename: All-Recipes-2025-01-15.frw.zip
+        const date = new Date();
+        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const filename = `All-Recipes-${dateStr}.frw.zip`;
+
+        return await this.createRecipesZip(recipes, 'Export All Recipes', filename);
       } catch (error) {
         logError('IPC', 'Error exporting all recipes', error);
         return createErrorResponse(error);
