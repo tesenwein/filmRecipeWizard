@@ -74,15 +74,27 @@ export interface AIColorAdjustments {
     name: string;
     type: 'face_skin' | 'iris_pupil' | 'eye_whites' | 'eyebrows' | 'lips' | 'teeth' | 'hair' | 'clothing' | 'body_skin' | 'sky' | 'vegetation' | 'water' | 'architecture' | 'natural_ground' | 'artificial_ground' | 'mountains' | 'background' | 'subject' | 'person' | 'radial' | 'linear' | 'brush' | 'range_color' | 'range_luminance';
     adjustments: {
+      // Support both local_* and plain field names for recipe compatibility
       local_contrast?: number;
+      contrast?: number;
       local_highlights?: number;
+      highlights?: number;
       local_shadows?: number;
+      shadows?: number;
       local_whites?: number;
+      whites?: number;
       local_blacks?: number;
+      blacks?: number;
       local_clarity?: number;
+      clarity?: number;
       local_dehaze?: number;
+      dehaze?: number;
       local_texture?: number;
+      texture?: number;
       local_saturation?: number;
+      saturation?: number;
+      local_vibrance?: number;
+      vibrance?: number;
     };
     // Common top-level geometry/params (supported in our generators/tests)
     // Radial geometry

@@ -143,9 +143,11 @@ describe('Capture One Generator', () => {
             feather: 75,
             inverted: false,
             adjustments: {
-              local_contrast: 20,
-              local_highlights: -15,
-              local_shadows: 25,
+              contrast: 0.2,        // 0-1 normalized value
+              highlights: -0.15,    // 0-1 normalized value
+              shadows: 0.25,        // 0-1 normalized value
+              saturation: -0.05,    // 0-1 normalized value
+              vibrance: 0.1,        // 0-1 normalized value
             },
           },
         ],
@@ -168,10 +170,12 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="Name" V="Test Radial Mask" />');
       expect(result).toContain('<E K="MaskType" V="2" />'); // Radial
 
-      // Mask layers should include local adjustment values from recipe data
-      expect(result).toContain('<E K="Contrast" V="20" />');
-      expect(result).toContain('<E K="HighlightRecoveryEx" V="15" />'); // Inverted
-      expect(result).toContain('<E K="ShadowRecovery" V="25" />');
+      // Mask layers should include local adjustment values from recipe data (converted to percentages)
+      expect(result).toContain('<E K="Contrast" V="20" />');           // 0.2 * 100
+      expect(result).toContain('<E K="HighlightRecoveryEx" V="15" />'); // -(-0.15) * 100, inverted
+      expect(result).toContain('<E K="ShadowRecovery" V="25" />');      // 0.25 * 100
+      expect(result).toContain('<E K="Saturation" V="-5" />');          // -0.05 * 100
+      expect(result).toContain('<E K="Vibrance" V="10" />');            // 0.1 * 100
     });
 
     it('should handle AI-detected masks correctly', () => {
@@ -188,8 +192,8 @@ describe('Capture One Generator', () => {
             referenceY: 0.3,
             inverted: false,
             adjustments: {
-              local_saturation: 10,
-              local_clarity: 5,
+              saturation: 0.1,   // 0-1 normalized value
+              clarity: 0.05,     // 0-1 normalized value (not currently mapped, but included in data)
             },
           },
         ],
@@ -210,7 +214,7 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="MaskType" V="4" />'); // AI/Subject mask
       expect(result).toContain('<SO>'); // Subject options
       expect(result).toContain('<E K="Face" V="1" />'); // face_skin maps to Face
-      // Note: Local adjustment values are not included in generated styles
+      expect(result).toContain('<E K="Saturation" V="10" />'); // 0.1 * 100
     });
 
     it('should have main adjustment layer plus mask layers', () => {
@@ -224,12 +228,12 @@ describe('Capture One Generator', () => {
           {
             type: 'face_skin',
             name: 'Face',
-            adjustments: { local_saturation: 5 },
+            adjustments: { saturation: 0.05 },  // 0-1 normalized value
           },
           {
             type: 'sky',
             name: 'Sky',
-            adjustments: { local_contrast: 10 },
+            adjustments: { contrast: 0.1 },     // 0-1 normalized value
           },
         ],
       };
@@ -257,18 +261,18 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="Name" V="Face" />');
       expect(result).toContain('<E K="Name" V="Sky" />');
 
-      // Face mask should have local_saturation: 5
+      // Face mask should have saturation: 0.05 -> 5%
       const faceLayerMatch = result.match(/<LD>[\s\S]*?<E K="Name" V="Face"[\s\S]*?<\/LD>/);
       expect(faceLayerMatch).toBeTruthy();
       if (faceLayerMatch) {
-        expect(faceLayerMatch[0]).toContain('<E K="Saturation" V="5" />');
+        expect(faceLayerMatch[0]).toContain('<E K="Saturation" V="5" />'); // 0.05 * 100
       }
 
-      // Sky mask should have local_contrast: 10
+      // Sky mask should have contrast: 0.1 -> 10%
       const skyLayerMatch = result.match(/<LD>[\s\S]*?<E K="Name" V="Sky"[\s\S]*?<\/LD>/);
       expect(skyLayerMatch).toBeTruthy();
       if (skyLayerMatch) {
-        expect(skyLayerMatch[0]).toContain('<E K="Contrast" V="10" />');
+        expect(skyLayerMatch[0]).toContain('<E K="Contrast" V="10" />'); // 0.1 * 100
       }
     });
 
