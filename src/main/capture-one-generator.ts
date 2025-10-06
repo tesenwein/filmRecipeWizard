@@ -448,7 +448,14 @@ function generateMasksXML(masks: any[], mainLayerElements: string[], mainLayerNa
     return xml;
   }
 
-  masks.forEach((mask, index) => {
+  // Filter out unsupported landscape masks - Capture One only supports person/face masks and background
+  const unsupportedMaskTypes = ['sky', 'vegetation', 'water', 'architecture', 'mountains', 'natural_ground', 'artificial_ground'];
+  const supportedMasks = masks.filter(mask => {
+    const maskType = normalizeMaskType(mask.type || 'subject');
+    return !unsupportedMaskTypes.includes(maskType);
+  });
+
+  supportedMasks.forEach((mask, index) => {
     const maskType = normalizeMaskType(mask.type || 'subject');
     const adjustments = mask.adjustments || {};
 
