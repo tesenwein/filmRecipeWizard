@@ -215,7 +215,7 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="MaskType" V="4" />'); // AI/Subject mask
       expect(result).toContain('<SO>'); // Subject options
       expect(result).toContain('<E K="Face" V="1" />'); // face_skin maps to Face
-      expect(result).toContain('<E K="Exposure" V="30" />'); // 0.3 * 100
+      expect(result).toMatch(/<E K="Exposure" V="0\.3[0-9]*" \/>/); // Direct value (no conversion)
       expect(result).toContain('<E K="Saturation" V="10" />'); // 0.1 * 100
     });
 

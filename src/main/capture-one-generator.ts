@@ -470,9 +470,10 @@ function generateMasksXML(masks: any[], mainLayerElements: string[], _mainLayerN
     localElements.push(E('Moire', '0;0'));
     localElements.push(E('Name', escapeXml(mask.name || `Mask ${index + 1}`)));
 
-    // Add local adjustments from the mask data (normalized 0-1 values -> percentages)
+    // Add local adjustments from the mask data (normalized -1..1 values -> percentages)
+    // NOTE: Exposure uses small decimal values, all others use percentage scale (*100)
     if (typeof adjustments.exposure === 'number') {
-      localElements.push(E('Exposure', adjustments.exposure * 100));
+      localElements.push(E('Exposure', adjustments.exposure)); // Keep as decimal
     }
 
     if (typeof adjustments.contrast === 'number') {
