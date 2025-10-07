@@ -1,5 +1,5 @@
 import { DeleteOutline, RestartAlt, Save as SaveIcon, Visibility, VisibilityOff } from '@mui/icons-material';
-import { Alert, Box, Button, Container, Divider, IconButton, InputAdornment, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Container, Divider, FormControlLabel, IconButton, InputAdornment, Paper, Stack, Switch, TextField, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import ConfirmDialog from './ConfirmDialog';
@@ -27,6 +27,7 @@ const Settings: React.FC = () => {
   const [storageLocation, setStorageLocation] = useState('');
   const [lightroomProfilePath, setLightroomProfilePath] = useState('');
   const [captureOneStylesPath, setCaptureOneStylesPath] = useState('');
+  const [includeRatingInFilename, setIncludeRatingInFilename] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +43,7 @@ const Settings: React.FC = () => {
           setStorageLocation(settingsRes.settings.storageLocation || '');
           setLightroomProfilePath((settingsRes.settings as any).lightroomProfilePath || '');
           setCaptureOneStylesPath((settingsRes.settings as any).captureOneStylesPath || '');
+          setIncludeRatingInFilename((settingsRes.settings as any).includeRatingInFilename !== false);
           const u = (settingsRes.settings as any).userProfile || {};
           setProfileData({
             firstName: u.firstName || '',
@@ -207,7 +209,10 @@ const Settings: React.FC = () => {
       if (captureOneStylesPath.trim()) {
         settingsToSave.captureOneStylesPath = captureOneStylesPath.trim();
       }
-      
+
+      // Always save includeRatingInFilename setting
+      settingsToSave.includeRatingInFilename = includeRatingInFilename;
+
       // Always include userProfile as it's a complete object
       settingsToSave.userProfile = {
         firstName: profileData.firstName.trim(),
@@ -437,6 +442,26 @@ const Settings: React.FC = () => {
           />
           <Typography variant="caption" color="text.secondary">
             Set this to your Capture One styles folder to enable direct export. Usually located at: ~/Library/Application Support/Capture One/Styles/ (macOS) or %APPDATA%\Capture One\Styles\ (Windows).
+          </Typography>
+        </Stack>
+      </Paper>
+
+      <Typography variant="h6" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
+        Export Options
+      </Typography>
+      <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+        <Stack spacing={1.5}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={includeRatingInFilename}
+                onChange={(e) => setIncludeRatingInFilename(e.target.checked)}
+              />
+            }
+            label="Include star rating in export filenames"
+          />
+          <Typography variant="caption" color="text.secondary">
+            When enabled, exported files will be prefixed with the recipe's star rating (e.g., "5 - My Recipe.xmp"). Default: enabled.
           </Typography>
         </Stack>
       </Paper>

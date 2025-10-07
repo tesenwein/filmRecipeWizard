@@ -372,7 +372,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           // Export preset to Lightroom for each recipe
           const res = await saveLightroomPresetToFolder(
             recipe.results?.[0]?.metadata?.aiAdjustments,
-            recipe.name || 'Custom Recipe'
+            recipe.name || 'Custom Recipe',
+            recipe.userRating
           );
           
           
@@ -427,7 +428,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           // Export camera profile to Lightroom for each recipe
           const res = await saveLightroomProfileToFolder(
             recipe.results?.[0]?.metadata?.aiAdjustments,
-            recipe.name || 'Custom Recipe'
+            recipe.name || 'Custom Recipe',
+            recipe.userRating
           );
           
           if (res.success) {
@@ -480,7 +482,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           const res = await saveCaptureOneStyleToFolder(
             recipe.results?.[0]?.metadata?.aiAdjustments,
             {},
-            recipe.name || 'Custom Recipe'
+            recipe.name || 'Custom Recipe',
+            recipe.userRating
           );
           
           if (res.success) {
@@ -529,7 +532,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           const res = await downloadCaptureOneStyle(
             recipe.results?.[0]?.metadata?.aiAdjustments,
             {},
-            recipe.name || 'Custom Recipe'
+            recipe.name || 'Custom Recipe',
+            recipe.userRating
           );
           
           if (res.success) {

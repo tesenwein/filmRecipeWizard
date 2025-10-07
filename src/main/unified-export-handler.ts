@@ -20,6 +20,7 @@ export interface ExportRequest {
   adjustments: any;
   include?: any;
   recipeName?: string;
+  userRating?: number;
 }
 
 export interface ExportResponse {
@@ -86,16 +87,16 @@ export class UnifiedExportHandler {
     try {
       // Generate content
       const content = await config.generateContent(
-        request.adjustments, 
-        request.include, 
-        request.recipeName, 
+        request.adjustments,
+        request.include,
+        request.recipeName,
         this.imageProcessor
       );
 
       if (request.action === 'download') {
-        return await this.handleDownload(config, content, request.recipeName);
+        return await this.handleDownload(config, content, request.recipeName, request.userRating);
       } else {
-        return await this.handleSaveToFolder(config, content, request.recipeName);
+        return await this.handleSaveToFolder(config, content, request.recipeName, request.userRating);
       }
     } catch (error) {
       logError('UnifiedExportHandler', `Error handling ${request.action} for ${request.type}`, error);
@@ -104,15 +105,18 @@ export class UnifiedExportHandler {
   }
 
   private async handleDownload(
-    config: any, 
-    content: string, 
-    recipeName?: string
+    config: any,
+    content: string,
+    recipeName?: string,
+    userRating?: number
   ): Promise<ExportResponse> {
     try {
-      const filename = config.defaultFilename(recipeName);
+      const settings = await this.settingsService.loadSettings();
+      const includeRating = settings.includeRatingInFilename !== false; // Default to true
+      const filenameWithRating = this.buildFilename(recipeName, userRating, includeRating, config);
       const saveRes = await dialog.showSaveDialog({
         title: `Save ${config.displayName}`,
-        defaultPath: filename,
+        defaultPath: filenameWithRating,
         filters: [
           { name: config.displayName, extensions: [config.fileExtension] },
           { name: 'All Files', extensions: ['*'] },
@@ -132,24 +136,26 @@ export class UnifiedExportHandler {
   }
 
   private async handleSaveToFolder(
-    config: any, 
-    content: string, 
-    recipeName?: string
+    config: any,
+    content: string,
+    recipeName?: string,
+    userRating?: number
   ): Promise<ExportResponse> {
     try {
       const settings = await this.settingsService.loadSettings();
       const settingsPath = settings[config.settingsPath] as string;
-      
+
       if (!settingsPath) {
-        return { 
-          success: false, 
-          error: `${config.displayName} path not configured. Please set it in Settings.` 
+        return {
+          success: false,
+          error: `${config.displayName} path not configured. Please set it in Settings.`
         };
       }
 
-      // Create safe filename
+      // Create safe filename with rating
       const safeName = this.createSafeFilename(recipeName || 'Custom Recipe');
-      const filename = config.defaultFilename(safeName);
+      const includeRating = settings.includeRatingInFilename !== false; // Default to true
+      const filename = this.buildFilename(safeName, userRating, includeRating, config);
 
       // Ensure directory exists
       await fs.mkdir(settingsPath, { recursive: true });
@@ -163,6 +169,23 @@ export class UnifiedExportHandler {
       logError('UnifiedExportHandler', `Error saving ${config.displayName} to folder`, error);
       return createErrorResponse(error);
     }
+  }
+
+  private buildFilename(
+    recipeName: string | undefined,
+    userRating: number | undefined,
+    includeRating: boolean,
+    config: any
+  ): string {
+    let baseName = recipeName || 'Custom Recipe';
+
+    // Prepend rating if enabled and rating exists (format: "5 - Recipe Name")
+    if (includeRating && userRating && userRating >= 1 && userRating <= 5) {
+      baseName = `${userRating} - ${baseName}`;
+    }
+
+    const safeName = this.createSafeFilename(baseName);
+    return config.defaultFilename(safeName);
   }
 
   private createSafeFilename(name: string): string {

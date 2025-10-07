@@ -86,6 +86,8 @@ export interface AppSettings {
   captureOneStylesPath?: string; // Path to Capture One styles destination folder
   // Optional UX: show generating spinner during reprocessing after Accept
   reprocessShowsGenerating?: boolean;
+  // Include star rating in export filenames (default: true)
+  includeRatingInFilename?: boolean;
 }
 
 export interface ExportResult {

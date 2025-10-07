@@ -108,7 +108,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
 }) => {
   const { showError, showSuccess } = useAlert();
   const { deleteRecipe, settings, loadSettings } = useAppStore();
-  
+
   // Check if Lightroom path is configured
   const lightroomPathConfigured = !!(settings as any)?.lightroomProfilePath;
   // Check if Capture One path is configured
@@ -469,7 +469,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   }, [processId, prompt]);
 
   // Clear reprocessing indicator when recipe status flips away from 'generating'
+  // Also get the current recipe's rating for exports
   const { recipes } = useAppStore();
+  const currentRecipe = recipes.find(r => r.id === processId);
+  const userRating = currentRecipe?.userRating;
+
   useEffect(() => {
     if (!isReprocessing || !processId || !expectGenerating) return;
     const rec = recipes.find(r => r.id === processId);
@@ -554,7 +558,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
       
-      const res = await downloadLightroomPreset(adjForExport, processName);
+      const res = await downloadLightroomPreset(adjForExport, processName, userRating);
       if (!res.success) {
         showError(`Export failed: ${res.error}`);
       }
@@ -598,7 +602,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await downloadLightroomProfile(adjForExport, processName);
+      const res = await downloadLightroomProfile(adjForExport, processName, userRating);
 
       if (res?.success) {
         setProfileExportStatus({ ok: true, msg: '', path: res.filePath });
@@ -620,7 +624,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await saveLightroomPresetToFolder(adjForExport, processName);
+      const res = await saveLightroomPresetToFolder(adjForExport, processName, userRating);
 
       if (res?.success) {
         showSuccess(
@@ -645,7 +649,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await saveLightroomProfileToFolder(adjForExport, processName);
+      const res = await saveLightroomProfileToFolder(adjForExport, processName, userRating);
 
       if (res?.success) {
         showSuccess(
@@ -670,7 +674,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await saveCaptureOneStyleToFolder(adjForExport, {}, processName);
+      const res = await saveCaptureOneStyleToFolder(adjForExport, {}, processName, userRating);
 
       if (res?.success) {
         showSuccess(
@@ -693,7 +697,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await downloadCaptureOneStyle(adjForExport, getOptions(index), processName);
+      const res = await downloadCaptureOneStyle(adjForExport, getOptions(index), processName, userRating);
       if (!res.success) {
         showError(`Export failed: ${res.error}`);
       }

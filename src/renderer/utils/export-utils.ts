@@ -12,6 +12,7 @@ export interface ExportRequest {
   adjustments: any;
   include?: any;
   recipeName?: string;
+  userRating?: number;
 }
 
 export interface ExportResponse {
@@ -36,7 +37,7 @@ export async function unifiedExport(request: ExportRequest): Promise<ExportRespo
 }
 
 // Convenience functions for common export operations
-export async function downloadLightroomPreset(adjustments: any, recipeName?: string): Promise<ExportResponse> {
+export async function downloadLightroomPreset(adjustments: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
   return unifiedExport({
     type: 'lightroom-preset',
     action: 'download',
@@ -53,11 +54,12 @@ export async function downloadLightroomPreset(adjustments: any, recipeName?: str
       exposure: false,
       sharpenNoise: false,
     },
-    recipeName
+    recipeName,
+    userRating
   });
 }
 
-export async function downloadLightroomProfile(adjustments: any, recipeName?: string): Promise<ExportResponse> {
+export async function downloadLightroomProfile(adjustments: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
   return unifiedExport({
     type: 'lightroom-profile',
     action: 'download',
@@ -74,11 +76,12 @@ export async function downloadLightroomProfile(adjustments: any, recipeName?: st
       exposure: false,
       sharpenNoise: false,
     },
-    recipeName
+    recipeName,
+    userRating
   });
 }
 
-export async function downloadCaptureOneStyle(adjustments: any, include?: any, recipeName?: string): Promise<ExportResponse> {
+export async function downloadCaptureOneStyle(adjustments: any, include?: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
   return unifiedExport({
     type: 'capture-one-style',
     action: 'download',
@@ -95,12 +98,13 @@ export async function downloadCaptureOneStyle(adjustments: any, include?: any, r
       exposure: false,
       sharpenNoise: false,
     },
-    recipeName
+    recipeName,
+    userRating
   });
 }
 
 
-export async function saveLightroomPresetToFolder(adjustments: any, recipeName?: string): Promise<ExportResponse> {
+export async function saveLightroomPresetToFolder(adjustments: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
   return unifiedExport({
     type: 'lightroom-preset',
     action: 'save-to-folder',
@@ -117,11 +121,12 @@ export async function saveLightroomPresetToFolder(adjustments: any, recipeName?:
       exposure: false,
       sharpenNoise: false,
     },
-    recipeName
+    recipeName,
+    userRating
   });
 }
 
-export async function saveLightroomProfileToFolder(adjustments: any, recipeName?: string): Promise<ExportResponse> {
+export async function saveLightroomProfileToFolder(adjustments: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
   return unifiedExport({
     type: 'lightroom-profile',
     action: 'save-to-folder',
@@ -138,11 +143,12 @@ export async function saveLightroomProfileToFolder(adjustments: any, recipeName?
       exposure: false,
       sharpenNoise: false,
     },
-    recipeName
+    recipeName,
+    userRating
   });
 }
 
-export async function saveCaptureOneStyleToFolder(adjustments: any, include?: any, recipeName?: string): Promise<ExportResponse> {
+export async function saveCaptureOneStyleToFolder(adjustments: any, include?: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
   return unifiedExport({
     type: 'capture-one-style',
     action: 'save-to-folder',
@@ -159,7 +165,8 @@ export async function saveCaptureOneStyleToFolder(adjustments: any, include?: an
       exposure: false,
       sharpenNoise: false,
     },
-    recipeName
+    recipeName,
+    userRating
   });
 }
 
