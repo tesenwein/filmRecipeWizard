@@ -1,6 +1,6 @@
 {
   "name": "film-recipe-wizard",
-  "version": "2.9.3",
+  "version": "2.9.4",
   "description": "Create and apply photo recipes with AI-powered color grading",
   "main": "dist/main/main.js",
   "scripts": {
