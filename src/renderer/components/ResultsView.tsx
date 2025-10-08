@@ -11,7 +11,7 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Avatar, Box, Button, Chip, CircularProgress, Divider, IconButton, Paper, Popover, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, CircularProgress, Divider, FormControlLabel, IconButton, Paper, Popover, Switch, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
 // Subcomponents
 import React, { useEffect, useRef, useState } from 'react';
 import { filterFailedResults, filterSuccessfulResults } from '../../shared/result-utils';
@@ -167,6 +167,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({
     msg: string;
     path?: string;
   } | null>(null);
+
+  // Mask inclusion toggle (initialized from settings)
+  const [includeMasks, setIncludeMasks] = useState<boolean>(true);
+
+  // Initialize includeMasks from settings when they load
+  useEffect(() => {
+    if (settings) {
+      setIncludeMasks((settings as any)?.includeMasks !== false);
+    }
+  }, [settings]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -558,7 +568,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
       
-      const res = await downloadLightroomPreset(adjForExport, processName, userRating);
+      const res = await downloadLightroomPreset(adjForExport, processName, userRating, includeMasks);
       if (!res.success) {
         showError(`Export failed: ${res.error}`);
       }
@@ -624,7 +634,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await saveLightroomPresetToFolder(adjForExport, processName, userRating);
+      const res = await saveLightroomPresetToFolder(adjForExport, processName, userRating, includeMasks);
 
       if (res?.success) {
         showSuccess(
@@ -674,7 +684,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await saveCaptureOneStyleToFolder(adjForExport, {}, processName, userRating);
+      const res = await saveCaptureOneStyleToFolder(adjForExport, {}, processName, userRating, includeMasks);
 
       if (res?.success) {
         showSuccess(
@@ -697,7 +707,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
       const adjForExport = { ...adjustments } as any;
       if (processName) adjForExport.preset_name = processName;
       if (processDescription) adjForExport.description = processDescription;
-      const res = await downloadCaptureOneStyle(adjForExport, getOptions(index), processName, userRating);
+      const res = await downloadCaptureOneStyle(adjForExport, getOptions(index), processName, userRating, includeMasks);
       if (!res.success) {
         showError(`Export failed: ${res.error}`);
       }
@@ -1115,8 +1125,29 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Box>
                           );
                         })()}
-                        {/* Export Buttons */}
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+
+                        {/* Toggle and export buttons section */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mt: 3 }}>
+                          {/* Mask inclusion toggle with gray background */}
+                          <Box sx={{ px: 3, py: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={includeMasks}
+                                  onChange={(e) => setIncludeMasks(e.target.checked)}
+                                  size="small"
+                                />
+                              }
+                              label={
+                                <Typography variant="body2">
+                                  Include masks
+                                </Typography>
+                              }
+                            />
+                          </Box>
+
+                          {/* Export Buttons */}
+                          <Box sx={{ display: 'flex', gap: 2 }}>
                           <Button
                             variant="outlined"
                             startIcon={<DownloadIcon />}
@@ -1151,6 +1182,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               </span>
                             </Tooltip>
                           )}
+                          </Box>
                         </Box>
                       </Paper>
 
@@ -1168,7 +1200,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                           Camera Profile (.xmp)
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                          Create a new Camera Profile from your recipe adjustments for use in Lightroom.
+                          Create a new Camera Profile from your recipe adjustments for use in Lightroom. Note: Camera profiles do not support local adjustments (masks).
                         </Typography>
                         {profileExportStatus && (
                           <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
@@ -1181,6 +1213,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Typography>
                           </Paper>
                         )}
+
+                        {/* Export Buttons */}
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                           <Button
                             variant="outlined"
@@ -1255,8 +1289,29 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             </Box>
                           );
                         })()}
-                        {/* Export Buttons */}
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+
+                        {/* Toggle and export buttons section */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mt: 3 }}>
+                          {/* Mask inclusion toggle with gray background */}
+                          <Box sx={{ px: 3, py: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={includeMasks}
+                                  onChange={(e) => setIncludeMasks(e.target.checked)}
+                                  size="small"
+                                />
+                              }
+                              label={
+                                <Typography variant="body2">
+                                  Include masks
+                                </Typography>
+                              }
+                            />
+                          </Box>
+
+                          {/* Export Buttons */}
+                          <Box sx={{ display: 'flex', gap: 2 }}>
                           <Button
                             variant="outlined"
                             startIcon={<DownloadIcon />}
@@ -1291,6 +1346,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                               </span>
                             </Tooltip>
                           )}
+                          </Box>
                         </Box>
                       </Paper>
 

@@ -88,6 +88,8 @@ export interface AppSettings {
   reprocessShowsGenerating?: boolean;
   // Include star rating in export filenames (default: true)
   includeRatingInFilename?: boolean;
+  // Include masks in Lightroom and Capture One exports (default: true)
+  includeMasks?: boolean;
 }
 
 export interface ExportResult {

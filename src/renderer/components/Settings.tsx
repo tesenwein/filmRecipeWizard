@@ -28,6 +28,7 @@ const Settings: React.FC = () => {
   const [lightroomProfilePath, setLightroomProfilePath] = useState('');
   const [captureOneStylesPath, setCaptureOneStylesPath] = useState('');
   const [includeRatingInFilename, setIncludeRatingInFilename] = useState(true);
+  const [includeMasks, setIncludeMasks] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -44,6 +45,7 @@ const Settings: React.FC = () => {
           setLightroomProfilePath((settingsRes.settings as any).lightroomProfilePath || '');
           setCaptureOneStylesPath((settingsRes.settings as any).captureOneStylesPath || '');
           setIncludeRatingInFilename((settingsRes.settings as any).includeRatingInFilename !== false);
+          setIncludeMasks((settingsRes.settings as any).includeMasks !== false);
           const u = (settingsRes.settings as any).userProfile || {};
           setProfileData({
             firstName: u.firstName || '',
@@ -212,6 +214,9 @@ const Settings: React.FC = () => {
 
       // Always save includeRatingInFilename setting
       settingsToSave.includeRatingInFilename = includeRatingInFilename;
+
+      // Always save includeMasks setting
+      settingsToSave.includeMasks = includeMasks;
 
       // Always include userProfile as it's a complete object
       settingsToSave.userProfile = {
@@ -462,6 +467,21 @@ const Settings: React.FC = () => {
           />
           <Typography variant="caption" color="text.secondary">
             When enabled, exported files will be prefixed with the recipe's star rating (e.g., "5 - My Recipe.xmp"). Default: enabled.
+          </Typography>
+
+          <Divider sx={{ my: 1 }} />
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={includeMasks}
+                onChange={(e) => setIncludeMasks(e.target.checked)}
+              />
+            }
+            label="Include masks in Lightroom and Capture One exports"
+          />
+          <Typography variant="caption" color="text.secondary">
+            When enabled, local adjustments (masks) will be included in exported presets, profiles, and styles. You can also toggle this per-export in the gallery toolbar. Default: enabled.
           </Typography>
         </Stack>
       </Paper>

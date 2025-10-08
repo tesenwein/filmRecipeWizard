@@ -37,7 +37,7 @@ export async function unifiedExport(request: ExportRequest): Promise<ExportRespo
 }
 
 // Convenience functions for common export operations
-export async function downloadLightroomPreset(adjustments: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
+export async function downloadLightroomPreset(adjustments: any, recipeName?: string, userRating?: number, includeMasks?: boolean): Promise<ExportResponse> {
   return unifiedExport({
     type: 'lightroom-preset',
     action: 'download',
@@ -50,7 +50,7 @@ export async function downloadLightroomPreset(adjustments: any, recipeName?: str
       pointColor: true,
       grain: true,
       vignette: true,
-      masks: true,
+      masks: includeMasks !== false,
       exposure: false,
       sharpenNoise: false,
     },
@@ -72,7 +72,7 @@ export async function downloadLightroomProfile(adjustments: any, recipeName?: st
       pointColor: true,
       grain: true,
       vignette: true,
-      masks: true,
+      masks: false, // Profiles don't support masks
       exposure: false,
       sharpenNoise: false,
     },
@@ -81,30 +81,37 @@ export async function downloadLightroomProfile(adjustments: any, recipeName?: st
   });
 }
 
-export async function downloadCaptureOneStyle(adjustments: any, include?: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
+export async function downloadCaptureOneStyle(adjustments: any, include?: any, recipeName?: string, userRating?: number, includeMasks?: boolean): Promise<ExportResponse> {
+  const finalInclude = include || {
+    basic: true,
+    hsl: true,
+    colorGrading: true,
+    curves: true,
+    pointColor: true,
+    grain: true,
+    vignette: true,
+    masks: includeMasks !== false,
+    exposure: false,
+    sharpenNoise: false,
+  };
+
+  // Override masks if includeMasks is explicitly provided
+  if (includeMasks !== undefined) {
+    finalInclude.masks = includeMasks;
+  }
+
   return unifiedExport({
     type: 'capture-one-style',
     action: 'download',
     adjustments,
-    include: include || {
-      basic: true,
-      hsl: true,
-      colorGrading: true,
-      curves: true,
-      pointColor: true,
-      grain: true,
-      vignette: true,
-      masks: true,
-      exposure: false,
-      sharpenNoise: false,
-    },
+    include: finalInclude,
     recipeName,
     userRating
   });
 }
 
 
-export async function saveLightroomPresetToFolder(adjustments: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
+export async function saveLightroomPresetToFolder(adjustments: any, recipeName?: string, userRating?: number, includeMasks?: boolean): Promise<ExportResponse> {
   return unifiedExport({
     type: 'lightroom-preset',
     action: 'save-to-folder',
@@ -117,7 +124,7 @@ export async function saveLightroomPresetToFolder(adjustments: any, recipeName?:
       pointColor: true,
       grain: true,
       vignette: true,
-      masks: true,
+      masks: includeMasks !== false,
       exposure: false,
       sharpenNoise: false,
     },
@@ -139,7 +146,7 @@ export async function saveLightroomProfileToFolder(adjustments: any, recipeName?
       pointColor: true,
       grain: true,
       vignette: true,
-      masks: true,
+      masks: false, // Profiles don't support masks
       exposure: false,
       sharpenNoise: false,
     },
@@ -148,23 +155,30 @@ export async function saveLightroomProfileToFolder(adjustments: any, recipeName?
   });
 }
 
-export async function saveCaptureOneStyleToFolder(adjustments: any, include?: any, recipeName?: string, userRating?: number): Promise<ExportResponse> {
+export async function saveCaptureOneStyleToFolder(adjustments: any, include?: any, recipeName?: string, userRating?: number, includeMasks?: boolean): Promise<ExportResponse> {
+  const finalInclude = include || {
+    basic: true,
+    hsl: true,
+    colorGrading: true,
+    curves: true,
+    pointColor: true,
+    grain: true,
+    vignette: true,
+    masks: includeMasks !== false,
+    exposure: false,
+    sharpenNoise: false,
+  };
+
+  // Override masks if includeMasks is explicitly provided
+  if (includeMasks !== undefined) {
+    finalInclude.masks = includeMasks;
+  }
+
   return unifiedExport({
     type: 'capture-one-style',
     action: 'save-to-folder',
     adjustments,
-    include: include || {
-      basic: true,
-      hsl: true,
-      colorGrading: true,
-      curves: true,
-      pointColor: true,
-      grain: true,
-      vignette: true,
-      masks: true,
-      exposure: false,
-      sharpenNoise: false,
-    },
+    include: finalInclude,
     recipeName,
     userRating
   });

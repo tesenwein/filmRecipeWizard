@@ -58,12 +58,16 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
   const [xmpImportDialogOpen, setXmpImportDialogOpen] = useState(false);
   const [selectedRecipes, setSelectedRecipes] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
+  const [includeMasks, setIncludeMasks] = useState<boolean>(true);
   const { showSuccess, showError } = useAlert();
 
-  // Load settings when component mounts
+  // Load settings when component mounts and initialize includeMasks from settings
   useEffect(() => {
     if (!settings || Object.keys(settings).length === 0) {
       loadSettings();
+    } else {
+      // Initialize includeMasks from settings (default to true if not set)
+      setIncludeMasks(settings.includeMasks !== false);
     }
   }, [settings, loadSettings]);
 
@@ -373,7 +377,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           const res = await saveLightroomPresetToFolder(
             recipe.results?.[0]?.metadata?.aiAdjustments,
             recipe.name || 'Custom Recipe',
-            recipe.userRating
+            recipe.userRating,
+            includeMasks
           );
           
           
@@ -483,7 +488,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             recipe.results?.[0]?.metadata?.aiAdjustments,
             {},
             recipe.name || 'Custom Recipe',
-            recipe.userRating
+            recipe.userRating,
+            includeMasks
           );
           
           if (res.success) {
@@ -533,7 +539,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
             recipe.results?.[0]?.metadata?.aiAdjustments,
             {},
             recipe.name || 'Custom Recipe',
-            recipe.userRating
+            recipe.userRating,
+            includeMasks
           );
           
           if (res.success) {
@@ -682,6 +689,8 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
           onSaveStylesToCaptureOne={handleBulkSaveStylesToCaptureOne}
           lightroomPathConfigured={!!settings?.lightroomProfilePath}
           captureOnePathConfigured={!!settings?.captureOneStylesPath}
+          includeMasks={includeMasks}
+          onToggleMasks={setIncludeMasks}
         />
       )}
 

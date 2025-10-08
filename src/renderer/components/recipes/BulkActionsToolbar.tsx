@@ -1,7 +1,7 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, FormControl, ListItemIcon, ListItemText, MenuItem, Select, Toolbar, Typography } from '@mui/material';
+import { Box, Button, FormControl, FormControlLabel, ListItemIcon, ListItemText, MenuItem, Select, Switch, Toolbar, Typography } from '@mui/material';
 import React from 'react';
 
 interface BulkActionsToolbarProps {
@@ -17,6 +17,8 @@ interface BulkActionsToolbarProps {
   onSaveStylesToCaptureOne: () => void;
   lightroomPathConfigured?: boolean;
   captureOnePathConfigured?: boolean;
+  includeMasks: boolean;
+  onToggleMasks: (value: boolean) => void;
 }
 
 const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
@@ -31,7 +33,9 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
   onSaveProfilesToLightroom,
   onSaveStylesToCaptureOne,
   lightroomPathConfigured: _lightroomPathConfigured = false,
-  captureOnePathConfigured: _captureOnePathConfigured = false
+  captureOnePathConfigured: _captureOnePathConfigured = false,
+  includeMasks,
+  onToggleMasks
 }) => {
   return (
     <Toolbar
@@ -52,6 +56,30 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
             : 'Select recipes to perform bulk actions'
           }
         </Typography>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={includeMasks}
+              onChange={(e) => onToggleMasks(e.target.checked)}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: 'primary.contrastText',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                },
+              }}
+            />
+          }
+          label="Include Masks"
+          sx={{
+            color: 'primary.contrastText',
+            '& .MuiFormControlLabel-label': {
+              fontSize: '0.875rem',
+            },
+          }}
+        />
         <Button
           variant="outlined"
           size="small"
