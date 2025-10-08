@@ -1,7 +1,7 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import SaveIcon from '@mui/icons-material/Save';
-import { Box, Button, FormControl, FormControlLabel, ListItemIcon, ListItemText, MenuItem, Select, Switch, Toolbar, Typography } from '@mui/material';
+import { Box, Button, Divider, FormControl, FormControlLabel, ListItemIcon, ListItemText, MenuItem, Select, Switch, Toolbar, Typography } from '@mui/material';
 import React from 'react';
 
 interface BulkActionsToolbarProps {
@@ -50,11 +50,24 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onSelectAll}
+          sx={{
+            color: 'primary.contrastText',
+            borderColor: 'primary.contrastText',
+            '&:hover': {
+              borderColor: 'primary.contrastText',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          }}
+        >
+          {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
+        </Button>
+
         <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
-          {selectedCount > 0
-            ? `${selectedCount} recipe${selectedCount !== 1 ? 's' : ''} selected`
-            : 'Select recipes to perform bulk actions'
-          }
+          {selectedCount > 0 && `${selectedCount} recipe${selectedCount !== 1 ? 's' : ''} selected`}
         </Typography>
 
         <FormControlLabel
@@ -80,22 +93,7 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
             },
           }}
         />
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={onSelectAll}
-          sx={{
-            color: 'primary.contrastText',
-            borderColor: 'primary.contrastText',
-            '&:hover': {
-              borderColor: 'primary.contrastText',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            },
-          }}
-        >
-          {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
-        </Button>
-        
+
         <FormControl size="small" sx={{ minWidth: 200}}>
           <Select
             value=""
@@ -185,7 +183,16 @@ const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
             </MenuItem>
           </Select>
         </FormControl>
-        
+
+        <Divider
+          orientation="vertical"
+          flexItem
+          sx={{
+            borderColor: 'rgba(255, 255, 255, 0.3)',
+            mx: 1,
+          }}
+        />
+
         <Button
           variant="contained"
           size="small"

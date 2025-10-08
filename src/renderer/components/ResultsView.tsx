@@ -1127,9 +1127,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         })()}
 
                         {/* Toggle and export buttons section */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mt: 3 }}>
-                          {/* Mask inclusion toggle with gray background */}
-                          <Box sx={{ px: 3, py: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                        <Box sx={{ mt: 3, py: 2, pr: 2, pl: 3, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                            {/* Mask inclusion toggle */}
                             <FormControlLabel
                               control={
                                 <Switch
@@ -1144,44 +1144,44 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 </Typography>
                               }
                             />
-                          </Box>
 
-                          {/* Export Buttons */}
-                          <Box sx={{ display: 'flex', gap: 2 }}>
-                          <Button
-                            variant="outlined"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => handleExportXMP(index, result)}
-                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                            size="large"
-                          >
-                            Export Preset (.xmp)
-                          </Button>
-                          {lightroomPathConfigured ? (
+                            {/* Export Buttons */}
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button
-                              variant="contained"
+                              variant="outlined"
                               startIcon={<DownloadIcon />}
-                              onClick={() => handleExportPresetToLightroom(index, result)}
-                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                              onClick={() => handleExportXMP(index, result)}
+                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4, backgroundColor: 'white', '&:hover': { backgroundColor: 'grey.100' } }}
                               size="large"
                             >
-                              Save to Lightroom
+                              Export Preset (.xmp)
                             </Button>
-                          ) : (
-                            <Tooltip title="Configure Lightroom folder path in Settings to enable direct export">
-                              <span>
-                                <Button
-                                  variant="contained"
-                                  startIcon={<DownloadIcon />}
-                                  disabled
-                                  sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                                  size="large"
-                                >
-                                  Save to Lightroom
-                                </Button>
-                              </span>
-                            </Tooltip>
-                          )}
+                            {lightroomPathConfigured ? (
+                              <Button
+                                variant="contained"
+                                startIcon={<DownloadIcon />}
+                                onClick={() => handleExportPresetToLightroom(index, result)}
+                                sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                                size="large"
+                              >
+                                Save to Lightroom
+                              </Button>
+                            ) : (
+                              <Tooltip title="Configure Lightroom folder path in Settings to enable direct export">
+                                <span>
+                                  <Button
+                                    variant="contained"
+                                    startIcon={<DownloadIcon />}
+                                    disabled
+                                    sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                                    size="large"
+                                  >
+                                    Save to Lightroom
+                                  </Button>
+                                </span>
+                              </Tooltip>
+                            )}
+                            </Box>
                           </Box>
                         </Box>
                       </Paper>
@@ -1220,7 +1220,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                             variant="outlined"
                             startIcon={<DownloadIcon />}
                             onClick={() => handleExportProfile(index, result)}
-                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4, backgroundColor: 'white', '&:hover': { backgroundColor: 'grey.100' } }}
                             size="large"
                           >
                             Export Profile (.xmp)
@@ -1291,9 +1291,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                         })()}
 
                         {/* Toggle and export buttons section */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mt: 3 }}>
-                          {/* Mask inclusion toggle with gray background */}
-                          <Box sx={{ px: 3, py: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                        <Box sx={{ mt: 3, py: 2, pr: 2, pl: 3, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                            {/* Mask inclusion toggle */}
                             <FormControlLabel
                               control={
                                 <Switch
@@ -1308,44 +1308,44 @@ const ResultsView: React.FC<ResultsViewProps> = ({
                                 </Typography>
                               }
                             />
-                          </Box>
 
-                          {/* Export Buttons */}
-                          <Box sx={{ display: 'flex', gap: 2 }}>
-                          <Button
-                            variant="outlined"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => handleExportCaptureOneStyle(index, result)}
-                            sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                            size="large"
-                          >
-                            Export Style (.costyle)
-                          </Button>
-                          {captureOnePathConfigured ? (
+                            {/* Export Buttons */}
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button
-                              variant="contained"
+                              variant="outlined"
                               startIcon={<DownloadIcon />}
-                              onClick={() => handleExportStyleToCaptureOne(index, result)}
-                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                              onClick={() => handleExportCaptureOneStyle(index, result)}
+                              sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4, backgroundColor: 'white', '&:hover': { backgroundColor: 'grey.100' } }}
                               size="large"
                             >
-                              Save to Capture One
+                              Export Style (.costyle)
                             </Button>
-                          ) : (
-                            <Tooltip title="Configure Capture One styles path in Settings to enable direct export">
-                              <span>
-                                <Button
-                                  variant="contained"
-                                  startIcon={<DownloadIcon />}
-                                  disabled
-                                  sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
-                                  size="large"
-                                >
-                                  Save to Capture One
-                                </Button>
-                              </span>
-                            </Tooltip>
-                          )}
+                            {captureOnePathConfigured ? (
+                              <Button
+                                variant="contained"
+                                startIcon={<DownloadIcon />}
+                                onClick={() => handleExportStyleToCaptureOne(index, result)}
+                                sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                                size="large"
+                              >
+                                Save to Capture One
+                              </Button>
+                            ) : (
+                              <Tooltip title="Configure Capture One styles path in Settings to enable direct export">
+                                <span>
+                                  <Button
+                                    variant="contained"
+                                    startIcon={<DownloadIcon />}
+                                    disabled
+                                    sx={{ textTransform: 'none', fontWeight: 700, py: 2, px: 4 }}
+                                    size="large"
+                                  >
+                                    Save to Capture One
+                                  </Button>
+                                </span>
+                              </Tooltip>
+                            )}
+                            </Box>
                           </Box>
                         </Box>
                       </Paper>
