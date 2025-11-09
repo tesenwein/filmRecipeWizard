@@ -4,7 +4,6 @@
   "description": "Create and apply photo recipes with AI-powered color grading",
   "main": "dist/main/main.js",
   "scripts": {
-    "postinstall": "electron-rebuild",
     "start": "npm run build && electron .",
     "dev": "concurrently \"npm run watch:main\" \"npm run watch:renderer\" \"wait-on dist/main/main.js && cross-env NODE_ENV=development electron .\"",
     "dev:test": "concurrently \"npm run watch:main\" \"npm run watch:renderer\" \"npm run test:watch\" \"wait-on dist/main/main.js && cross-env NODE_ENV=development electron .\"",
@@ -37,7 +36,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:xmp": "jest --testPathPattern=xmp",
-    "knip": "knip"
+    "knip": "knip",
+    "rebuild": "electron-rebuild -f -w sharp"
   },
   "keywords": [
     "electron",
