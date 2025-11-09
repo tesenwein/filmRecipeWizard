@@ -74,6 +74,7 @@ export class ImportHandlers {
                   results: recipe.results,
                   recipeImageData: recipe.recipeImageData,
                   author: recipe.author,
+                  userRating: recipe.userRating,
                 };
                 await this.storageService.updateProcess(existingRecipe.id, updated);
                 replacedCount++;
@@ -90,6 +91,7 @@ export class ImportHandlers {
                   results: recipe.results,
                   recipeImageData: recipe.recipeImageData,
                   author: recipe.author,
+                  userRating: recipe.userRating,
                 };
                 await this.storageService.addProcess(imported);
                 importedCount++;
@@ -144,6 +146,7 @@ export class ImportHandlers {
               results: process.results,
               recipeImageData: process.recipeImageData,
               author: process.author,
+              userRating: process.userRating,
             };
             await this.storageService.updateProcess(existingRecipe.id, updated);
             return { success: true, count: 1, replaced: 1 };
@@ -160,6 +163,7 @@ export class ImportHandlers {
               results: process.results,
               recipeImageData: process.recipeImageData,
               author: process.author,
+              userRating: process.userRating,
             };
             await this.storageService.addProcess(imported);
             return { success: true, count: 1, replaced: 0 };

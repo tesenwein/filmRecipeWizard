@@ -47,6 +47,7 @@ export class ExportHandlers {
           results: recipe.results,
           recipeImageData: recipe.recipeImageData,
           author: recipe.author,
+          userRating: recipe.userRating,
         })),
       };
 
