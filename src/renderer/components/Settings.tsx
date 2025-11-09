@@ -6,7 +6,7 @@ import ConfirmDialog from './ConfirmDialog';
 import ProfileEdit, { ProfileData } from './ProfileEdit';
 
 const Settings: React.FC = () => {
-  const { resetApp } = useAppStore();
+  const { resetApp, saveSettings: saveSettingsToStore } = useAppStore();
   const [openaiKey, setOpenaiKey] = useState('');
   const [masked, setMasked] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -227,15 +227,11 @@ const Settings: React.FC = () => {
         instagram: ig.handle || undefined,
       };
 
-      const res = await window.electronAPI.saveSettings(settingsToSave);
-      if (res.success) {
-        setMasked(!!openaiKey);
-        setOpenaiKey('');
-        setShowKey(false);
-        setStatus({ type: 'success', msg: 'Settings saved successfully' });
-      } else {
-        setStatus({ type: 'error', msg: res.error || 'Failed to save settings' });
-      }
+      await saveSettingsToStore(settingsToSave);
+      setMasked(!!openaiKey);
+      setOpenaiKey('');
+      setShowKey(false);
+      setStatus({ type: 'success', msg: 'Settings saved successfully' });
     } catch {
       setStatus({ type: 'error', msg: 'Failed to save settings' });
     } finally {
@@ -246,15 +242,11 @@ const Settings: React.FC = () => {
   const handleClear = async () => {
     setStatus(null);
     try {
-      const res = await window.electronAPI.saveSettings({ openaiKey: '' });
-      if (res.success) {
-        setMasked(false);
-        setOpenaiKey('');
-        setShowKey(false);
-        setStatus({ type: 'success', msg: 'OpenAI key cleared' });
-      } else {
-        setStatus({ type: 'error', msg: res.error || 'Failed to clear key' });
-      }
+      await saveSettingsToStore({ openaiKey: '' });
+      setMasked(false);
+      setOpenaiKey('');
+      setShowKey(false);
+      setStatus({ type: 'success', msg: 'OpenAI key cleared' });
     } catch {
       setStatus({ type: 'error', msg: 'Failed to clear key' });
     }
