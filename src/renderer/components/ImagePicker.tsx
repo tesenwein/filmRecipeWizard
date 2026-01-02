@@ -7,7 +7,7 @@ import { logError } from '../../shared/error-utils';
 import ImageGrid from './ImageGrid';
 import SingleImage from './SingleImage';
 
-type Kind = 'target' | 'reference';
+type Kind = 'reference';
 
 interface ImagePickerProps {
   kind: Kind;
@@ -46,17 +46,6 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
 
   const defaults = useMemo(() => {
-    if (kind === 'target') {
-      return {
-        title: 'Target Image',
-        description: 'The photo you want to transform',
-        chip: undefined,
-        icon: <PhotoCameraOutlinedIcon sx={{ color: 'primary.main', fontSize: 24 }} />,
-        emptyCta: 'Select Target Images',
-        changeCta: 'Change Images',
-        countLabel: (n: number) => `${n} image${n !== 1 ? 's' : ''} selected`,
-      };
-    }
     return {
       title: 'Reference Style',
       description: 'Upload up to 3 reference images',
@@ -184,11 +173,11 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
           >
             <SingleImage
               source={display[0]}
-              alt={kind === 'target' ? 'Target' : 'Reference'}
+              alt="Reference"
               fit="contain"
             />
             {onRemoveImage && (
-              <Tooltip title={kind === 'target' ? 'Remove this image' : 'Remove this reference'}>
+              <Tooltip title="Remove this reference">
                 <IconButton
                   size="small"
                   onClick={() => onRemoveImage(0)}
@@ -310,11 +299,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             }}
           >
             <Box sx={{ textAlign: 'center' }}>
-              {kind === 'target' ? (
-                <PhotoCameraOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />
-              ) : (
-                <PaletteOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />
-              )}
+              <PaletteOutlinedIcon sx={{ fontSize: 72, color: '#adb5bd', mb: 2 }} />
               <h4 style={{ fontSize: 18, color: '#868e96', marginBottom: 8 }}>
                 Drop images here or click to browse
               </h4>

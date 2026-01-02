@@ -13,9 +13,7 @@ const electronAPI = {
   processImages: (data: any) => ipcRenderer.invoke('process-images', data),
   processWithStoredImages: (data: {
     processId: string;
-    targetIndex?: number;
     baseImageData?: string | string[];
-    targetImageData?: string[];
     prompt?: string;
     styleOptions?: any;
   }) => ipcRenderer.invoke('process-with-stored-images', data),

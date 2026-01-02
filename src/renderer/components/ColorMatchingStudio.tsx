@@ -1,5 +1,6 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { Box, Paper } from '@mui/material';
+import BrushIcon from '@mui/icons-material/Brush';
+import { Box, FormControlLabel, Paper, Switch } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { StyleOptions } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
@@ -13,10 +14,9 @@ import StyleCategoriesCard from './StyleCategoriesCard';
 import StyleDescriptionCard from './StyleDescriptionCard';
 
 interface ColorMatchingStudioProps {
-  onImagesSelected: (baseImages: string[], targetImages: string[]) => void;
+  onImagesSelected: (baseImages: string[]) => void;
   onStartProcessing: () => void;
   baseImages: string[];
-  targetImages: string[];
   prompt: string;
   onPromptChange: (value: string) => void;
   styleOptions?: StyleOptions;
@@ -27,16 +27,13 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   onImagesSelected,
   onStartProcessing,
   baseImages,
-  targetImages,
   prompt,
   onPromptChange,
   styleOptions,
   onStyleOptionsChange,
 }) => {
-  const [targetPreviews, setTargetPreviews] = useState<string[]>([]);
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteType, setDeleteType] = useState<'base' | 'target'>('base');
   const [deleteIndex, setDeleteIndex] = useState<number>(0);
 
   const isSafeForImg = (p?: string | null) => {
@@ -64,38 +61,13 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
           baseImages.length > 0
             ? Array.from(new Set([...baseImages, ...result])).slice(0, 3)
             : result.slice(0, 3);
-        onImagesSelected(next, targetImages);
+        onImagesSelected(next);
       }
     } catch (error) {
       console.error('Error selecting base image:', error);
     }
   };
 
-  const handleTargetImagesSelect = async () => {
-    try {
-      const result = await window.electronAPI.selectFiles({
-        title: 'Select Target Image to Process',
-        filters: [
-          {
-            name: 'Images',
-            extensions: ['jpg', 'jpeg', 'png', 'webp'],
-          },
-        ],
-        properties: ['openFile', 'multiSelections'],
-      });
-
-      if (result && result.length > 0) {
-        // Add to existing images if any, otherwise replace
-        const next =
-          targetImages.length > 0
-            ? Array.from(new Set([...targetImages, ...result])).slice(0, 3)
-            : result.slice(0, 3);
-        onImagesSelected(baseImages, next);
-      }
-    } catch (error) {
-      console.error('Error selecting target images:', error);
-    }
-  };
 
   // Enable processing when not currently processing and at least one option is active
   const { processingState } = useAppStore();
@@ -157,24 +129,13 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
 
   // Remove handlers
   const handleRemoveBase = (index: number) => {
-    setDeleteType('base');
-    setDeleteIndex(index);
-    setDeleteDialogOpen(true);
-  };
-  const handleRemoveTarget = (index: number) => {
-    setDeleteType('target');
     setDeleteIndex(index);
     setDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = () => {
-    if (deleteType === 'base') {
-      const next = baseImages.filter((_, i) => i !== deleteIndex);
-      onImagesSelected(next, targetImages);
-    } else {
-      const next = targetImages.filter((_, i) => i !== deleteIndex);
-      onImagesSelected(baseImages, next);
-    }
+    const next = baseImages.filter((_, i) => i !== deleteIndex);
+    onImagesSelected(next);
     setDeleteDialogOpen(false);
   };
 
@@ -182,35 +143,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     setDeleteDialogOpen(false);
   };
 
-  // Generate previews for target images
-  useEffect(() => {
-    const generateTargetPreviews = async () => {
-      if (targetImages.length === 0) {
-        setTargetPreviews([]);
-        return;
-      }
-
-      try {
-        const previews = await Promise.all(
-          targetImages.map(async imagePath => {
-            try {
-              const result = await window.electronAPI.generatePreview({ path: imagePath });
-              return result.success ? result.previewPath : imagePath;
-            } catch (error) {
-              console.error('Error generating preview for target image:', error);
-              return imagePath;
-            }
-          })
-        );
-        setTargetPreviews(previews);
-      } catch (error) {
-        console.error('Error generating target previews:', error);
-        setTargetPreviews(targetImages); // Fallback to original paths
-      }
-    };
-
-    generateTargetPreviews();
-  }, [targetImages]);
 
   // Load current global settings
   useEffect(() => {
@@ -270,24 +202,8 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
             overflow: 'hidden',
           }}
         >
-          {/* Left Column - Target Image and Reference Image */}
+          {/* Left Column - Reference Image */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%', overflow: 'hidden' }}>
-            <Box sx={{ display: 'flex', width: '100%', overflow: 'hidden' }}>
-              <ImagePicker
-                kind="target"
-                images={targetImages}
-                previews={targetPreviews}
-                onSelectFiles={handleTargetImagesSelect}
-                onRemoveImage={handleRemoveTarget}
-                onDropFiles={paths => {
-                  if (!paths || paths.length === 0) return;
-                  const next = Array.from(new Set([...(targetImages || []), ...paths])).slice(0, 3);
-                  onImagesSelected(baseImages, next);
-                }}
-                maxFiles={3}
-              />
-            </Box>
-
             <ImagePicker
               kind="reference"
               images={baseImages}
@@ -297,7 +213,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
               onDropFiles={paths => {
                 if (!paths || paths.length === 0) return;
                 const next = Array.from(new Set([...(baseImages || []), ...paths])).slice(0, 3);
-                onImagesSelected(next, targetImages);
+                onImagesSelected(next);
               }}
               maxFiles={3}
             />
@@ -332,6 +248,38 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
               onStyleOptionsChange={onStyleOptionsChange}
             />
 
+            {/* Include Masks Toggle */}
+            <Paper className="card slide-in" sx={{ p: 2.5, animationDelay: '0.2s' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <BrushIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                <Box sx={{ flex: 1 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>
+                    Local Adjustments
+                  </h3>
+                  <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
+                    Include masks for targeted editing
+                  </p>
+                </Box>
+              </Box>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={styleOptions?.includeMasks === true}
+                    onChange={(e) =>
+                      onStyleOptionsChange?.({ includeMasks: e.target.checked })
+                    }
+                    color="primary"
+                  />
+                }
+                label={
+                  <span style={{ fontSize: 13, color: '#374151' }}>
+                    {styleOptions?.includeMasks === true ? 'Include Masks' : 'Masks Disabled'}
+                  </span>
+                }
+                sx={{ mt: 1 }}
+              />
+            </Paper>
+
             {/* Process Button */}
             <Box sx={{ mt: 2 }}>
               <ProcessButton
@@ -349,8 +297,7 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         title="Remove Image"
-        content={`Are you sure you want to remove this ${deleteType === 'base' ? 'recipe reference' : 'target'
-          } image?`}
+        content="Are you sure you want to remove this recipe reference image?"
         confirmButtonText="Remove"
         confirmColor="error"
       />

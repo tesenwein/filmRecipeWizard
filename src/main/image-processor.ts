@@ -47,7 +47,7 @@ export class ImageProcessor {
     try {
       const aiAdjustments = await aiService.analyzeColorMatch(
         data.baseImageBase64,
-        data.targetImageBase64,
+        undefined, // No target image
         data.prompt, // hint/prompt
         {
           styleOptions: data.styleOptions, // Pass style options to AI
@@ -57,7 +57,7 @@ export class ImageProcessor {
       // No longer generating processed images - just return analysis
       return {
         success: true,
-        outputPath: data.targetImagePath, // Return original path since we're not processing
+        outputPath: '', // No output path needed
         metadata: {
           aiAdjustments,
           confidence: aiAdjustments.confidence,

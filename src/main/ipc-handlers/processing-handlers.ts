@@ -27,89 +27,6 @@ export class ProcessingHandlers {
       }
     );
 
-    // Handle processing for a single target (one reference + one target)
-    ipcMain.handle('process-images', async (_event, data) => {
-      const mainWindow = this.getMainWindow();
-      if (!mainWindow) return [];
-
-      try {
-        const targetPath =
-          Array.isArray(data.targetImagePaths) && data.targetImagePaths.length > 0
-            ? data.targetImagePaths[0]
-            : undefined;
-        if (!targetPath) throw new Error('No target image provided');
-        const prompt =
-          typeof data?.hint === 'string' && data.hint.trim().length > 0
-            ? data.hint.trim()
-            : typeof data?.prompt === 'string' && data.prompt.trim().length > 0
-              ? data.prompt.trim()
-              : undefined;
-
-        mainWindow.webContents.send('processing-progress', 5, 'Analyzing...');
-
-        let result: any;
-        try {
-          result = await this.imageProcessor.matchStyle({
-            baseImagePath: data.baseImagePath,
-            targetImagePath: targetPath,
-            matchColors: true,
-            matchBrightness: true,
-            matchContrast: true,
-            matchSaturation: true,
-            prompt,
-            ...data.options,
-            onStreamUpdate: (update: { type: string; content: string; step?: string; progress?: number; toolName?: string; toolArgs?: any }) => {
-              try {
-                // Send structured streaming update
-                mainWindow.webContents.send('streaming-update', update);
-              } catch {
-                /* ignore */
-              }
-            },
-          });
-          mainWindow.webContents.send('processing-progress', 100, 'Completed');
-        } catch (error) {
-          console.error('[IPC] Error processing image:', error);
-          const errMsg = error instanceof Error ? error.message : 'Unknown error';
-          try {
-            mainWindow.webContents.send('processing-progress', 100, `Failed: ${errMsg}`);
-          } catch {
-            // Ignore IPC send errors
-          }
-          result = { success: false, error: errMsg };
-        }
-
-        const results = [result];
-
-        try {
-          if (data?.processId && this.storageService) {
-            await this.storageService.updateProcess(data.processId, {
-              results: [result],
-              status: result.success ? 'completed' : 'failed',
-            } as any);
-            try {
-              mainWindow?.webContents.send('process-updated', {
-                processId: data.processId,
-                updates: {
-                  results: [result],
-                  status: result.success ? 'completed' : 'failed',
-                },
-              });
-            } catch {
-              // Ignore IPC send errors
-            }
-          }
-        } catch (err) {
-          console.error('[IPC] process-images: failed to persist results', err);
-        }
-
-        mainWindow.webContents.send('processing-complete', results);
-        return results;
-      } catch (error) {
-        console.error('[IPC] Error in processing:', error);
-        throw error;
-      }
-    });
 
     // Handle processing with stored base64 data from recipe
     ipcMain.handle(
@@ -118,9 +35,7 @@ export class ProcessingHandlers {
         _event,
         data: {
           processId: string;
-          targetIndex?: number;
           baseImageData?: string | string[];
-          targetImageData?: string[];
           prompt?: string;
           styleOptions?: any;
         }
@@ -224,24 +139,12 @@ export class ProcessingHandlers {
           prompt = (prompt + optionsHint).trim() ||
             'Apply natural, balanced color grading with clean contrast and faithful skin tones.';
 
-          // Determine which target image to use (for processing, not storage)
-          const targetIndex = data.targetIndex || 0;
-          const providedTargets = data.targetImageData || [];
-          const targetImageData = providedTargets[targetIndex];
-
-          // If no target image is provided, we'll still do AI analysis using just the base image
-
           // Emit initial progress
           try {
             mainWindow?.webContents.send('processing-progress', 5, 'Starting AI analysis...');
           } catch {
             /* Ignore IPC send errors */
           }
-
-          // Create temporary files for processing (baseImagePath not needed when using base64)
-          const targetImageTempPath = targetImageData
-            ? await this.storageService.base64ToTempFile(targetImageData, 'target.jpg')
-            : undefined;
 
           // Process using the image processor
           let result;
@@ -250,9 +153,9 @@ export class ProcessingHandlers {
           try {
             result = await this.imageProcessor.matchStyle({
               baseImagePath: undefined,
-              targetImagePath: targetImageTempPath || '', // Use empty string if no target image
+              targetImagePath: '', // No target image needed
               baseImageBase64: baseImageData,
-              targetImageBase64: targetImageData,
+              targetImageBase64: undefined,
               aiAdjustments: undefined,
               prompt,
               styleOptions: options,
@@ -265,7 +168,7 @@ export class ProcessingHandlers {
             result = {
               success: false,
               error: errorMessage,
-              outputPath: targetImageTempPath || '',
+              outputPath: '',
               metadata: null,
             };
           }
@@ -304,7 +207,12 @@ export class ProcessingHandlers {
             try {
               let adj = result?.metadata?.aiAdjustments;
               if (result.success && adj) {
-                effectiveAdjustments = adj;
+                effectiveAdjustments = { ...adj };
+                // Filter out masks if includeMasks is false (default is false)
+                const includeMasks = options?.includeMasks === true;
+                if (!includeMasks && effectiveAdjustments.masks) {
+                  effectiveAdjustments.masks = [];
+                }
               }
             } catch (e) {
               console.warn('[IPC] Adjustments processing failed:', e);

@@ -3,7 +3,6 @@ import { ExportResult, ImportResult, ProcessingResult, StyleOptions } from '../s
 // Additional type definitions for better type safety
 interface ProcessingRequest {
   baseImagePath: string;
-  targetImagePaths: string[];
   hint?: string;
   options: StyleOptions;
   processId?: string;
@@ -76,18 +75,9 @@ declare global {
       processDroppedFiles: (files: { name: string; data: string }[]) => Promise<string[]>;
 
       // Image processing
-      processImages: (data: {
-        baseImagePath: string;
-        targetImagePaths: string[];
-        hint?: string;
-        options: StyleOptions;
-        processId?: string;
-      }) => Promise<any[]>;
       processWithStoredImages: (data: {
         processId: string;
-        targetIndex?: number;
         baseImageData?: string | string[];
-        targetImageData?: string[];
         prompt?: string;
         styleOptions?: StyleOptions;
       }) => Promise<any>;
@@ -153,7 +143,6 @@ declare global {
       getImageDataUrls: (processId: string) => Promise<{
         success: boolean;
         baseImageUrls: string[];
-        targetImageUrls: string[];
         error?: string;
       }>;
       setBaseImage: (
