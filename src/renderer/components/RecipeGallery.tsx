@@ -315,15 +315,21 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     if (selectedRecipes.size === 0) return;
     
     try {
-      // Use the existing exportSelectedRecipes function which creates a ZIP file with only selected recipes
       const selectedRecipeIds = Array.from(selectedRecipes);
-      const res = await window.electronAPI.exportSelectedRecipes(selectedRecipeIds);
+      console.log('[RecipeGallery] Calling exportSelectedRecipesAsFiles with:', { selectedRecipeIds, exportType: 'lightroom-preset', includeMasks });
+      const res = await window.electronAPI.exportSelectedRecipesAsFiles(selectedRecipeIds, 'lightroom-preset', includeMasks);
+      console.log('[RecipeGallery] Export result:', res);
       if (res.success) {
-        showSuccess(`Successfully exported ${selectedRecipes.size} recipe${selectedRecipes.size !== 1 ? 's' : ''} as presets ZIP file`);
+        const count = res.count || selectedRecipes.size;
+        showSuccess(`Successfully exported ${count} preset${count !== 1 ? 's' : ''} as ZIP file`);
+        if (res.error) {
+          showError(res.error);
+        }
       } else if (res.error && res.error !== 'Export canceled') {
         showError(`Export failed: ${res.error}`);
       }
-    } catch {
+    } catch (error) {
+      console.error('Bulk export presets failed:', error);
       showError('Bulk export failed');
     }
   };
@@ -332,15 +338,19 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     if (selectedRecipes.size === 0) return;
     
     try {
-      // Use the existing exportSelectedRecipes function which creates a ZIP file with only selected recipes
       const selectedRecipeIds = Array.from(selectedRecipes);
-      const res = await window.electronAPI.exportSelectedRecipes(selectedRecipeIds);
+      const res = await window.electronAPI.exportSelectedRecipesAsFiles(selectedRecipeIds, 'lightroom-profile', false);
       if (res.success) {
-        showSuccess(`Successfully exported ${selectedRecipes.size} recipe${selectedRecipes.size !== 1 ? 's' : ''} as profiles ZIP file`);
+        const count = res.count || selectedRecipes.size;
+        showSuccess(`Successfully exported ${count} profile${count !== 1 ? 's' : ''} as ZIP file`);
+        if (res.error) {
+          showError(res.error);
+        }
       } else if (res.error && res.error !== 'Export canceled') {
         showError(`Export failed: ${res.error}`);
       }
-    } catch {
+    } catch (error) {
+      console.error('Bulk export profiles failed:', error);
       showError('Bulk export failed');
     }
   };
@@ -522,45 +532,19 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     
     try {
       const selectedRecipeIds = Array.from(selectedRecipes);
-      let successCount = 0;
-      let errorCount = 0;
-      
-      for (const recipeId of selectedRecipeIds) {
-        try {
-          // Get the recipe data
-          const recipe = recipes.find(r => r.id === recipeId);
-          if (!recipe) {
-            errorCount++;
-            continue;
-          }
-          
-          // Download Capture One style for each recipe
-          const res = await downloadCaptureOneStyle(
-            recipe.results?.[0]?.metadata?.aiAdjustments,
-            {},
-            recipe.name || 'Custom Recipe',
-            recipe.userRating,
-            includeMasks
-          );
-          
-          if (res.success) {
-            successCount++;
-          } else {
-            errorCount++;
-          }
-        } catch {
-          errorCount++;
+      const res = await window.electronAPI.exportSelectedRecipesAsFiles(selectedRecipeIds, 'capture-one-style', includeMasks);
+      if (res.success) {
+        const count = res.count || selectedRecipes.size;
+        showSuccess(`Successfully exported ${count} style${count !== 1 ? 's' : ''} as ZIP file`);
+        if (res.error) {
+          showError(res.error);
         }
+      } else if (res.error && res.error !== 'Export canceled') {
+        showError(`Export failed: ${res.error}`);
       }
-      
-      if (successCount > 0) {
-        showSuccess(`Successfully exported ${successCount} style${successCount !== 1 ? 's' : ''}`);
-      }
-      if (errorCount > 0) {
-        showError(`Failed to export ${errorCount} style${errorCount !== 1 ? 's' : ''}`);
-      }
-    } catch {
-      showError('Bulk export styles failed');
+    } catch (error) {
+      console.error('Bulk export styles failed:', error);
+      showError('Bulk export failed');
     }
   };
 

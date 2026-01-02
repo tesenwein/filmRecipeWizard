@@ -24,8 +24,6 @@ const electronAPI = {
   matchStyle: (data: any) => ipcRenderer.invoke('match-style', data),
   generatePreset: (data: any) => ipcRenderer.invoke('generate-preset', data),
   generateLUT: (data: any) => ipcRenderer.invoke('generate-lut', data),
-  generateXmpContent: (data: { adjustments: any; include?: any; recipeName?: string }) =>
-    ipcRenderer.invoke('generate-xmp-content', data),
   // Note: Individual export APIs removed - now using unified export system
   // Unified export API
   unifiedExport: (request: { type: string; action: string; adjustments: any; include?: any; recipeName?: string }) =>
@@ -33,7 +31,8 @@ const electronAPI = {
   // Recipe import/export
   exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
   exportAllRecipes: () => ipcRenderer.invoke('export-all-recipes'),
-  exportSelectedRecipes: (recipeIds: string[]) => ipcRenderer.invoke('export-selected-recipes', recipeIds),
+  exportSelectedRecipesAsFiles: (recipeIds: string[], exportType: string, includeMasks?: boolean) =>
+    ipcRenderer.invoke('export-selected-recipes-as-files', recipeIds, exportType, includeMasks),
   importRecipe: () => ipcRenderer.invoke('import-recipe'),
   importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) =>
     ipcRenderer.invoke('import-xmp', data),

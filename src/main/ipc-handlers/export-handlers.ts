@@ -5,6 +5,8 @@ import { ImageProcessor } from '../image-processor';
 import { SettingsService } from '../settings-service';
 import { StorageService } from '../storage-service';
 import { generateXMPContent } from '../xmp-generator';
+import { generateCaptureOneStyle } from '../capture-one-generator';
+import type { ExportType } from '../unified-export-handler';
 
 export class ExportHandlers {
   constructor(
@@ -65,32 +67,6 @@ export class ExportHandlers {
   }
 
   setupHandlers(): void {
-    // Generate XMP content (no save dialog) and return the string
-    ipcMain.handle('generate-xmp', async (_event, data) => {
-      try {
-        const include = {
-          basic: data?.include?.basic ?? true,
-          hsl: data?.include?.hsl ?? true,
-          colorGrading: data?.include?.colorGrading ?? true,
-          curves: data?.include?.curves ?? true,
-          pointColor: data?.include?.pointColor ?? true,
-          grain: data?.include?.grain ?? true,
-          masks: data?.include?.masks ?? true,
-          exposure: data?.include?.exposure ?? false,
-          sharpenNoise: false,
-          vignette: data?.include?.vignette ?? true,
-        } as any;
-
-        if (data?.recipeName) (include as any).recipeName = String(data.recipeName);
-        const xmpContent = generateXMPContent(data.adjustments, include);
-
-        return { success: true, content: xmpContent };
-      } catch (error) {
-        logError('IPC', 'Error generating XMP content', error);
-        return createErrorResponse(error);
-      }
-    });
-
     // Note: Individual export handlers removed - now using unified export system
     // The following handlers have been replaced by UnifiedExportHandler:
     // - download-xmp
@@ -100,6 +76,7 @@ export class ExportHandlers {
     // - export-style-to-capture-one
     // - generate-capture-one-style
     // - download-capture-one-style
+    // - generate-xmp (unused, removed)
 
     // Export a recipe (process) to a ZIP file
     ipcMain.handle('export-recipe', async (_event, processId: string): Promise<ExportResult> => {
@@ -181,32 +158,6 @@ export class ExportHandlers {
       }
     });
 
-    // Export selected recipes to ZIP
-    ipcMain.handle('export-selected-recipes', async (_event, recipeIds: string[]): Promise<ExportResult> => {
-      try {
-        if (!recipeIds || recipeIds.length === 0) {
-          return { success: false, error: 'No recipes selected' };
-        }
-
-        const recipes = [];
-        for (const recipeId of recipeIds) {
-          const recipe = await this.storageService.getProcess(recipeId);
-          if (recipe) {
-            recipes.push(recipe);
-          }
-        }
-
-        if (recipes.length === 0) {
-          return { success: false, error: 'No valid recipes found' };
-        }
-
-        return await this.createRecipesZip(recipes, 'Export Selected Recipes', 'Selected-Recipes.frw.zip');
-      } catch (error) {
-        logError('IPC', 'Error exporting selected recipes', error);
-        return createErrorResponse(error);
-      }
-    });
-
     // Export all recipes to ZIP
     ipcMain.handle('export-all-recipes', async (): Promise<ExportResult> => {
       try {
@@ -223,6 +174,165 @@ export class ExportHandlers {
         return await this.createRecipesZip(recipes, 'Export All Recipes', filename);
       } catch (error) {
         logError('IPC', 'Error exporting all recipes', error);
+        return createErrorResponse(error);
+      }
+    });
+
+    // Export selected recipes as actual preset/profile/style files in a ZIP
+    ipcMain.handle('export-selected-recipes-as-files', async (
+      _event,
+      recipeIds: string[],
+      exportType: ExportType,
+      includeMasks: boolean = true
+    ): Promise<ExportResult> => {
+      try {
+        console.log('[ExportHandlers] export-selected-recipes-as-files called with:', { recipeIds, exportType, includeMasks });
+        if (!recipeIds || recipeIds.length === 0) {
+          return { success: false, error: 'No recipes selected' };
+        }
+
+        const recipes = [];
+        for (const recipeId of recipeIds) {
+          const recipe = await this.storageService.getProcess(recipeId);
+          if (recipe) {
+            recipes.push(recipe);
+          }
+        }
+
+        if (recipes.length === 0) {
+          return { success: false, error: 'No valid recipes found' };
+        }
+
+        // Determine file extension and display name
+        const exportConfigs: Record<ExportType, { extension: string; displayName: string }> = {
+          'lightroom-preset': { extension: 'xmp', displayName: 'Lightroom Presets' },
+          'lightroom-profile': { extension: 'xmp', displayName: 'Lightroom Profiles' },
+          'capture-one-style': { extension: 'costyle', displayName: 'Capture One Styles' },
+        };
+
+        const config = exportConfigs[exportType];
+        if (!config) {
+          return { success: false, error: `Unknown export type: ${exportType}` };
+        }
+
+        // Show save dialog
+        const saveRes = await dialog.showSaveDialog({
+          title: `Export Selected Recipes as ${config.displayName}`,
+          defaultPath: `Selected-${config.displayName.replace(/\s+/g, '-')}.zip`,
+          filters: [
+            { name: 'ZIP Files', extensions: ['zip'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+
+        if (saveRes.canceled || !saveRes.filePath) {
+          return { success: false, error: 'Export canceled' };
+        }
+
+        // Build ZIP contents
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip();
+
+        const settings = await this.settingsService.loadSettings();
+        const includeRating = settings.includeRatingInFilename !== false;
+
+        // Process each recipe
+        let successCount = 0;
+        const errors: string[] = [];
+
+        for (const recipe of recipes) {
+          try {
+            // Extract adjustments from the first result
+            const firstResult = recipe.results?.[0];
+            if (!firstResult?.metadata?.aiAdjustments) {
+              errors.push(`${recipe.name || recipe.id}: No adjustments found`);
+              continue;
+            }
+
+            const adjustments = firstResult.metadata.aiAdjustments;
+            const recipeName = recipe.name || adjustments.preset_name || `Recipe-${recipe.id}`;
+            const userRating = recipe.userRating;
+
+            // Build include options
+            const include: any = {
+              basic: true,
+              hsl: true,
+              colorGrading: true,
+              curves: true,
+              pointColor: true,
+              grain: true,
+              vignette: true,
+              masks: exportType !== 'lightroom-profile' && includeMasks, // Profiles don't support masks
+              exposure: false,
+              sharpenNoise: false,
+            };
+
+            // Generate file content
+            let content: string;
+            if (exportType === 'lightroom-preset') {
+              content = generateXMPContent(adjustments, include);
+            } else if (exportType === 'lightroom-profile') {
+              const result = await this.imageProcessor.generateCameraProfile({ adjustments, recipeName });
+              if (!result.success || !result.xmpContent) {
+                errors.push(`${recipeName}: ${result.error || 'Failed to generate profile'}`);
+                continue;
+              }
+              content = result.xmpContent;
+            } else if (exportType === 'capture-one-style') {
+              content = generateCaptureOneStyle(adjustments, include);
+            } else {
+              errors.push(`${recipeName}: Unknown export type`);
+              continue;
+            }
+
+            // Build filename with rating if enabled
+            let baseName = recipeName;
+            if (includeRating && userRating && userRating >= 1 && userRating <= 5) {
+              baseName = `${userRating} - ${baseName}`;
+            }
+
+            // Create safe filename
+            const safeName = baseName
+              .replace(/[^A-Za-z0-9 _-]+/g, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .replace(/\s/g, '-');
+
+            // Determine filename based on export type
+            let filename: string;
+            if (exportType === 'lightroom-profile') {
+              filename = `${safeName || 'Custom-Profile'}-Profile.${config.extension}`;
+            } else {
+              filename = `${safeName || 'Custom-Preset'}.${config.extension}`;
+            }
+
+            // Add file to ZIP
+            zip.addFile(filename, Buffer.from(content, 'utf8'));
+            successCount++;
+          } catch (error) {
+            const recipeName = recipe.name || recipe.id;
+            errors.push(`${recipeName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+        }
+
+        if (successCount === 0) {
+          return {
+            success: false,
+            error: `Failed to export any recipes. Errors: ${errors.join('; ')}`,
+          };
+        }
+
+        // Write ZIP file
+        zip.writeZip(saveRes.filePath);
+
+        return {
+          success: true,
+          filePath: saveRes.filePath,
+          count: successCount,
+          error: errors.length > 0 ? `Some exports failed: ${errors.join('; ')}` : undefined,
+        };
+      } catch (error) {
+        logError('IPC', 'Error exporting selected recipes as files', error);
         return createErrorResponse(error);
       }
     });

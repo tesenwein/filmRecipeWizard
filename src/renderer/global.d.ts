@@ -106,7 +106,7 @@ declare global {
       // Recipe import/export
       exportRecipe: (processId: string) => Promise<ExportResult>;
       exportAllRecipes: () => Promise<ExportResult>;
-      exportSelectedRecipes: (recipeIds: string[]) => Promise<ExportResult>;
+      exportSelectedRecipesAsFiles: (recipeIds: string[], exportType: 'lightroom-preset' | 'lightroom-profile' | 'capture-one-style', includeMasks?: boolean) => Promise<ExportResult>;
       importRecipe: () => Promise<ImportResult>;
 
       // AI Image generation
