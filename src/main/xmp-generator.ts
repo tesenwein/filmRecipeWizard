@@ -116,15 +116,16 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   } as const;
 
   // Optimized: Only compute basicToneValues when needed
+  // Fix: Clamp values to Lightroom's expected range (-100 to 100) to match camera-profile-generator behavior
   const basicToneValues = inc.wbBasic ? {
-    contrast: withDefault(aiAdjustments.contrast, 5),
-    highlights: withDefault(aiAdjustments.highlights, -10),
-    shadows: withDefault(aiAdjustments.shadows, 10),
-    whites: withDefault(aiAdjustments.whites, -5),
-    blacks: withDefault(aiAdjustments.blacks, 5),
-    clarity: withDefault(aiAdjustments.clarity, 10),
-    vibrance: withDefault(aiAdjustments.vibrance, 5),
-    saturation: withDefault(aiAdjustments.saturation, 0),
+    contrast: round(clamp(withDefault(aiAdjustments.contrast, 5), -100, 100)),
+    highlights: round(clamp(withDefault(aiAdjustments.highlights, -10), -100, 100)),
+    shadows: round(clamp(withDefault(aiAdjustments.shadows, 10), -100, 100)),
+    whites: round(clamp(withDefault(aiAdjustments.whites, -5), -100, 100)),
+    blacks: round(clamp(withDefault(aiAdjustments.blacks, 5), -100, 100)),
+    clarity: round(clamp(withDefault(aiAdjustments.clarity, 10), -100, 100)),
+    vibrance: round(clamp(withDefault(aiAdjustments.vibrance, 5), -100, 100)),
+    saturation: round(clamp(withDefault(aiAdjustments.saturation, 0), -100, 100)),
   } : null;
 
   // Build conditional blocks - optimized with early returns
@@ -160,32 +161,33 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
 
   // HSL only applies to color treatment; B&W uses GrayMixer tags
   // Optimized: Only compute HSL values if needed
+  // Fix: Clamp HSL values to Lightroom's expected range (-100 to 100)
   // HSL values should be attributes on the rdf:Description element, not separate elements
   const hslValues = inc.hsl && !isBW ? {
-    hue_red: withDefault(aiAdjustments.hue_red, 0),
-    hue_orange: withDefault(aiAdjustments.hue_orange, 0),
-    hue_yellow: withDefault(aiAdjustments.hue_yellow, 0),
-    hue_green: withDefault(aiAdjustments.hue_green, 0),
-    hue_aqua: withDefault(aiAdjustments.hue_aqua, 0),
-    hue_blue: withDefault(aiAdjustments.hue_blue, 0),
-    hue_purple: withDefault(aiAdjustments.hue_purple, 0),
-    hue_magenta: withDefault(aiAdjustments.hue_magenta, 0),
-    sat_red: withDefault(aiAdjustments.sat_red, 0),
-    sat_orange: withDefault(aiAdjustments.sat_orange, 0),
-    sat_yellow: withDefault(aiAdjustments.sat_yellow, 0),
-    sat_green: withDefault(aiAdjustments.sat_green, 0),
-    sat_aqua: withDefault(aiAdjustments.sat_aqua, 0),
-    sat_blue: withDefault(aiAdjustments.sat_blue, 0),
-    sat_purple: withDefault(aiAdjustments.sat_purple, 0),
-    sat_magenta: withDefault(aiAdjustments.sat_magenta, 0),
-    lum_red: withDefault(aiAdjustments.lum_red, 0),
-    lum_orange: withDefault(aiAdjustments.lum_orange, 0),
-    lum_yellow: withDefault(aiAdjustments.lum_yellow, 0),
-    lum_green: withDefault(aiAdjustments.lum_green, 0),
-    lum_aqua: withDefault(aiAdjustments.lum_aqua, 0),
-    lum_blue: withDefault(aiAdjustments.lum_blue, 0),
-    lum_purple: withDefault(aiAdjustments.lum_purple, 0),
-    lum_magenta: withDefault(aiAdjustments.lum_magenta, 0),
+    hue_red: round(clamp(withDefault(aiAdjustments.hue_red, 0), -100, 100)),
+    hue_orange: round(clamp(withDefault(aiAdjustments.hue_orange, 0), -100, 100)),
+    hue_yellow: round(clamp(withDefault(aiAdjustments.hue_yellow, 0), -100, 100)),
+    hue_green: round(clamp(withDefault(aiAdjustments.hue_green, 0), -100, 100)),
+    hue_aqua: round(clamp(withDefault(aiAdjustments.hue_aqua, 0), -100, 100)),
+    hue_blue: round(clamp(withDefault(aiAdjustments.hue_blue, 0), -100, 100)),
+    hue_purple: round(clamp(withDefault(aiAdjustments.hue_purple, 0), -100, 100)),
+    hue_magenta: round(clamp(withDefault(aiAdjustments.hue_magenta, 0), -100, 100)),
+    sat_red: round(clamp(withDefault(aiAdjustments.sat_red, 0), -100, 100)),
+    sat_orange: round(clamp(withDefault(aiAdjustments.sat_orange, 0), -100, 100)),
+    sat_yellow: round(clamp(withDefault(aiAdjustments.sat_yellow, 0), -100, 100)),
+    sat_green: round(clamp(withDefault(aiAdjustments.sat_green, 0), -100, 100)),
+    sat_aqua: round(clamp(withDefault(aiAdjustments.sat_aqua, 0), -100, 100)),
+    sat_blue: round(clamp(withDefault(aiAdjustments.sat_blue, 0), -100, 100)),
+    sat_purple: round(clamp(withDefault(aiAdjustments.sat_purple, 0), -100, 100)),
+    sat_magenta: round(clamp(withDefault(aiAdjustments.sat_magenta, 0), -100, 100)),
+    lum_red: round(clamp(withDefault(aiAdjustments.lum_red, 0), -100, 100)),
+    lum_orange: round(clamp(withDefault(aiAdjustments.lum_orange, 0), -100, 100)),
+    lum_yellow: round(clamp(withDefault(aiAdjustments.lum_yellow, 0), -100, 100)),
+    lum_green: round(clamp(withDefault(aiAdjustments.lum_green, 0), -100, 100)),
+    lum_aqua: round(clamp(withDefault(aiAdjustments.lum_aqua, 0), -100, 100)),
+    lum_blue: round(clamp(withDefault(aiAdjustments.lum_blue, 0), -100, 100)),
+    lum_purple: round(clamp(withDefault(aiAdjustments.lum_purple, 0), -100, 100)),
+    lum_magenta: round(clamp(withDefault(aiAdjustments.lum_magenta, 0), -100, 100)),
   } : null;
   const hslAttrs = inc.hsl && !isBW && hslValues
     ? [
@@ -217,21 +219,22 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // Color Grading block - Optimized: Only compute if enabled
+  // Fix: Clamp color grading values to expected ranges (hue: 0-360, sat/lum: -100 to 100)
   const colorGradingValues = inc.colorGrading ? {
-    color_grade_shadow_hue: withDefault(aiAdjustments.color_grade_shadow_hue, 0),
-    color_grade_shadow_sat: withDefault(aiAdjustments.color_grade_shadow_sat, 0),
-    color_grade_shadow_lum: withDefault(aiAdjustments.color_grade_shadow_lum, 0),
-    color_grade_midtone_hue: withDefault(aiAdjustments.color_grade_midtone_hue, 0),
-    color_grade_midtone_sat: withDefault(aiAdjustments.color_grade_midtone_sat, 0),
-    color_grade_midtone_lum: withDefault(aiAdjustments.color_grade_midtone_lum, 0),
-    color_grade_highlight_hue: withDefault(aiAdjustments.color_grade_highlight_hue, 0),
-    color_grade_highlight_sat: withDefault(aiAdjustments.color_grade_highlight_sat, 0),
-    color_grade_highlight_lum: withDefault(aiAdjustments.color_grade_highlight_lum, 0),
-    color_grade_global_hue: withDefault(aiAdjustments.color_grade_global_hue, 0),
-    color_grade_global_sat: withDefault(aiAdjustments.color_grade_global_sat, 0),
-    color_grade_global_lum: withDefault(aiAdjustments.color_grade_global_lum, 0),
-    color_grade_blending: withDefault(aiAdjustments.color_grade_blending, 0),
-    color_grade_balance: withDefault(aiAdjustments.color_grade_balance, 0),
+    color_grade_shadow_hue: round(clamp(withDefault(aiAdjustments.color_grade_shadow_hue, 0), 0, 360)),
+    color_grade_shadow_sat: round(clamp(withDefault(aiAdjustments.color_grade_shadow_sat, 0), 0, 100)),
+    color_grade_shadow_lum: round(clamp(withDefault(aiAdjustments.color_grade_shadow_lum, 0), -100, 100)),
+    color_grade_midtone_hue: round(clamp(withDefault(aiAdjustments.color_grade_midtone_hue, 0), 0, 360)),
+    color_grade_midtone_sat: round(clamp(withDefault(aiAdjustments.color_grade_midtone_sat, 0), 0, 100)),
+    color_grade_midtone_lum: round(clamp(withDefault(aiAdjustments.color_grade_midtone_lum, 0), -100, 100)),
+    color_grade_highlight_hue: round(clamp(withDefault(aiAdjustments.color_grade_highlight_hue, 0), 0, 360)),
+    color_grade_highlight_sat: round(clamp(withDefault(aiAdjustments.color_grade_highlight_sat, 0), 0, 100)),
+    color_grade_highlight_lum: round(clamp(withDefault(aiAdjustments.color_grade_highlight_lum, 0), -100, 100)),
+    color_grade_global_hue: round(clamp(withDefault(aiAdjustments.color_grade_global_hue, 0), 0, 360)),
+    color_grade_global_sat: round(clamp(withDefault(aiAdjustments.color_grade_global_sat, 0), 0, 100)),
+    color_grade_global_lum: round(clamp(withDefault(aiAdjustments.color_grade_global_lum, 0), -100, 100)),
+    color_grade_blending: round(clamp(withDefault(aiAdjustments.color_grade_blending, 0), -100, 100)),
+    color_grade_balance: round(clamp(withDefault(aiAdjustments.color_grade_balance, 0), -100, 100)),
   } : null;
   const colorGradingBlock = inc.colorGrading && colorGradingValues
     ? [
@@ -253,15 +256,16 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // Black & White Mix block (GrayMixer*) when in monochrome - Optimized: Only compute if BW
+  // Fix: Clamp B&W mixer values to expected range (-100 to 100)
   const bwMixerValues = isBW ? {
-    gray_red: withDefault(aiAdjustments.gray_red, 0),
-    gray_orange: withDefault(aiAdjustments.gray_orange, 0),
-    gray_yellow: withDefault(aiAdjustments.gray_yellow, 0),
-    gray_green: withDefault(aiAdjustments.gray_green, 0),
-    gray_aqua: withDefault(aiAdjustments.gray_aqua, 0),
-    gray_blue: withDefault(aiAdjustments.gray_blue, 0),
-    gray_purple: withDefault(aiAdjustments.gray_purple, 0),
-    gray_magenta: withDefault(aiAdjustments.gray_magenta, 0),
+    gray_red: round(clamp(withDefault(aiAdjustments.gray_red, 0), -100, 100)),
+    gray_orange: round(clamp(withDefault(aiAdjustments.gray_orange, 0), -100, 100)),
+    gray_yellow: round(clamp(withDefault(aiAdjustments.gray_yellow, 0), -100, 100)),
+    gray_green: round(clamp(withDefault(aiAdjustments.gray_green, 0), -100, 100)),
+    gray_aqua: round(clamp(withDefault(aiAdjustments.gray_aqua, 0), -100, 100)),
+    gray_blue: round(clamp(withDefault(aiAdjustments.gray_blue, 0), -100, 100)),
+    gray_purple: round(clamp(withDefault(aiAdjustments.gray_purple, 0), -100, 100)),
+    gray_magenta: round(clamp(withDefault(aiAdjustments.gray_magenta, 0), -100, 100)),
   } : null;
   const bwMixerBlock = isBW && bwMixerValues
     ? [
