@@ -169,12 +169,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({
   } | null>(null);
 
   // Mask inclusion toggle (initialized from settings)
-  const [includeMasks, setIncludeMasks] = useState<boolean>(true);
+  const [includeMasks, setIncludeMasks] = useState<boolean>(false);
 
-  // Initialize includeMasks from settings when they load
+  // Initialize includeMasks from settings when they load (default is false)
   useEffect(() => {
     if (settings) {
-      setIncludeMasks((settings as any)?.includeMasks !== false);
+      setIncludeMasks((settings as any)?.includeMasks === true);
     }
   }, [settings]);
 

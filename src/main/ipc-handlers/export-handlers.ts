@@ -183,7 +183,7 @@ export class ExportHandlers {
       _event,
       recipeIds: string[],
       exportType: ExportType,
-      includeMasks: boolean = true
+      includeMasks: boolean = false
     ): Promise<ExportResult> => {
       try {
         console.log('[ExportHandlers] export-selected-recipes-as-files called with:', { recipeIds, exportType, includeMasks });
