@@ -132,12 +132,13 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     // Purple: interpolate between blue and magenta (C1 doesn't have separate purple)
     const gray_purple = clamp((aiAdjustments as any).gray_purple, -100, 100);
 
-    baseElements.push(E('BwRed', typeof gray_red === 'number' ? gray_red + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0));
-    baseElements.push(E('BwGreen', typeof gray_green === 'number' ? gray_green : 0));
-    baseElements.push(E('BwBlue', typeof gray_blue === 'number' ? gray_blue + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0));
-    baseElements.push(E('BwYellow', typeof gray_yellow === 'number' ? gray_yellow + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0));
-    baseElements.push(E('BwCyan', typeof gray_cyan === 'number' ? gray_cyan : 0));
-    baseElements.push(E('BwMagenta', typeof gray_magenta === 'number' ? gray_magenta + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0));
+    // Fix: Clamp combined B&W mixer values to prevent exceeding -100 to 100 range
+    baseElements.push(E('BwRed', clamp(typeof gray_red === 'number' ? gray_red + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0, -100, 100)));
+    baseElements.push(E('BwGreen', clamp(typeof gray_green === 'number' ? gray_green : 0, -100, 100)));
+    baseElements.push(E('BwBlue', clamp(typeof gray_blue === 'number' ? gray_blue + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0, -100, 100)));
+    baseElements.push(E('BwYellow', clamp(typeof gray_yellow === 'number' ? gray_yellow + (typeof gray_orange === 'number' ? gray_orange * 0.5 : 0) : 0, -100, 100)));
+    baseElements.push(E('BwCyan', clamp(typeof gray_cyan === 'number' ? gray_cyan : 0, -100, 100)));
+    baseElements.push(E('BwMagenta', clamp(typeof gray_magenta === 'number' ? gray_magenta + (typeof gray_purple === 'number' ? gray_purple * 0.5 : 0) : 0, -100, 100)));
   }
 
   if (filmCurveName) {
@@ -336,10 +337,11 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
    * @see example/coloreditor.costyle for real-world example
    */
   // Optimized: buildColorZone - cache calculations and use faster math
+  // Fix: Clamp HSL values to expected range (-100 to 100) before using
   const buildColorZone = (hue: number | undefined, sat: number | undefined, lum: number | undefined, hueAngleDegrees: number): string => {
-    const h = hue || 0;
-    const s = sat || 0;
-    const l = lum || 0;
+    const h = clamp(hue, -100, 100) || 0;
+    const s = clamp(sat, -100, 100) || 0;
+    const l = clamp(lum, -100, 100) || 0;
 
     // Always enable zones (Capture One shows all colors even with 0 adjustments)
     const enabled = 1;
