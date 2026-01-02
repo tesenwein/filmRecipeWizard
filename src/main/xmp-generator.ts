@@ -127,20 +127,6 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     saturation: withDefault(aiAdjustments.saturation, 0),
   } : null;
 
-  const presetName = aiAdjustments.preset_name || (include?.recipeName as string) || 'Custom Recipe';
-  const groupName = 'film-recipe-wizard';
-  // Inclusion flags: only include sections when explicitly enabled.
-  const inc = {
-    wbBasic: include?.basic === true,
-    hsl: include?.hsl === true,
-    colorGrading: include?.colorGrading === true,
-    curves: include?.curves === true,
-    pointColor: include?.pointColor === true,
-    grain: include?.grain === true,
-    vignette: include?.vignette === true,
-    masks: include?.masks === true,
-  } as const;
-
   // Build conditional blocks - optimized with early returns
   const wbBasicBlock = inc.wbBasic && basicToneValues
     ? [
