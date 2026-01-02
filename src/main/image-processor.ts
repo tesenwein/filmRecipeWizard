@@ -87,7 +87,8 @@ export class ImageProcessor {
   // Set OpenAI API key
   async setOpenAIKey(key: string): Promise<void> {
     await this.settingsService.saveSettings({ openaiKey: key });
-    // Reset analyzer to use new key
+    // Reset AI service to use new key - force recreation on next use
+    this.aiService = null;
   }
 
   async generateLightroomPreset(data: any): Promise<ProcessingResult> {
