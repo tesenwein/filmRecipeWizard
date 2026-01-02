@@ -1,6 +1,5 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
-import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 import { Box, Button, Chip, IconButton, Paper, Tooltip } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { logError } from '../../shared/error-utils';
