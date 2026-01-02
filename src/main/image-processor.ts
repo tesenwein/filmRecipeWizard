@@ -35,7 +35,7 @@ export class ImageProcessor {
   private async ensureAIService(): Promise<AIService> {
     if (!this.aiService) {
       const settings = await this.settingsService.loadSettings();
-      this.aiService = new AIService(settings.openaiKey || '', 'gpt-5');
+      this.aiService = new AIService(settings.openaiKey || '', 'gpt-5.2-2025-12-11');
     }
     return this.aiService;
   }

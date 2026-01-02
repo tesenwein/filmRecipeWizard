@@ -315,11 +315,10 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     if (selectedRecipes.size === 0) return;
     
     try {
-      // Use the existing exportSelectedRecipes function which creates a ZIP file with only selected recipes
       const selectedRecipeIds = Array.from(selectedRecipes);
-      const res = await window.electronAPI.exportSelectedRecipes(selectedRecipeIds);
+      const res = await window.electronAPI.exportSelectedPresets(selectedRecipeIds);
       if (res.success) {
-        showSuccess(`Successfully exported ${selectedRecipes.size} recipe${selectedRecipes.size !== 1 ? 's' : ''} as presets ZIP file`);
+        showSuccess(`Successfully exported ${selectedRecipes.size} preset${selectedRecipes.size !== 1 ? 's' : ''} as ZIP file`);
       } else if (res.error && res.error !== 'Export canceled') {
         showError(`Export failed: ${res.error}`);
       }
@@ -332,11 +331,10 @@ const RecipeGallery: React.FC<RecipeGalleryProps> = ({ onOpenRecipe, onNewProces
     if (selectedRecipes.size === 0) return;
     
     try {
-      // Use the existing exportSelectedRecipes function which creates a ZIP file with only selected recipes
       const selectedRecipeIds = Array.from(selectedRecipes);
-      const res = await window.electronAPI.exportSelectedRecipes(selectedRecipeIds);
+      const res = await window.electronAPI.exportSelectedProfiles(selectedRecipeIds);
       if (res.success) {
-        showSuccess(`Successfully exported ${selectedRecipes.size} recipe${selectedRecipes.size !== 1 ? 's' : ''} as profiles ZIP file`);
+        showSuccess(`Successfully exported ${selectedRecipes.size} profile${selectedRecipes.size !== 1 ? 's' : ''} as ZIP file`);
       } else if (res.error && res.error !== 'Export canceled') {
         showError(`Export failed: ${res.error}`);
       }

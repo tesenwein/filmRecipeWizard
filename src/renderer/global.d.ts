@@ -107,6 +107,8 @@ declare global {
       exportRecipe: (processId: string) => Promise<ExportResult>;
       exportAllRecipes: () => Promise<ExportResult>;
       exportSelectedRecipes: (recipeIds: string[]) => Promise<ExportResult>;
+      exportSelectedPresets: (recipeIds: string[]) => Promise<ExportResult>;
+      exportSelectedProfiles: (recipeIds: string[]) => Promise<ExportResult>;
       importRecipe: () => Promise<ImportResult>;
 
       // AI Image generation

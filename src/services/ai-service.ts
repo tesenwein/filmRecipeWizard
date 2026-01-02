@@ -18,7 +18,7 @@ export interface AIOptions {
 export class AIService {
     private openai: OpenAI;
 
-    constructor(apiKey: string, _model: string = 'gpt-5') {
+    constructor(apiKey: string, _model: string = 'gpt-5.2-2025-12-11') {
         this.openai = new OpenAI({
             apiKey: apiKey,
         });
@@ -42,7 +42,7 @@ export class AIService {
 
             // Call OpenAI directly with GPT-5
             const response = await this.openai.chat.completions.create({
-                model: 'gpt-5',
+                model: 'gpt-5gpt-5.2-2025-12-11',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     ...messages

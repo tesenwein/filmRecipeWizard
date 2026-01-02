@@ -34,6 +34,8 @@ const electronAPI = {
   exportRecipe: (processId: string) => ipcRenderer.invoke('export-recipe', processId),
   exportAllRecipes: () => ipcRenderer.invoke('export-all-recipes'),
   exportSelectedRecipes: (recipeIds: string[]) => ipcRenderer.invoke('export-selected-recipes', recipeIds),
+  exportSelectedPresets: (recipeIds: string[]) => ipcRenderer.invoke('export-selected-presets', recipeIds),
+  exportSelectedProfiles: (recipeIds: string[]) => ipcRenderer.invoke('export-selected-profiles', recipeIds),
   importRecipe: () => ipcRenderer.invoke('import-recipe'),
   importXMP: (data: { filePath?: string; fileContent?: string; title?: string; description?: string }) =>
     ipcRenderer.invoke('import-xmp', data),

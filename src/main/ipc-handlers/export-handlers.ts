@@ -226,5 +226,153 @@ export class ExportHandlers {
         return createErrorResponse(error);
       }
     });
+
+    // Export selected recipes as Lightroom presets to ZIP
+    ipcMain.handle('export-selected-presets', async (_event, recipeIds: string[]): Promise<ExportResult> => {
+      try {
+        if (!recipeIds || recipeIds.length === 0) {
+          return { success: false, error: 'No recipes selected' };
+        }
+
+        const recipes = [];
+        for (const recipeId of recipeIds) {
+          const recipe = await this.storageService.getProcess(recipeId);
+          if (recipe) {
+            recipes.push(recipe);
+          }
+        }
+
+        if (recipes.length === 0) {
+          return { success: false, error: 'No valid recipes found' };
+        }
+
+        const saveRes = await dialog.showSaveDialog({
+          title: 'Export Lightroom Presets',
+          defaultPath: 'Lightroom-Presets.zip',
+          filters: [
+            { name: 'ZIP Archive', extensions: ['zip'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+
+        if (saveRes.canceled || !saveRes.filePath) {
+          return { success: false, error: 'Export canceled' };
+        }
+
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip();
+
+        // Generate preset files for each recipe
+        for (const recipe of recipes) {
+          const adjustments = recipe.results?.[0]?.metadata?.aiAdjustments;
+          if (!adjustments) {
+            continue; // Skip recipes without adjustments
+          }
+
+          const recipeName = recipe.name || adjustments.preset_name || 'Custom-Preset';
+          const safeName = recipeName
+            .replace(/[^A-Za-z0-9 _-]+/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/\s/g, '-');
+
+          const include = {
+            basic: true,
+            hsl: true,
+            colorGrading: true,
+            curves: true,
+            pointColor: true,
+            grain: true,
+            vignette: true,
+            masks: true,
+            exposure: false,
+            sharpenNoise: false,
+          };
+
+          const xmpContent = generateXMPContent(adjustments, { ...include, recipeName });
+          const filename = `${safeName}.xmp`;
+          zip.addFile(filename, Buffer.from(xmpContent, 'utf8'));
+        }
+
+        zip.writeZip(saveRes.filePath);
+        return { success: true, filePath: saveRes.filePath, count: recipes.length };
+      } catch (error) {
+        logError('IPC', 'Error exporting selected presets', error);
+        return createErrorResponse(error);
+      }
+    });
+
+    // Export selected recipes as Lightroom profiles to ZIP
+    ipcMain.handle('export-selected-profiles', async (_event, recipeIds: string[]): Promise<ExportResult> => {
+      try {
+        if (!recipeIds || recipeIds.length === 0) {
+          return { success: false, error: 'No recipes selected' };
+        }
+
+        const recipes = [];
+        for (const recipeId of recipeIds) {
+          const recipe = await this.storageService.getProcess(recipeId);
+          if (recipe) {
+            recipes.push(recipe);
+          }
+        }
+
+        if (recipes.length === 0) {
+          return { success: false, error: 'No valid recipes found' };
+        }
+
+        const saveRes = await dialog.showSaveDialog({
+          title: 'Export Lightroom Profiles',
+          defaultPath: 'Lightroom-Profiles.zip',
+          filters: [
+            { name: 'ZIP Archive', extensions: ['zip'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+
+        if (saveRes.canceled || !saveRes.filePath) {
+          return { success: false, error: 'Export canceled' };
+        }
+
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip();
+
+        // Generate profile files for each recipe
+        for (const recipe of recipes) {
+          const adjustments = recipe.results?.[0]?.metadata?.aiAdjustments;
+          if (!adjustments) {
+            continue; // Skip recipes without adjustments
+          }
+
+          const recipeName = recipe.name || adjustments.preset_name || 'Custom-Profile';
+          const safeName = recipeName
+            .replace(/[^A-Za-z0-9 _-]+/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/\s/g, '-');
+
+          try {
+            const result = await this.imageProcessor.generateCameraProfile({ 
+              adjustments, 
+              recipeName: recipeName 
+            });
+            
+            if (result.success && result.xmpContent) {
+              const filename = `${safeName}-Profile.xmp`;
+              zip.addFile(filename, Buffer.from(result.xmpContent, 'utf8'));
+            }
+          } catch (error) {
+            logError('IPC', `Error generating profile for recipe ${recipe.id}`, error);
+            // Continue with other recipes even if one fails
+          }
+        }
+
+        zip.writeZip(saveRes.filePath);
+        return { success: true, filePath: saveRes.filePath, count: recipes.length };
+      } catch (error) {
+        logError('IPC', 'Error exporting selected profiles', error);
+        return createErrorResponse(error);
+      }
+    });
   }
 }
