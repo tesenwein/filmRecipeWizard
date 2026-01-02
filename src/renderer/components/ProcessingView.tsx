@@ -13,12 +13,11 @@ import { ProcessingState } from '../../shared/types';
 interface ProcessingViewProps {
   processingState: ProcessingState;
   baseImage: string | null;
-  targetImages: string[];
   prompt?: string;
 }
 
 
-const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage, targetImages: _targetImages }) => {
+const ProcessingView: React.FC<ProcessingViewProps> = ({ processingState, baseImage: _baseImage }) => {
   const [loadingText, setLoadingText] = useState('Initializing AI analysis...');
 
   // Simulate realistic progress during processing

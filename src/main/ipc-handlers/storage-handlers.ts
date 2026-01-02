@@ -77,23 +77,6 @@ export class StorageHandlers {
             }
           }
 
-          // Prepare target images as base64 for immediate processing only (do not persist)
-          let targetImageDataEphemeral: string[] = [];
-          const targetImages: string[] | undefined = Array.isArray(
-            (processData as any).targetImages
-          )
-            ? (processData as any).targetImages
-            : undefined;
-          if (targetImages && targetImages.length > 0) {
-            for (const t of targetImages.slice(0, 3)) {
-              try {
-                const b64 = await this.storageService.convertImageToBase64(t);
-                targetImageDataEphemeral.push(b64);
-              } catch {
-                console.warn('[IPC] save-process: failed to prepare target image');
-              }
-            }
-          }
 
           // Load author profile from settings, if available
           let authorProfile: AppSettings['userProfile'] | undefined = undefined;
@@ -119,7 +102,7 @@ export class StorageHandlers {
           } as ProcessHistory;
 
           await this.storageService.addProcess(process);
-          return { success: true, process, targetImageData: targetImageDataEphemeral };
+          return { success: true, process };
         } catch (error) {
           console.error('[IPC] Error saving process:', error);
           return {
@@ -239,9 +222,8 @@ export class StorageHandlers {
           };
         }
 
-        const result: { baseImageUrls: string[]; targetImageUrls: string[] } = {
+        const result: { baseImageUrls: string[] } = {
           baseImageUrls: [],
-          targetImageUrls: [],
         };
 
         if ((process as any).recipeImageData) {
@@ -254,9 +236,6 @@ export class StorageHandlers {
             result.baseImageUrls = [];
           }
         }
-
-        // Do not persist target images anymore; no target previews returned
-        result.targetImageUrls = [];
 
         return { success: true, ...result };
       } catch (error) {

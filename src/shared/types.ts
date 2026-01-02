@@ -38,6 +38,9 @@ export interface StyleOptions {
   // Optional artist and film selections
   artistStyle?: { key: string; name: string; category: string; blurb: string; prompt?: string; colorType?: 'color' | 'monochrome' };
   filmStyle?: { key: string; name: string; category: string; blurb: string; prompt?: string };
+  
+  // Include masks in AI generation
+  includeMasks?: boolean;
 }
 
 export interface Recipe {

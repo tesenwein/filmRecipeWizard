@@ -86,7 +86,6 @@ interface ProcessedImageCardProps {
   result: ProcessingResult;
   index: number;
   baseImageDataUrl?: string | null;
-  targetImageDataUrl?: string;
   processPrompt?: string;
   processOptions?: any;
   processId?: string;
@@ -100,7 +99,6 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
   result,
   index,
   baseImageDataUrl,
-  targetImageDataUrl,
   processPrompt,
   processOptions,
   processId,
@@ -119,111 +117,58 @@ const ProcessedImageCard: React.FC<ProcessedImageCardProps> = ({
         animationDelay: `${index * 0.1}s`,
       }}
     >
-      {/* Image Previews: Base vs Result */}
+      {/* Image Preview: Base Reference */}
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-          gap: 2.5,
           mb: 2.5,
         }}
       >
-        <Box>
-          <Typography
-            variant="caption"
-            sx={{
-              fontSize: 11,
-              color: '#5f6b74',
-              mb: 0.75,
-              textTransform: 'uppercase',
-              fontWeight: 600,
-              display: 'block',
-            }}
-          >
-            Base Reference
-          </Typography>
-          <Box
-            sx={{
-              width: '100%',
-              height: 380,
-              borderRadius: 2,
-              overflow: 'hidden',
-              border: 'none',
-              position: 'relative',
-            }}
-          >
-            <SingleImage source={baseImageDataUrl || undefined} alt="Base" fit="contain" />
-            {!baseImageDataUrl && processId && (
-              <Tooltip title="Add base image">
-                <IconButton
-                  size="small"
-                  onClick={onAttachBaseImage}
-                  className="no-drag"
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    zIndex: 2,
-                    backgroundColor: 'rgba(255,255,255,0.7)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
-                  }}
-                  aria-label="Add base image"
-                >
-                  <AddPhotoAlternateOutlinedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        </Box>
-        <Box>
-          <Typography
-            variant="caption"
-            sx={{
-              fontSize: 11,
-              color: '#5f6b74',
-              mb: 0.75,
-              textTransform: 'uppercase',
-              fontWeight: 600,
-              display: 'block',
-            }}
-          >
-            Processed Result
-          </Typography>
-          <Box
-            sx={{
-              width: '100%',
-              height: 380,
-              borderRadius: 2,
-              overflow: 'hidden',
-              border: 'none',
-              position: 'relative',
-            }}
-          >
-            {targetImageDataUrl ? (
-              <SingleImage
-                source={targetImageDataUrl}
-                alt={`Processed image ${index + 1}`}
-                fit="contain"
-              />
-            ) : (
-              <Box
+        <Typography
+          variant="caption"
+          sx={{
+            fontSize: 11,
+            color: '#5f6b74',
+            mb: 0.75,
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            display: 'block',
+          }}
+        >
+          Base Reference
+        </Typography>
+        <Box
+          sx={{
+            width: '100%',
+            height: 380,
+            borderRadius: 2,
+            overflow: 'hidden',
+            border: 'none',
+            position: 'relative',
+          }}
+        >
+          <SingleImage source={baseImageDataUrl || undefined} alt="Base" fit="contain" />
+          {!baseImageDataUrl && processId && (
+            <Tooltip title="Add base image">
+              <IconButton
+                size="small"
+                onClick={onAttachBaseImage}
+                className="no-drag"
                 sx={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: '#f8f9ff',
-                  color: '#5f6b74',
-                  fontSize: 14,
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  zIndex: 2,
+                  backgroundColor: 'rgba(255,255,255,0.7)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
                 }}
+                aria-label="Add base image"
               >
-                No image available
-              </Box>
-            )}
-          </Box>
+                <AddPhotoAlternateOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Box>
 

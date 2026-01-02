@@ -3,7 +3,6 @@ import { ExportResult, ImportResult, ProcessingResult, StyleOptions } from '../s
 // Additional type definitions for better type safety
 interface ProcessingRequest {
   baseImagePath: string;
-  targetImagePaths: string[];
   hint?: string;
   options: StyleOptions;
   processId?: string;
@@ -76,18 +75,9 @@ declare global {
       processDroppedFiles: (files: { name: string; data: string }[]) => Promise<string[]>;
 
       // Image processing
-      processImages: (data: {
-        baseImagePath: string;
-        targetImagePaths: string[];
-        hint?: string;
-        options: StyleOptions;
-        processId?: string;
-      }) => Promise<any[]>;
       processWithStoredImages: (data: {
         processId: string;
-        targetIndex?: number;
         baseImageData?: string | string[];
-        targetImageData?: string[];
         prompt?: string;
         styleOptions?: StyleOptions;
       }) => Promise<any>;
@@ -106,9 +96,7 @@ declare global {
       // Recipe import/export
       exportRecipe: (processId: string) => Promise<ExportResult>;
       exportAllRecipes: () => Promise<ExportResult>;
-      exportSelectedRecipes: (recipeIds: string[]) => Promise<ExportResult>;
-      exportSelectedPresets: (recipeIds: string[]) => Promise<ExportResult>;
-      exportSelectedProfiles: (recipeIds: string[]) => Promise<ExportResult>;
+      exportSelectedRecipesAsFiles: (recipeIds: string[], exportType: 'lightroom-preset' | 'lightroom-profile' | 'capture-one-style', includeMasks?: boolean) => Promise<ExportResult>;
       importRecipe: () => Promise<ImportResult>;
 
       // AI Image generation
@@ -155,7 +143,6 @@ declare global {
       getImageDataUrls: (processId: string) => Promise<{
         success: boolean;
         baseImageUrls: string[];
-        targetImageUrls: string[];
         error?: string;
       }>;
       setBaseImage: (

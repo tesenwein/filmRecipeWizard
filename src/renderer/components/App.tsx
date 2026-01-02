@@ -34,7 +34,6 @@ const AppContent: React.FC = () => {
   const [routeQuery, setRouteQuery] = useState<Record<string, string>>(initialHash.query);
 
   const [baseImages, setBaseImages] = useState<string[]>([]);
-  const [targetImages, setTargetImages] = useState<string[]>([]);
   const [prompt, setPrompt] = useState<string>('');
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [currentStep, setCurrentStep] = useState<'gallery' | 'upload' | 'processing' | 'results'>(
@@ -46,10 +45,6 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     currentProcessIdRef.current = currentProcessId;
   }, [currentProcessId]);
-  const targetImagesRef = useRef<string[]>([]);
-  useEffect(() => {
-    targetImagesRef.current = targetImages;
-  }, [targetImages]);
   const [startupStatus, setStartupStatus] = useState<{
     status: string;
     progress: number;
@@ -128,14 +123,13 @@ const AppContent: React.FC = () => {
 
   // No settings dialog anymore; routing controls settings page
 
-  const handleImagesSelected = (bases: string[], targets: string[]) => {
+  const handleImagesSelected = (bases: string[]) => {
     setBaseImages(bases.slice(0, 3));
-    setTargetImages(targets.slice(0, 3));
     setResults([]);
   };
 
   const handleStartProcessing = async () => {
-    // Prevent concurrent runs (target images are now optional)
+    // Prevent concurrent runs
     if (startingRef.current || processingState.isProcessing) return;
     startingRef.current = true;
 
@@ -145,7 +139,6 @@ const AppContent: React.FC = () => {
     try {
       const processData = {
         baseImages: baseImages.length ? baseImages.slice(0, 3) : undefined,
-        targetImages,
         results: [],
         prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
         userOptions: styleOptions,
@@ -171,10 +164,6 @@ const AppContent: React.FC = () => {
         returnedBase64.base = result?.process?.recipeImageData
           ? [result.process.recipeImageData]
           : undefined;
-        // Use ephemeral target base64 data returned by save-process (not persisted)
-        returnedBase64.targets = Array.isArray((result as any)?.targetImageData)
-          ? (result as any).targetImageData
-          : [];
           
         // Debug logging for reference image data
         // Calculate base length for validation
@@ -216,9 +205,7 @@ const AppContent: React.FC = () => {
       try {
         const processingData = {
           processId: newProcessId,
-          targetIndex: 0,
           baseImageData: returnedBase64.base,
-          targetImageData: returnedBase64.targets || undefined,
           prompt: prompt && prompt.trim() ? prompt.trim() : undefined,
           styleOptions: styleOptions,
         };
@@ -264,10 +251,9 @@ const AppContent: React.FC = () => {
       clearInterval(statusIntervalRef.current);
       statusIntervalRef.current = null;
     }
-    // Convert the results to include inputPath for proper storage
-    const inputs = targetImagesRef.current || [];
-    const results: ProcessingResult[] = processingResults.map((result, index) => ({
-      inputPath: inputs[index],
+    // Convert the results for proper storage
+    const results: ProcessingResult[] = processingResults.map((result) => ({
+      inputPath: '',
       outputPath: result.outputPath,
       success: result.success,
       error: result.error,
@@ -321,7 +307,6 @@ const AppContent: React.FC = () => {
 
   const handleReset = () => {
     setBaseImages([]);
-    setTargetImages([]);
     setResults([]);
     setCurrentProcessId(null);
     setCurrentStep('upload');
@@ -343,7 +328,6 @@ const AppContent: React.FC = () => {
     setProcessingState({ isProcessing: false, progress: 0, status: '' });
     // Clear current images when opening a recipe
     setBaseImages([]);
-    setTargetImages([]);
     setCurrentProcessId(recipe.id);
     try {
       if (recipe.id) {
@@ -466,14 +450,13 @@ const AppContent: React.FC = () => {
         const id = routeQuery?.id;
         if (id) {
           try {
-            const res = await window.electronAPI.getProcess(id);
-            if (res?.success && res.process) {
-              setBaseImages([]);
-              setTargetImages([]);
-              setResults(res.process.results || []);
-              setCurrentProcessId(res.process.id);
-              setCurrentStep('results');
-            }
+        const res = await window.electronAPI.getProcess(id);
+        if (res?.success && res.process) {
+          setBaseImages([]);
+          setResults(res.process.results || []);
+          setCurrentProcessId(res.process.id);
+          setCurrentStep('results');
+        }
           } catch (e) {
             console.warn('Failed to restore recipe from hash:', e);
           }
@@ -503,7 +486,6 @@ const AppContent: React.FC = () => {
         currentStep={currentStep}
         currentProcessId={currentProcessId}
         baseImages={baseImages}
-        targetImages={targetImages}
         prompt={prompt}
         results={results}
         styleOptions={styleOptions}

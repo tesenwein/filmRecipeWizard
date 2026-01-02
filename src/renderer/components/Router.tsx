@@ -16,14 +16,13 @@ interface RouterProps {
   currentStep: 'gallery' | 'upload' | 'processing' | 'results';
   currentProcessId: string | null;
   baseImages: string[];
-  targetImages: string[];
   prompt: string;
   styleOptions?: StyleOptions;
   results: ProcessingResult[];
   processingState: { isProcessing: boolean; progress: number; status: string };
   onOpenRecipe: (recipe: Recipe) => Promise<void>;
   onNewProcess: () => void;
-  onImagesSelected: (bases: string[], targets: string[]) => void;
+  onImagesSelected: (bases: string[]) => void;
   onStartProcessing: () => Promise<void>;
   onPromptChange: (prompt: string) => void;
   onStyleOptionsChange: (options: Partial<StyleOptions>) => void;
@@ -38,7 +37,6 @@ const Router: React.FC<RouterProps> = ({
   currentStep,
   currentProcessId,
   baseImages,
-  targetImages,
   prompt,
   results,
   styleOptions,
@@ -79,7 +77,6 @@ const Router: React.FC<RouterProps> = ({
               onImagesSelected={onImagesSelected}
               onStartProcessing={onStartProcessing}
               baseImages={baseImages}
-              targetImages={targetImages}
               prompt={prompt}
               onPromptChange={onPromptChange}
               styleOptions={styleOptions}
@@ -92,7 +89,6 @@ const Router: React.FC<RouterProps> = ({
             <ProcessingView
               processingState={processingState}
               baseImage={baseImages[0] || null}
-              targetImages={targetImages}
               prompt={prompt}
             />
           </div>

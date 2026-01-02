@@ -1,6 +1,6 @@
 {
   "name": "film-recipe-wizard",
-  "version": "2.9.6",
+  "version": "2.10.0",
   "description": "Create and apply photo recipes with AI-powered color grading",
   "main": "dist/main/main.js",
   "scripts": {
@@ -13,8 +13,8 @@
     "build:renderer": "webpack --config webpack.renderer.js",
     "watch:main": "tsc -p src/main/tsconfig.json --watch",
     "watch:renderer": "webpack --config webpack.renderer.js --watch",
-    "lint": "eslint 'src/**/*.ts' 'src/**/*.tsx' --fix",
-    "lint:check": "eslint 'src/**/*.ts' 'src/**/*.tsx'",
+    "lint": "eslint src/**/*.ts src/**/*.tsx --fix",
+    "lint:check": "eslint src/**/*.ts src/**/*.tsx",
     "typecheck": "tsc -p src/main/tsconfig.json --noEmit && tsc -p src/renderer/tsconfig.json --noEmit",
     "clean": "rimraf dist release",
     "prepare:build": "npm run clean && npm run build && npm run validate-build",

@@ -50,7 +50,7 @@ export async function downloadLightroomPreset(adjustments: any, recipeName?: str
       pointColor: true,
       grain: true,
       vignette: true,
-      masks: includeMasks !== false,
+      masks: includeMasks === true, // Default is false (masks disabled)
       exposure: false,
       sharpenNoise: false,
     },
@@ -90,14 +90,14 @@ export async function downloadCaptureOneStyle(adjustments: any, include?: any, r
     pointColor: true,
     grain: true,
     vignette: true,
-    masks: includeMasks !== false,
+    masks: includeMasks === true, // Default is false (masks disabled)
     exposure: false,
     sharpenNoise: false,
   };
 
   // Override masks if includeMasks is explicitly provided
   if (includeMasks !== undefined) {
-    finalInclude.masks = includeMasks;
+    finalInclude.masks = includeMasks === true;
   }
 
   return unifiedExport({
@@ -124,7 +124,7 @@ export async function saveLightroomPresetToFolder(adjustments: any, recipeName?:
       pointColor: true,
       grain: true,
       vignette: true,
-      masks: includeMasks !== false,
+      masks: includeMasks === true, // Default is false (masks disabled)
       exposure: false,
       sharpenNoise: false,
     },
@@ -164,14 +164,14 @@ export async function saveCaptureOneStyleToFolder(adjustments: any, include?: an
     pointColor: true,
     grain: true,
     vignette: true,
-    masks: includeMasks !== false,
+    masks: includeMasks === true, // Default is false (masks disabled)
     exposure: false,
     sharpenNoise: false,
   };
 
   // Override masks if includeMasks is explicitly provided
   if (includeMasks !== undefined) {
-    finalInclude.masks = includeMasks;
+    finalInclude.masks = includeMasks === true;
   }
 
   return unifiedExport({

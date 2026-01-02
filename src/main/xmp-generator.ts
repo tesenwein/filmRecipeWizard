@@ -5,13 +5,35 @@ import { getAllMaskTypes, getMaskConfig, normalizeMaskType } from '../shared/mas
 // Using raw values directly - no scaling needed
 
 
+// Optimized UUID generation - faster than regex replace
+function generateUUID(): string {
+  const hex = '0123456789ABCDEF';
+  let uuid = '';
+  // Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      uuid += '-';
+    } else if (i === 14) {
+      uuid += '4';
+    } else if (i === 19) {
+      const r = (Math.random() * 4) | 0;
+      uuid += hex[(r & 0x3) | 0x8];
+    } else {
+      uuid += hex[(Math.random() * 16) | 0];
+    }
+  }
+  return uuid;
+}
+
 export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
   // Generate XMP content for Lightroom based on AI adjustments
+  // Optimized: Cache isBW check
   const isBW =
     !!aiAdjustments.monochrome ||
     aiAdjustments.treatment === 'black_and_white' ||
     (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
     (typeof aiAdjustments.saturation === 'number' && aiAdjustments.saturation <= -100);
+  
   // Normalize any AI-provided profile name to Adobe's canonical set
   const normalizeCameraProfile = (name?: string): string | undefined => {
     if (!name) return undefined;
@@ -25,9 +47,12 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   };
 
   // Heuristic auto-selection based on masks/scene if AI didn't specify
+  // Optimized: Only compute if needed
   const autoSelectCameraProfile = (): string => {
     if (isBW) return 'Adobe Monochrome';
     const masks = (aiAdjustments as any).masks || [];
+    if (masks.length === 0) return 'Adobe Color';
+    
     let faceCount = 0;
     let landscapeLike = 0;
     let hasSky = false;
@@ -50,36 +75,32 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
   const treatmentTag = isBW
     ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>'
     : '<crs:Treatment>Color</crs:Treatment>';
-  const tag = (name: string, val?: number | string) =>
-    val === 0 || val === '0' || !!val ? `      <crs:${name}>${val}</crs:${name}>\n` : '';
-  const attrIf = (k: string, val?: string | number) =>
-    val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
+  
+  // Optimized: Inline simple tag/attr functions to reduce function call overhead
+  const tag = (name: string, val?: number | string) => {
+    if (val === 0 || val === '0' || (val !== undefined && val !== null && val !== '')) {
+      return `      <crs:${name}>${val}</crs:${name}>\n`;
+    }
+    return '';
+  };
+  const attrIf = (k: string, val?: string | number) => {
+    if (val === 0 || val === '0' || (val !== undefined && val !== null)) {
+      return ` crs:${k}="${val}"`;
+    }
+    return '';
+  };
 
-  // Clamp helpers to keep values within Lightroom-expected ranges
+  // Optimized: Inline clamp/round/withDefault for better performance
   const clamp = (v: any, min: number, max: number): number | undefined => {
     if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
     return Math.max(min, Math.min(max, v));
   };
   const round = (v: number | undefined) => (typeof v === 'number' ? Math.round(v) : undefined);
-
-  // Helper function to provide default values when adjustments are undefined
   const withDefault = (v: any, def: number): number => {
-    if (typeof v === 'number' && Number.isFinite(v)) return v;
-    return def;
+    return (typeof v === 'number' && Number.isFinite(v)) ? v : def;
   };
 
-  // Use raw values with meaningful defaults that create subtle visible effects
-  const basicToneValues = {
-    contrast: withDefault(aiAdjustments.contrast, 5), // Subtle contrast increase
-    highlights: withDefault(aiAdjustments.highlights, -10), // Slight highlight reduction
-    shadows: withDefault(aiAdjustments.shadows, 10), // Slight shadow lift
-    whites: withDefault(aiAdjustments.whites, -5), // Slight white point reduction
-    blacks: withDefault(aiAdjustments.blacks, 5), // Slight black point lift
-    clarity: withDefault(aiAdjustments.clarity, 10), // Subtle clarity boost
-    vibrance: withDefault(aiAdjustments.vibrance, 5), // Slight vibrance increase
-    saturation: withDefault(aiAdjustments.saturation, 0), // Keep saturation neutral
-  };
-
+  // Optimized: Only compute basicToneValues if wbBasic is enabled
   const presetName = aiAdjustments.preset_name || (include?.recipeName as string) || 'Custom Recipe';
   const groupName = 'film-recipe-wizard';
   // Inclusion flags: only include sections when explicitly enabled.
@@ -94,8 +115,21 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     masks: include?.masks === true,
   } as const;
 
-  // Build conditional blocks - always include what's available
-  const wbBasicBlock = inc.wbBasic
+  // Optimized: Only compute basicToneValues when needed
+  // Fix: Clamp values to Lightroom's expected range (-100 to 100) to match camera-profile-generator behavior
+  const basicToneValues = inc.wbBasic ? {
+    contrast: round(clamp(withDefault(aiAdjustments.contrast, 5), -100, 100)),
+    highlights: round(clamp(withDefault(aiAdjustments.highlights, -10), -100, 100)),
+    shadows: round(clamp(withDefault(aiAdjustments.shadows, 10), -100, 100)),
+    whites: round(clamp(withDefault(aiAdjustments.whites, -5), -100, 100)),
+    blacks: round(clamp(withDefault(aiAdjustments.blacks, 5), -100, 100)),
+    clarity: round(clamp(withDefault(aiAdjustments.clarity, 10), -100, 100)),
+    vibrance: round(clamp(withDefault(aiAdjustments.vibrance, 5), -100, 100)),
+    saturation: round(clamp(withDefault(aiAdjustments.saturation, 0), -100, 100)),
+  } : null;
+
+  // Build conditional blocks - optimized with early returns
+  const wbBasicBlock = inc.wbBasic && basicToneValues
     ? [
         tag('Contrast2012', basicToneValues.contrast),
         tag('Highlights2012', basicToneValues.highlights),
@@ -126,34 +160,36 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     : '';
 
   // HSL only applies to color treatment; B&W uses GrayMixer tags
+  // Optimized: Only compute HSL values if needed
+  // Fix: Clamp HSL values to Lightroom's expected range (-100 to 100)
   // HSL values should be attributes on the rdf:Description element, not separate elements
   const hslValues = inc.hsl && !isBW ? {
-    hue_red: withDefault(aiAdjustments.hue_red, 0),
-    hue_orange: withDefault(aiAdjustments.hue_orange, 0),
-    hue_yellow: withDefault(aiAdjustments.hue_yellow, 0),
-    hue_green: withDefault(aiAdjustments.hue_green, 0),
-    hue_aqua: withDefault(aiAdjustments.hue_aqua, 0),
-    hue_blue: withDefault(aiAdjustments.hue_blue, 0),
-    hue_purple: withDefault(aiAdjustments.hue_purple, 0),
-    hue_magenta: withDefault(aiAdjustments.hue_magenta, 0),
-    sat_red: withDefault(aiAdjustments.sat_red, 0),
-    sat_orange: withDefault(aiAdjustments.sat_orange, 0),
-    sat_yellow: withDefault(aiAdjustments.sat_yellow, 0),
-    sat_green: withDefault(aiAdjustments.sat_green, 0),
-    sat_aqua: withDefault(aiAdjustments.sat_aqua, 0),
-    sat_blue: withDefault(aiAdjustments.sat_blue, 0),
-    sat_purple: withDefault(aiAdjustments.sat_purple, 0),
-    sat_magenta: withDefault(aiAdjustments.sat_magenta, 0),
-    lum_red: withDefault(aiAdjustments.lum_red, 0),
-    lum_orange: withDefault(aiAdjustments.lum_orange, 0),
-    lum_yellow: withDefault(aiAdjustments.lum_yellow, 0),
-    lum_green: withDefault(aiAdjustments.lum_green, 0),
-    lum_aqua: withDefault(aiAdjustments.lum_aqua, 0),
-    lum_blue: withDefault(aiAdjustments.lum_blue, 0),
-    lum_purple: withDefault(aiAdjustments.lum_purple, 0),
-    lum_magenta: withDefault(aiAdjustments.lum_magenta, 0),
-  } : {};
-  const hslAttrs = inc.hsl && !isBW
+    hue_red: round(clamp(withDefault(aiAdjustments.hue_red, 0), -100, 100)),
+    hue_orange: round(clamp(withDefault(aiAdjustments.hue_orange, 0), -100, 100)),
+    hue_yellow: round(clamp(withDefault(aiAdjustments.hue_yellow, 0), -100, 100)),
+    hue_green: round(clamp(withDefault(aiAdjustments.hue_green, 0), -100, 100)),
+    hue_aqua: round(clamp(withDefault(aiAdjustments.hue_aqua, 0), -100, 100)),
+    hue_blue: round(clamp(withDefault(aiAdjustments.hue_blue, 0), -100, 100)),
+    hue_purple: round(clamp(withDefault(aiAdjustments.hue_purple, 0), -100, 100)),
+    hue_magenta: round(clamp(withDefault(aiAdjustments.hue_magenta, 0), -100, 100)),
+    sat_red: round(clamp(withDefault(aiAdjustments.sat_red, 0), -100, 100)),
+    sat_orange: round(clamp(withDefault(aiAdjustments.sat_orange, 0), -100, 100)),
+    sat_yellow: round(clamp(withDefault(aiAdjustments.sat_yellow, 0), -100, 100)),
+    sat_green: round(clamp(withDefault(aiAdjustments.sat_green, 0), -100, 100)),
+    sat_aqua: round(clamp(withDefault(aiAdjustments.sat_aqua, 0), -100, 100)),
+    sat_blue: round(clamp(withDefault(aiAdjustments.sat_blue, 0), -100, 100)),
+    sat_purple: round(clamp(withDefault(aiAdjustments.sat_purple, 0), -100, 100)),
+    sat_magenta: round(clamp(withDefault(aiAdjustments.sat_magenta, 0), -100, 100)),
+    lum_red: round(clamp(withDefault(aiAdjustments.lum_red, 0), -100, 100)),
+    lum_orange: round(clamp(withDefault(aiAdjustments.lum_orange, 0), -100, 100)),
+    lum_yellow: round(clamp(withDefault(aiAdjustments.lum_yellow, 0), -100, 100)),
+    lum_green: round(clamp(withDefault(aiAdjustments.lum_green, 0), -100, 100)),
+    lum_aqua: round(clamp(withDefault(aiAdjustments.lum_aqua, 0), -100, 100)),
+    lum_blue: round(clamp(withDefault(aiAdjustments.lum_blue, 0), -100, 100)),
+    lum_purple: round(clamp(withDefault(aiAdjustments.lum_purple, 0), -100, 100)),
+    lum_magenta: round(clamp(withDefault(aiAdjustments.lum_magenta, 0), -100, 100)),
+  } : null;
+  const hslAttrs = inc.hsl && !isBW && hslValues
     ? [
         attrIf('HueAdjustmentRed', hslValues.hue_red),
         attrIf('HueAdjustmentOrange', hslValues.hue_orange),
@@ -182,24 +218,25 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  // Color Grading block
+  // Color Grading block - Optimized: Only compute if enabled
+  // Fix: Clamp color grading values to expected ranges (hue: 0-360, sat/lum: -100 to 100)
   const colorGradingValues = inc.colorGrading ? {
-    color_grade_shadow_hue: withDefault(aiAdjustments.color_grade_shadow_hue, 0),
-    color_grade_shadow_sat: withDefault(aiAdjustments.color_grade_shadow_sat, 0),
-    color_grade_shadow_lum: withDefault(aiAdjustments.color_grade_shadow_lum, 0),
-    color_grade_midtone_hue: withDefault(aiAdjustments.color_grade_midtone_hue, 0),
-    color_grade_midtone_sat: withDefault(aiAdjustments.color_grade_midtone_sat, 0),
-    color_grade_midtone_lum: withDefault(aiAdjustments.color_grade_midtone_lum, 0),
-    color_grade_highlight_hue: withDefault(aiAdjustments.color_grade_highlight_hue, 0),
-    color_grade_highlight_sat: withDefault(aiAdjustments.color_grade_highlight_sat, 0),
-    color_grade_highlight_lum: withDefault(aiAdjustments.color_grade_highlight_lum, 0),
-    color_grade_global_hue: withDefault(aiAdjustments.color_grade_global_hue, 0),
-    color_grade_global_sat: withDefault(aiAdjustments.color_grade_global_sat, 0),
-    color_grade_global_lum: withDefault(aiAdjustments.color_grade_global_lum, 0),
-    color_grade_blending: withDefault(aiAdjustments.color_grade_blending, 0),
-    color_grade_balance: withDefault(aiAdjustments.color_grade_balance, 0),
-  } : {};
-  const colorGradingBlock = inc.colorGrading
+    color_grade_shadow_hue: round(clamp(withDefault(aiAdjustments.color_grade_shadow_hue, 0), 0, 360)),
+    color_grade_shadow_sat: round(clamp(withDefault(aiAdjustments.color_grade_shadow_sat, 0), 0, 100)),
+    color_grade_shadow_lum: round(clamp(withDefault(aiAdjustments.color_grade_shadow_lum, 0), -100, 100)),
+    color_grade_midtone_hue: round(clamp(withDefault(aiAdjustments.color_grade_midtone_hue, 0), 0, 360)),
+    color_grade_midtone_sat: round(clamp(withDefault(aiAdjustments.color_grade_midtone_sat, 0), 0, 100)),
+    color_grade_midtone_lum: round(clamp(withDefault(aiAdjustments.color_grade_midtone_lum, 0), -100, 100)),
+    color_grade_highlight_hue: round(clamp(withDefault(aiAdjustments.color_grade_highlight_hue, 0), 0, 360)),
+    color_grade_highlight_sat: round(clamp(withDefault(aiAdjustments.color_grade_highlight_sat, 0), 0, 100)),
+    color_grade_highlight_lum: round(clamp(withDefault(aiAdjustments.color_grade_highlight_lum, 0), -100, 100)),
+    color_grade_global_hue: round(clamp(withDefault(aiAdjustments.color_grade_global_hue, 0), 0, 360)),
+    color_grade_global_sat: round(clamp(withDefault(aiAdjustments.color_grade_global_sat, 0), 0, 100)),
+    color_grade_global_lum: round(clamp(withDefault(aiAdjustments.color_grade_global_lum, 0), -100, 100)),
+    color_grade_blending: round(clamp(withDefault(aiAdjustments.color_grade_blending, 0), -100, 100)),
+    color_grade_balance: round(clamp(withDefault(aiAdjustments.color_grade_balance, 0), -100, 100)),
+  } : null;
+  const colorGradingBlock = inc.colorGrading && colorGradingValues
     ? [
         tag('ColorGradeMidtoneHue', colorGradingValues.color_grade_midtone_hue),
         tag('ColorGradeMidtoneSat', colorGradingValues.color_grade_midtone_sat),
@@ -218,18 +255,19 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
       ].join('')
     : '';
 
-  // Black & White Mix block (GrayMixer*) when in monochrome
+  // Black & White Mix block (GrayMixer*) when in monochrome - Optimized: Only compute if BW
+  // Fix: Clamp B&W mixer values to expected range (-100 to 100)
   const bwMixerValues = isBW ? {
-    gray_red: withDefault(aiAdjustments.gray_red, 0),
-    gray_orange: withDefault(aiAdjustments.gray_orange, 0),
-    gray_yellow: withDefault(aiAdjustments.gray_yellow, 0),
-    gray_green: withDefault(aiAdjustments.gray_green, 0),
-    gray_aqua: withDefault(aiAdjustments.gray_aqua, 0),
-    gray_blue: withDefault(aiAdjustments.gray_blue, 0),
-    gray_purple: withDefault(aiAdjustments.gray_purple, 0),
-    gray_magenta: withDefault(aiAdjustments.gray_magenta, 0),
-  } : {};
-  const bwMixerBlock = isBW
+    gray_red: round(clamp(withDefault(aiAdjustments.gray_red, 0), -100, 100)),
+    gray_orange: round(clamp(withDefault(aiAdjustments.gray_orange, 0), -100, 100)),
+    gray_yellow: round(clamp(withDefault(aiAdjustments.gray_yellow, 0), -100, 100)),
+    gray_green: round(clamp(withDefault(aiAdjustments.gray_green, 0), -100, 100)),
+    gray_aqua: round(clamp(withDefault(aiAdjustments.gray_aqua, 0), -100, 100)),
+    gray_blue: round(clamp(withDefault(aiAdjustments.gray_blue, 0), -100, 100)),
+    gray_purple: round(clamp(withDefault(aiAdjustments.gray_purple, 0), -100, 100)),
+    gray_magenta: round(clamp(withDefault(aiAdjustments.gray_magenta, 0), -100, 100)),
+  } : null;
+  const bwMixerBlock = isBW && bwMixerValues
     ? [
         tag('GrayMixerRed', bwMixerValues.gray_red),
         tag('GrayMixerOrange', bwMixerValues.gray_orange),
@@ -300,8 +338,16 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
         const attrIf = (k: string, val?: string | number) =>
           val === 0 || val === '0' || (val !== undefined && val !== null) ? ` crs:${k}="${val}"` : '';
 
-        // Helper to generate a 32-character uppercase hex string (Lightroom expects 32 hex chars)
-        const randomHex32 = () => Array.from({ length: 32 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)]).join('');
+        // Optimized: Helper to generate a 32-character uppercase hex string (Lightroom expects 32 hex chars)
+        // Using direct string building instead of Array.from for better performance
+        const randomHex32 = () => {
+          const hex = '0123456789ABCDEF';
+          let result = '';
+          for (let i = 0; i < 32; i++) {
+            result += hex[(Math.random() * 16) | 0];
+          }
+          return result;
+        };
 
         const correctionLis = masks
           .map((m: any, i: number) => {
@@ -535,15 +581,11 @@ ${correctionLis}
       })()
     : '';
 
-  // Generate UUID for the preset
-  const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16).toUpperCase();
-    });
-  };
+  // UUID generation moved to top-level function for better performance
 
+  // Optimized: Generate UUID once at the end
+  const presetUUID = generateUUID();
+  
   const xmp = `<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00        ">
  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
   <rdf:Description rdf:about=""
@@ -551,7 +593,7 @@ ${correctionLis}
    crs:PresetType="Normal"
    crs:Cluster="${groupName}"
    crs:ClusterGroup="${groupName}"
-   crs:UUID="${generateUUID()}"
+   crs:UUID="${presetUUID}"
    crs:SupportsAmount2="True"
    crs:SupportsAmount="True"
    crs:SupportsColor="True"

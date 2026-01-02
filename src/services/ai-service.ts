@@ -32,7 +32,7 @@ export class AIService {
     ): Promise<AIColorAdjustments> {
         try {
             // Build messages for OpenAI
-            const messages = await this.buildOpenAIMessages(baseImageBase64, targetImageBase64, hint, options);
+            const messages = await this.buildOpenAIMessages(baseImageBase64, undefined, hint, options);
             
             // Define tools for OpenAI
             const tools = this.buildOpenAITools(options);
@@ -118,7 +118,7 @@ export class AIService {
 
     private async buildOpenAIMessages(
         baseImageBase64?: string | string[],
-        targetImageBase64?: string,
+        _targetImageBase64?: string,
         hint?: string,
         _options?: AIOptions & { styleOptions?: any }
     ): Promise<any[]> {
@@ -147,31 +147,14 @@ export class AIService {
             });
         }
 
-        // Add target image
-        if (targetImageBase64) {
+        // No target image - create a preset based on the reference image style
+        if (baseImageBase64) {
             messages.push({
                 role: 'user',
                 content: [
                     {
                 type: 'text',
-                        text: 'TARGET IMAGE: This is the image to be modified to match the reference style.'
-                    },
-                    {
-                        type: 'image_url',
-                        image_url: {
-                            url: `data:image/jpeg;base64,${targetImageBase64}`,
-                detail: 'high'
-                        }
-                    }
-                ]
-            });
-        } else if (baseImageBase64) {
-            messages.push({
-                role: 'user',
-                content: [
-                    {
-                type: 'text',
-                        text: 'NO TARGET IMAGE: Create a preset based on the reference image style that can be applied to any similar image.'
+                        text: 'Create a preset based on the reference image style that can be applied to any similar image.'
                     }
                 ]
             });
@@ -281,8 +264,11 @@ export class AIService {
             }
         ];
 
-        // Add masks tool if enabled
-        if (options?.aiFunctions?.masks !== false) {
+        // Add masks tool if enabled (check both aiFunctions.masks and styleOptions.includeMasks)
+        // Default is false (masks disabled)
+        const includeMasks = options?.aiFunctions?.masks !== false && 
+                            (options?.styleOptions?.includeMasks === true);
+        if (includeMasks) {
             tools.push({
                 type: 'function',
                 function: {
@@ -371,13 +357,19 @@ export class AIService {
         return ensured;
     }
 
-    private getSystemPrompt(_options: AIOptions): string {
+    private getSystemPrompt(options: AIOptions): string {
+        // Default is false (masks disabled)
+        const includeMasks = options?.aiFunctions?.masks !== false && 
+                            (options?.styleOptions?.includeMasks === true);
         const base = getCoreSystemPrompt({
-            includeMaskTypes: true,
+            includeMaskTypes: includeMasks,
             includeTechniques: true,
             includeRequirements: true
         });
-        return `${base}
+        const maskInstruction = includeMasks 
+            ? '' 
+            : '\n\nIMPORTANT: DO NOT generate any masks or local adjustments. Only create global adjustments.';
+        return `${base}${maskInstruction}
 
 CRITICAL REFERENCE IMAGE REQUIREMENTS:
 - When reference images are provided, you MUST analyze them thoroughly

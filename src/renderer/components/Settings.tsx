@@ -181,12 +181,14 @@ const Settings: React.FC = () => {
       if (openaiKey.trim()) {
         const isValid = await testOpenAIKey(openaiKey.trim());
         if (!isValid) {
+          setIsValidating(false);
           return; // Error message already set by testOpenAIKey
         }
       }
 
       // Check profile validity
       if (!isProfileValid) {
+        setIsValidating(false);
         return;
       }
 
@@ -196,9 +198,13 @@ const Settings: React.FC = () => {
       // Only include fields that have values to avoid overwriting existing settings
       const settingsToSave: any = {};
       
+      // Include openaiKey if user has entered a new value (when masked, empty string means keep existing)
+      // If user enters a new key, save it; if masked and empty, don't include it (preserves existing)
       if (openaiKey.trim()) {
         settingsToSave.openaiKey = openaiKey.trim();
       }
+      // Note: If masked and openaiKey is empty, we don't include it in settingsToSave
+      // This preserves the existing key
       
       if (storageLocation.trim()) {
         settingsToSave.storageLocation = storageLocation.trim();
@@ -228,7 +234,13 @@ const Settings: React.FC = () => {
       };
 
       await saveSettingsToStore(settingsToSave);
-      setMasked(!!openaiKey);
+      // Update masked state: if we saved a key, it should be masked; if we didn't save one and it was masked, keep it masked
+      if (settingsToSave.openaiKey) {
+        setMasked(true);
+      } else if (masked) {
+        // Keep masked state if we didn't update the key
+        setMasked(true);
+      }
       setOpenaiKey('');
       setShowKey(false);
       setStatus({ type: 'success', msg: 'Settings saved successfully' });
