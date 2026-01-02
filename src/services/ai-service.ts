@@ -13,6 +13,9 @@ export interface AIOptions {
         grain?: boolean;
         pointColor?: boolean;
     };
+    styleOptions?: {
+        includeMasks?: boolean;
+    };
 }
 
 export class AIService {
@@ -28,7 +31,7 @@ export class AIService {
         baseImageBase64?: string | string[],
         targetImageBase64?: string,
         hint?: string,
-        options?: AIOptions & { styleOptions?: any }
+        options?: AIOptions
     ): Promise<AIColorAdjustments> {
         try {
             // Build messages for OpenAI
@@ -120,7 +123,7 @@ export class AIService {
         baseImageBase64?: string | string[],
         _targetImageBase64?: string,
         hint?: string,
-        _options?: AIOptions & { styleOptions?: any }
+        _options?: AIOptions
     ): Promise<any[]> {
         const messages: any[] = [];
 
