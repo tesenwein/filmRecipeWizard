@@ -7,7 +7,6 @@ import { Recipe } from '../../shared/types';
 import { useAlert } from '../context/AlertContext';
 import { useAppStore } from '../store/appStore';
 import {
-    downloadCaptureOneStyle,
     saveCaptureOneStyleToFolder,
     saveLightroomPresetToFolder,
     saveLightroomProfileToFolder
