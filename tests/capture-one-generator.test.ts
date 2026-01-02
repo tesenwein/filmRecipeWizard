@@ -599,7 +599,8 @@ describe('Capture One Generator', () => {
         expect(orangeZone[5]).toBe('3'); // luminance
         expect(orangeZone[6]).toBe('255'); // R channel (orange has high R)
         expect(orangeZone[7]).toBe('0'); // G channel
-        expect(parseFloat(orangeZone[8])).toBeCloseTo(127.5, 1); // B channel (30° = halfway from 255 to 0)
+        // Updated: RGB encoding now uses Math.round() for performance (30° = 255 - round(127.5) = 127)
+        expect(parseFloat(orangeZone[8])).toBeCloseTo(127, 1); // B channel (rounded from 127.5)
 
         // Test Blue zone (240°)
         const blueZone = zones[5].split(',');
