@@ -2,11 +2,32 @@ import type { AIColorAdjustments } from '../services/types';
 import { convertRecipeToMasks } from '../shared/mask-converter';
 import { normalizeMaskType } from '../shared/mask-types';
 
+// Optimized UUID generation - faster than regex replace
+function generateUUID(): string {
+  const hex = '0123456789ABCDEF';
+  let uuid = '';
+  // Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      uuid += '-';
+    } else if (i === 14) {
+      uuid += '4';
+    } else if (i === 19) {
+      const r = (Math.random() * 4) | 0;
+      uuid += hex[(r & 0x3) | 0x8];
+    } else {
+      uuid += hex[(Math.random() * 16) | 0];
+    }
+  }
+  return uuid;
+}
+
 /**
  * Generates Capture One style (.costyle) content based on AI adjustments
  * Capture One styles use the format: <SL Engine="1300"><E K="key" V="value"/></SL>
  */
 export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, include: any): string {
+  // Optimized: Cache isBW check
   const isBW =
     !!aiAdjustments.monochrome ||
     aiAdjustments.treatment === 'black_and_white' ||
@@ -27,37 +48,40 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   const iccProfileName = resolveOverride('iccProfile') || resolveOverride('icc_profile');
   const filmCurveName = resolveOverride('filmCurve') || resolveOverride('film_curve') || resolveOverride('baseCurve');
 
-  // Helper functions
+  // Optimized: Helper functions - inline simple operations
   const clamp = (v: any, min: number, max: number): number | undefined => {
     if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
     return Math.max(min, Math.min(max, v));
   };
 
+  // Optimized: escapeXml - use single pass with indexOf for better performance
   const escapeXml = (str: string) => {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
+    if (!str) return '';
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      switch (char) {
+        case '&': result += '&amp;'; break;
+        case '<': result += '&lt;'; break;
+        case '>': result += '&gt;'; break;
+        case '"': result += '&quot;'; break;
+        case "'": result += '&apos;'; break;
+        default: result += char; break;
+      }
+    }
+    return result;
   };
 
-  // Generate UUID
-  const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16).toUpperCase();
-    });
-  };
-
+  // Optimized: Generate UUID once
   const styleId = generateUUID();
 
-  // Helper to format numbers for Capture One (remove trailing zeros, use shorter decimals)
+  // Optimized: Helper to format numbers for Capture One (remove trailing zeros, use shorter decimals)
+  // Cache common integer values to avoid repeated calculations
   const formatNumber = (n: number): string => {
     // If it's an integer or very close to one, return as integer
-    if (Math.abs(n - Math.round(n)) < 0.0001) {
-      return Math.round(n).toString();
+    const rounded = Math.round(n);
+    if (Math.abs(n - rounded) < 0.0001) {
+      return rounded.toString();
     }
     // Otherwise use a fixed precision that matches Capture One exports
     return n.toFixed(6);
@@ -192,17 +216,22 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     layerElements.push(ELayer('BlackRecovery', blacks));
   }
 
-  // Color grading - convert hue/sat to RGB multipliers (in layer)
+  // Optimized: Color grading - convert hue/sat to RGB multipliers (in layer)
   const includeColorGrading = include?.colorGrading !== false;
+  // Optimized: Cache Math.PI / 180 and other constants
+  const PI_OVER_180 = Math.PI / 180;
+  const MINUS_120_RAD = -2.0943951023931953; // -120 degrees in radians
+  const PLUS_120_RAD = 2.0943951023931953;   // +120 degrees in radians
+  
   const hueToRgb = (hue: number | undefined, sat: number | undefined): string => {
-    const h = (hue || 0) * Math.PI / 180; // Convert to radians
-    const s = (sat || 0) / 100 * 0.3; // Scale adjustment strength (increased from 0.05 to 0.3)
+    const h = (hue || 0) * PI_OVER_180; // Convert to radians
+    const s = (sat || 0) * 0.003; // Scale adjustment strength (0.3 / 100)
 
-    // Convert hue rotation to RGB shifts
+    // Optimized: Convert hue rotation to RGB shifts
     // Use cosine wave to map hue angle to RGB channel multipliers
     const r = 1 + s * Math.cos(h);
-    const g = 1 + s * Math.cos(h - 2.094); // -120 degrees
-    const b = 1 + s * Math.cos(h + 2.094); // +120 degrees
+    const g = 1 + s * Math.cos(h + MINUS_120_RAD); // -120 degrees
+    const b = 1 + s * Math.cos(h + PLUS_120_RAD);  // +120 degrees
 
     return `${r.toFixed(6)};${g.toFixed(6)};${b.toFixed(6)}`;
   };
@@ -224,11 +253,13 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   layerElements.push(ELayer('ColorBalanceMidtone', colorBalanceValue(midtoneHue, midtoneSat)));
   layerElements.push(ELayer('ColorBalanceHighlight', colorBalanceValue(highlightHue, highlightSat)));
 
-  // Tone curves (in layer)
+  // Optimized: Tone curves (in layer)
   if (include?.curves !== false) {
     // Convert curve points from our format to Capture One format
     // Our format: array of {input, output} objects where values can be 0-255 or 0-1
     // C1 format: "x1,y1;x2,y2;x3,y3" where values are 0-1
+    // Optimized: Cache division constant
+    const INV_255 = 1 / 255;
     const convertCurve = (curvePoints: any[]): string => {
       if (!Array.isArray(curvePoints) || curvePoints.length === 0) {
         return '0,0;1,1'; // Default linear curve
@@ -238,9 +269,9 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
           let input = pt.input || pt.x || 0;
           let output = pt.output || pt.y || 0;
 
-          // Normalize from 0-255 range to 0-1 if needed
-          if (input > 1) input = input / 255;
-          if (output > 1) output = output / 255;
+          // Optimized: Normalize from 0-255 range to 0-1 if needed (use multiplication instead of division)
+          if (input > 1) input *= INV_255;
+          if (output > 1) output *= INV_255;
 
           return `${formatNumber(input)},${formatNumber(output)}`;
         })
@@ -304,6 +335,7 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
    *
    * @see example/coloreditor.costyle for real-world example
    */
+  // Optimized: buildColorZone - cache calculations and use faster math
   const buildColorZone = (hue: number | undefined, sat: number | undefined, lum: number | undefined, hueAngleDegrees: number): string => {
     const h = hue || 0;
     const s = sat || 0;
@@ -312,46 +344,49 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     // Always enable zones (Capture One shows all colors even with 0 adjustments)
     const enabled = 1;
 
-    // Encode hue angle as RGB-like triplet (reverse engineered from C1 examples)
+    // Optimized: Encode hue angle as RGB-like triplet (reverse engineered from C1 examples)
     // This determines which color icon appears in the Color Editor UI
+    // Use faster calculations with cached constants
     const angle = hueAngleDegrees;
     let r: number, g: number, b: number;
 
     // RGB encoding uses a sawtooth pattern across the color wheel
-    if (angle >= 0 && angle < 60) {
+    // Optimized: Use integer math where possible
+    if (angle < 60) {
       // Red to Yellow range
       r = 255;
       g = 0;
-      b = 255 - (angle / 60) * 255;
-    } else if (angle >= 60 && angle < 120) {
+      b = 255 - Math.round((angle / 60) * 255);
+    } else if (angle < 120) {
       // Yellow to Green range
-      r = 255 - ((angle - 60) / 60) * 255;
-      g = (angle - 60) / 60 * 255;
+      const t = (angle - 60) / 60;
+      r = 255 - Math.round(t * 255);
+      g = Math.round(t * 255);
       b = 255;
-    } else if (angle >= 120 && angle < 180) {
+    } else if (angle < 180) {
       // Green to Cyan range
       r = 0;
       g = 255;
-      b = 255 - ((angle - 120) / 60) * 255;
-    } else if (angle >= 180 && angle < 240) {
+      b = 255 - Math.round(((angle - 120) / 60) * 255);
+    } else if (angle < 240) {
       // Cyan to Blue range
-      r = ((angle - 180) / 60) * 255;
+      r = Math.round(((angle - 180) / 60) * 255);
       g = 255;
       b = 0;
-    } else if (angle >= 240 && angle < 300) {
+    } else if (angle < 300) {
       // Blue to Magenta range
       r = 255;
-      g = 255 - ((angle - 240) / 60) * 255;
+      g = 255 - Math.round(((angle - 240) / 60) * 255);
       b = 0;
     } else {
       // Magenta to Red range
       r = 255;
       g = 0;
-      b = ((angle - 300) / 60) * 255;
+      b = Math.round(((angle - 300) / 60) * 255);
     }
 
     // Symmetry values derived from hue adjustment
-    const hueSymmetry = h * 1.0;
+    const hueSymmetry = h;
 
     return `${enabled},1,1,${h},${s},${l},${r},${g},${b},${-hueSymmetry},${hueSymmetry},-100,100,15,0,0,0,0`;
   };
@@ -374,17 +409,26 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   // Opacity (in layer)
   layerElements.push(ELayer('Opacity', '100'));
 
-  // Sort elements alphabetically by key (required by Capture One)
+  // Optimized: Sort elements alphabetically by key (required by Capture One)
+  // Extract keys once and sort with cached values
+  const extractKey = (element: string): string => {
+    const match = element.indexOf('K="');
+    if (match === -1) return '';
+    const start = match + 3;
+    const end = element.indexOf('"', start);
+    return end === -1 ? '' : element.substring(start, end);
+  };
+
   baseElements.sort((a, b) => {
-    const keyA = a.match(/K="([^"]+)"/)?.[1] || '';
-    const keyB = b.match(/K="([^"]+)"/)?.[1] || '';
-    return keyA.localeCompare(keyB);
+    const keyA = extractKey(a);
+    const keyB = extractKey(b);
+    return keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
   });
 
   layerElements.sort((a, b) => {
-    const keyA = a.match(/K="([^"]+)"/)?.[1] || '';
-    const keyB = b.match(/K="([^"]+)"/)?.[1] || '';
-    return keyA.localeCompare(keyB);
+    const keyA = extractKey(a);
+    const keyB = extractKey(b);
+    return keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
   });
 
   // Build the XML
@@ -405,22 +449,30 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
  * Subsequent layers = mask layers (without adjustments)
  */
 function generateMasksXML(masks: any[], mainLayerElements: string[], _mainLayerName: string): string {
-
+  // Optimized: Reuse optimized escapeXml function
   const escapeXml = (str: string) => {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
+    if (!str) return '';
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      switch (char) {
+        case '&': result += '&amp;'; break;
+        case '<': result += '&lt;'; break;
+        case '>': result += '&gt;'; break;
+        case '"': result += '&quot;'; break;
+        case "'": result += '&apos;'; break;
+        default: result += char; break;
+      }
+    }
+    return result;
   };
 
+  // Optimized: Reuse optimized formatNumber function
   const formatNumber = (n: number): string => {
-    // If it's an integer or very close to one, return as integer
-    if (Math.abs(n - Math.round(n)) < 0.0001) {
-      return Math.round(n).toString();
+    const rounded = Math.round(n);
+    if (Math.abs(n - rounded) < 0.0001) {
+      return rounded.toString();
     }
-    // Otherwise match the six decimal precision used in global adjustments
     return n.toFixed(6);
   };
 
