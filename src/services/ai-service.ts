@@ -15,6 +15,12 @@ export interface AIOptions {
     };
     styleOptions?: {
         includeMasks?: boolean;
+        enableCurves?: boolean;
+        enableColorGrading?: boolean;
+        enableHSL?: boolean;
+        enableGrain?: boolean;
+        enableVignette?: boolean;
+        enablePointColor?: boolean;
     };
 }
 
@@ -175,6 +181,165 @@ export class AIService {
     }
 
     private buildOpenAITools(options?: AIOptions): any[] {
+        // Get enabled features from styleOptions (default to true if not set)
+        const styleOpts = options?.styleOptions || {};
+        const enableCurves = styleOpts.enableCurves !== false; // Default true
+        const enableColorGrading = styleOpts.enableColorGrading !== false; // Default true
+        const enableHSL = styleOpts.enableHSL !== false; // Default true
+        const enableGrain = styleOpts.enableGrain !== false; // Default true
+        const enableVignette = styleOpts.enableVignette !== false; // Default true
+        const enablePointColor = styleOpts.enablePointColor !== false; // Default true
+
+        // Build properties object conditionally
+        const properties: any = {
+            // Basic tone adjustments (always included)
+            contrast: { type: 'number', description: 'Contrast adjustment (-100 to +100)' },
+            highlights: { type: 'number', description: 'Highlights adjustment (-100 to +100)' },
+            shadows: { type: 'number', description: 'Shadows adjustment (-100 to +100)' },
+            whites: { type: 'number', description: 'Whites adjustment (-100 to +100)' },
+            blacks: { type: 'number', description: 'Blacks adjustment (-100 to +100)' },
+            vibrance: { type: 'number', description: 'Vibrance adjustment (-100 to +100)' },
+            saturation: { type: 'number', description: 'Saturation adjustment (-100 to +100)' },
+            temperature: { type: 'number', description: 'Temperature adjustment (-100 to +100)' },
+            tint: { type: 'number', description: 'Tint adjustment (-100 to +100)' },
+            camera_profile: { type: 'string', description: 'Camera profile name' },
+        };
+
+        // Add tone curves if enabled
+        if (enableCurves) {
+            properties.tone_curve = {
+                type: 'array',
+                description: 'RGB tone curve points. Array of {input, output} objects where values are 0-255. Use S-curves for film looks: lift shadows (0,0 to 30,20), compress highlights (200,200 to 255,240).',
+                items: {
+                    type: 'object',
+                    properties: {
+                        input: { type: 'number', description: 'Input value (0-255)' },
+                        output: { type: 'number', description: 'Output value (0-255)' }
+                    },
+                    required: ['input', 'output']
+                }
+            };
+            properties.tone_curve_red = {
+                type: 'array',
+                description: 'Red channel tone curve points. Array of {input, output} objects (0-255). Use for color-specific contrast adjustments.',
+                items: {
+                    type: 'object',
+                    properties: {
+                        input: { type: 'number', description: 'Input value (0-255)' },
+                        output: { type: 'number', description: 'Output value (0-255)' }
+                    },
+                    required: ['input', 'output']
+                }
+            };
+            properties.tone_curve_green = {
+                type: 'array',
+                description: 'Green channel tone curve points. Array of {input, output} objects (0-255).',
+                items: {
+                    type: 'object',
+                    properties: {
+                        input: { type: 'number', description: 'Input value (0-255)' },
+                        output: { type: 'number', description: 'Output value (0-255)' }
+                    },
+                    required: ['input', 'output']
+                }
+            };
+            properties.tone_curve_blue = {
+                type: 'array',
+                description: 'Blue channel tone curve points. Array of {input, output} objects (0-255).',
+                items: {
+                    type: 'object',
+                    properties: {
+                        input: { type: 'number', description: 'Input value (0-255)' },
+                        output: { type: 'number', description: 'Output value (0-255)' }
+                    },
+                    required: ['input', 'output']
+                }
+            };
+        }
+
+        // Add color grading if enabled
+        if (enableColorGrading) {
+            properties.color_grade_shadow_hue = { type: 'number', description: 'Shadow color grading hue (0-360). Shift shadows warm (+20) or cool (-15) to match reference mood.' };
+            properties.color_grade_shadow_sat = { type: 'number', description: 'Shadow color grading saturation (0-100). Typical: +5 to +15 for film looks.' };
+            properties.color_grade_shadow_lum = { type: 'number', description: 'Shadow color grading luminance (-100 to +100). Lift shadows: +10 to +30.' };
+            properties.color_grade_midtone_hue = { type: 'number', description: 'Midtone color grading hue (0-360). Adjust skin tones and overall color cast.' };
+            properties.color_grade_midtone_sat = { type: 'number', description: 'Midtone color grading saturation (0-100). Typical: +5 to +20.' };
+            properties.color_grade_midtone_lum = { type: 'number', description: 'Midtone color grading luminance (-100 to +100).' };
+            properties.color_grade_highlight_hue = { type: 'number', description: 'Highlight color grading hue (0-360). Cool highlights (-15) or warm (+10) for atmosphere.' };
+            properties.color_grade_highlight_sat = { type: 'number', description: 'Highlight color grading saturation (0-100). Typical: +5 to +15.' };
+            properties.color_grade_highlight_lum = { type: 'number', description: 'Highlight color grading luminance (-100 to +100). Compress highlights: -10 to -30.' };
+            properties.color_grade_global_hue = { type: 'number', description: 'Global color grading hue (0-360). Overall color shift.' };
+            properties.color_grade_global_sat = { type: 'number', description: 'Global color grading saturation (0-100).' };
+            properties.color_grade_global_lum = { type: 'number', description: 'Global color grading luminance (-100 to +100).' };
+            properties.color_grade_blending = { type: 'number', description: 'Color grading blending (0-100). How much color grading affects the image.' };
+            properties.color_grade_balance = { type: 'number', description: 'Color grading balance (-100 to +100). Balance between shadows and highlights.' };
+        }
+
+        // Add HSL adjustments if enabled
+        if (enableHSL) {
+            properties.hue_red = { type: 'number', description: 'Red hue adjustment (-100 to +100)' };
+            properties.hue_orange = { type: 'number', description: 'Orange hue adjustment (-100 to +100)' };
+            properties.hue_yellow = { type: 'number', description: 'Yellow hue adjustment (-100 to +100)' };
+            properties.hue_green = { type: 'number', description: 'Green hue adjustment (-100 to +100)' };
+            properties.hue_aqua = { type: 'number', description: 'Aqua hue adjustment (-100 to +100)' };
+            properties.hue_blue = { type: 'number', description: 'Blue hue adjustment (-100 to +100)' };
+            properties.hue_purple = { type: 'number', description: 'Purple hue adjustment (-100 to +100)' };
+            properties.hue_magenta = { type: 'number', description: 'Magenta hue adjustment (-100 to +100)' };
+            properties.sat_red = { type: 'number', description: 'Red saturation adjustment (-100 to +100)' };
+            properties.sat_orange = { type: 'number', description: 'Orange saturation adjustment (-100 to +100)' };
+            properties.sat_yellow = { type: 'number', description: 'Yellow saturation adjustment (-100 to +100)' };
+            properties.sat_green = { type: 'number', description: 'Green saturation adjustment (-100 to +100)' };
+            properties.sat_aqua = { type: 'number', description: 'Aqua saturation adjustment (-100 to +100)' };
+            properties.sat_blue = { type: 'number', description: 'Blue saturation adjustment (-100 to +100)' };
+            properties.sat_purple = { type: 'number', description: 'Purple saturation adjustment (-100 to +100)' };
+            properties.sat_magenta = { type: 'number', description: 'Magenta saturation adjustment (-100 to +100)' };
+            properties.lum_red = { type: 'number', description: 'Red luminance adjustment (-100 to +100)' };
+            properties.lum_orange = { type: 'number', description: 'Orange luminance adjustment (-100 to +100)' };
+            properties.lum_yellow = { type: 'number', description: 'Yellow luminance adjustment (-100 to +100)' };
+            properties.lum_green = { type: 'number', description: 'Green luminance adjustment (-100 to +100)' };
+            properties.lum_aqua = { type: 'number', description: 'Aqua luminance adjustment (-100 to +100)' };
+            properties.lum_blue = { type: 'number', description: 'Blue luminance adjustment (-100 to +100)' };
+            properties.lum_purple = { type: 'number', description: 'Purple luminance adjustment (-100 to +100)' };
+            properties.lum_magenta = { type: 'number', description: 'Magenta luminance adjustment (-100 to +100)' };
+        }
+
+        // Add grain if enabled
+        if (enableGrain) {
+            properties.grain_amount = { type: 'number', description: 'Film grain amount (0-100)' };
+            properties.grain_size = { type: 'number', description: 'Film grain size (0-100)' };
+            properties.grain_frequency = { type: 'number', description: 'Film grain frequency (0-100)' };
+        }
+
+        // Add vignette if enabled
+        if (enableVignette) {
+            properties.vignette_amount = { type: 'number', description: 'Vignette amount (-100 to +100)' };
+            properties.vignette_midpoint = { type: 'number', description: 'Vignette midpoint (0-100)' };
+            properties.vignette_feather = { type: 'number', description: 'Vignette feather (0-100)' };
+            properties.vignette_roundness = { type: 'number', description: 'Vignette roundness (-100 to +100)' };
+        }
+
+        // Add point color if enabled
+        if (enablePointColor) {
+            properties.point_colors = {
+                type: 'array',
+                description: 'Point color corrections. Array of color correction points.',
+                items: { type: 'array', items: { type: 'number' } }
+            };
+        }
+
+        // Build description based on enabled features
+        const enabledFeatures: string[] = [];
+        if (enableCurves) enabledFeatures.push('tone curves');
+        if (enableColorGrading) enabledFeatures.push('color grading');
+        if (enableHSL) enabledFeatures.push('HSL adjustments');
+        if (enableGrain) enabledFeatures.push('film grain');
+        if (enableVignette) enabledFeatures.push('vignette');
+        if (enablePointColor) enabledFeatures.push('point color');
+        
+        const featuresDesc = enabledFeatures.length > 0 
+            ? ` Enabled features: ${enabledFeatures.join(', ')}.`
+            : '';
+
         const tools: any[] = [
             {
                 type: 'function',
@@ -221,21 +386,10 @@ export class AIService {
                 type: 'function',
                 function: {
                     name: 'generate_global_adjustments',
-                    description: 'MANDATORY: Generate global Lightroom/Camera Raw adjustments for the entire image. This is REQUIRED for all analysis.',
+                    description: `MANDATORY: Generate global Lightroom/Camera Raw adjustments for the entire image. This is REQUIRED for all analysis.${featuresDesc} Use the enabled features to create impactful style matching.`,
                     parameters: {
                         type: 'object',
-                        properties: {
-                            contrast: { type: 'number', description: 'Contrast adjustment (-100 to +100)' },
-                            highlights: { type: 'number', description: 'Highlights adjustment (-100 to +100)' },
-                            shadows: { type: 'number', description: 'Shadows adjustment (-100 to +100)' },
-                            whites: { type: 'number', description: 'Whites adjustment (-100 to +100)' },
-                            blacks: { type: 'number', description: 'Blacks adjustment (-100 to +100)' },
-                            vibrance: { type: 'number', description: 'Vibrance adjustment (-100 to +100)' },
-                            saturation: { type: 'number', description: 'Saturation adjustment (-100 to +100)' },
-                            temperature: { type: 'number', description: 'Temperature adjustment (-100 to +100)' },
-                            tint: { type: 'number', description: 'Tint adjustment (-100 to +100)' },
-                            camera_profile: { type: 'string', description: 'Camera profile name' }
-                        },
+                        properties: properties,
                         required: ['contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation', 'temperature', 'tint', 'camera_profile']
                     }
                 }
@@ -364,6 +518,16 @@ export class AIService {
         // Default is false (masks disabled)
         const includeMasks = options?.aiFunctions?.masks !== false && 
                             (options?.styleOptions?.includeMasks === true);
+        
+        // Get enabled features from styleOptions (default to true if not set)
+        const styleOpts = options?.styleOptions || {};
+        const enableCurves = styleOpts.enableCurves !== false;
+        const enableColorGrading = styleOpts.enableColorGrading !== false;
+        const enableHSL = styleOpts.enableHSL !== false;
+        const enableGrain = styleOpts.enableGrain !== false;
+        const enableVignette = styleOpts.enableVignette !== false;
+        const enablePointColor = styleOpts.enablePointColor !== false;
+
         const base = getCoreSystemPrompt({
             includeMaskTypes: includeMasks,
             includeTechniques: true,
@@ -372,6 +536,46 @@ export class AIService {
         const maskInstruction = includeMasks 
             ? '' 
             : '\n\nIMPORTANT: DO NOT generate any masks or local adjustments. Only create global adjustments.';
+        
+        // Build feature-specific instructions
+        const featureInstructions: string[] = [];
+        
+        if (enableCurves) {
+            featureInstructions.push('- **TONE CURVES ENABLED**: You MUST include tone_curve in generate_global_adjustments for ALL presets (this is critical for style matching). Analyze the reference image\'s contrast curve and create matching tone curves (S-curves for film looks, lifted shadows, compressed highlights). Example: [{input:0,output:0}, {input:30,output:20}, {input:200,output:200}, {input:255,output:240}]');
+        } else {
+            featureInstructions.push('- **TONE CURVES DISABLED**: Do NOT include tone_curve, tone_curve_red, tone_curve_green, or tone_curve_blue in your adjustments.');
+        }
+        
+        if (enableColorGrading) {
+            featureInstructions.push('- **COLOR GRADING ENABLED**: You MUST include color_grade_shadow_hue, color_grade_shadow_sat, color_grade_midtone_hue, color_grade_highlight_hue, etc. to match color temperature and mood. Color grading is a PRIMARY tool for matching reference styles. Example: warm shadows (hue: +20, sat: +10), cool highlights (hue: -15, sat: +5)');
+        } else {
+            featureInstructions.push('- **COLOR GRADING DISABLED**: Do NOT include any color_grade_* parameters in your adjustments.');
+        }
+        
+        if (enableHSL) {
+            featureInstructions.push('- **HSL ADJUSTMENTS ENABLED**: Use hue_*, sat_*, and lum_* parameters to fine-tune specific colors and match the reference style.');
+        } else {
+            featureInstructions.push('- **HSL ADJUSTMENTS DISABLED**: Do NOT include any hue_*, sat_*, or lum_* parameters in your adjustments.');
+        }
+        
+        if (enableGrain) {
+            featureInstructions.push('- **FILM GRAIN ENABLED**: Include grain_amount, grain_size, and grain_frequency to match film texture characteristics.');
+        } else {
+            featureInstructions.push('- **FILM GRAIN DISABLED**: Do NOT include grain_amount, grain_size, or grain_frequency in your adjustments.');
+        }
+        
+        if (enableVignette) {
+            featureInstructions.push('- **VIGNETTE ENABLED**: Include vignette_amount, vignette_midpoint, vignette_feather, and vignette_roundness if the reference style shows vignetting.');
+        } else {
+            featureInstructions.push('- **VIGNETTE DISABLED**: Do NOT include any vignette_* parameters in your adjustments.');
+        }
+        
+        if (enablePointColor) {
+            featureInstructions.push('- **POINT COLOR ENABLED**: Use point_colors for targeted color corrections if needed.');
+        } else {
+            featureInstructions.push('- **POINT COLOR DISABLED**: Do NOT include point_colors in your adjustments.');
+        }
+
         return `${base}${maskInstruction}
 
 CRITICAL REFERENCE IMAGE REQUIREMENTS:
@@ -381,6 +585,11 @@ CRITICAL REFERENCE IMAGE REQUIREMENTS:
 - Use the analyze_color_palette tool to understand the color characteristics
 - Use the generate_global_adjustments tool to create matching adjustments
 - Use the name_and_describe tool to create an appropriate preset name and confidence level
+
+ENABLED MODIFICATIONS:
+${featureInstructions.join('\n')}
+
+IMPORTANT: Only use the features that are enabled above. Do NOT include parameters for disabled features.
 
 CONFIDENCE CALCULATION:
 - Assess how well you can match the reference style (0.0 = poor match, 1.0 = perfect match)

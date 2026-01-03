@@ -9,6 +9,7 @@ import ConfirmDialog from './ConfirmDialog';
 import FilmStylesCard from './FilmStylesCard';
 import FineTuneControls from './FineTuneControls';
 import ImagePicker from './ImagePicker';
+import ModificationTogglesCard from './ModificationTogglesCard';
 import ProcessButton from './ProcessButton';
 import StyleCategoriesCard from './StyleCategoriesCard';
 import StyleDescriptionCard from './StyleDescriptionCard';
@@ -216,6 +217,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
                 onImagesSelected(next);
               }}
               maxFiles={3}
+            />
+            
+            <ModificationTogglesCard
+              styleOptions={styleOptions}
+              onStyleOptionsChange={onStyleOptionsChange}
             />
           </Box>
 

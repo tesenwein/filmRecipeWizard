@@ -41,6 +41,14 @@ export interface StyleOptions {
   
   // Include masks in AI generation
   includeMasks?: boolean;
+  
+  // Modification toggles (all default to true)
+  enableCurves?: boolean; // Tone curves
+  enableColorGrading?: boolean; // Color grading
+  enableHSL?: boolean; // HSL adjustments
+  enableGrain?: boolean; // Film grain
+  enableVignette?: boolean; // Vignette
+  enablePointColor?: boolean; // Point color corrections
 }
 
 export interface Recipe {
