@@ -5,8 +5,9 @@ export interface AIColorAdjustments {
 
   // Rendering intent / profile
   treatment?: 'color' | 'black_and_white';
-  camera_profile?: string;
+  camera_profile?: string; // Set by export generators, not by AI
   monochrome?: boolean;
+  colorProfile?: 'color' | 'black_and_white' | 'flat'; // User-selected profile hint
 
   // Basic tone and color
   highlights?: number; // -100..100

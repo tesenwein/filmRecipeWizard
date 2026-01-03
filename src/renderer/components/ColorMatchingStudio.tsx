@@ -1,12 +1,11 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import BrushIcon from '@mui/icons-material/Brush';
-import { Box, FormControlLabel, Paper, Switch } from '@mui/material';
+import { Box, Paper } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { StyleOptions } from '../../shared/types';
 import { useAppStore } from '../store/appStore';
 import ArtisticStylesCard from './ArtisticStylesCard';
-import ConfirmDialog from './ConfirmDialog';
 import FilmStylesCard from './FilmStylesCard';
+import ColorProfileSelector from './ColorProfileSelector';
 import FineTuneControls from './FineTuneControls';
 import ImagePicker from './ImagePicker';
 import ModificationTogglesCard from './ModificationTogglesCard';
@@ -34,8 +33,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
   onStyleOptionsChange,
 }) => {
   const [basePreviews, setBasePreviews] = useState<string[]>([]);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteIndex, setDeleteIndex] = useState<number>(0);
 
   const isSafeForImg = (p?: string | null) => {
     if (!p) return false;
@@ -128,20 +125,10 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
     run();
   }, [baseImages]);
 
-  // Remove handlers
+  // Remove handler - ImagePicker now handles confirmation internally
   const handleRemoveBase = (index: number) => {
-    setDeleteIndex(index);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    const next = baseImages.filter((_, i) => i !== deleteIndex);
+    const next = baseImages.filter((_, i) => i !== index);
     onImagesSelected(next);
-    setDeleteDialogOpen(false);
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
   };
 
 
@@ -234,6 +221,11 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
               onPromptChange={onPromptChange}
             />
 
+            <ColorProfileSelector
+              styleOptions={styleOptions}
+              onStyleOptionsChange={onStyleOptionsChange}
+            />
+
             <StyleCategoriesCard
               selectedStyleCategories={styleOptions?.styleCategories}
               onStyleCategoriesChange={handleStyleCategoriesChange}
@@ -254,38 +246,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
               onStyleOptionsChange={onStyleOptionsChange}
             />
 
-            {/* Include Masks Toggle */}
-            <Paper className="card slide-in" sx={{ p: 2.5, animationDelay: '0.2s' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <BrushIcon sx={{ color: 'primary.main', fontSize: 20 }} />
-                <Box sx={{ flex: 1 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2c3338', margin: 0 }}>
-                    Local Adjustments
-                  </h3>
-                  <p style={{ fontSize: 12, color: '#5f6b74', margin: 0 }}>
-                    Include masks for targeted editing
-                  </p>
-                </Box>
-              </Box>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={styleOptions?.includeMasks === true}
-                    onChange={(e) =>
-                      onStyleOptionsChange?.({ includeMasks: e.target.checked })
-                    }
-                    color="primary"
-                  />
-                }
-                label={
-                  <span style={{ fontSize: 13, color: '#374151' }}>
-                    {styleOptions?.includeMasks === true ? 'Include Masks' : 'Masks Disabled'}
-                  </span>
-                }
-                sx={{ mt: 1 }}
-              />
-            </Paper>
-
             {/* Process Button */}
             <Box sx={{ mt: 2 }}>
               <ProcessButton
@@ -298,15 +258,6 @@ const ColorMatchingStudio: React.FC<ColorMatchingStudioProps> = ({
         </Box>
       </Box>
 
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onClose={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
-        title="Remove Image"
-        content="Are you sure you want to remove this recipe reference image?"
-        confirmButtonText="Remove"
-        confirmColor="error"
-      />
     </Box>
   );
 };

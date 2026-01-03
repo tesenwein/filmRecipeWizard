@@ -1,3 +1,5 @@
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { IconButton, Tooltip } from '@mui/material';
 import React from 'react';
 import SingleImage from './SingleImage';
 
@@ -46,28 +48,27 @@ const ImageGrid: React.FC<ImageGridProps> = ({ sources, columns, gap = 6, tileHe
         >
           <SingleImage source={s} alt={`thumb-${i}`} fit="contain" style={{ width: '100%', height: '100%' }} />
           {onRemove && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRemove(i); }}
-              style={{
-                position: 'absolute',
-                top: 6,
-                right: 6,
-                zIndex: 2,
-                border: '1px solid rgba(255,255,255,0.4)',
-                background: 'rgba(255,255,255,0.6)',
-                WebkitBackdropFilter: 'blur(10px)',
-                backdropFilter: 'blur(10px)',
-                color: '#111',
-                borderRadius: 8,
-                padding: '2px 6px',
-                fontSize: 12,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-              }}
-              title="Remove"
-            >
-              ✕
-            </button>
+            <Tooltip title="Remove this reference">
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); onRemove(i); }}
+                sx={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  zIndex: 2,
+                  background: 'rgba(255,255,255,0.6)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  color: '#111',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+                  '&:hover': { background: 'rgba(255,255,255,0.75)' },
+                }}
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           )}
         </div>
       ))}

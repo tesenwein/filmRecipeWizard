@@ -156,6 +156,26 @@ const ModificationTogglesCard: React.FC<ModificationTogglesCardProps> = ({
             </Box>
           }
         />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={styleOptions?.includeMasks === true}
+              onChange={(e) => onStyleOptionsChange?.({ includeMasks: e.target.checked })}
+              color="primary"
+            />
+          }
+          label={
+            <Box>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                Local Adjustments (Masks)
+              </Typography>
+              <Typography sx={{ fontSize: 11, color: '#6b7280' }}>
+                Include masks for targeted editing
+              </Typography>
+            </Box>
+          }
+        />
       </Box>
     </Paper>
   );

@@ -49,6 +49,9 @@ export interface StyleOptions {
   enableGrain?: boolean; // Film grain
   enableVignette?: boolean; // Vignette
   enablePointColor?: boolean; // Point color corrections
+  
+  // Color profile selection
+  colorProfile?: 'color' | 'black_and_white' | 'flat'; // Color profile type
 }
 
 export interface Recipe {

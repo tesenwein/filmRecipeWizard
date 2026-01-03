@@ -27,7 +27,8 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="Name" V="Test Style" />');
       expect(result).toContain('<E K="UUID"');
       expect(result).not.toContain('<E K="FilmCurve"');
-      expect(result).not.toContain('<E K="ICCProfile"');
+      // ICCProfile is now always set (defaults to Generic RGB Profile for color)
+      expect(result).toContain('<E K="ICCProfile" V="Generic RGB Profile" />');
       expect(result).toContain('<E K="ColorBalanceShadow" V="1;1;1" />');
       expect(result).toContain('<E K="ColorBalanceMidtone" V="1;1;1" />');
       expect(result).toContain('<E K="ColorBalanceHighlight" V="1;1;1" />');
@@ -404,7 +405,8 @@ describe('Capture One Generator', () => {
       expect(result).toContain('<E K="Name" V="Minimal Style" />');
       expect(result).toContain('<E K="UUID"');
       expect(result).not.toContain('<E K="FilmCurve"');
-      expect(result).not.toContain('<E K="ICCProfile"');
+      // ICCProfile is now always set (defaults to Generic RGB Profile for color)
+      expect(result).toContain('<E K="ICCProfile" V="Generic RGB Profile" />');
     });
 
     it('includes camera references only when explicitly provided', () => {
@@ -700,6 +702,118 @@ describe('Capture One Generator', () => {
       const slTags = result.match(/<SL[^>]*>/g) || [];
       const closeTags = result.match(/<\/SL>/g) || [];
       expect(slTags.length).toBe(closeTags.length);
+    });
+  });
+
+  describe('Color Profile Mapping', () => {
+    it('should map Adobe Color to Generic RGB Profile', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Color Profile Test',
+        treatment: 'color',
+        camera_profile: 'Adobe Color',
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      expect(result).toContain('<E K="ICCProfile" V="Generic RGB Profile" />');
+    });
+
+    it('should map Adobe Monochrome to Generic Gray Profile', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'B&W Profile Test',
+        treatment: 'black_and_white',
+        camera_profile: 'Adobe Monochrome',
+        monochrome: true,
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      expect(result).toContain('<E K="ICCProfile" V="Generic Gray Profile" />');
+    });
+
+    it('should map black and white treatment to Generic Gray Profile', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'B&W Treatment Test',
+        treatment: 'black_and_white',
+        monochrome: true,
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      expect(result).toContain('<E K="ICCProfile" V="Generic Gray Profile" />');
+    });
+
+    it('should default to Generic RGB Profile when no profile is specified', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Default Profile Test',
+        treatment: 'color',
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      expect(result).toContain('<E K="ICCProfile" V="Generic RGB Profile" />');
+    });
+
+    it('should use override ICC profile when provided', () => {
+      const adjustments: AIColorAdjustments = {
+        preset_name: 'Override Profile Test',
+        treatment: 'color',
+        camera_profile: 'Adobe Color',
+      };
+
+      const include = {
+        basic: true,
+        hsl: false,
+        colorGrading: false,
+        grain: false,
+        vignette: false,
+        masks: false,
+        captureOne: {
+          iccProfile: 'Custom-Profile.icm',
+        },
+      };
+
+      const result = generateCaptureOneStyle(adjustments, include);
+
+      // Override should take precedence
+      expect(result).toContain('<E K="ICCProfile" V="Custom-Profile.icm" />');
+      expect(result).not.toContain('Generic RGB Profile');
     });
   });
 });

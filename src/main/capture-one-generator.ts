@@ -28,7 +28,9 @@ function generateUUID(): string {
  */
 export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, include: any): string {
   // Optimized: Cache isBW check
+  const colorProfileHint = (aiAdjustments as any).colorProfile;
   const isBW =
+    colorProfileHint === 'black_and_white' ||
     !!aiAdjustments.monochrome ||
     aiAdjustments.treatment === 'black_and_white' ||
     (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
@@ -45,7 +47,36 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
     return undefined;
   };
 
-  const iccProfileName = resolveOverride('iccProfile') || resolveOverride('icc_profile');
+  // Map colorProfile hint to Capture One ICC profile (user selection takes precedence)
+  // The AI doesn't set camera_profile - we map it here during export
+  const mapColorProfileToICC = (colorProfile?: 'color' | 'black_and_white' | 'flat'): string | undefined => {
+    if (colorProfile === 'black_and_white') {
+      return 'Generic Gray Profile';
+    }
+    // For color and flat, use Generic RGB Profile
+    if (colorProfile === 'color' || colorProfile === 'flat') {
+      return 'Generic RGB Profile';
+    }
+    return undefined;
+  };
+
+  // Map camera profile to Capture One ICC profile (fallback for legacy data)
+  const mapCameraProfileToICC = (profile?: string): string | undefined => {
+    if (!profile) return undefined;
+    const profileLower = profile.toLowerCase();
+    // Check for monochrome/black and white
+    if (/mono|black\s*&?\s*white|b\s*&\s*w/.test(profileLower) || isBW) {
+      return 'Generic Gray Profile';
+    }
+    // For color profiles, use Generic RGB Profile
+    return 'Generic RGB Profile';
+  };
+
+  // Get ICC profile from override, or map from colorProfile hint, or fallback to camera_profile
+  const iccProfileName = resolveOverride('iccProfile') || 
+                         resolveOverride('icc_profile') ||
+                         mapColorProfileToICC(colorProfileHint) ||
+                         mapCameraProfileToICC(aiAdjustments.camera_profile);
   const filmCurveName = resolveOverride('filmCurve') || resolveOverride('film_curve') || resolveOverride('baseCurve');
 
   // Optimized: Helper functions - inline simple operations
@@ -151,8 +182,13 @@ export function generateCaptureOneStyle(aiAdjustments: AIColorAdjustments, inclu
   if (filmCurveName) {
     baseElements.push(E('FilmCurve', filmCurveName));
   }
+  // Always set ICC profile - it's required for proper color rendering in Capture One
   if (iccProfileName) {
     baseElements.push(E('ICCProfile', iccProfileName));
+  } else {
+    // Fallback based on isBW: Generic Gray Profile for B&W, Generic RGB Profile for color
+    const defaultProfile = isBW ? 'Generic Gray Profile' : 'Generic RGB Profile';
+    baseElements.push(E('ICCProfile', defaultProfile));
   }
 
   // Grain (in base adjustments)

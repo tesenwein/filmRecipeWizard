@@ -28,7 +28,9 @@ function generateUUID(): string {
 export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: any): string {
   // Generate XMP content for Lightroom based on AI adjustments
   // Optimized: Cache isBW check
+  const colorProfileHint = (aiAdjustments as any).colorProfile;
   const isBW =
+    colorProfileHint === 'black_and_white' ||
     !!aiAdjustments.monochrome ||
     aiAdjustments.treatment === 'black_and_white' ||
     (typeof aiAdjustments.camera_profile === 'string' && /monochrome/i.test(aiAdjustments.camera_profile || '')) ||
@@ -70,7 +72,29 @@ export function generateXMPContent(aiAdjustments: AIColorAdjustments, include: a
     return 'Adobe Color';
   };
 
-  const cameraProfile = normalizeCameraProfile(aiAdjustments.camera_profile) || autoSelectCameraProfile();
+  // Map colorProfile hint to Adobe profile (user selection takes precedence)
+  // The AI doesn't set camera_profile - we map it here during export
+  let cameraProfile: string;
+  
+  if (colorProfileHint === 'black_and_white') {
+    cameraProfile = 'Adobe Monochrome';
+  } else if (colorProfileHint === 'flat') {
+    cameraProfile = 'Adobe Color'; // Flat uses Adobe Color
+  } else if (colorProfileHint === 'color') {
+    cameraProfile = 'Adobe Color';
+  } else {
+    // Fallback: use existing camera_profile if set, or normalize/auto-select
+    const providedProfile = aiAdjustments.camera_profile;
+    if (providedProfile && 
+        (providedProfile === 'Adobe Color' || 
+         providedProfile === 'Adobe Portrait' || 
+         providedProfile === 'Adobe Landscape' || 
+         providedProfile === 'Adobe Monochrome')) {
+      cameraProfile = providedProfile;
+    } else {
+      cameraProfile = normalizeCameraProfile(providedProfile) || autoSelectCameraProfile();
+    }
+  }
   const profileName = cameraProfile;
   const treatmentTag = isBW
     ? '<crs:Treatment>Black &amp; White</crs:Treatment>\n      <crs:ConvertToGrayscale>True</crs:ConvertToGrayscale>'
@@ -612,8 +636,7 @@ ${correctionLis}
    crs:CompatibleVersion="251854848"
    crs:ProcessVersion="15.4"
    crs:HasSettings="True"
-   crs:ProfileName="${profileName}"
-   crs:Look="${isBW ? 'Adobe Monochrome' : ''}"
+   ${isBW ? '' : `crs:ProfileName="${profileName}"`}
    crs:PresetSubtype="Normal"
     crs:WhiteBalance="As Shot"
     crs:Name="${presetName}"${hslAttrs}>
@@ -643,22 +666,21 @@ ${correctionLis}
     </rdf:Alt>
    </crs:Description>
    ${isBW ? `<crs:Look>
-     <rdf:Description
-      crs:Name="Adobe Monochrome"
-      crs:Amount="1"
-      crs:UUID="0CFE8F8AB5F63B2A73CE0B0077D20817"
-      crs:SupportsAmount="true"
-      crs:SupportsMonochrome="false"
-      crs:SupportsOutputReferred="false"
-      crs:Copyright="© 2018 Adobe Systems, Inc."
-      crs:Stubbed="true">
-     <crs:Group>
-      <rdf:Alt>
-       <rdf:li xml:lang="x-default">Profiles</rdf:li>
-      </rdf:Alt>
-     </crs:Group>
-     </rdf:Description>
-    </crs:Look>` : ''}
+    <rdf:Description
+     crs:Name="Adobe Monochrome"
+     crs:Amount="1"
+     crs:UUID="0CFE8F8AB5F63B2A73CE0B0077D20817"
+     crs:SupportsAmount="false"
+     crs:SupportsMonochrome="false"
+     crs:SupportsOutputReferred="false"
+     crs:Stubbed="true">
+    <crs:Group>
+     <rdf:Alt>
+      <rdf:li xml:lang="x-default">Profiles</rdf:li>
+     </rdf:Alt>
+    </crs:Group>
+    </rdf:Description>
+   </crs:Look>` : ''}
    ${treatmentTag}
 ${wbBasicBlock}${parametricCurvesBlock}${toneCurvesBlock}${bwMixerBlock}${colorGradingBlock}${pointColorBlock}${grainBlock}${vignetteBlock}
    <!-- Masks (optional) -->

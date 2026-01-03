@@ -3,6 +3,7 @@ import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import { Box, Button, Chip, IconButton, Paper, Tooltip } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { logError } from '../../shared/error-utils';
+import ConfirmDialog from './ConfirmDialog';
 import ImageGrid from './ImageGrid';
 import SingleImage from './SingleImage';
 
@@ -43,6 +44,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   required = false,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number>(0);
 
   const defaults = useMemo(() => {
     return {
@@ -124,6 +127,24 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const hasImages = Array.isArray(images) && images.length > 0;
   const display = (previews.length ? previews : images).slice(0, maxFiles);
 
+  // Unified deletion handler with confirmation
+  const handleRemoveClick = (index: number) => {
+    if (!onRemoveImage) return;
+    setDeleteIndex(index);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (onRemoveImage) {
+      onRemoveImage(deleteIndex);
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  };
+
   return (
     <Paper
       className="card slide-in"
@@ -179,7 +200,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
               <Tooltip title="Remove this reference">
                 <IconButton
                   size="small"
-                  onClick={() => onRemoveImage(0)}
+                  onClick={() => handleRemoveClick(0)}
                   sx={{
                     position: 'absolute',
                     top: 10,
@@ -220,7 +241,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
                 sources={display.slice(1)}
                 columns={4}
                 tileHeight={80}
-                onRemove={onRemoveImage ? i => onRemoveImage(i + 1) : undefined}
+                onRemove={onRemoveImage ? i => handleRemoveClick(i + 1) : undefined}
               />
             </Box>
           )}
@@ -336,6 +357,16 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
           </Box>
         </Box>
       )}
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Remove Image"
+        content="Are you sure you want to remove this reference image?"
+        confirmButtonText="Remove"
+        confirmColor="error"
+      />
     </Paper>
   );
 };

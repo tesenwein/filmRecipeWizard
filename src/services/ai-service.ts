@@ -1,5 +1,4 @@
 import OpenAI from 'openai';
-import { getMaskConfig, normalizeMaskType } from '../shared/mask-types';
 import { getCoreSystemPrompt } from './ai-prompt-shared';
 import { AIColorAdjustments } from './types';
 
@@ -21,6 +20,7 @@ export interface AIOptions {
         enableGrain?: boolean;
         enableVignette?: boolean;
         enablePointColor?: boolean;
+        colorProfile?: 'color' | 'black_and_white' | 'flat';
     };
 }
 
@@ -71,12 +71,41 @@ export class AIService {
             // Process tool calls to extract adjustments
             const adjustments = await this.processToolCalls(toolCalls);
 
-            return this.ensureAdjustmentMetadata(adjustments);
+            // Store color profile hint from user selection (not the Adobe profile name)
+            // The export generators will map this to the correct Adobe profile
+            const colorProfile = options?.styleOptions?.colorProfile;
+            if (colorProfile) {
+                // Store the user's selection as a hint (color, black_and_white, or flat)
+                adjustments.colorProfile = colorProfile;
+                // If black and white, also set treatment and monochrome flags
+                if (colorProfile === 'black_and_white') {
+                    adjustments.treatment = 'black_and_white';
+                    adjustments.monochrome = true;
+                    // Also set saturation to -100 for B&W
+                    adjustments.saturation = -100;
+                }
+            }
+
+            // Now ensure metadata
+            const result = this.ensureAdjustmentMetadata(adjustments);
+            
+            // Ensure colorProfile hint is preserved
+            if (colorProfile) {
+                result.colorProfile = colorProfile;
+                if (colorProfile === 'black_and_white') {
+                    result.treatment = 'black_and_white';
+                    result.monochrome = true;
+                    result.saturation = -100; // Force saturation for B&W
+                }
+            }
+
+            return result;
         } catch (error) {
             console.error('GPT-5 API Error:', error);
             throw error;
         }
     }
+
 
     private async processToolCalls(toolCalls: any[]): Promise<AIColorAdjustments> {
         
@@ -202,7 +231,6 @@ export class AIService {
             saturation: { type: 'number', description: 'Saturation adjustment (-100 to +100)' },
             temperature: { type: 'number', description: 'Temperature adjustment (-100 to +100)' },
             tint: { type: 'number', description: 'Tint adjustment (-100 to +100)' },
-            camera_profile: { type: 'string', description: 'Camera profile name' },
         };
 
         // Add tone curves if enabled
@@ -390,7 +418,7 @@ export class AIService {
                     parameters: {
                         type: 'object',
                         properties: properties,
-                        required: ['contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation', 'temperature', 'tint', 'camera_profile']
+                        required: ['contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation', 'temperature', 'tint']
                     }
                 }
             },
@@ -475,23 +503,6 @@ export class AIService {
     }
 
 
-    private getDefaultAdjustments(): AIColorAdjustments {
-        return {
-            preset_name: 'Custom Recipe',
-            description: 'A custom color grading recipe',
-            camera_profile: 'Adobe Color',
-            contrast: 0,
-            highlights: 0,
-            shadows: 0,
-            whites: 0,
-            blacks: 0,
-            vibrance: 0,
-            saturation: 0
-        };
-    }
-
-
-
     private ensureAdjustmentMetadata(adjustments: AIColorAdjustments | null): AIColorAdjustments {
         const ensured = adjustments ? { ...adjustments } : { ...this.createDefaultAdjustments() };
 
@@ -508,8 +519,8 @@ export class AIService {
             ensured.confidence = 0.5; // Default confidence when not provided by AI
         }
 
-        const normalizedProfile = this.normalizeCameraProfileName(ensured.camera_profile) || this.autoSelectProfileFromResult(ensured);
-        ensured.camera_profile = normalizedProfile;
+        // Note: colorProfile hint is set in analyzeColorMatch before calling this method
+        // The actual camera_profile is set by export generators (xmp-generator, capture-one-generator)
 
         return ensured;
     }
@@ -527,6 +538,7 @@ export class AIService {
         const enableGrain = styleOpts.enableGrain !== false;
         const enableVignette = styleOpts.enableVignette !== false;
         const enablePointColor = styleOpts.enablePointColor !== false;
+        const colorProfile = styleOpts.colorProfile;
 
         const base = getCoreSystemPrompt({
             includeMaskTypes: includeMasks,
@@ -576,6 +588,17 @@ export class AIService {
             featureInstructions.push('- **POINT COLOR DISABLED**: Do NOT include point_colors in your adjustments.');
         }
 
+        // Build profile instruction (as a hint, not a requirement to set camera_profile)
+        let profileInstruction = '';
+        if (colorProfile) {
+            profileInstruction = `\n\nCOLOR PROFILE HINT:
+- The user has selected a ${colorProfile === 'black_and_white' ? 'black and white' : colorProfile === 'flat' ? 'flat/neutral' : 'full color'} profile
+- This is a HINT about the intended output - adjust your color adjustments accordingly
+${colorProfile === 'black_and_white' ? '- This is a black and white recipe - you MUST set saturation to -100, treatment to "black_and_white", and monochrome to true' : ''}
+${colorProfile === 'flat' ? '- This is a flat/neutral color profile - use neutral color settings with minimal saturation shifts' : ''}
+- DO NOT set camera_profile - it will be set automatically during export based on this selection`;
+        }
+
         return `${base}${maskInstruction}
 
 CRITICAL REFERENCE IMAGE REQUIREMENTS:
@@ -585,6 +608,7 @@ CRITICAL REFERENCE IMAGE REQUIREMENTS:
 - Use the analyze_color_palette tool to understand the color characteristics
 - Use the generate_global_adjustments tool to create matching adjustments
 - Use the name_and_describe tool to create an appropriate preset name and confidence level
+${profileInstruction}
 
 ENABLED MODIFICATIONS:
 ${featureInstructions.join('\n')}
@@ -607,74 +631,11 @@ CRITICAL TOOL USAGE REQUIREMENTS:
 
 
 
-    private parseResultFromText(text: string): AIColorAdjustments | null {
-        // Try to extract structured data from the text
-        try {
-            // Look for JSON-like structures in the text
-            const jsonMatches = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
-            if (jsonMatches) {
-                for (const match of jsonMatches) {
-                    try {
-                        const parsed = JSON.parse(match);
-                        // Check if it looks like a valid AIColorAdjustments object
-                        if (parsed && typeof parsed === 'object' && (parsed.preset_name || parsed.confidence !== undefined)) {
-                            return parsed as AIColorAdjustments;
-                        }
-                    } catch {
-                        // Continue to next match
-                        continue;
-                    }
-                }
-            }
-        } catch (error) {
-            console.warn('Could not parse result from text:', error);
-        }
-        return null;
-    }
-
-    // Normalize any free-form profile name to Adobe's canonical set
-    private normalizeCameraProfileName(name?: string): string | undefined {
-        if (!name) return undefined;
-        const n = String(name).toLowerCase();
-        if (/mono|black\s*&?\s*white|b\s*&\s*w/.test(n)) return 'Adobe Monochrome';
-        if (/portrait|people|skin/.test(n)) return 'Adobe Portrait';
-        if (/landscape|sky|mountain|nature/.test(n)) return 'Adobe Landscape';
-        if (/color|standard|default|auto/.test(n)) return 'Adobe Color';
-        return 'Adobe Color';
-    }
-
-    // Pick an Adobe profile using the adjustments and mask hints
-    private autoSelectProfileFromResult(adjustments: AIColorAdjustments): string {
-        const isBW =
-            !!adjustments.monochrome ||
-            adjustments.treatment === 'black_and_white' ||
-            (typeof adjustments.saturation === 'number' && adjustments.saturation <= -100);
-        if (isBW) return 'Adobe Monochrome';
-
-        const masks = (adjustments as any).masks || [];
-        let faceCount = 0;
-        let landscapeLike = 0;
-        let hasSky = false;
-        for (const m of masks) {
-            let t: any = m?.type;
-            if (typeof t === 'string') t = normalizeMaskType(t);
-            const cfg = typeof t === 'string' ? getMaskConfig(t) : undefined;
-            const cat = cfg?.category;
-            if (cat === 'face' || t === 'subject' || t === 'person') faceCount++;
-            if (cat === 'landscape' || cat === 'background') landscapeLike++;
-            if (t === 'sky') hasSky = true;
-        }
-        if (faceCount > 0) return 'Adobe Portrait';
-        if (hasSky || landscapeLike > 0) return 'Adobe Landscape';
-        return 'Adobe Color';
-    }
-
     private createDefaultAdjustments(): AIColorAdjustments {
         return {
             preset_name: 'Custom Recipe',
             description: 'A balanced color grading recipe with natural tones and clean contrast.',
             confidence: 0.5,
-            camera_profile: 'Adobe Color',
             contrast: 0,
             highlights: 0,
             shadows: 0,

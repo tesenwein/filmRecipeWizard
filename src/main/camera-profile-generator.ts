@@ -68,7 +68,21 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
     if (hasSky || landscapeLike > 0) return 'Adobe Landscape';
     return 'Adobe Color';
   };
-  const cameraProfileName = normalizeCameraProfile((adjustments as any)?.camera_profile) || autoSelectCameraProfile();
+  // Map colorProfile hint to Adobe profile (user selection takes precedence)
+  // The AI doesn't set camera_profile - we map it here during export
+  let cameraProfileName: string;
+  const colorProfileHint = (adjustments as any).colorProfile;
+  
+  if (colorProfileHint === 'black_and_white') {
+    cameraProfileName = 'Adobe Monochrome';
+  } else if (colorProfileHint === 'flat') {
+    cameraProfileName = 'Adobe Color'; // Flat uses Adobe Color
+  } else if (colorProfileHint === 'color') {
+    cameraProfileName = 'Adobe Color';
+  } else {
+    // Fallback: use existing camera_profile if set, or normalize/auto-select
+    cameraProfileName = normalizeCameraProfile((adjustments as any)?.camera_profile) || autoSelectCameraProfile();
+  }
 
   // Color grading (use proper field names from AI adjustments)
   const shadowsHue = round(clamp(adjustments.color_grade_shadow_hue, 0, 360));
@@ -242,7 +256,6 @@ export function generateCameraProfileXMP(profileName: string, adjustments: any):
          crs:SupportsAmount="false"
          crs:SupportsMonochrome="false"
          crs:SupportsOutputReferred="false"
-         crs:Copyright="© 2018 Adobe Systems, Inc."
          crs:Stubbed="true">
         <crs:Group>
          <rdf:Alt>
