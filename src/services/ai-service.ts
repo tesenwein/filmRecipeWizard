@@ -45,7 +45,7 @@ export class AIService {
 
             // Call OpenAI directly with GPT-5
             const response = await this.openai.chat.completions.create({
-                model: 'gpt-5gpt-5.2-2025-12-11',
+                model: 'gpt-5.2-2025-12-11',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     ...messages
